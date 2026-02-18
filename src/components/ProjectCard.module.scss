@@ -1,0 +1,84 @@
+@import '../styles/variables';
+
+.card {
+    background: white;
+    border-radius: $border-radius;
+    box-shadow: $shadow-sm;
+    transition: $transition;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: $shadow-md;
+
+        .image {
+            transform: scale(1.05);
+        }
+    }
+
+    .image-wrapper {
+        overflow: hidden;
+        height: 200px;
+    }
+
+    .image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .content {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: $text-primary;
+    }
+
+    .description {
+        color: $text-secondary;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        flex-grow: 1;
+    }
+
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .tag {
+        background-color: rgba($primary-color, 0.1);
+        color: $primary-color;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .links {
+        display: flex;
+        gap: 1rem;
+        margin-top: auto;
+
+        a {
+            text-align: center;
+            flex: 1;
+            padding: 0.6rem;
+            font-size: 0.9rem;
+        }
+    }
+}

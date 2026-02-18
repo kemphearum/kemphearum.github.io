@@ -1,0 +1,56 @@
+@import '../styles/variables';
+
+.section {
+    padding: 6rem 0;
+    background-color: $surface-color;
+    scroll-margin-top: $nav-height;
+
+    .container {
+        @include container;
+    }
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2.5rem;
+    margin-top: 3rem;
+
+    // Staggered animation for children
+    &>* {
+        opacity: 0;
+        animation: fadeIn 0.6s ease-out forwards;
+
+        @for $i from 1 through 10 {
+            &:nth-child(#{$i}) {
+                animation-delay: #{$i * 0.1}s;
+            }
+        }
+    }
+}
+
+.loading,
+.empty {
+    text-align: center;
+    color: $text-secondary;
+    font-size: 1.2rem;
+    padding: 3rem;
+}
+
+.hint {
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    opacity: 0.7;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

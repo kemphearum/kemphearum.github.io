@@ -1,0 +1,62 @@
+@import '../styles/variables';
+
+.section {
+    padding: 5rem 0;
+    background-color: $background-color;
+
+    .container {
+        @include container;
+    }
+}
+
+.content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.text {
+    max-width: 800px;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: $text-secondary;
+
+    p {
+        margin-bottom: 1.5rem;
+    }
+}
+
+.subtext {
+    color: $text-primary;
+    margin-top: 1rem;
+    font-weight: 500;
+}
+
+.skillsList {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(140px, 200px));
+    gap: 0.5rem 2rem;
+    padding: 0;
+    margin: 1.5rem 0 0 0;
+    list-style: none;
+
+    li {
+        position: relative;
+        padding-left: 1.5rem;
+        font-size: 1rem;
+
+        &::before {
+            content: '▹';
+            position: absolute;
+            left: 0;
+            color: $primary-color;
+            font-weight: 700;
+        }
+    }
+}
+
+@media (max-width: 600px) {
+    .skillsList {
+        grid-template-columns: 1fr;
+    }
+}

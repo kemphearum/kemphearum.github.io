@@ -1,0 +1,198 @@
+@import '../styles/variables';
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: $surface-color;
+    padding: 2rem;
+}
+
+.dashboard {
+    width: 100%;
+    max-width: 800px;
+}
+
+.card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: $border-radius;
+    box-shadow: $shadow-md;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    animation: fadeIn 0.5s ease-out;
+
+    h2,
+    h3 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        color: $primary-color;
+    }
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+
+    h1 {
+        font-size: 1.8rem;
+        margin: 0;
+        color: $text-primary;
+    }
+
+    .actions {
+        display: flex;
+    }
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.input,
+.textarea {
+    padding: 0.8rem 1rem;
+    border: 1px solid rgba($accent-color, 0.2);
+    border-radius: $border-radius;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: $transition;
+
+    &:focus {
+        outline: none;
+        border-color: $primary-color;
+        box-shadow: 0 0 0 3px rgba($primary-color, 0.05);
+    }
+}
+
+.textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.fileInput {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+
+    label {
+        font-weight: 500;
+        color: $text-secondary;
+    }
+}
+
+.hint {
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: $text-secondary;
+    text-align: center;
+    background-color: rgba($primary-color, 0.05);
+    padding: 1rem;
+    border-radius: $border-radius;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.projectList {
+    margin-top: 3rem;
+    width: 100%;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+
+    h3 {
+        text-align: center;
+        color: $primary-color;
+        margin-bottom: 1.5rem;
+    }
+}
+
+.projectItem {
+    background: white;
+    padding: 1.5rem;
+    border-radius: $border-radius;
+    box-shadow: $shadow-sm;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: $transition;
+
+    &:hover {
+        box-shadow: $shadow-md;
+    }
+
+    .info {
+        flex: 1;
+
+        h4 {
+            margin-bottom: 0.5rem;
+            color: $text-primary;
+        }
+
+        p {
+            font-size: 0.9rem;
+            color: $text-secondary;
+        }
+    }
+
+    .deleteBtn {
+        background-color: #ff6b6b;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: $border-radius;
+        font-size: 0.9rem;
+        margin-left: 1rem;
+
+        &:hover {
+            background-color: darken(#ff6b6b, 10%);
+        }
+    }
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    button {
+        padding: 0.5rem 1.5rem;
+        background: white;
+        border: 1px solid rgba($accent-color, 0.2);
+        border-radius: $border-radius;
+        color: $text-secondary;
+        cursor: pointer;
+        font-weight: 500;
+        transition: $transition;
+
+        &:hover {
+            background: rgba($primary-color, 0.05);
+            border-color: $primary-color;
+        }
+
+        &.active {
+            background: $primary-color;
+            color: white;
+            border-color: $primary-color;
+        }
+    }
+}
