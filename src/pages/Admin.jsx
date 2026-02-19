@@ -184,6 +184,7 @@ const Admin = () => {
         if (!window.confirm("Are you sure you want to delete this project?")) return;
         try {
             await deleteDoc(doc(db, "projects", id));
+            invalidateCache('collection:projects');
             setProjects(projects.filter(p => p.id !== id));
             showToast('Project deleted.');
         } catch (error) {
@@ -205,8 +206,10 @@ const Admin = () => {
                 ...project,
                 techStack: project.techStack.split(',').map(item => item.trim()),
                 imageUrl,
+                visible: true,
                 createdAt: serverTimestamp()
             });
+            invalidateCache('collection:projects');
             showToast('Project added successfully!');
             setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '' });
             setProjectImage(null);
@@ -267,6 +270,7 @@ const Admin = () => {
         if (!window.confirm("Are you sure you want to delete this experience?")) return;
         try {
             await deleteDoc(doc(db, "experience", id));
+            invalidateCache('collection:experience');
             setExperiences(experiences.filter(e => e.id !== id));
             showToast('Experience deleted.');
         } catch (error) {
@@ -280,8 +284,10 @@ const Admin = () => {
         try {
             await addDoc(collection(db, "experience"), {
                 ...experience,
+                visible: true,
                 createdAt: serverTimestamp()
             });
+            invalidateCache('collection:experience');
             showToast('Experience added successfully!');
             setExperience({ company: '', role: '', period: '', description: '' });
             fetchExperiences();
@@ -311,6 +317,22 @@ const Admin = () => {
             showToast('Error updating experience.', 'error');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Toggle visibility for projects or experience
+    const toggleVisibility = async (collectionName, id, currentVisible) => {
+        try {
+            await updateDoc(doc(db, collectionName, id), { visible: !currentVisible });
+            invalidateCache(`collection:${collectionName}`);
+            if (collectionName === 'projects') {
+                setProjects(prev => prev.map(p => p.id === id ? { ...p, visible: !currentVisible } : p));
+            } else {
+                setExperiences(prev => prev.map(e => e.id === id ? { ...e, visible: !currentVisible } : e));
+            }
+            showToast(`Item ${!currentVisible ? 'visible' : 'hidden'} on homepage.`);
+        } catch (error) {
+            showToast('Failed to toggle visibility.', 'error');
         }
     };
 
@@ -541,12 +563,19 @@ const Admin = () => {
                                 <div className={styles.emptyState}>No experience entries yet.</div>
                             ) : (
                                 experiences.map(exp => (
-                                    <div key={exp.id} className={styles.listItem}>
+                                    <div key={exp.id} className={`${styles.listItem} ${exp.visible === false ? styles.hiddenItem : ''}`}>
                                         <div className={styles.listItemInfo}>
-                                            <h4>{exp.role}</h4>
+                                            <h4>{exp.role} {exp.visible === false && <span className={styles.hiddenBadge}>Hidden</span>}</h4>
                                             <p className={styles.listMeta}>{exp.company} • <em>{exp.period}</em></p>
                                         </div>
                                         <div className={styles.listItemActions}>
+                                            <button className={`${styles.visibilityBtn} ${exp.visible === false ? styles.off : ''}`} onClick={() => toggleVisibility('experience', exp.id, exp.visible !== false)} title={exp.visible === false ? 'Show on homepage' : 'Hide from homepage'}>
+                                                {exp.visible === false ? (
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                                                ) : (
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                                )}
+                                            </button>
                                             <button className={styles.editBtn} onClick={() => handleEditExperienceClick(exp)}>Edit</button>
                                             <button className={styles.deleteBtn} onClick={() => handleDeleteExperience(exp.id)}>Delete</button>
                                         </div>
@@ -614,9 +643,9 @@ const Admin = () => {
                                 <div className={styles.emptyState}>No projects yet.</div>
                             ) : (
                                 projects.map(p => (
-                                    <div key={p.id} className={styles.listItem}>
+                                    <div key={p.id} className={`${styles.listItem} ${p.visible === false ? styles.hiddenItem : ''}`}>
                                         <div className={styles.listItemInfo}>
-                                            <h4>{p.title}</h4>
+                                            <h4>{p.title} {p.visible === false && <span className={styles.hiddenBadge}>Hidden</span>}</h4>
                                             <div className={styles.techTags}>
                                                 {(Array.isArray(p.techStack) ? p.techStack : []).map((t, i) => (
                                                     <span key={i} className={styles.techTag}>{t}</span>
@@ -624,6 +653,13 @@ const Admin = () => {
                                             </div>
                                         </div>
                                         <div className={styles.listItemActions}>
+                                            <button className={`${styles.visibilityBtn} ${p.visible === false ? styles.off : ''}`} onClick={() => toggleVisibility('projects', p.id, p.visible !== false)} title={p.visible === false ? 'Show on homepage' : 'Hide from homepage'}>
+                                                {p.visible === false ? (
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                                                ) : (
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                                )}
+                                            </button>
                                             <button className={styles.editBtn} onClick={() => handleEditClick(p)}>Edit</button>
                                             <button className={styles.deleteBtn} onClick={() => handleDeleteProject(p.id)}>Delete</button>
                                         </div>

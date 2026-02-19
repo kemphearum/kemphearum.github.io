@@ -9,8 +9,11 @@ const Projects = () => {
     const { data: projects, loading } = useFirebaseCollection('projects', 'createdAt', 'asc');
     const [filter, setFilter] = useState('All');
 
+    // Only show visible projects
+    const visibleProjects = projects.filter(p => p.visible !== false);
+
     // Extract unique tech-stack tags for filtering
-    const allTags = projects.reduce((acc, proj) => {
+    const allTags = visibleProjects.reduce((acc, proj) => {
         if (proj.techStack) {
             proj.techStack.forEach(tag => {
                 if (!acc.includes(tag)) acc.push(tag);
@@ -20,8 +23,8 @@ const Projects = () => {
     }, []);
 
     const filteredProjects = filter === 'All'
-        ? projects
-        : projects.filter(p => p.techStack && p.techStack.includes(filter));
+        ? visibleProjects
+        : visibleProjects.filter(p => p.techStack && p.techStack.includes(filter));
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -48,7 +51,7 @@ const Projects = () => {
                     Featured Projects
                 </motion.h2>
 
-                {!loading && projects.length > 0 && (
+                {!loading && visibleProjects.length > 0 && (
                     <motion.div
                         className={styles.filters}
                         initial={{ opacity: 0, y: 10 }}
@@ -124,7 +127,7 @@ const Projects = () => {
                     </motion.div>
                 )}
 
-                {!loading && projects.length === 0 && (
+                {!loading && visibleProjects.length === 0 && (
                     <div className={styles.empty}>
                         <p>No projects found yet.</p>
                         <p className={styles.hint}>Visit /admin to add projects.</p>

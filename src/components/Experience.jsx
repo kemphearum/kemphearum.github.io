@@ -7,6 +7,9 @@ import { motion } from 'framer-motion';
 const Experience = () => {
     const { data: experiences, loading } = useFirebaseCollection('experience', 'createdAt', 'desc');
 
+    // Only show visible experiences
+    const visibleExperiences = experiences.filter(e => e.visible !== false);
+
     const cardVariants = {
         offscreen: { y: 50, opacity: 0 },
         onscreen: {
@@ -47,10 +50,10 @@ const Experience = () => {
                     </div>
                 ) : (
                     <div className={styles.timeline}>
-                        {experiences.length === 0 ? (
+                        {visibleExperiences.length === 0 ? (
                             <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No experience listed yet.</p>
                         ) : (
-                            experiences.map((exp, index) => (
+                            visibleExperiences.map((exp, index) => (
                                 <motion.div
                                     key={exp.id}
                                     className={styles.timelineItem}
