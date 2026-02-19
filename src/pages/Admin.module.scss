@@ -403,16 +403,16 @@
 
     .hint {
         font-weight: 400;
-        color: rgba(160, 160, 176, 0.5);
+        color: var(--input-placeholder);
     }
 
     input,
     textarea {
         width: 100%;
         padding: 0.8rem 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--input-border);
         border-radius: 10px;
-        background: rgba(0, 0, 0, 0.2);
+        background: var(--input-bg);
         color: $text-primary;
         font-size: 0.92rem;
         transition: all 0.3s ease;
@@ -420,12 +420,12 @@
         &:focus {
             outline: none;
             border-color: $primary-color;
-            background: rgba(0, 0, 0, 0.3);
+            background: var(--input-focus-bg);
             box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
         }
 
         &::placeholder {
-            color: rgba(160, 160, 176, 0.4);
+            color: var(--input-placeholder);
         }
     }
 

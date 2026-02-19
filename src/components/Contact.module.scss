@@ -28,9 +28,9 @@
     margin: 0 auto 3rem;
     border-radius: 8px;
     background: linear-gradient(90deg,
-            rgba(255, 255, 255, 0.04) 25%,
-            rgba(255, 255, 255, 0.08) 50%,
-            rgba(255, 255, 255, 0.04) 75%);
+            var(--skeleton-base) 25%,
+            var(--skeleton-shine) 50%,
+            var(--skeleton-base) 75%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
 }
@@ -72,9 +72,9 @@
     input,
     textarea {
         padding: 0.85rem 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        border: 1px solid var(--input-border);
         border-radius: 10px;
-        background: rgba(0, 0, 0, 0.2);
+        background: var(--input-bg);
         color: $text-primary;
         transition: all 0.3s ease;
         font-size: 0.95rem;
@@ -82,12 +82,12 @@
         &:focus {
             outline: none;
             border-color: $primary-color;
-            background: rgba(0, 0, 0, 0.3);
+            background: var(--input-focus-bg);
             box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
         }
 
         &::placeholder {
-            color: rgba(160, 160, 176, 0.5);
+            color: var(--input-placeholder);
         }
     }
 

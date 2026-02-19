@@ -121,7 +121,7 @@
     color: $text-primary;
     margin-bottom: 0.5rem;
     font-weight: 700;
-    background: linear-gradient(135deg, $text-primary, $primary-color);
+    background: linear-gradient(135deg, var(--hero-gradient-start), var(--hero-gradient-end));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;

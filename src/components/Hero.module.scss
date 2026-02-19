@@ -70,9 +70,9 @@
 
 .skeletonLine {
     background: linear-gradient(90deg,
-            rgba(255, 255, 255, 0.04) 25%,
-            rgba(255, 255, 255, 0.08) 50%,
-            rgba(255, 255, 255, 0.04) 75%);
+            var(--skeleton-base) 25%,
+            var(--skeleton-shine) 50%,
+            var(--skeleton-base) 75%);
     background-size: 200% 100%;
     border-radius: 8px;
     animation: shimmer 1.5s infinite;
@@ -139,7 +139,7 @@
     margin-bottom: 0.5rem;
     line-height: 1.1;
     letter-spacing: -1px;
-    background: linear-gradient(135deg, #f0f0f5 0%, rgba($primary-color, 0.9) 100%);
+    background: linear-gradient(135deg, var(--hero-gradient-start) 0%, var(--hero-gradient-end) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;

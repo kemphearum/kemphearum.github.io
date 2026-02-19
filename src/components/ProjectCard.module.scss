@@ -12,7 +12,7 @@
 
     &:hover {
         transform: translateY(-8px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, var(--shadow-alpha));
         border-color: rgba($primary-color, 0.3);
 
         .imageOverlay {
@@ -133,7 +133,7 @@
     gap: 0.75rem;
     margin-top: auto;
     padding-top: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid var(--divider);
 }
 
 .linkBtn,
@@ -153,13 +153,13 @@
 
 .linkBtn {
     color: $text-secondary;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
 
     &:hover {
         color: $text-primary;
-        background: rgba(255, 255, 255, 0.08);
-        border-color: rgba(255, 255, 255, 0.2);
+        background: var(--card-hover);
+        border-color: rgba($primary-color, 0.2);
         transform: translateY(-2px);
     }
 }

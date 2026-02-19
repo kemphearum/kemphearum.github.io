@@ -9,14 +9,19 @@ const Projects = () => {
     const { data: projects, loading } = useFirebaseCollection('projects', 'createdAt', 'asc');
     const [filter, setFilter] = useState('All');
 
-    // Only show visible projects
-    const visibleProjects = projects.filter(p => p.visible !== false);
+    // Only show visible projects (strictly check for true)
+    const visibleProjects = projects.filter(p => p.visible === true);
 
-    // Extract unique tech-stack tags for filtering
+    // Debug: log all projects and visibility
+    console.log('[Projects] All projects:', projects.map(p => ({ title: p.title, visible: p.visible, type: typeof p.visible, techStack: p.techStack })));
+    console.log('[Projects] Visible:', visibleProjects.map(p => p.title));
+
+    // Extract unique tech-stack tags for filtering (trimmed and deduped)
     const allTags = visibleProjects.reduce((acc, proj) => {
-        if (proj.techStack) {
+        if (Array.isArray(proj.techStack)) {
             proj.techStack.forEach(tag => {
-                if (!acc.includes(tag)) acc.push(tag);
+                const trimmed = tag.trim();
+                if (trimmed && !acc.includes(trimmed)) acc.push(trimmed);
             });
         }
         return acc;
@@ -24,7 +29,7 @@ const Projects = () => {
 
     const filteredProjects = filter === 'All'
         ? visibleProjects
-        : visibleProjects.filter(p => p.techStack && p.techStack.includes(filter));
+        : visibleProjects.filter(p => Array.isArray(p.techStack) && p.techStack.some(t => t.trim() === filter));
 
     const containerVariants = {
         hidden: { opacity: 0 },

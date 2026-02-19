@@ -8,7 +8,7 @@ const Experience = () => {
     const { data: experiences, loading } = useFirebaseCollection('experience', 'createdAt', 'desc');
 
     // Only show visible experiences
-    const visibleExperiences = experiences.filter(e => e.visible !== false);
+    const visibleExperiences = experiences.filter(e => e.visible === true);
 
     const cardVariants = {
         offscreen: { y: 50, opacity: 0 },
