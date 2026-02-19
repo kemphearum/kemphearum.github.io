@@ -46,13 +46,13 @@ const icons = {
 };
 
 const tabLabels = {
+    home: 'Home Content',
     experience: 'Experience',
     projects: 'Projects',
-    home: 'Home Content',
-    about: 'About Content',
-    contact: 'Contact Info',
-    general: 'Settings',
     messages: 'Messages',
+    contact: 'Contact Info',
+    about: 'About Content',
+    general: 'Settings',
 };
 
 // Toast notification component
@@ -77,7 +77,7 @@ const Admin = () => {
     const [password, setPassword] = useState('');
     const [isRegistering, setIsRegistering] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('experience');
+    const [activeTab, setActiveTab] = useState('home');
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [toast, setToast] = useState(null);
     const navigate = useNavigate();
