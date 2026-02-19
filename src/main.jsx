@@ -3,11 +3,15 @@ import { createRoot } from 'react-dom/client'
 import './styles/global.scss'
 import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary'
+import { ThemeProvider } from './context/ThemeContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </ErrorBoundary>
   </StrictMode>,
 )
+

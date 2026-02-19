@@ -17,11 +17,48 @@ html {
     --primary-hue: 250;
     --secondary-hue: 330;
     --bg-color: #0a0a12;
+    --bg-surface: rgba(10, 10, 18, 0.95);
+    --bg-surface-light: rgba(10, 10, 18, 0.85);
     --text-primary: #f0f0f5;
     --text-secondary: #a0a0b0;
     --glass-surface: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.08);
     --neon-glow: 0 0 10px rgba(108, 99, 255, 0.3);
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --card-hover: rgba(255, 255, 255, 0.06);
+    --input-bg: rgba(0, 0, 0, 0.2);
+    --input-border: rgba(255, 255, 255, 0.08);
+    --shadow-alpha: 0.3;
+    --bg-gradient-1: rgba(108, 99, 255, 0.1);
+    --bg-gradient-2: rgba(255, 101, 132, 0.08);
+    --skeleton-base: rgba(255, 255, 255, 0.05);
+    --skeleton-shine: rgba(255, 255, 255, 0.1);
+    --divider: rgba(255, 255, 255, 0.06);
+    --backdrop-bg: rgba(0, 0, 0, 0.5);
+    --mobile-menu-bg: rgba(10, 10, 18, 0.97);
+}
+
+[data-theme="light"] {
+    --bg-color: #f5f5fa;
+    --bg-surface: rgba(255, 255, 255, 0.95);
+    --bg-surface-light: rgba(255, 255, 255, 0.85);
+    --text-primary: #1a1a2e;
+    --text-secondary: #5a5a72;
+    --glass-surface: rgba(255, 255, 255, 0.6);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --neon-glow: 0 0 10px rgba(108, 99, 255, 0.15);
+    --card-bg: rgba(255, 255, 255, 0.7);
+    --card-hover: rgba(255, 255, 255, 0.9);
+    --input-bg: rgba(0, 0, 0, 0.03);
+    --input-border: rgba(0, 0, 0, 0.1);
+    --shadow-alpha: 0.08;
+    --bg-gradient-1: rgba(108, 99, 255, 0.06);
+    --bg-gradient-2: rgba(255, 101, 132, 0.04);
+    --skeleton-base: rgba(0, 0, 0, 0.06);
+    --skeleton-shine: rgba(0, 0, 0, 0.1);
+    --divider: rgba(0, 0, 0, 0.08);
+    --backdrop-bg: rgba(0, 0, 0, 0.3);
+    --mobile-menu-bg: rgba(255, 255, 255, 0.97);
 }
 
 body {
@@ -29,11 +66,12 @@ body {
     color: var(--text-primary);
     background-color: var(--bg-color);
     background-image:
-        radial-gradient(circle at 10% 20%, rgba(108, 99, 255, 0.1) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(255, 101, 132, 0.08) 0%, transparent 40%);
+        radial-gradient(circle at 10% 20%, var(--bg-gradient-1) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, var(--bg-gradient-2) 0%, transparent 40%);
     line-height: 1.6;
     overflow-x: clip;
     min-height: 100vh;
+    transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 button {
