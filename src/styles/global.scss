@@ -32,7 +32,7 @@ body {
         radial-gradient(circle at 10% 20%, rgba(108, 99, 255, 0.1) 0%, transparent 40%),
         radial-gradient(circle at 90% 80%, rgba(255, 101, 132, 0.08) 0%, transparent 40%);
     line-height: 1.6;
-    overflow-x: hidden;
+    overflow-x: clip;
     min-height: 100vh;
 }
 
