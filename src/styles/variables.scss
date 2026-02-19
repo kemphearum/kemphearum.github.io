@@ -1,22 +1,50 @@
 /* Color Palette - Vibrant & Modern Light Theme */
-$primary-color: #6c63ff;     /* Vivid Violet */
-$secondary-color: #ff6584;   /* Soft Red/Pink */
-$accent-color: #3f3d56;      /* Dark Gunmetal */
-$background-color: #ffffff;  /* Pure White */
-$surface-color: #f9f9fc;    /* Very Light Grey/Data */
-$text-primary: #2f2e41;      /* Dark Grey for Text */
-$text-secondary: #6e6d7a;    /* Muted Text */
-$nav-height: 70px;
+// Colors
+$primary-color: #6C63FF;
+$primary-light: #8078FF; // lighten($primary-color, 8%) equivalent
+$primary-dark: #5B52E0; // darken($primary-color, 5%) equivalent
+$secondary-color: #FF6584;
+$accent-color: #F0F0F5; // Light text for dark mode
+$text-primary: var(--text-primary);
+$text-secondary: var(--text-secondary);
+$background-color: var(--bg-color);
+$surface-color: var(--bg-color); // fallback or same as bg for now
+
+// Effects
+$glass-bg: var(--glass-surface);
+$glass-border: var(--glass-border);
+$glass-blur: 10px;
+
+// Typography
+$font-family: 'Inter', sans-serif;
+
+// Layout
+$nav-height: 80px;
 $container-width: 1200px;
 $border-radius: 12px;
-$shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
-$shadow-md: 0 10px 15px rgba(0,0,0,0.1);
-$transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+// Shadows
+$shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 8px 15px rgba(0, 0, 0, 0.2);
+$shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.3);
+$neon-glow: var(--neon-glow);
+
+// Transitions
+$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+@mixin glass {
+  background: $glass-bg;
+  backdrop-filter: blur($glass-blur);
+  -webkit-backdrop-filter: blur($glass-blur);
+  border: 1px solid $glass-border;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
 
 @mixin container {
   max-width: $container-width;
   margin: 0 auto;
   padding: 0 2rem;
+  width: 100%;
 }
 
 @mixin section-padding {

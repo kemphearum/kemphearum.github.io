@@ -1,27 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import React, { useState } from 'react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useFirebaseDoc } from '../hooks/useFirebaseData';
 import styles from './Contact.module.scss';
+// eslint-disable-next-line no-unused-vars
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Contact = () => {
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-    const [status, setStatus] = useState(null); // 'sending', 'success', 'error'
-    const [introText, setIntroText] = useState("I'm currently looking for new opportunities, my inbox is always open. Whether you have a question or just want to say hi, I'll try my best to get back to you!");
-
-    useEffect(() => {
-        const fetchContent = async () => {
-            try {
-                const docRef = doc(db, "content", "contact");
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists() && docSnap.data().introText) {
-                    setIntroText(docSnap.data().introText);
-                }
-            } catch (error) {
-                console.error("Error fetching contact content:", error);
-            }
-        };
-        fetchContent();
-    }, []);
+    const [status, setStatus] = useState(null);
+    const { data: contactContent, loading } = useFirebaseDoc('content', 'contact', { introText: '' });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -40,7 +28,7 @@ const Contact = () => {
             setFormData({ name: '', email: '', message: '' });
             setTimeout(() => setStatus(null), 5000);
         } catch (error) {
-            console.error("Error adding document: ", error);
+            console.error("Error submitting form: ", error);
             setStatus('error');
         }
     };
@@ -48,35 +36,62 @@ const Contact = () => {
     return (
         <section id="contact" className={styles.section}>
             <div className={styles.container}>
-                <h2 className="section-title">Get In Touch</h2>
+                <motion.h2
+                    className="section-title"
+                    initial={{ opacity: 0, y: -20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                >
+                    Get In Touch
+                </motion.h2>
                 <div className={styles.content}>
-                    <p className={styles.text}>
-                        {introText}
-                    </p>
+                    {loading ? (
+                        <div className={styles.skeletonText} />
+                    ) : (
+                        <motion.p
+                            className={styles.text}
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                            viewport={{ once: true }}
+                        >
+                            {contactContent.introText}
+                        </motion.p>
+                    )}
 
-                    <form className={styles.form} onSubmit={handleSubmit}>
-                        <div className={styles.inputGroup}>
-                            <label htmlFor="name">Name</label>
-                            <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-
-                        <div className={styles.inputGroup}>
-                            <label htmlFor="email">Email</label>
-                            <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                            />
+                    <motion.form
+                        className={styles.form}
+                        onSubmit={handleSubmit}
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ type: "spring", duration: 0.8, delay: 0.3 }}
+                        viewport={{ once: true }}
+                    >
+                        <div className={styles.formRow}>
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="name">Name</label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="Your Name"
+                                />
+                            </div>
+                            <div className={styles.inputGroup}>
+                                <label htmlFor="email">Email</label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="your@email.com"
+                                />
+                            </div>
                         </div>
 
                         <div className={styles.inputGroup}>
@@ -88,16 +103,58 @@ const Contact = () => {
                                 value={formData.message}
                                 onChange={handleChange}
                                 required
+                                placeholder="How can I help you?"
                             ></textarea>
                         </div>
 
-                        <button type="submit" className={`btn btn-primary ${styles.submitBtn}`} disabled={status === 'sending'}>
-                            {status === 'sending' ? 'Sending...' : 'Send Message'}
-                        </button>
+                        <motion.button
+                            type="submit"
+                            className={styles.submitBtn}
+                            disabled={status === 'sending'}
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                        >
+                            {status === 'sending' ? (
+                                <span className={styles.sendingState}>
+                                    <span className={styles.spinner} />
+                                    Sending...
+                                </span>
+                            ) : (
+                                <span className={styles.btnContent}>
+                                    Send Message
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
+                                    </svg>
+                                </span>
+                            )}
+                        </motion.button>
 
-                        {status === 'success' && <p className={styles.success}>Message sent successfully!</p>}
-                        {status === 'error' && <p className={styles.error}>Something went wrong. Please try again.</p>}
-                    </form>
+                        <AnimatePresence>
+                            {status === 'success' && (
+                                <motion.div
+                                    className={styles.success}
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    Message sent successfully!
+                                </motion.div>
+                            )}
+                            {status === 'error' && (
+                                <motion.div
+                                    className={styles.error}
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                >
+                                    Something went wrong. Please try again.
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.form>
                 </div>
             </div>
         </section>

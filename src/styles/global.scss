@@ -13,12 +13,27 @@ html {
     scroll-behavior: smooth;
 }
 
+:root {
+    --primary-hue: 250;
+    --secondary-hue: 330;
+    --bg-color: #0a0a12;
+    --text-primary: #f0f0f5;
+    --text-secondary: #a0a0b0;
+    --glass-surface: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --neon-glow: 0 0 10px rgba(108, 99, 255, 0.3);
+}
+
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    color: $text-primary;
-    background-color: $background-color;
+    color: var(--text-primary);
+    background-color: var(--bg-color);
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(108, 99, 255, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(255, 101, 132, 0.08) 0%, transparent 40%);
     line-height: 1.6;
     overflow-x: hidden;
+    min-height: 100vh;
 }
 
 button {
@@ -86,7 +101,7 @@ h6 {
         &:hover {
             transform: translateY(-2px);
             box-shadow: $shadow-md;
-            background-color: darken($primary-color, 5%);
+            background-color: $primary-dark;
         }
     }
 

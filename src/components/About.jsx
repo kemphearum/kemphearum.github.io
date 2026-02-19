@@ -1,52 +1,87 @@
-import React, { useState, useEffect } from 'react';
-import { db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import React from 'react';
+import { useFirebaseDoc } from '../hooks/useFirebaseData';
 import styles from './About.module.scss';
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
 
 const About = () => {
-    const [content, setContent] = useState({
-        bio: "Hello! I'm a passionate developer who loves creating interactive and user-friendly web applications. With a strong foundation in modern web technologies, I strive to build performant and scalable solutions.\n\nI enjoy turning complex problems into simple, beautiful, and intuitive designs. When I'm not coding, you can find me exploring new technologies, contributing to open source, or enjoying a good cup of coffee.",
-        skills: ['JavaScript (ES6+)', 'React', 'Firebase', 'Node.js', 'HTML5 & SCSS', 'Git & GitHub']
-    });
+    const { data: content, loading } = useFirebaseDoc('content', 'about', { bio: '', skills: [] });
 
-    useEffect(() => {
-        const fetchContent = async () => {
-            try {
-                const docRef = doc(db, "content", "about");
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    setContent(prev => ({ ...prev, ...docSnap.data() }));
-                }
-            } catch (error) {
-                console.error("Error fetching about content:", error);
-            }
-        };
-        fetchContent();
-    }, []);
-
-    // Helper to render bio paragraphs
     const renderBio = (text) => {
         if (!text) return null;
         return text.split('\n\n').map((paragraph, index) => (
-            <p key={index} style={{ marginBottom: '1.5rem' }}>{paragraph}</p>
+            <p key={index}>{paragraph}</p>
         ));
+    };
+
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.06 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 15, scale: 0.95 },
+        visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }
     };
 
     return (
         <section id="about" className={styles.section}>
             <div className={styles.container}>
-                <h2 className="section-title">About Me</h2>
+                <motion.h2
+                    className="section-title"
+                    initial={{ opacity: 0, y: -20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                >
+                    About Me
+                </motion.h2>
                 <div className={styles.content}>
-                    <div className={styles.text}>
-                        {renderBio(content.bio)}
-                        <p className={styles.subtext}>Here are a few technologies I've been working with recently:</p>
-
-                        <ul className={styles.skillsList}>
-                            {content.skills && content.skills.map((skill, index) => (
-                                <li key={index}>{skill}</li>
+                    {loading ? (
+                        <div className={styles.skeletonWrapper}>
+                            {[...Array(3)].map((_, i) => (
+                                <div key={i} className={styles.skeletonLine} style={{ width: `${90 - i * 15}%` }} />
                             ))}
-                        </ul>
-                    </div>
+                            <div className={styles.skeletonSkills}>
+                                {[...Array(8)].map((_, i) => (
+                                    <div key={i} className={styles.skeletonPill} />
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <motion.div
+                            className={styles.text}
+                            variants={containerVariants}
+                            initial="hidden"
+                            whileInView="visible"
+                            viewport={{ once: true }}
+                        >
+                            <div className={styles.bioText}>
+                                {renderBio(content.bio)}
+                            </div>
+                            <p className={styles.subtext}>Technologies & Skills</p>
+                            <motion.div
+                                className={styles.skillsList}
+                                variants={containerVariants}
+                                initial="hidden"
+                                whileInView="visible"
+                                viewport={{ once: true }}
+                            >
+                                {content.skills && content.skills.map((skill, index) => (
+                                    <motion.span
+                                        key={index}
+                                        variants={itemVariants}
+                                        className={styles.skillTag}
+                                        whileHover={{ scale: 1.05, y: -3 }}
+                                    >
+                                        {skill}
+                                    </motion.span>
+                                ))}
+                            </motion.div>
+                        </motion.div>
+                    )}
                 </div>
             </div>
         </section>

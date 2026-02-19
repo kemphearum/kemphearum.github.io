@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Navbar.module.scss';
 import { Link, useLocation } from 'react-router-dom';
+import { useFirebaseDoc } from '../hooks/useFirebaseData';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -8,60 +9,79 @@ const Navbar = () => {
     const location = useLocation();
     const isHome = location.pathname === '/';
 
+    const { data: generalContent } = useFirebaseDoc('content', 'general', {
+        logoText: 'Phearum',
+        logoHighlight: 'Kem'
+    });
+
     useEffect(() => {
         const handleScroll = () => {
-            if (window.scrollY > 50) {
-                setScrolled(true);
-            } else {
-                setScrolled(false);
-            }
+            setScrolled(window.scrollY > 50);
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Close mobile menu on resize
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth > 768) setIsOpen(false);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Prevent body scroll when mobile menu is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [isOpen]);
+
     const scrollToSection = (id) => {
         setIsOpen(false);
-        if (!isHome) {
-            // If not on home, we can't scroll. This link should act as a route change then scroll.
-            // But for simplicity, we assume this is only used on Home.
-            return;
-        }
+        if (!isHome) return;
         const element = document.getElementById(id);
         if (element) {
             const headerOffset = 70;
             const elementPosition = element.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: "smooth"
-            });
+            window.scrollTo({ top: offsetPosition, behavior: "smooth" });
         }
     };
+
+    const navItems = ['home', 'about', 'experience', 'projects', 'contact'];
 
     return (
         <nav className={`${styles.navbar} ${scrolled ? styles.scrolled : ''}`}>
             <div className={styles.container}>
                 <div className={styles.logo}>
                     <Link to="/" onClick={(e) => { if (isHome) { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }}>
-                        Dev<span className={styles.highlight}>Portfolio</span>
+                        {generalContent.logoHighlight}<span className={styles.highlight}>{generalContent.logoText}</span>
                     </Link>
                 </div>
 
-                <div className={styles.hamburger} onClick={() => setIsOpen(!isOpen)}>
-                    <span className={isOpen ? styles.open : ''}></span>
-                    <span className={isOpen ? styles.open : ''}></span>
-                    <span className={isOpen ? styles.open : ''}></span>
+                <div className={`${styles.hamburger} ${isOpen ? styles.hamburgerOpen : ''}`} onClick={() => setIsOpen(!isOpen)}>
+                    <span />
+                    <span />
+                    <span />
                 </div>
+
+                {/* Backdrop for mobile */}
+                {isOpen && <div className={styles.backdrop} onClick={() => setIsOpen(false)} />}
 
                 <ul className={`${styles.navLinks} ${isOpen ? styles.active : ''}`}>
                     {isHome ? (
-                        <>
-                            <li><button onClick={() => scrollToSection('home')}>Home</button></li>
-                            <li><button onClick={() => scrollToSection('about')}>About</button></li>
-                            <li><button onClick={() => scrollToSection('projects')}>Projects</button></li>
-                            <li><button onClick={() => scrollToSection('contact')}>Contact</button></li>
-                        </>
+                        navItems.map(item => (
+                            <li key={item}>
+                                <button onClick={() => scrollToSection(item)}>
+                                    {item.charAt(0).toUpperCase() + item.slice(1)}
+                                </button>
+                            </li>
+                        ))
                     ) : (
                         <li><Link to="/">Back to Home</Link></li>
                     )}
