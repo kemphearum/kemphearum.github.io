@@ -5,6 +5,7 @@ import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, 
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import styles from './Admin.module.scss';
 import { useNavigate } from 'react-router-dom';
+import { invalidateCache } from '../hooks/useFirebaseData';
 
 // Icons as small components
 const icons = {
@@ -110,7 +111,7 @@ const Admin = () => {
     const [aboutData, setAboutData] = useState({ bio: '', skills: '' });
     const [contactData, setContactData] = useState({ introText: "" });
     const [generalData, setGeneralData] = useState({
-        logoText: '', logoHighlight: '', footerText: ''
+        logoText: '', logoHighlight: '', footerText: '', tagline: ''
     });
     const [messages, setMessages] = useState([]);
 
@@ -158,6 +159,7 @@ const Admin = () => {
         setLoading(true);
         try {
             await setDoc(doc(db, "content", section), data);
+            invalidateCache(`content/${section}`);
             showToast(`${section.charAt(0).toUpperCase() + section.slice(1)} updated successfully!`);
         } catch (error) {
             console.error(`Error saving ${section}:`, error);
@@ -741,6 +743,10 @@ const Admin = () => {
                                     <label>Logo Text</label>
                                     <input type="text" placeholder="Phearum" value={generalData.logoText} onChange={(e) => setGeneralData({ ...generalData, logoText: e.target.value })} />
                                 </div>
+                            </div>
+                            <div className={styles.inputGroup}>
+                                <label>Tagline</label>
+                                <input type="text" placeholder="ICT Security & IT Audit Professional" value={generalData.tagline} onChange={(e) => setGeneralData({ ...generalData, tagline: e.target.value })} />
                             </div>
                             <div className={styles.inputGroup}>
                                 <label>Footer Text</label>

@@ -4,7 +4,10 @@ import styles from './Footer.module.scss';
 
 const Footer = () => {
     const { data: generalContent } = useFirebaseDoc('content', 'general', {
-        footerText: '© 2026 Kem Phearum. All Rights Reserved.'
+        footerText: '© 2026 Kem Phearum. All Rights Reserved.',
+        logoHighlight: 'Kem',
+        logoText: 'Phearum',
+        tagline: 'ICT Security & IT Audit Professional'
     });
 
     return (
@@ -12,8 +15,8 @@ const Footer = () => {
             <div className={styles.container}>
                 <div className={styles.topSection}>
                     <div className={styles.brand}>
-                        <span className={styles.logo}>Kem<span className={styles.highlight}>Phearum</span></span>
-                        <p className={styles.tagline}>ICT Security & IT Audit Professional</p>
+                        <span className={styles.logo}>{generalContent.logoHighlight}<span className={styles.highlight}>{generalContent.logoText}</span></span>
+                        <p className={styles.tagline}>{generalContent.tagline || 'ICT Security & IT Audit Professional'}</p>
                     </div>
                     <div className={styles.socialLinks}>
                         <a href="https://github.com/kemphearum" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="GitHub">
