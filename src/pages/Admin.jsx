@@ -47,11 +47,11 @@ const icons = {
 
 const tabLabels = {
     home: 'Home Content',
+    about: 'About Content',
     experience: 'Experience',
     projects: 'Projects',
     messages: 'Messages',
     contact: 'Contact Info',
-    about: 'About Content',
     general: 'Settings',
 };
 

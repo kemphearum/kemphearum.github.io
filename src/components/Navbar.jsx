@@ -53,7 +53,7 @@ const Navbar = () => {
         }
     };
 
-    const navItems = ['home', 'experience', 'projects', 'contact', 'about'];
+    const navItems = ['home', 'about', 'experience', 'projects', 'contact'];
 
     return (
         <nav className={`${styles.navbar} ${scrolled ? styles.scrolled : ''}`}>

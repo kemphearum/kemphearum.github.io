@@ -24,10 +24,10 @@ const Main = () => (
     <Navbar />
     <main>
       <Hero />
+      <About />
       <Experience />
       <Projects />
       <Contact />
-      <About />
     </main>
     <Footer />
   </>
