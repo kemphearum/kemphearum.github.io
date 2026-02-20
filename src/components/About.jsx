@@ -5,7 +5,10 @@ import styles from './About.module.scss';
 import { motion } from 'framer-motion';
 
 const About = () => {
-    const { data: content, loading } = useFirebaseDoc('content', 'about', { bio: '', skills: [] });
+    const { data: content, loading } = useFirebaseDoc('content', 'about', {
+        bio: "",
+        skills: []
+    });
 
     const renderBio = (text) => {
         if (!text) return null;

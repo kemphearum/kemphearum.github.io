@@ -11,9 +11,9 @@ const Navbar = () => {
     const isHome = location.pathname === '/';
     const { theme, toggleTheme } = useTheme();
 
-    const { data: generalContent } = useFirebaseDoc('content', 'general', {
-        logoText: 'Phearum',
-        logoHighlight: 'Kem'
+    const { data: settings } = useFirebaseDoc('content', 'settings', {
+        logoText: '',
+        logoHighlight: ''
     });
 
     useEffect(() => {
@@ -55,30 +55,38 @@ const Navbar = () => {
         }
     };
 
-    const navItems = ['home', 'about', 'experience', 'projects', 'contact'];
+    const navItems = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
 
     return (
         <nav className={`${styles.navbar} ${scrolled ? styles.scrolled : ''}`}>
             <div className={styles.container}>
                 <div className={styles.logo}>
                     <Link to="/" onClick={(e) => { if (isHome) { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }}>
-                        {generalContent.logoHighlight}<span className={styles.highlight}>{generalContent.logoText}</span>
+                        {settings.logoHighlight}<span className={styles.highlight}>{settings.logoText}</span>
                     </Link>
                 </div>
 
                 <div className={styles.navRight}>
                     <ul className={`${styles.navLinks} ${isOpen ? styles.active : ''}`}>
-                        {isHome ? (
-                            navItems.map(item => (
-                                <li key={item}>
-                                    <button onClick={() => scrollToSection(item)}>
+                        {navItems.map(item => (
+                            <li key={item}>
+                                {item === 'blog' ? (
+                                    <Link to="/blog" onClick={() => setIsOpen(false)}>
                                         {item.charAt(0).toUpperCase() + item.slice(1)}
-                                    </button>
-                                </li>
-                            ))
-                        ) : (
-                            <li><Link to="/">Back to Home</Link></li>
-                        )}
+                                    </Link>
+                                ) : (
+                                    isHome ? (
+                                        <button onClick={() => scrollToSection(item)}>
+                                            {item.charAt(0).toUpperCase() + item.slice(1)}
+                                        </button>
+                                    ) : (
+                                        <Link to={`/#${item}`}>
+                                            {item.charAt(0).toUpperCase() + item.slice(1)}
+                                        </Link>
+                                    )
+                                )}
+                            </li>
+                        ))}
                     </ul>
 
                     <button

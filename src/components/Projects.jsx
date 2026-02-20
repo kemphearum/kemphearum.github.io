@@ -1,20 +1,17 @@
 import React, { useState } from 'react';
-import { useFirebaseCollection } from '../hooks/useFirebaseData';
+import { useFirebaseCollection, useFirebaseDoc } from '../hooks/useFirebaseData';
 import ProjectCard from './ProjectCard';
 import styles from './Projects.module.scss';
 // eslint-disable-next-line no-unused-vars
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const Projects = () => {
     const { data: projects, loading } = useFirebaseCollection('projects', 'createdAt', 'asc');
+    const { data: settings } = useFirebaseDoc('content', 'settings');
     const [filter, setFilter] = useState('All');
 
     // Only show visible projects (strictly check for true)
     const visibleProjects = projects.filter(p => p.visible === true);
-
-    // Debug: log all projects and visibility
-    console.log('[Projects] All projects:', projects.map(p => ({ title: p.title, visible: p.visible, type: typeof p.visible, techStack: p.techStack })));
-    console.log('[Projects] Visible:', visibleProjects.map(p => p.title));
 
     // Extract unique tech-stack tags for filtering (trimmed and deduped)
     const allTags = visibleProjects.reduce((acc, proj) => {
@@ -27,22 +24,20 @@ const Projects = () => {
         return acc;
     }, []);
 
+    const displayTags = settings?.projectFilters
+        ? settings.projectFilters.split(',').map(s => s.trim()).filter(s => s)
+        : allTags.slice(0, 8);
+
     const filteredProjects = filter === 'All'
         ? visibleProjects
         : visibleProjects.filter(p => Array.isArray(p.techStack) && p.techStack.some(t => t.trim() === filter));
 
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.1, delayChildren: 0.2 }
-        }
-    };
 
-    const itemVariants = {
-        hidden: { opacity: 0, y: 30 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
-    };
+
+
+
+
+
 
     return (
         <section id="projects" className={styles.section}>
@@ -70,7 +65,7 @@ const Projects = () => {
                         >
                             All
                         </button>
-                        {allTags.slice(0, 8).map(tag => (
+                        {displayTags.map(tag => (
                             <button
                                 key={tag}
                                 className={`${styles.filterBtn} ${filter === tag ? styles.active : ''}`}
@@ -102,33 +97,28 @@ const Projects = () => {
                 ) : (
                     <motion.div
                         className={styles.grid}
-                        variants={containerVariants}
-                        initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true, amount: 0.1 }}
                     >
-                        <AnimatePresence mode="popLayout">
-                            {filteredProjects.length > 0 ? (
-                                filteredProjects.map(project => (
-                                    <motion.div
-                                        key={project.id}
-                                        variants={itemVariants}
-                                        layout
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                    >
-                                        <ProjectCard project={project} />
-                                    </motion.div>
-                                ))
-                            ) : (
+                        {filteredProjects.length > 0 ? (
+                            filteredProjects.map(project => (
                                 <motion.div
-                                    className={styles.empty}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
+                                    key={project.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.3 }}
                                 >
-                                    <p>No projects match this filter.</p>
+                                    <ProjectCard project={project} />
                                 </motion.div>
-                            )}
-                        </AnimatePresence>
+                            ))
+                        ) : (
+                            <motion.div
+                                className={styles.empty}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                            >
+                                <p>No projects match this filter.</p>
+                            </motion.div>
+                        )}
                     </motion.div>
                 )}
 

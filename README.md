@@ -1,6 +1,6 @@
 # Kem Phearum — Portfolio
 
-A modern, responsive personal portfolio built with **React**, **Firebase**, and **SCSS**. Features a glassmorphism dark theme, animated UI powered by Framer Motion, a full-featured admin dashboard, and automated deployment to GitHub Pages.
+A modern, responsive personal portfolio built with **React**, **Firebase**, and **SCSS**. Features dark & light theme support, glassmorphism UI, animated sections powered by Framer Motion, a full-featured admin dashboard, and automated deployment to GitHub Pages.
 
 🔗 **Live Site**: [kemphearum.github.io](https://kemphearum.github.io/)
 
@@ -15,6 +15,7 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 - **Projects** — Filterable project grid with tech-stack filter buttons and smooth layout animations
 - **Contact** — Contact form that saves messages to Firestore with success/error feedback
 - **Footer** — Social links (GitHub, Email) with hover animations
+- **🌗 Dark / Light Theme** — Toggle between dark and light modes; preference is saved to `localStorage` and respects the user's system setting by default
 
 ### Admin Dashboard (`/#/admin`)
 - 🔒 Firebase Auth login (Email/Password)
@@ -27,9 +28,11 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 
 ### Technical Highlights
 - **Custom Firebase hooks** (`useFirebaseDoc`, `useFirebaseCollection`) with in-memory caching and request deduplication
+- **ThemeContext** with `ThemeProvider` for global dark/light mode state management
 - **Skeleton loaders** for every data-fetching section
 - **Framer Motion** animations with `AnimatePresence` for smooth transitions
 - **SCSS Modules** with a shared design system (variables, glassmorphism mixin)
+- **React Router** (`react-router-dom`) for client-side routing
 - **Error Boundary** component for graceful error handling
 - **SEO optimized** with meta tags, semantic HTML, and proper heading hierarchy
 
@@ -37,12 +40,13 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 
 ## 🛠️ Tech Stack
 
-| Category       | Technologies                                    |
-|----------------|------------------------------------------------|
-| **Frontend**   | React 19, Vite 7, SCSS Modules, Framer Motion |
-| **Backend**    | Firebase (Firestore, Auth, Storage)            |
-| **Deployment** | GitHub Pages via `gh-pages`                    |
-| **Fonts**      | Inter (Google Fonts)                           |
+| Category       | Technologies                                              |
+|----------------|----------------------------------------------------------|
+| **Frontend**   | React 19, Vite 7, SCSS Modules, Framer Motion           |
+| **Routing**    | React Router DOM 7                                       |
+| **Backend**    | Firebase (Firestore, Auth, Storage)                      |
+| **Deployment** | GitHub Pages via `gh-pages`                              |
+| **Fonts**      | Inter (Google Fonts)                                     |
 
 ---
 
@@ -51,7 +55,14 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 ```
 portfolio/
 ├── public/
+├── scripts/
+│   ├── check-data.mjs             # Verify Firestore data
+│   ├── list-duplicates.mjs        # List duplicate documents
+│   ├── migrate-visible.mjs        # Migration utility
+│   └── remove-duplicates.mjs      # Remove duplicate documents
 ├── src/
+│   ├── assets/
+│   │   └── react.svg
 │   ├── components/
 │   │   ├── Hero.jsx / Hero.module.scss
 │   │   ├── About.jsx / About.module.scss
@@ -62,16 +73,18 @@ portfolio/
 │   │   ├── Navbar.jsx / Navbar.module.scss
 │   │   ├── Footer.jsx / Footer.module.scss
 │   │   └── ErrorBoundary.jsx
+│   ├── context/
+│   │   └── ThemeContext.jsx       # Dark/light theme provider
 │   ├── hooks/
-│   │   └── useFirebaseData.js      # Custom caching hooks
+│   │   └── useFirebaseData.js     # Custom caching hooks
 │   ├── pages/
 │   │   └── Admin.jsx / Admin.module.scss
 │   ├── styles/
-│   │   ├── variables.scss          # Design tokens & mixins
-│   │   └── global.scss             # Global styles & CSS variables
-│   ├── firebase.js                 # Firebase configuration
-│   ├── App.jsx                     # Routes & layout
-│   └── main.jsx                    # Entry point
+│   │   ├── variables.scss         # Design tokens & mixins
+│   │   └── global.scss            # Global styles & CSS variables
+│   ├── firebase.js                # Firebase configuration
+│   ├── App.jsx                    # Routes & layout
+│   └── main.jsx                   # Entry point
 ├── index.html
 ├── vite.config.js
 └── package.json
@@ -182,7 +195,7 @@ service firebase.storage {
 | `home`     | `greeting`, `name`, `subtitle`, `description`, `ctaText`, `ctaLink`, `profileImageUrl` |
 | `about`    | `bio` (string), `skills` (array of strings)                                        |
 | `contact`  | `introText`                                                                        |
-| `general`  | `logoText`, `logoHighlight`, `footerText`                                          |
+| `general`  | `logoText`, `logoHighlight`, `tagline`, `footerText`                               |
 
 ### Collection: `experience`
 | Field         | Type      | Description                          |
@@ -191,18 +204,20 @@ service firebase.storage {
 | `role`        | string    | Job title                            |
 | `period`      | string    | Employment period                    |
 | `description` | string    | Responsibilities (newline-separated) |
+| `visible`     | boolean   | Show/hide on homepage (default `true`) |
 | `createdAt`   | timestamp | Auto-generated                       |
 
 ### Collection: `projects`
-| Field         | Type      | Description                        |
-|---------------|-----------|-------------------------------------|
-| `title`       | string    | Project name                        |
-| `description` | string    | Project description                 |
-| `techStack`   | array     | List of technologies used           |
-| `imageUrl`    | string    | Project screenshot URL              |
-| `githubUrl`   | string    | GitHub repository link              |
-| `liveUrl`     | string    | Live demo link                      |
-| `createdAt`   | timestamp | Auto-generated                      |
+| Field         | Type      | Description                          |
+|---------------|-----------|--------------------------------------|
+| `title`       | string    | Project name                         |
+| `description` | string    | Project description                  |
+| `techStack`   | array     | List of technologies used            |
+| `imageUrl`    | string    | Project screenshot URL               |
+| `githubUrl`   | string    | GitHub repository link               |
+| `liveUrl`     | string    | Live demo link                       |
+| `visible`     | boolean   | Show/hide on homepage (default `true`) |
+| `createdAt`   | timestamp | Auto-generated                       |
 
 ### Collection: `messages`
 | Field       | Type      | Description          |
@@ -244,6 +259,7 @@ This runs `vite build` and pushes the `dist/` folder to the `gh-pages` branch.
 | `npm run build`   | Build for production to `dist/`          |
 | `npm run preview` | Preview production build locally         |
 | `npm run deploy`  | Build + deploy to GitHub Pages           |
+| `npm run lint`    | Run ESLint on the project                |
 
 ---
 

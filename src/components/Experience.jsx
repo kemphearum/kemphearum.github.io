@@ -7,8 +7,18 @@ import { motion } from 'framer-motion';
 const Experience = () => {
     const { data: experiences, loading } = useFirebaseCollection('experience', 'createdAt', 'desc');
 
-    // Only show visible experiences
-    const visibleExperiences = experiences.filter(e => e.visible === true);
+    // Filter and sort visible experiences by year (descending)
+    const visibleExperiences = experiences
+        .filter(e => e.visible === true)
+        .sort((a, b) => {
+            const getYear = (str) => {
+                if (!str) return 0;
+                if (str.toLowerCase().includes('present')) return 9999;
+                const years = str.match(/[12]\d{3}/g);
+                return years ? Math.max(...years.map(Number)) : 0;
+            };
+            return getYear(b.period) - getYear(a.period);
+        });
 
     const cardVariants = {
         offscreen: { y: 50, opacity: 0 },

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { auth, db, storage } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
@@ -6,6 +7,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import styles from './Admin.module.scss';
 import { useNavigate } from 'react-router-dom';
 import { invalidateCache } from '../hooks/useFirebaseData';
+import { FileText, Database, Upload, ExternalLink, EyeOff, Eye, Edit2, Trash2, LogOut } from 'lucide-react';
 
 // Icons as small components
 const icons = {
@@ -34,7 +36,7 @@ const icons = {
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
         </svg>
     ),
-    general: (
+    settings: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
@@ -44,6 +46,9 @@ const icons = {
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
     ),
+    blog: (
+        <FileText size={18} />
+    )
 };
 
 const tabLabels = {
@@ -51,9 +56,10 @@ const tabLabels = {
     about: 'About Content',
     experience: 'Experience',
     projects: 'Projects',
+    blog: 'Blog',
     messages: 'Messages',
     contact: 'Contact Info',
-    general: 'Settings',
+    settings: 'Settings',
 };
 
 // Toast notification component
@@ -110,9 +116,13 @@ const Admin = () => {
     const [homeImage, setHomeImage] = useState(null);
     const [aboutData, setAboutData] = useState({ bio: '', skills: '' });
     const [contactData, setContactData] = useState({ introText: "" });
-    const [generalData, setGeneralData] = useState({
-        logoText: '', logoHighlight: '', footerText: '', tagline: ''
+    const [settingsData, setSettingsData] = useState({
+        logoText: '', logoHighlight: '', footerText: '', tagline: '', projectFilters: '', pageTitle: '', pageFaviconUrl: ''
     });
+    const [settingsFavicon, setSettingsFavicon] = useState(null);
+    const [posts, setPosts] = useState([]);
+    const [postForm, setPostForm] = useState({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true });
+    const [postImage, setPostImage] = useState(null);
     const [messages, setMessages] = useState([]);
 
     useEffect(() => {
@@ -127,6 +137,7 @@ const Admin = () => {
             if (activeTab === 'projects') fetchProjects();
             else if (activeTab === 'experience') fetchExperiences();
             else if (activeTab === 'messages') fetchMessages();
+            else if (activeTab === 'blog') fetchPosts();
             else fetchSectionData(activeTab);
         }
     }, [user, activeTab]);
@@ -147,7 +158,19 @@ const Admin = () => {
                 if (section === 'home') setHomeData(data);
                 if (section === 'about') setAboutData({ ...data, skills: data.skills?.join(', ') || '' });
                 if (section === 'contact') setContactData(data);
-                if (section === 'general') setGeneralData(data);
+                if (section === 'settings') setSettingsData(data);
+            }
+            if (section === 'projects') {
+                const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setProjects(list);
+            }
+            if (section === 'blog') {
+                const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+                const querySnapshot = await getDocs(q);
+                const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                setPosts(list);
             }
         } catch (error) {
             console.error(`Error fetching ${section} data:`, error);
@@ -176,7 +199,7 @@ const Admin = () => {
             const querySnapshot = await getDocs(q);
             setProjects(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
         } catch (error) {
-            console.error("Error fetching projects: ", error);
+            console.error("Error fetching projects:", error);
         }
     };
 
@@ -262,7 +285,7 @@ const Admin = () => {
             const querySnapshot = await getDocs(q);
             setExperiences(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
         } catch (error) {
-            console.error("Error fetching experience: ", error);
+            console.error("Error fetching experience:", error);
         }
     };
 
@@ -327,6 +350,8 @@ const Admin = () => {
             invalidateCache(`collection:${collectionName}`);
             if (collectionName === 'projects') {
                 setProjects(prev => prev.map(p => p.id === id ? { ...p, visible: !currentVisible } : p));
+            } else if (collectionName === 'posts') {
+                setPosts(prev => prev.map(p => p.id === id ? { ...p, visible: !currentVisible } : p));
             } else {
                 setExperiences(prev => prev.map(e => e.id === id ? { ...e, visible: !currentVisible } : e));
             }
@@ -388,9 +413,98 @@ const Admin = () => {
         saveSectionData('contact', contactData);
     };
 
-    const handleSaveGeneral = (e) => {
+    const handleSaveSettings = async (e) => {
         e.preventDefault();
-        saveSectionData('general', generalData);
+        setLoading(true);
+        try {
+            let faviconUrl = settingsData.pageFaviconUrl || '';
+            if (settingsFavicon) {
+                const imageRef = ref(storage, `settings/favicon_${Date.now()}`);
+                await uploadBytes(imageRef, settingsFavicon);
+                faviconUrl = await getDownloadURL(imageRef);
+            }
+            await saveSectionData('settings', {
+                ...settingsData,
+                pageTitle: settingsData.pageTitle || '',
+                pageFaviconUrl: faviconUrl
+            });
+            setSettingsFavicon(null);
+        } catch (error) {
+            console.error(error);
+            showToast('Error saving settings.', 'error');
+            setLoading(false);
+        }
+    };
+
+    // Blog Handlers
+    const fetchPosts = async () => {
+        try {
+            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+            const querySnapshot = await getDocs(q);
+            setPosts(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+        } catch (error) {
+            console.error("Error fetching posts:", error);
+        }
+    };
+
+    const handleSavePost = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            let imageUrl = postForm.coverImage;
+            if (postImage) {
+                const imageRef = ref(storage, `blog/covers/${Date.now()}`);
+                await uploadBytes(imageRef, postImage);
+                imageUrl = await getDownloadURL(imageRef);
+            }
+
+            // Auto-generate slug if empty
+            let finalSlug = postForm.slug.trim();
+            if (!finalSlug) {
+                finalSlug = postForm.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            }
+
+            const postData = {
+                ...postForm,
+                slug: finalSlug,
+                coverImage: imageUrl,
+                tags: Array.isArray(postForm.tags) ? postForm.tags : postForm.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+                createdAt: postForm.createdAt || serverTimestamp()
+            };
+
+            if (postForm.id) {
+                await updateDoc(doc(db, "posts", postForm.id), postData);
+                showToast('Post updated successfully!');
+            } else {
+                await addDoc(collection(db, "posts"), { ...postData, createdAt: serverTimestamp() });
+                showToast('Post created successfully!');
+            }
+            invalidateCache('collection:posts');
+            setPostForm({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true });
+            setPostImage(null);
+            fetchPosts();
+        } catch (error) {
+            console.error(error);
+            showToast('Error saving post.', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeletePost = async (id) => {
+        if (!window.confirm('Are you sure?')) return;
+        setLoading(true);
+        try {
+            await deleteDoc(doc(db, "posts", id));
+            invalidateCache('collection:posts');
+            showToast('Post deleted.');
+            fetchPosts();
+        } catch (error) {
+            console.error(error);
+            showToast('Error deleting post.', 'error');
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Auth
@@ -501,9 +615,7 @@ const Admin = () => {
                         <span className={styles.userEmail}>{user.email}</span>
                     </div>
                     <button onClick={() => signOut(auth)} className={styles.logoutBtn}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
-                        </svg>
+                        <LogOut size={16} style={{ marginRight: '8px' }} />
                         Logout
                     </button>
                 </div>
@@ -670,6 +782,96 @@ const Admin = () => {
                     </>
                 )}
 
+                {/* ========== BLOG TAB ========== */}
+                {activeTab === 'blog' && (
+                    <div className={styles.section} style={{ paddingBottom: '4rem' }}>
+                        <div className={styles.cardHeader} style={{ marginBottom: '1.5rem' }}>
+                            <h3>{postForm.id ? '✏️ Edit Post' : '📝 New Blog Post'}</h3>
+                        </div>
+
+                        <form onSubmit={handleSavePost} className={styles.form}>
+                            <div className={styles.formGrid}>
+                                <div className={styles.inputGroup}>
+                                    <label>Title</label>
+                                    <input type="text" placeholder="Post Title" value={postForm.title} onChange={(e) => setPostForm({ ...postForm, title: e.target.value })} required />
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Slug (URL) <span className={styles.hint}>(leave empty to auto-generate)</span></label>
+                                    <input type="text" placeholder="my-post-url" value={postForm.slug} onChange={(e) => setPostForm({ ...postForm, slug: e.target.value })} />
+                                </div>
+                                <div className={styles.inputGroup} style={{ gridColumn: 'span 2' }}>
+                                    <label>Excerpt</label>
+                                    <textarea placeholder="Short summary..." value={postForm.excerpt} onChange={(e) => setPostForm({ ...postForm, excerpt: e.target.value })} rows="2" />
+                                </div>
+                                <div className={styles.inputGroup} style={{ gridColumn: 'span 2' }}>
+                                    <label>Content (Markdown)</label>
+                                    <textarea placeholder="# Hello World\nWrite in Markdown..." value={postForm.content} onChange={(e) => setPostForm({ ...postForm, content: e.target.value })} rows="10" required style={{ fontFamily: 'monospace' }} />
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Tags (comma separated)</label>
+                                    <input type="text" placeholder="React, Tutorial..." value={Array.isArray(postForm.tags) ? postForm.tags.join(', ') : postForm.tags} onChange={(e) => setPostForm({ ...postForm, tags: e.target.value })} />
+                                </div>
+                                <div className={styles.fileInputGroup}>
+                                    <label>Cover Image</label>
+                                    <div className={styles.fileDropzone}>
+                                        <input type="file" accept="image/*" onChange={(e) => setPostImage(e.target.files[0])} />
+                                        <div className={styles.fileDropzoneContent}>
+                                            <Upload size={24} />
+                                            <span>{postImage ? postImage.name : 'Upload Image'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className={styles.formActions} style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
+                                <button type="submit" disabled={loading} className={styles.submitBtn}>
+                                    {loading ? <><span className={styles.spinner} /> Saving...</> : (postForm.id ? 'Update Post' : 'Add Post')}
+                                </button>
+                                {postForm.id && (
+                                    <button type="button" className={styles.cancelBtn} onClick={() => { setPostForm({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true }); setPostImage(null); }}>
+                                        Cancel
+                                    </button>
+                                )}
+                            </div>
+                        </form>
+
+                        <div className={styles.listSection} style={{ marginTop: '3rem' }}>
+                            <h3 className={styles.listTitle}>Published Posts <span className={styles.count}>{posts.length}</span></h3>
+                            {posts.length === 0 ? (
+                                <div className={styles.emptyState}>No posts yet.</div>
+                            ) : (
+                                posts.map(post => (
+                                    <div key={post.id} className={styles.listItem} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderBottom: '1px solid #eee' }}>
+                                        <div className={styles.itemInfo}>
+                                            <h4 style={{ margin: '0 0 0.5rem 0' }}>{post.title}</h4>
+                                            <p style={{ margin: 0, color: '#666', fontSize: '0.9rem' }}>{post.excerpt}</p>
+                                            <div className={styles.meta} style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#999' }}>
+                                                <span className={styles.date}>{post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
+                                                <span style={{ marginLeft: '1rem', color: post.visible ? 'green' : 'orange' }}>
+                                                    {post.visible ? 'Published' : 'Draft'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className={styles.itemActions} style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <button onClick={() => window.open(`#/blog/${post.slug}`, '_blank')} title="View" className={styles.editBtn}>
+                                                <ExternalLink size={16} />
+                                            </button>
+                                            <button onClick={() => updateDoc(doc(db, "posts", post.id), { visible: !post.visible }).then(() => fetchPosts())} title={post.visible ? "Hide" : "Show"}>
+                                                {post.visible ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
+                                            <button onClick={() => { setPostForm(post); window.scrollTo({ top: 0, behavior: 'smooth' }); }} title="Edit" className={styles.editBtn}>
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button onClick={() => handleDeletePost(post.id)} className={styles.deleteBtn} title="Delete">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* ========== HOME CONTENT TAB ========== */}
                 {activeTab === 'home' && (
                     <div className={styles.card}>
@@ -708,10 +910,8 @@ const Admin = () => {
                                 <div className={styles.fileDropzone}>
                                     <input type="file" accept="image/*" onChange={(e) => setHomeImage(e.target.files[0])} />
                                     <div className={styles.fileDropzoneContent}>
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
-                                        </svg>
-                                        <span>{homeImage ? homeImage.name : 'Click or drag to upload'}</span>
+                                        <Upload size={24} />
+                                        <span>{homeImage ? homeImage.name : 'Upload Image'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -765,28 +965,46 @@ const Admin = () => {
                     </div>
                 )}
 
-                {/* ========== GENERAL SETTINGS TAB ========== */}
-                {activeTab === 'general' && (
+                {/* ========== SETTINGS TAB ========== */}
+                {activeTab === 'settings' && (
                     <div className={styles.card}>
-                        <div className={styles.cardHeader}><h3>⚙️ General Settings</h3></div>
-                        <form onSubmit={handleSaveGeneral} className={styles.form}>
+                        <div className={styles.cardHeader}><h3>⚙️ Settings</h3></div>
+                        <form onSubmit={handleSaveSettings} className={styles.form}>
                             <div className={styles.formGrid}>
                                 <div className={styles.inputGroup}>
+                                    <label>Page Title (Browser Tab)</label>
+                                    <input type="text" placeholder="Kem Phearum | Portfolio" value={settingsData.pageTitle || ''} onChange={(e) => setSettingsData({ ...settingsData, pageTitle: e.target.value })} />
+                                </div>
+                                <div className={styles.inputGroup}>
                                     <label>Logo Highlight</label>
-                                    <input type="text" placeholder="Kem" value={generalData.logoHighlight} onChange={(e) => setGeneralData({ ...generalData, logoHighlight: e.target.value })} />
+                                    <input type="text" placeholder="Kem" value={settingsData.logoHighlight} onChange={(e) => setSettingsData({ ...settingsData, logoHighlight: e.target.value })} />
                                 </div>
                                 <div className={styles.inputGroup}>
                                     <label>Logo Text</label>
-                                    <input type="text" placeholder="Phearum" value={generalData.logoText} onChange={(e) => setGeneralData({ ...generalData, logoText: e.target.value })} />
+                                    <input type="text" placeholder="Phearum" value={settingsData.logoText} onChange={(e) => setSettingsData({ ...settingsData, logoText: e.target.value })} />
                                 </div>
                             </div>
                             <div className={styles.inputGroup}>
                                 <label>Tagline</label>
-                                <input type="text" placeholder="ICT Security & IT Audit Professional" value={generalData.tagline} onChange={(e) => setGeneralData({ ...generalData, tagline: e.target.value })} />
+                                <input type="text" placeholder="ICT Security & IT Audit Professional" value={settingsData.tagline} onChange={(e) => setSettingsData({ ...settingsData, tagline: e.target.value })} />
                             </div>
                             <div className={styles.inputGroup}>
                                 <label>Footer Text</label>
-                                <input type="text" placeholder="© 2026 Your Name. All Rights Reserved." value={generalData.footerText} onChange={(e) => setGeneralData({ ...generalData, footerText: e.target.value })} />
+                                <input type="text" placeholder="© 2026 Your Name. All Rights Reserved." value={settingsData.footerText} onChange={(e) => setSettingsData({ ...settingsData, footerText: e.target.value })} />
+                            </div>
+                            <div className={styles.inputGroup}>
+                                <label>Project Filters <span className={styles.hint}>(comma separated, overrides auto-detection)</span></label>
+                                <input type="text" placeholder="React, Python, Firebase..." value={settingsData.projectFilters || ''} onChange={(e) => setSettingsData({ ...settingsData, projectFilters: e.target.value })} />
+                            </div>
+                            <div className={styles.fileInputGroup}>
+                                <label>Browser Favicon <span className={styles.hint}>(leave empty to keep current)</span></label>
+                                <div className={styles.fileDropzone}>
+                                    <input type="file" accept="image/x-icon,image/png" onChange={(e) => setSettingsFavicon(e.target.files[0])} />
+                                    <div className={styles.fileDropzoneContent}>
+                                        <Upload size={24} />
+                                        <span>{settingsFavicon ? settingsFavicon.name : 'Upload Favicon'}</span>
+                                    </div>
+                                </div>
                             </div>
                             <button type="submit" disabled={loading} className={styles.submitBtn}>
                                 {loading ? <><span className={styles.spinner} /> Saving...</> : 'Save Changes'}

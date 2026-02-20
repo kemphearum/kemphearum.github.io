@@ -3,11 +3,11 @@ import { useFirebaseDoc } from '../hooks/useFirebaseData';
 import styles from './Footer.module.scss';
 
 const Footer = () => {
-    const { data: generalContent } = useFirebaseDoc('content', 'general', {
-        footerText: '© 2026 Kem Phearum. All Rights Reserved.',
-        logoHighlight: 'Kem',
-        logoText: 'Phearum',
-        tagline: 'ICT Security & IT Audit Professional'
+    const { data: settings } = useFirebaseDoc('content', 'settings', {
+        footerText: '',
+        logoHighlight: '',
+        logoText: '',
+        tagline: ''
     });
 
     return (
@@ -15,8 +15,8 @@ const Footer = () => {
             <div className={styles.container}>
                 <div className={styles.topSection}>
                     <div className={styles.brand}>
-                        <span className={styles.logo}>{generalContent.logoHighlight}<span className={styles.highlight}>{generalContent.logoText}</span></span>
-                        <p className={styles.tagline}>{generalContent.tagline || 'ICT Security & IT Audit Professional'}</p>
+                        <span className={styles.logo}>{settings.logoHighlight}<span className={styles.highlight}>{settings.logoText}</span></span>
+                        <p className={styles.tagline}>{settings.tagline || 'ICT Security & IT Audit Professional'}</p>
                     </div>
                     <div className={styles.socialLinks}>
                         <a href="https://github.com/kemphearum" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="GitHub">
@@ -32,7 +32,7 @@ const Footer = () => {
                     </div>
                 </div>
                 <div className={styles.divider} />
-                <p className={styles.copyright}>{generalContent.footerText}</p>
+                <p className={styles.copyright}>{settings.footerText}</p>
             </div>
         </footer>
     );

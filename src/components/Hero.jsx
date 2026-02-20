@@ -48,7 +48,13 @@ const Hero = () => {
                 initial="hidden"
                 animate="visible"
             >
-                <div className={styles.content}>
+                <motion.div
+                    className={styles.content}
+                    key={loading ? 'loading' : 'content'}
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                >
                     {loading ? (
                         <div className={styles.skeleton}>
                             <div className={styles.skeletonLine} style={{ width: '120px', height: '18px' }} />
@@ -106,7 +112,7 @@ const Hero = () => {
                             </motion.div>
                         </>
                     )}
-                </div>
+                </motion.div>
                 <motion.div variants={itemVariants} className={styles.imageWrapper}>
                     <div className={styles.imageContainer}>
                         <div className={styles.imageGlow} />
