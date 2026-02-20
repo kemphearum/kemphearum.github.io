@@ -70,7 +70,7 @@ const Blog = () => {
                             <div className={styles.grid}>
                                 {visiblePosts.map((post, index) => (
                                     <motion.article
-                                        key={post.id}
+                                        key={post.id || `post-${index}`}
                                         className={styles.postCard}
                                         initial={{ opacity: 0, y: 20 }}
                                         whileInView={{ opacity: 1, y: 0 }}

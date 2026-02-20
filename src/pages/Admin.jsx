@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db, storage } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, query, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, query, setDoc, getDoc, updateDoc, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import styles from './Admin.module.scss';
 import { useNavigate } from 'react-router-dom';
 import { invalidateCache } from '../hooks/useFirebaseData';
-import { FileText, Database, Upload, ExternalLink, EyeOff, Eye, Edit2, Trash2, LogOut } from 'lucide-react';
+import { FileText, Database, Upload, ExternalLink, EyeOff, Eye, Edit2, Trash2, LogOut, Bold, Italic, Link as LinkIcon, Code, Sun, Moon } from 'lucide-react';
+import MarkdownRenderer from '../components/MarkdownRenderer';
+import { useTheme } from '../context/ThemeContext';
 
 // Icons as small components
 const icons = {
@@ -88,6 +90,7 @@ const Admin = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [toast, setToast] = useState(null);
     const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -123,6 +126,7 @@ const Admin = () => {
     const [posts, setPosts] = useState([]);
     const [postForm, setPostForm] = useState({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true });
     const [postImage, setPostImage] = useState(null);
+    const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [messages, setMessages] = useState([]);
 
     useEffect(() => {
@@ -169,7 +173,11 @@ const Admin = () => {
             if (section === 'blog') {
                 const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
                 const querySnapshot = await getDocs(q);
-                const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const list = querySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    delete data.id;
+                    return { id: doc.id, ...data };
+                });
                 setPosts(list);
             }
         } catch (error) {
@@ -441,7 +449,11 @@ const Admin = () => {
         try {
             const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
             const querySnapshot = await getDocs(q);
-            setPosts(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+            setPosts(querySnapshot.docs.map(d => {
+                const data = d.data();
+                delete data.id; // ensure id from form state doesn't overwrite doc.id
+                return { id: d.id, ...data };
+            }));
         } catch (error) {
             console.error("Error fetching posts:", error);
         }
@@ -459,18 +471,36 @@ const Admin = () => {
             }
 
             // Auto-generate slug if empty
-            let finalSlug = postForm.slug.trim();
-            if (!finalSlug) {
-                finalSlug = postForm.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            let baseSlug = postForm.slug ? postForm.slug.trim() : '';
+            if (!baseSlug) {
+                baseSlug = postForm.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            }
+
+            // Ensure slug uniqueness
+            let finalSlug = baseSlug;
+            let counter = 1;
+            let isDuplicate = true;
+
+            while (isDuplicate) {
+                const slugQuery = query(collection(db, "posts"), where("slug", "==", finalSlug));
+                const slugSnap = await getDocs(slugQuery);
+                // True if any returned explicitly matches a document other than the current one
+                isDuplicate = slugSnap.docs.some(doc => doc.id !== postForm.id);
+
+                if (isDuplicate) {
+                    finalSlug = `${baseSlug}-${counter}`;
+                    counter++;
+                }
             }
 
             const postData = {
                 ...postForm,
                 slug: finalSlug,
                 coverImage: imageUrl,
-                tags: Array.isArray(postForm.tags) ? postForm.tags : postForm.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+                tags: Array.isArray(postForm.tags) ? postForm.tags : (postForm.tags || '').toString().split(',').map(tag => tag.trim()).filter(tag => tag),
                 createdAt: postForm.createdAt || serverTimestamp()
             };
+            delete postData.id; // Prevent writing the form state's id into the document
 
             if (postForm.id) {
                 await updateDoc(doc(db, "posts", postForm.id), postData);
@@ -505,6 +535,41 @@ const Admin = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const insertMarkdown = (syntax) => {
+        const textarea = document.getElementById('markdown-editor');
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = postForm.content;
+        const selectedText = text.substring(start, end);
+
+        let newText;
+
+        switch (syntax) {
+            case 'bold':
+                newText = text.substring(0, start) + `**${selectedText || 'bold text'}**` + text.substring(end);
+                break;
+            case 'italic':
+                newText = text.substring(0, start) + `*${selectedText || 'italic text'}*` + text.substring(end);
+                break;
+            case 'link':
+                newText = text.substring(0, start) + `[${selectedText || 'Link text'}](url)` + text.substring(end);
+                break;
+            case 'code':
+                newText = text.substring(0, start) + `\n\`\`\`\n${selectedText || 'code here'}\n\`\`\`\n` + text.substring(end);
+                break;
+            default:
+                return;
+        }
+
+        setPostForm({ ...postForm, content: newText });
+
+        setTimeout(() => {
+            textarea.focus();
+        }, 0);
     };
 
     // Auth
@@ -614,10 +679,16 @@ const Admin = () => {
                         <div className={styles.avatar}>{user.email?.charAt(0).toUpperCase()}</div>
                         <span className={styles.userEmail}>{user.email}</span>
                     </div>
-                    <button onClick={() => signOut(auth)} className={styles.logoutBtn}>
-                        <LogOut size={16} style={{ marginRight: '8px' }} />
-                        Logout
-                    </button>
+                    <div className={styles.footerActions}>
+                        <button onClick={toggleTheme} className={styles.themeToggleBtn} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+                            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                        </button>
+                        <button onClick={() => signOut(auth)} className={styles.logoutBtn}>
+                            <LogOut size={16} />
+                            Logout
+                        </button>
+                    </div>
                 </div>
             </aside>
 
@@ -804,8 +875,37 @@ const Admin = () => {
                                     <textarea placeholder="Short summary..." value={postForm.excerpt} onChange={(e) => setPostForm({ ...postForm, excerpt: e.target.value })} rows="2" />
                                 </div>
                                 <div className={styles.inputGroup} style={{ gridColumn: 'span 2' }}>
-                                    <label>Content (Markdown)</label>
-                                    <textarea placeholder="# Hello World\nWrite in Markdown..." value={postForm.content} onChange={(e) => setPostForm({ ...postForm, content: e.target.value })} rows="10" required style={{ fontFamily: 'monospace' }} />
+                                    <div className={styles.editorHeader}>
+                                        <label>Content (Markdown)</label>
+                                        <div className={styles.toolbar}>
+                                            {!isPreviewMode && (
+                                                <div className={styles.formatGroup}>
+                                                    <button type="button" onClick={() => insertMarkdown('bold')} title="Bold"><Bold size={16} /></button>
+                                                    <button type="button" onClick={() => insertMarkdown('italic')} title="Italic"><Italic size={16} /></button>
+                                                    <button type="button" onClick={() => insertMarkdown('link')} title="Link"><LinkIcon size={16} /></button>
+                                                    <button type="button" onClick={() => insertMarkdown('code')} title="Code Block"><Code size={16} /></button>
+                                                </div>
+                                            )}
+                                            <button type="button" className={styles.previewToggle} onClick={() => setIsPreviewMode(!isPreviewMode)}>
+                                                {isPreviewMode ? <><Edit2 size={14} /> Edit</> : <><Eye size={14} /> Preview</>}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {isPreviewMode ? (
+                                        <div className={styles.previewBox}>
+                                            <MarkdownRenderer content={postForm.content || '*Nothing to preview...*'} />
+                                        </div>
+                                    ) : (
+                                        <textarea
+                                            id="markdown-editor"
+                                            placeholder="# Hello World\nWrite in Markdown..."
+                                            value={postForm.content}
+                                            onChange={(e) => setPostForm({ ...postForm, content: e.target.value })}
+                                            rows="15"
+                                            required
+                                            style={{ fontFamily: 'monospace' }}
+                                        />
+                                    )}
                                 </div>
                                 <div className={styles.inputGroup}>
                                     <label>Tags (comma separated)</label>
@@ -827,7 +927,7 @@ const Admin = () => {
                                     {loading ? <><span className={styles.spinner} /> Saving...</> : (postForm.id ? 'Update Post' : 'Add Post')}
                                 </button>
                                 {postForm.id && (
-                                    <button type="button" className={styles.cancelBtn} onClick={() => { setPostForm({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true }); setPostImage(null); }}>
+                                    <button type="button" className={styles.cancelBtn} onClick={() => { setPostForm({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true }); setPostImage(null); setIsPreviewMode(false); }}>
                                         Cancel
                                     </button>
                                 )}
@@ -855,7 +955,7 @@ const Admin = () => {
                                             <button onClick={() => window.open(`#/blog/${post.slug}`, '_blank')} title="View" className={styles.editBtn}>
                                                 <ExternalLink size={16} />
                                             </button>
-                                            <button onClick={() => updateDoc(doc(db, "posts", post.id), { visible: !post.visible }).then(() => fetchPosts())} title={post.visible ? "Hide" : "Show"}>
+                                            <button onClick={() => toggleVisibility('posts', post.id, post.visible)} title={post.visible ? "Hide" : "Show"}>
                                                 {post.visible ? <EyeOff size={16} /> : <Eye size={16} />}
                                             </button>
                                             <button onClick={() => { setPostForm(post); window.scrollTo({ top: 0, behavior: 'smooth' }); }} title="Edit" className={styles.editBtn}>

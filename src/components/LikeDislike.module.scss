@@ -1,0 +1,76 @@
+@import '../styles/variables';
+
+.likeDislikeContainer {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin: 2rem 0;
+    padding: 1rem 0;
+    border-top: 1px solid rgba($text-secondary, 0.2);
+    border-bottom: 1px solid rgba($text-secondary, 0.2);
+    flex-wrap: wrap;
+}
+
+.buttonsWrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.errorMessage {
+    color: #e74c3c;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.voteBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    background: transparent;
+    border: 1px solid rgba($text-secondary, 0.3);
+    border-radius: 50px;
+    color: $text-secondary;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    span {
+        min-width: 1.5rem;
+        text-align: center;
+    }
+
+    &:hover:not(:disabled) {
+        background: rgba($primary-color, 0.1);
+        color: $primary-color;
+        border-color: $primary-color;
+        transform: translateY(-2px);
+    }
+
+    &.active {
+        background: $primary-color;
+        color: white;
+        border-color: $primary-color;
+    }
+
+    &.dislikeBtn {
+        &:hover:not(:disabled) {
+            background: rgba(#e74c3c, 0.1);
+            color: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        &.active {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+    }
+
+    &:disabled {
+        opacity: 0.8;
+        cursor: default;
+    }
+}

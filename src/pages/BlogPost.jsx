@@ -3,18 +3,39 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
-import ReactMarkdown from 'react-markdown';
+import MarkdownRenderer from '../components/MarkdownRenderer';
+
+import { calculateReadTime } from '../utils/helpers';
 import { motion } from 'framer-motion';
+import { ArrowUp } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import Comments from '../components/Comments';
+import LikeDislike from '../components/LikeDislike';
 import styles from './BlogPost.module.scss';
-import rehypeRaw from 'rehype-raw';
 
 const BlogPost = () => {
     const { slug } = useParams();
     const [post, setPost] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showScrollTop, setShowScrollTop] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 400) {
+                setShowScrollTop(true);
+            } else {
+                setShowScrollTop(false);
+            }
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -25,7 +46,11 @@ const BlogPost = () => {
 
                 if (!querySnapshot.empty) {
                     const docData = querySnapshot.docs[0].data();
-                    setPost({ id: querySnapshot.docs[0].id, ...docData });
+                    if (docData.visible === false) {
+                        setError('Post not found');
+                    } else {
+                        setPost({ id: querySnapshot.docs[0].id, ...docData });
+                    }
                 } else {
                     // Fallback: try by ID if slug fails (backward compatibility)
                     // But we won't implement that for now to keep clean URLs
@@ -89,6 +114,8 @@ const BlogPost = () => {
                                 <Link to="/blog" className={styles.backLink}>← Back to Blog</Link>
                                 <div className={styles.meta}>
                                     <span>{post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
+                                    <span style={{ margin: '0 8px' }}>•</span>
+                                    <span>{calculateReadTime(post.content)}</span>
                                     {post.tags && post.tags.length > 0 && <span className={styles.tag}>{post.tags[0]}</span>}
                                 </div>
                                 <h1>{post.title}</h1>
@@ -99,9 +126,10 @@ const BlogPost = () => {
 
                 <div className={styles.container}>
                     <div className={styles.contentWrapper}>
-                        <div className={styles.markdownContent}>
-                            <ReactMarkdown rehypePlugins={[rehypeRaw]}>{post.content}</ReactMarkdown>
-                        </div>
+                        <MarkdownRenderer content={post.content} />
+
+                        <LikeDislike postId={post.id} />
+                        <Comments postId={post.id} />
 
                         <div className={styles.shareSection}>
                             <h3>Thanks for reading!</h3>
@@ -110,6 +138,13 @@ const BlogPost = () => {
                     </div>
                 </div>
             </motion.article>
+
+            {showScrollTop && (
+                <button onClick={scrollToTop} className={styles.scrollTopBtn} aria-label="Scroll to top" title="Scroll to top">
+                    <ArrowUp size={24} />
+                </button>
+            )}
+
             <Footer />
         </>
     );
