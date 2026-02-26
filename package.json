@@ -9,7 +9,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "npm run build && firebase deploy --only hosting --project phearum-info"
+    "deploy": "npm run build && firebase deploy --only hosting"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
