@@ -18,7 +18,7 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 - **Footer** — Social links (GitHub, Email) with hover animations
 - **🌗 Dark / Light Theme** — Toggle between dark and light modes; preference is saved to `localStorage` and respects the user's system setting by default
 
-### Admin Dashboard (`/#/admin`)
+### Admin Dashboard
 - 🔒 Firebase Auth login (Email/Password)
 - 📝 Full CRUD for **Projects**, **Experience**, and **Blog Posts**
 - 🏠 Edit **Home**, **About**, **Contact**, and **General Settings** content

@@ -6,7 +6,7 @@ import imageCompression from 'browser-image-compression';
 import styles from './Admin.module.scss';
 import { useNavigate } from 'react-router-dom';
 import { invalidateCache } from '../hooks/useFirebaseData';
-import { FileText, Database, Upload, ExternalLink, EyeOff, Eye, Edit2, Trash2, LogOut, Bold, Italic, Link as LinkIcon, Code, Sun, Moon, Star, Search, ChevronLeft, ChevronRight, ChevronDown, User, Mail, MailOpen, X } from 'lucide-react';
+import { FileText, Database, Upload, ExternalLink, EyeOff, Eye, Edit2, Trash2, LogOut, Bold, Italic, Link as LinkIcon, Code, Sun, Moon, Star, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowUpDown, User, Mail, MailOpen, X } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useTheme } from '../context/ThemeContext';
 
@@ -93,6 +93,21 @@ const Toast = ({ message, type, onClose }) => {
         </div>
     );
 };
+
+// Reusable SortableHeader component
+const SortableHeader = ({ label, field, sortField, sortDirection, onSort, style }) => (
+    <div
+        onClick={() => onSort(field)}
+        style={{ cursor: 'pointer', userSelect: 'none', display: 'flex', alignItems: 'center', gap: '0.35rem', transition: 'color 0.2s ease', ...style }}
+        onMouseEnter={e => e.currentTarget.style.color = 'var(--primary-color)'}
+        onMouseLeave={e => e.currentTarget.style.color = ''}
+    >
+        {label}
+        {sortField === field
+            ? (sortDirection === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />)
+            : <ArrowUpDown size={14} style={{ opacity: 0.3 }} />}
+    </div>
+);
 
 // Reusable Pagination component
 const Pagination = ({ currentPage, totalPages, onPageChange, perPage, onPerPageChange, totalItems }) => {
@@ -226,6 +241,56 @@ const Admin = () => {
     const [usersPerPage, setUsersPerPage] = useState(5);
     const [auditPerPage, setAuditPerPage] = useState(5);
 
+    // Sort State
+    const [expSort, setExpSort] = useState({ field: 'period', dir: 'desc' });
+    const [projSort, setProjSort] = useState({ field: 'title', dir: 'asc' });
+    const [postSort, setPostSort] = useState({ field: 'createdAt', dir: 'desc' });
+    const [usersSort, setUsersSort] = useState({ field: 'createdAt', dir: 'desc' });
+    const [msgSort, setMsgSort] = useState({ field: 'createdAt', dir: 'desc' });
+    const [auditSort, setAuditSort] = useState({ field: 'timestamp', dir: 'desc' });
+
+    const toggleSort = useCallback((setter, pageSetter) => (field) => {
+        setter(prev => ({
+            field,
+            dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc'
+        }));
+        pageSetter(1);
+    }, []);
+
+    const handleExpSort = useMemo(() => toggleSort(setExpSort, setExpPage), [toggleSort]);
+    const handleProjSort = useMemo(() => toggleSort(setProjSort, setProjPage), [toggleSort]);
+    const handlePostSort = useMemo(() => toggleSort(setPostSort, setPostPage), [toggleSort]);
+    const handleUsersSort = useMemo(() => toggleSort(setUsersSort, setUsersPage), [toggleSort]);
+    const handleMsgSort = useMemo(() => toggleSort(setMsgSort, setMessagesPage), [toggleSort]);
+    const handleAuditSort = useMemo(() => toggleSort(setAuditSort, setAuditPage), [toggleSort]);
+
+    const sortData = useCallback((data, sortState) => {
+        if (!sortState.field) return data;
+        return [...data].sort((a, b) => {
+            let aVal = a[sortState.field];
+            let bVal = b[sortState.field];
+            // Handle Firestore Timestamps
+            if (aVal?.seconds !== undefined) aVal = aVal.seconds;
+            if (bVal?.seconds !== undefined) bVal = bVal.seconds;
+            // Handle booleans
+            if (typeof aVal === 'boolean') aVal = aVal ? 1 : 0;
+            if (typeof bVal === 'boolean') bVal = bVal ? 1 : 0;
+            // Handle nulls/undefined
+            if (aVal == null && bVal == null) return 0;
+            if (aVal == null) return 1;
+            if (bVal == null) return -1;
+            // String comparison
+            if (typeof aVal === 'string' && typeof bVal === 'string') {
+                return sortState.dir === 'asc'
+                    ? aVal.localeCompare(bVal)
+                    : bVal.localeCompare(aVal);
+            }
+            // Numeric comparison
+            return sortState.dir === 'asc' ? aVal - bVal : bVal - aVal;
+        });
+    }, []);
+
+
     // Add User State
     const [showAddUserForm, setShowAddUserForm] = useState(false);
     const [newUserEmail, setNewUserEmail] = useState('');
@@ -242,8 +307,8 @@ const Admin = () => {
                 (msg.message && msg.message.toLowerCase().includes(lowerSearch))
             );
         }
-        return result;
-    }, [messages, searchMessages]);
+        return sortData(result, msgSort);
+    }, [messages, searchMessages, msgSort, sortData]);
 
     const messagesTotalPages = Math.ceil(filteredMessages.length / messagesPerPage) || 1;
     const paginatedMessages = useMemo(() => {
@@ -263,41 +328,43 @@ const Admin = () => {
     // Filtered & Paginated Data
     const filteredExperiences = useMemo(() => {
         const q = searchExperience.toLowerCase();
-        if (!q) return experiences;
-        return experiences.filter(e => (e.role || '').toLowerCase().includes(q) || (e.company || '').toLowerCase().includes(q));
-    }, [experiences, searchExperience]);
+        const filtered = !q ? experiences : experiences.filter(e => (e.role || '').toLowerCase().includes(q) || (e.company || '').toLowerCase().includes(q));
+        return sortData(filtered, expSort);
+    }, [experiences, searchExperience, expSort, sortData]);
     const expTotalPages = Math.ceil(filteredExperiences.length / expPerPage);
     const paginatedExperiences = useMemo(() => filteredExperiences.slice((expPage - 1) * expPerPage, expPage * expPerPage), [filteredExperiences, expPage, expPerPage]);
 
     const filteredProjects = useMemo(() => {
         const q = searchProjects.toLowerCase();
-        if (!q) return projects;
-        return projects.filter(p => (p.title || '').toLowerCase().includes(q) || (Array.isArray(p.techStack) ? p.techStack.join(' ') : '').toLowerCase().includes(q));
-    }, [projects, searchProjects]);
+        const filtered = !q ? projects : projects.filter(p => (p.title || '').toLowerCase().includes(q) || (Array.isArray(p.techStack) ? p.techStack.join(' ') : '').toLowerCase().includes(q));
+        return sortData(filtered, projSort);
+    }, [projects, searchProjects, projSort, sortData]);
     const projTotalPages = Math.ceil(filteredProjects.length / projPerPage);
     const paginatedProjects = useMemo(() => filteredProjects.slice((projPage - 1) * projPerPage, projPage * projPerPage), [filteredProjects, projPage, projPerPage]);
 
     const filteredPosts = useMemo(() => {
         const q = searchPosts.toLowerCase();
-        if (!q) return posts;
-        return posts.filter(p => (p.title || '').toLowerCase().includes(q) || (p.excerpt || '').toLowerCase().includes(q));
-    }, [posts, searchPosts]);
+        const filtered = !q ? posts : posts.filter(p => (p.title || '').toLowerCase().includes(q) || (p.excerpt || '').toLowerCase().includes(q));
+        return sortData(filtered, postSort);
+    }, [posts, searchPosts, postSort, sortData]);
     const postTotalPages = Math.ceil(filteredPosts.length / postPerPage);
     const paginatedPosts = useMemo(() => filteredPosts.slice((postPage - 1) * postPerPage, postPage * postPerPage), [filteredPosts, postPage, postPerPage]);
 
     const filteredUsers = useMemo(() => {
-        return usersList.filter(u =>
+        const filtered = usersList.filter(u =>
             (u.email || '').toLowerCase().includes(searchUsers.toLowerCase()) ||
             (u.displayName || '').toLowerCase().includes(searchUsers.toLowerCase())
         );
-    }, [usersList, searchUsers]);
+        return sortData(filtered, usersSort);
+    }, [usersList, searchUsers, usersSort, sortData]);
 
     const filteredAuditLogs = useMemo(() => {
-        return auditLogsList.filter(log =>
-            (log.email || '').toLowerCase().includes(searchUsers.toLowerCase()) || // reuse searchUsers input
+        const filtered = auditLogsList.filter(log =>
+            (log.email || '').toLowerCase().includes(searchUsers.toLowerCase()) ||
             (log.ipAddress || '').includes(searchUsers)
         );
-    }, [auditLogsList, searchUsers]);
+        return sortData(filtered, auditSort);
+    }, [auditLogsList, searchUsers, auditSort, sortData]);
     const usersTotalPages = Math.ceil(filteredUsers.length / usersPerPage);
     const paginatedUsers = useMemo(() => filteredUsers.slice((usersPage - 1) * usersPerPage, usersPage * usersPerPage), [filteredUsers, usersPage, usersPerPage]);
 
@@ -1076,21 +1143,27 @@ const Admin = () => {
             showToast("Pending accounts are not authorized.", "error");
             return;
         }
+
+        // Optimistic UI Update
+        setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: !currentStatus } : m));
+        setViewingMessage(prev => (prev && prev.id === id) ? { ...prev, isRead: !currentStatus } : prev);
+
         try {
             await updateDoc(doc(db, "messages", id), { isRead: !currentStatus });
-            setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: !currentStatus } : m));
-            if (viewingMessage && viewingMessage.id === id) {
-                setViewingMessage(prev => ({ ...prev, isRead: !currentStatus }));
-            }
         } catch {
+            // Revert on error
+            setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: currentStatus } : m));
+            setViewingMessage(prev => (prev && prev.id === id) ? { ...prev, isRead: currentStatus } : prev);
             showToast('Failed to update message status.', 'error');
         }
     };
 
     const handleViewMessage = (msg) => {
-        setViewingMessage(msg);
         if (!msg.isRead) {
+            setViewingMessage({ ...msg, isRead: true });
             handleToggleMessageRead(msg.id, false);
+        } else {
+            setViewingMessage(msg);
         }
     };
 
@@ -1101,10 +1174,18 @@ const Admin = () => {
     };
 
     const handleSelectAllMessages = () => {
-        if (selectedMessages.length === paginatedMessages.length) {
-            setSelectedMessages([]);
+        const paginatedIds = paginatedMessages.map(m => m.id);
+        const allSelected = paginatedIds.every(id => selectedMessages.includes(id)) && paginatedIds.length > 0;
+
+        if (allSelected) {
+            // Uncheck all on current page
+            setSelectedMessages(prev => prev.filter(id => !paginatedIds.includes(id)));
         } else {
-            setSelectedMessages(paginatedMessages.map(m => m.id));
+            // Check all on current page (add only those not already selected)
+            setSelectedMessages(prev => {
+                const newSelections = paginatedIds.filter(id => !prev.includes(id));
+                return [...prev, ...newSelections];
+            });
         }
     };
 
@@ -1720,7 +1801,7 @@ const Admin = () => {
                             {icons[tab] || <FileText size={18} />}
                             <span>{tabLabels[tab]}</span>
                             {tab === 'messages' && unreadMessagesCount > 0 && (
-                                <span className={styles.badge} style={{ backgroundColor: 'var(--primary-color)', color: '#000' }}>{unreadMessagesCount}</span>
+                                <span className={styles.badge} style={{ background: 'linear-gradient(135deg, #6C63FF, #8B83FF)', color: '#fff', boxShadow: '0 2px 8px rgba(108, 99, 255, 0.4)' }}>{unreadMessagesCount}</span>
                             )}
                         </button>
                     ))}
@@ -1765,7 +1846,7 @@ const Admin = () => {
                         {!showExperienceForm ? (
                             <div className={styles.listSection}>
                                 <div className={styles.listSectionHeader}>
-                                    <h3 className={styles.listTitle}>Existing Experience <span className={styles.count}>{experiences.length}</span></h3>
+                                    <h3 className={styles.listTitle}>Existing Experience</h3>
                                     <button onClick={() => { setEditingExperience(null); setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false }); setShowExperienceForm(true); }} className={styles.addBtn}>
                                         ➕ Add New Experience
                                     </button>
@@ -1779,6 +1860,11 @@ const Admin = () => {
                                     <div className={styles.emptyState}>{searchExperience ? 'No matching experience found.' : 'No experience entries yet.'}</div>
                                 ) : (
                                     <>
+                                        <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                            <SortableHeader label="Role" field="role" sortField={expSort.field} sortDirection={expSort.dir} onSort={handleExpSort} />
+                                            <SortableHeader label="Company" field="company" sortField={expSort.field} sortDirection={expSort.dir} onSort={handleExpSort} />
+                                            <SortableHeader label="Period" field="period" sortField={expSort.field} sortDirection={expSort.dir} onSort={handleExpSort} />
+                                        </div>
                                         {paginatedExperiences.map(exp => (
                                             <div key={exp.id} className={`${styles.listItem} ${exp.visible === false ? styles.hiddenItem : ''}`}>
                                                 <div className={styles.listItemInfo}>
@@ -1889,7 +1975,7 @@ const Admin = () => {
                         {!showProjectForm ? (
                             <div className={styles.listSection}>
                                 <div className={styles.listSectionHeader}>
-                                    <h3 className={styles.listTitle}>Existing Projects <span className={styles.count}>{projects.length}</span></h3>
+                                    <h3 className={styles.listTitle}>Existing Projects</h3>
                                     <button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setIsProjectPreviewMode(false); setShowProjectForm(true); }} className={styles.addBtn}>
                                         ➕ Add New Project
                                     </button>
@@ -1903,6 +1989,11 @@ const Admin = () => {
                                     <div className={styles.emptyState}>{searchProjects ? 'No matching projects found.' : 'No projects yet.'}</div>
                                 ) : (
                                     <>
+                                        <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                            <SortableHeader label="Title" field="title" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
+                                            <SortableHeader label="Featured" field="featured" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
+                                            <SortableHeader label="Visibility" field="visible" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
+                                        </div>
                                         {paginatedProjects.map(p => (
                                             <div key={p.id} className={`${styles.listItem} ${p.visible === false ? styles.hiddenItem : ''}`}>
                                                 <div className={styles.listItemInfo}>
@@ -2038,7 +2129,7 @@ const Admin = () => {
                         {!showPostForm ? (
                             <div className={styles.listSection} style={{ marginTop: '0' }}>
                                 <div className={styles.listSectionHeader}>
-                                    <h3 className={styles.listTitle}>Published Posts <span className={styles.count}>{posts.length}</span></h3>
+                                    <h3 className={styles.listTitle}>Published Posts</h3>
                                     <button onClick={() => { setPostForm({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false }); setPostImage(null); setIsPreviewMode(false); setShowPostForm(true); }} className={styles.addBtn}>
                                         📝 Add New Post
                                     </button>
@@ -2053,6 +2144,12 @@ const Admin = () => {
                                     <div className={styles.emptyState}>{searchPosts ? 'No matching posts found.' : 'No posts yet.'}</div>
                                 ) : (
                                     <>
+                                        <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                            <SortableHeader label="Title" field="title" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
+                                            <SortableHeader label="Date" field="createdAt" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
+                                            <SortableHeader label="Status" field="visible" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
+                                            <SortableHeader label="Featured" field="featured" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
+                                        </div>
                                         {paginatedPosts.map(post => (
                                             <div key={post.id} className={styles.listItem} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', marginBottom: '0.75rem', borderRadius: '12px' }}>
                                                 <div className={styles.itemInfo}>
@@ -2347,7 +2444,14 @@ const Admin = () => {
                     <div className={styles.section} style={{ paddingBottom: '4rem' }}>
                         <div className={styles.listSection} style={{ marginTop: '0' }}>
                             <div className={styles.listSectionHeader}>
-                                <h3 className={styles.listTitle}>Inbox <span className={styles.count}>{messages.length}</span></h3>
+                                <h3 className={styles.listTitle}>
+                                    Inbox
+                                    {unreadMessagesCount > 0 && (
+                                        <span className={styles.count} style={{ background: 'linear-gradient(135deg, #6C63FF, #8B83FF)', color: '#fff', fontWeight: 'bold', marginLeft: '0.5rem', boxShadow: '0 2px 8px rgba(108, 99, 255, 0.4)' }}>
+                                            {unreadMessagesCount} Unread
+                                        </span>
+                                    )}
+                                </h3>
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -2387,13 +2491,13 @@ const Admin = () => {
                                     <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '1rem', padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
                                         <input
                                             type="checkbox"
-                                            checked={paginatedMessages.length > 0 && selectedMessages.length === paginatedMessages.length}
+                                            checked={paginatedMessages.length > 0 && paginatedMessages.every(msg => selectedMessages.includes(msg.id))}
                                             onChange={handleSelectAllMessages}
                                             style={{ cursor: 'pointer', accentColor: 'var(--primary-color)' }}
                                             title="Select All on this page"
                                         />
-                                        <div>Message Details</div>
-                                        <div style={{ textAlign: 'right' }}>Date</div>
+                                        <SortableHeader label="Message Details" field="name" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={handleMsgSort} />
+                                        <SortableHeader label="Date" field="createdAt" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={handleMsgSort} style={{ justifyContent: 'flex-end' }} />
                                     </div>
 
                                     {paginatedMessages.map(msg => {
@@ -2450,7 +2554,7 @@ const Admin = () => {
                                                             className={styles.editBtn}
                                                             title={msg.isRead ? "Mark as Unread" : "Mark as Read"}
                                                         >
-                                                            {msg.isRead ? <Mail size={16} /> : <MailOpen size={16} />}
+                                                            {msg.isRead ? <MailOpen size={16} /> : <Mail size={16} />}
                                                         </button>
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
@@ -2532,7 +2636,7 @@ const Admin = () => {
                     <div className={styles.section} style={{ paddingBottom: '4rem' }}>
                         <div className={styles.listSection} style={{ marginTop: '0' }}>
                             <div className={styles.listSectionHeader}>
-                                <h3 className={styles.listTitle}>User Management <span className={styles.count}>{usersList.length}</span></h3>
+                                <h3 className={styles.listTitle}>User Management</h3>
                             </div>
 
                             {userRole !== 'superadmin' ? (
@@ -2594,9 +2698,9 @@ const Admin = () => {
                                     ) : (
                                         <>
                                             <div className={styles.userGridHeader}>
-                                                <div>User</div>
-                                                <div>Role</div>
-                                                <div>Registered</div>
+                                                <SortableHeader label="User" field="email" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
+                                                <SortableHeader label="Role" field="role" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
+                                                <SortableHeader label="Registered" field="createdAt" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
                                                 <div style={{ textAlign: 'right' }}>Actions</div>
                                             </div>
                                             {paginatedUsers.map(u => {
@@ -2766,7 +2870,7 @@ const Admin = () => {
                     <div className={styles.section} style={{ paddingBottom: '4rem' }}>
                         <div className={styles.listSection} style={{ marginTop: '0' }}>
                             <div className={styles.listSectionHeader}>
-                                <h3 className={styles.listTitle}>Login Audit Trail <span className={styles.count}>{auditLogsList.length}</span></h3>
+                                <h3 className={styles.listTitle}>Login Audit Trail</h3>
                             </div>
 
                             {userRole !== 'superadmin' ? (
@@ -2786,10 +2890,10 @@ const Admin = () => {
                                     ) : (
                                         <>
                                             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 2fr 1.5fr', gap: '1rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                                                <div>User Email</div>
-                                                <div>IP Address</div>
-                                                <div>User Agent</div>
-                                                <div>Timestamp</div>
+                                                <SortableHeader label="User Email" field="email" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
+                                                <SortableHeader label="IP Address" field="ipAddress" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
+                                                <SortableHeader label="User Agent" field="userAgent" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
+                                                <SortableHeader label="Timestamp" field="timestamp" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                             </div>
                                             {paginatedAuditLogs.map(log => (
                                                 <div key={log.id} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 2fr 1.5fr', gap: '1rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', fontSize: '0.85rem', alignItems: 'center', transition: 'background 0.2s ease', cursor: 'default', ':hover': { background: 'rgba(255,255,255,0.04)' } }} className={styles.userGridRowHover}>
@@ -2877,7 +2981,7 @@ const Admin = () => {
                                 </p>
                             </div>
                         </div>
-                        <div className={styles.modalFooter} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between' }}>
+                        <div className={styles.modalFooter} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <button
                                 className={styles.deleteBtn}
                                 onClick={() => handleDeleteMessage(viewingMessage.id)}
@@ -2885,12 +2989,19 @@ const Admin = () => {
                                 <Trash2 size={16} /> Delete
                             </button>
                             <div style={{ display: 'flex', gap: '1rem' }}>
+                                <a
+                                    href={`mailto:${viewingMessage.email}?subject=Re: Inquiry from ${encodeURIComponent(viewingMessage.name)}`}
+                                    className={styles.submitBtn}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none', background: 'var(--bg-color)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg> Reply
+                                </a>
                                 <button
                                     className={styles.editBtn}
                                     onClick={() => { handleToggleMessageRead(viewingMessage.id, viewingMessage.isRead); }}
                                     style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                                 >
-                                    {viewingMessage.isRead ? <><Mail size={16} /> Mark Unread</> : <><MailOpen size={16} /> Mark Read</>}
+                                    {viewingMessage.isRead ? <><MailOpen size={16} /> Mark Unread</> : <><Mail size={16} /> Mark Read</>}
                                 </button>
                                 <button
                                     className={styles.confirmBtn}
