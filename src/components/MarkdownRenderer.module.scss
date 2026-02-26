@@ -1,0 +1,178 @@
+@import '../styles/variables';
+
+.markdownContent {
+    line-height: 1.8;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        color: var(--heading-color, #fff);
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    h2 {
+        font-size: 1.8rem;
+        border-bottom: 1px solid var(--divider);
+        padding-bottom: 0.5rem;
+    }
+
+    h3 {
+        font-size: 1.5rem;
+    }
+
+    p {
+        margin-bottom: 1.5rem;
+    }
+
+    a {
+        color: var(--primary-color, #64ffda);
+        text-decoration: none;
+        border-bottom: 1px dashed rgba($primary-color, 0.5);
+        transition: all 0.3s ease;
+
+        &:hover {
+            color: $primary-color;
+            border-bottom-style: solid;
+        }
+    }
+
+    ul,
+    ol {
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+    }
+
+    blockquote {
+        margin: 2rem 0;
+        padding: 1rem 1.5rem;
+        border-left: 4px solid $primary-color;
+        background: rgba($primary-color, 0.05);
+        border-radius: 0 8px 8px 0;
+        font-style: italic;
+        color: var(--text-secondary);
+
+        p {
+            margin-bottom: 0;
+        }
+    }
+
+    .inlineCode {
+        background: var(--glass-surface);
+        padding: 0.2em 0.4em;
+        border-radius: 4px;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.9em;
+        color: #ff7b72;
+    }
+
+    .codeBlockWrapper {
+        margin: 1.5rem 0;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #1e1e1e;
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+
+        .codeHeader {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--glass-border);
+
+            .language {
+                font-family: 'Fira Code', monospace;
+                font-size: 0.8rem;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .copyButton {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                background: transparent;
+                border: none;
+                color: var(--text-secondary);
+                font-size: 0.8rem;
+                cursor: pointer;
+                transition: color 0.2s ease;
+                padding: 4px 8px;
+                border-radius: 4px;
+
+                &:hover {
+                    color: var(--primary-color, #64ffda);
+                    background: var(--glass-surface);
+                }
+
+                .checkIcon {
+                    color: #4ade80;
+                }
+            }
+        }
+    }
+
+    .codeBlock {
+        margin: 0 !important;
+        border-radius: 0 0 8px 8px !important;
+        font-size: 0.95rem !important;
+        background: transparent !important;
+        border: none !important;
+
+        &::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 4px;
+        }
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 2rem auto;
+        display: block;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+}
+
+.videoWrapper {
+    position: relative;
+    padding-bottom: 56.25%;
+    /* 16:9 */
+    height: 0;
+    margin: 2rem 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+
+    iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+}

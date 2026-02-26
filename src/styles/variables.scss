@@ -1,0 +1,52 @@
+/* Color Palette - Vibrant & Modern Light Theme */
+// Colors
+$primary-color: #6C63FF;
+$primary-light: #8078FF; // lighten($primary-color, 8%) equivalent
+$primary-dark: #5B52E0; // darken($primary-color, 5%) equivalent
+$secondary-color: #FF6584;
+$accent-color: var(--heading-color);
+$text-primary: var(--text-primary);
+$text-secondary: var(--text-secondary);
+$background-color: var(--bg-color);
+$surface-color: var(--bg-color); // fallback or same as bg for now
+
+// Effects
+$glass-bg: var(--glass-surface);
+$glass-border: var(--glass-border);
+$glass-blur: 10px;
+
+// Typography
+$font-family: 'Inter', sans-serif;
+
+// Layout
+$nav-height: 80px;
+$container-width: 1200px;
+$border-radius: 12px;
+
+// Shadows
+$shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 8px 15px rgba(0, 0, 0, 0.2);
+$shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.3);
+$neon-glow: var(--neon-glow);
+
+// Transitions
+$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+@mixin glass {
+  background: $glass-bg;
+  backdrop-filter: blur($glass-blur);
+  -webkit-backdrop-filter: blur($glass-blur);
+  border: 1px solid $glass-border;
+  box-shadow: var(--glass-shadow);
+}
+
+@mixin container {
+  max-width: $container-width;
+  margin: 0 auto;
+  padding: 0 2rem;
+  width: 100%;
+}
+
+@mixin section-padding {
+  padding: 5rem 0;
+}
