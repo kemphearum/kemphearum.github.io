@@ -1,10 +1,12 @@
 import React from 'react';
 import { useFirebaseDoc } from '../hooks/useFirebaseData';
+import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Hero.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 
 const Hero = () => {
+    const { trackEvent } = useAnalytics();
     const { data: content, loading } = useFirebaseDoc('content', 'home', {
         greeting: '',
         name: '',
@@ -82,6 +84,7 @@ const Hero = () => {
                                     href={content.ctaLink || "#experience"}
                                     className={styles.ctaButton}
                                     onClick={(e) => {
+                                        trackEvent('hero_cta_clicked', { link: content.ctaLink || "#experience" });
                                         const link = content.ctaLink || "#experience";
                                         if (link.startsWith('#')) {
                                             e.preventDefault();
@@ -101,6 +104,7 @@ const Hero = () => {
                                     </svg>
                                 </a>
                                 <a href="#contact" className={styles.ctaSecondary} onClick={(e) => {
+                                    trackEvent('hero_contact_clicked');
                                     e.preventDefault();
                                     const el = document.querySelector('#contact');
                                     if (el) {

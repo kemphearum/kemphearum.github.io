@@ -104,6 +104,25 @@ const Main = () => {
   );
 };
 
+import { useAnalytics } from './hooks/useAnalytics';
+
+// Create an inner component to run analytics *inside* the required <Router> context
+const AppRoutes = () => {
+  useAnalytics(); // This tracks route changes globally
+
+  return (
+    <Routes>
+      <Route path="/" element={<Main />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="/projects" element={<ProjectsPage />} />
+      <Route path="/projects/:slug" element={<ProjectDetail />} />
+      <Route path="/blog" element={<Blog />} />
+      <Route path="/blog/:slug" element={<BlogPost />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+};
+
 function App() {
   // Fetch global settings for title/favicon
   const { data: settings } = useFirebaseDoc('content', 'settings');
@@ -126,15 +145,7 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Main />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/projects/:slug" element={<ProjectDetail />} />
-        <Route path="/blog" element={<Blog />} />
-        <Route path="/blog/:slug" element={<BlogPost />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <AppRoutes />
     </Router>
   );
 }

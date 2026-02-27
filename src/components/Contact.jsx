@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useFirebaseDoc } from '../hooks/useFirebaseData';
+import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Contact.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Contact = () => {
+    const { trackEvent } = useAnalytics();
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
     const [status, setStatus] = useState(null);
     const { data: contactContent, loading } = useFirebaseDoc('content', 'contact', { introText: '' });
@@ -41,6 +43,7 @@ const Contact = () => {
             localStorage.setItem('lastContactSubmit', Date.now().toString());
             setStatus('success');
             setFormData({ name: '', email: '', message: '' });
+            trackEvent('contact_form_submit');
             setTimeout(() => setStatus(null), 5000);
         } catch (error) {
             console.error("Error submitting form: ", error);
