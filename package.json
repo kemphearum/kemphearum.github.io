@@ -10,9 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
