@@ -2907,12 +2907,7 @@ const Admin = () => {
                                 </h3>
                             </div>
                             <div className={styles.formContainer}>
-                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.5rem' }}>
-                                    <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Looker Studio Integration Pending</h4>
-                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: 0 }}>
-                                        To display your website traffic and user events here natively, you need to connect your Firebase GA4 property to Looker Studio and generate an embed link.
-                                    </p>
-                                </div>
+                                {/* Looker Studio setup instructions removed as setup is complete */}
                                 <div style={{ minHeight: '600px', display: 'flex', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', overflow: 'hidden', background: '#fff' }}>
                                     <iframe
                                         width="100%"
