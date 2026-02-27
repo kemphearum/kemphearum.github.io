@@ -9,6 +9,7 @@ import { invalidateCache } from '../hooks/useFirebaseData';
 import { FileText, Database, Upload, ExternalLink, EyeOff, Eye, Edit2, Trash2, LogOut, Bold, Italic, Link as LinkIcon, Code, Sun, Moon, Star, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowUpDown, User, Mail, MailOpen, X } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useTheme } from '../context/ThemeContext';
+import { sortData } from '../utils/sortData';
 
 // Icons as small components
 const icons = {
@@ -264,32 +265,6 @@ const Admin = () => {
     const handleMsgSort = useMemo(() => toggleSort(setMsgSort, setMessagesPage), [toggleSort]);
     const handleAuditSort = useMemo(() => toggleSort(setAuditSort, setAuditPage), [toggleSort]);
 
-    const sortData = useCallback((data, sortState) => {
-        if (!sortState.field) return data;
-        return [...data].sort((a, b) => {
-            let aVal = a[sortState.field];
-            let bVal = b[sortState.field];
-            // Handle Firestore Timestamps
-            if (aVal?.seconds !== undefined) aVal = aVal.seconds;
-            if (bVal?.seconds !== undefined) bVal = bVal.seconds;
-            // Handle booleans
-            if (typeof aVal === 'boolean') aVal = aVal ? 1 : 0;
-            if (typeof bVal === 'boolean') bVal = bVal ? 1 : 0;
-            // Handle nulls/undefined
-            if (aVal == null && bVal == null) return 0;
-            if (aVal == null) return 1;
-            if (bVal == null) return -1;
-            // String comparison
-            if (typeof aVal === 'string' && typeof bVal === 'string') {
-                return sortState.dir === 'asc'
-                    ? aVal.localeCompare(bVal)
-                    : bVal.localeCompare(aVal);
-            }
-            // Numeric comparison
-            return sortState.dir === 'asc' ? aVal - bVal : bVal - aVal;
-        });
-    }, []);
-
 
     // Add User State
     const [showAddUserForm, setShowAddUserForm] = useState(false);
@@ -308,7 +283,7 @@ const Admin = () => {
             );
         }
         return sortData(result, msgSort);
-    }, [messages, searchMessages, msgSort, sortData]);
+    }, [messages, searchMessages, msgSort]);
 
     const messagesTotalPages = Math.ceil(filteredMessages.length / messagesPerPage) || 1;
     const paginatedMessages = useMemo(() => {
@@ -330,7 +305,7 @@ const Admin = () => {
         const q = searchExperience.toLowerCase();
         const filtered = !q ? experiences : experiences.filter(e => (e.role || '').toLowerCase().includes(q) || (e.company || '').toLowerCase().includes(q));
         return sortData(filtered, expSort);
-    }, [experiences, searchExperience, expSort, sortData]);
+    }, [experiences, searchExperience, expSort]);
     const expTotalPages = Math.ceil(filteredExperiences.length / expPerPage);
     const paginatedExperiences = useMemo(() => filteredExperiences.slice((expPage - 1) * expPerPage, expPage * expPerPage), [filteredExperiences, expPage, expPerPage]);
 
@@ -338,7 +313,7 @@ const Admin = () => {
         const q = searchProjects.toLowerCase();
         const filtered = !q ? projects : projects.filter(p => (p.title || '').toLowerCase().includes(q) || (Array.isArray(p.techStack) ? p.techStack.join(' ') : '').toLowerCase().includes(q));
         return sortData(filtered, projSort);
-    }, [projects, searchProjects, projSort, sortData]);
+    }, [projects, searchProjects, projSort]);
     const projTotalPages = Math.ceil(filteredProjects.length / projPerPage);
     const paginatedProjects = useMemo(() => filteredProjects.slice((projPage - 1) * projPerPage, projPage * projPerPage), [filteredProjects, projPage, projPerPage]);
 
@@ -346,7 +321,7 @@ const Admin = () => {
         const q = searchPosts.toLowerCase();
         const filtered = !q ? posts : posts.filter(p => (p.title || '').toLowerCase().includes(q) || (p.excerpt || '').toLowerCase().includes(q));
         return sortData(filtered, postSort);
-    }, [posts, searchPosts, postSort, sortData]);
+    }, [posts, searchPosts, postSort]);
     const postTotalPages = Math.ceil(filteredPosts.length / postPerPage);
     const paginatedPosts = useMemo(() => filteredPosts.slice((postPage - 1) * postPerPage, postPage * postPerPage), [filteredPosts, postPage, postPerPage]);
 
@@ -356,7 +331,7 @@ const Admin = () => {
             (u.displayName || '').toLowerCase().includes(searchUsers.toLowerCase())
         );
         return sortData(filtered, usersSort);
-    }, [usersList, searchUsers, usersSort, sortData]);
+    }, [usersList, searchUsers, usersSort]);
 
     const filteredAuditLogs = useMemo(() => {
         const filtered = auditLogsList.filter(log =>
@@ -364,7 +339,7 @@ const Admin = () => {
             (log.ipAddress || '').includes(searchUsers)
         );
         return sortData(filtered, auditSort);
-    }, [auditLogsList, searchUsers, auditSort, sortData]);
+    }, [auditLogsList, searchUsers, auditSort]);
     const usersTotalPages = Math.ceil(filteredUsers.length / usersPerPage);
     const paginatedUsers = useMemo(() => filteredUsers.slice((usersPage - 1) * usersPerPage, usersPage * usersPerPage), [filteredUsers, usersPage, usersPerPage]);
 
@@ -727,36 +702,39 @@ const Admin = () => {
                 return;
             }
 
-            // 1. Create the new user in Firebase Auth.
-            // WARNING: This automatically logs the Superadmin out and the new user in.
-            await createUserWithEmailAndPassword(auth, newUserEmail, newUserPassword);
+            // 1. Create the new user using the REST API to prevent signing out the current Superadmin
+            const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
 
-            // 2. Since onAuthStateChanged will race with us, we don't manually create the document.
-            // We just wait for the auth state listener to generate the 'pending' record.
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            // 3. Look up their newly auto-created document
-            const q = query(collection(db, "users"), where("email", "==", newUserEmail));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                // 4. Update the document with their assigned role
-                const newDocRef = querySnapshot.docs[0].ref;
-                await updateDoc(newDocRef, { role: newUserRole });
-            } else {
-                // Failsafe: if onAuthStateChanged somehow missed it, we create it
-                await addDoc(collection(db, "users"), {
+            const signupResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
                     email: newUserEmail,
-                    role: newUserRole,
-                    isActive: true,
-                    createdAt: serverTimestamp()
-                });
+                    password: newUserPassword,
+                    returnSecureToken: false
+                })
+            });
+
+            const signupData = await signupResponse.json();
+
+            if (!signupResponse.ok) {
+                throw new Error(signupData.error?.message || 'Failed to create user in Authentication');
             }
 
-            showToast('User created successfully. You must now log back in as Superadmin.');
+            // 2. Add the user directly to Firestore
+            await addDoc(collection(db, "users"), {
+                email: newUserEmail,
+                role: newUserRole,
+                isActive: true,
+                createdAt: serverTimestamp()
+            });
 
-            // 5. Force logout because the session is now the new user
-            await signOut(auth);
+            showToast('User created successfully.');
+
+            // Fetch to update the local list
+            fetchUsers();
 
             setShowAddUserForm(false);
             setNewUserEmail('');
@@ -764,9 +742,9 @@ const Admin = () => {
             setNewUserRole('pending');
         } catch (error) {
             console.error("Error creating user:", error);
-            if (error.code === 'auth/email-already-in-use') {
+            if (error.message.includes('EMAIL_EXISTS')) {
                 showToast("This email is already registered.", "error");
-            } else if (error.code === 'auth/weak-password') {
+            } else if (error.message.includes('WEAK_PASSWORD')) {
                 showToast("Password should be at least 6 characters.", "error");
             } else {
                 showToast("Failed to create user.", "error");
@@ -2663,12 +2641,6 @@ const Admin = () => {
                                         <form onSubmit={handleAddUser} className={styles.formContainer} style={{ marginBottom: '2rem', padding: '1.5rem', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                             <h4 style={{ marginBottom: '1rem', color: 'var(--text-primary)' }}>Create New User</h4>
 
-                                            <div className={styles.warningBox} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-                                                <p style={{ color: 'var(--accent-color)', margin: 0, fontSize: '0.9rem', lineHeight: '1.4' }}>
-                                                    <strong>Warning:</strong> Creating a new user logs you out as Superadmin and automatically logs the new user in. You will be redirected to the login screen and will need to log back in as Superadmin.
-                                                </p>
-                                            </div>
-
                                             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                                                 <div className={styles.formGroup} style={{ flex: 1 }}>
                                                     <label>Email Address</label>
@@ -2688,7 +2660,7 @@ const Admin = () => {
                                                 </div>
                                             </div>
                                             <button type="submit" className={styles.primaryBtn} disabled={loading} style={{ width: '100%' }}>
-                                                {loading ? 'Creating User & Swapping Session...' : 'Create User'}
+                                                {loading ? 'Creating User...' : 'Create User'}
                                             </button>
                                         </form>
                                     )}
