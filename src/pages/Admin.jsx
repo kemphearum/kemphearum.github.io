@@ -6,13 +6,16 @@ import imageCompression from 'browser-image-compression';
 import styles from './Admin.module.scss';
 import { useNavigate } from 'react-router-dom';
 import { invalidateCache } from '../hooks/useFirebaseData';
-import { FileText, Database, Upload, ExternalLink, EyeOff, Eye, Edit2, Trash2, LogOut, Bold, Italic, Link as LinkIcon, Code, Sun, Moon, Star, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowUpDown, User, Mail, MailOpen, X } from 'lucide-react';
+import { FileText, Database, Upload, ExternalLink, EyeOff, Eye, Edit2, Trash2, LogOut, Bold, Italic, Link as LinkIcon, Code, Sun, Moon, Star, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowUpDown, User, Mail, MailOpen, X, BarChart2 } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useTheme } from '../context/ThemeContext';
 import { sortData } from '../utils/sortData';
 
 // Icons as small components
 const icons = {
+    analytics: (
+        <BarChart2 size={18} />
+    ),
     experience: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
@@ -76,7 +79,8 @@ const tabLabels = {
     database: 'Database',
     users: 'Users',
     audit: 'Audit Logs',
-    profile: 'My Profile'
+    profile: 'My Profile',
+    analytics: 'Analytics'
 };
 
 // Toast notification component
@@ -2888,6 +2892,39 @@ const Admin = () => {
                                     )}
                                 </>
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ========== ANALYTICS TAB ========== */}
+                {activeTab === 'analytics' && (
+                    <div className={styles.section} style={{ paddingBottom: '4rem' }}>
+                        <div className={styles.card}>
+                            <div className={styles.cardHeader} style={{ paddingBottom: '0.5rem' }}>
+                                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <BarChart2 size={24} style={{ color: 'var(--primary-color)' }} />
+                                    Google Analytics 4 Dashboard
+                                </h3>
+                            </div>
+                            <div className={styles.formContainer}>
+                                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '1.5rem' }}>
+                                    <h4 style={{ color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Looker Studio Integration Pending</h4>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: 0 }}>
+                                        To display your website traffic and user events here natively, you need to connect your Firebase GA4 property to Looker Studio and generate an embed link.
+                                    </p>
+                                </div>
+                                <div style={{ minHeight: '600px', display: 'flex', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', overflow: 'hidden', background: '#fff' }}>
+                                    <iframe
+                                        width="100%"
+                                        height="800"
+                                        src="https://lookerstudio.google.com/embed/reporting/3da11f3d-4807-4df3-9a02-7eda732bf3df/page/kIV1C"
+                                        frameBorder="0"
+                                        style={{ border: 0 }}
+                                        allowFullScreen
+                                        sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                                    ></iframe>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
