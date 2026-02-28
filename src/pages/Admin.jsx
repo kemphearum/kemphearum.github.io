@@ -6,10 +6,11 @@ import imageCompression from 'browser-image-compression';
 import styles from './Admin.module.scss';
 import { useNavigate } from 'react-router-dom';
 import { invalidateCache } from '../hooks/useFirebaseData';
-import { FileText, Database, Upload, ExternalLink, EyeOff, Eye, Edit2, Trash2, LogOut, Bold, Italic, Link as LinkIcon, Code, Sun, Moon, Star, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowUpDown, User, Mail, MailOpen, X, BarChart2 } from 'lucide-react';
+import { FileText, Database, Upload, ExternalLink, EyeOff, Eye, Edit2, Trash2, LogOut, Bold, Italic, Link as LinkIcon, Code, Sun, Moon, Star, Search, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ArrowUpDown, User, Mail, MailOpen, X, BarChart2, RefreshCw, Users, Globe, Monitor, Smartphone, Tablet, TrendingUp, Eye as EyeIcon, Calendar, MapPin, Share2 } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useTheme } from '../context/ThemeContext';
 import { sortData } from '../utils/sortData';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 // Icons as small components
 const icons = {
@@ -229,6 +230,17 @@ const Admin = () => {
     // Users & Audit State
     const [usersList, setUsersList] = useState([]);
     const [auditLogsList, setAuditLogsList] = useState([]);
+
+    // Analytics State
+    const [visits, setVisits] = useState([]);
+    const [analyticsLoading, setAnalyticsLoading] = useState(false);
+    const [analyticsRange, setAnalyticsRange] = useState(() => {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(start.getDate() - 30);
+        return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0], preset: '30d' };
+    });
+    const [analyticsDetail, setAnalyticsDetail] = useState(null); // 'visits' | 'countries' | 'devices' | 'pages' | null
 
     // Search & Pagination State
     const [searchExperience, setSearchExperience] = useState('');
@@ -608,6 +620,44 @@ const Admin = () => {
             showToast("Failed to load audit logs.", "error");
         }
     }, [userRole, showToast]);
+
+    const fetchAnalytics = useCallback(async () => {
+        if (userRole !== 'superadmin' && userRole !== 'admin') return;
+        setAnalyticsLoading(true);
+        try {
+            const startDate = new Date(analyticsRange.start + 'T00:00:00');
+            const endDate = new Date(analyticsRange.end + 'T23:59:59');
+
+            const q = query(
+                collection(db, "visits"),
+                where("timestamp", ">=", startDate),
+                where("timestamp", "<=", endDate),
+                orderBy("timestamp", "desc")
+            );
+
+            const querySnapshot = await getDocs(q);
+            const visitDocs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setVisits(visitDocs);
+        } catch (error) {
+            console.error("Error fetching analytics:", error);
+            showToast("Failed to load analytics data.", "error");
+        } finally {
+            setAnalyticsLoading(false);
+        }
+    }, [userRole, showToast, analyticsRange]);
+
+    const handleAnalyticsPreset = useCallback((preset) => {
+        const end = new Date();
+        const start = new Date();
+        switch (preset) {
+            case '7d': start.setDate(end.getDate() - 7); break;
+            case '30d': start.setDate(end.getDate() - 30); break;
+            case '90d': start.setDate(end.getDate() - 90); break;
+            case 'all': start.setFullYear(2020); break;
+            default: start.setDate(end.getDate() - 30);
+        }
+        setAnalyticsRange({ start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0], preset });
+    }, []);
 
     const handleRoleChange = async (userId, newRole) => {
         if (userRole !== 'superadmin') {
@@ -1324,6 +1374,115 @@ const Admin = () => {
         }
     }, [activeTab, fetchAuditLogs, userRole]);
 
+    useEffect(() => {
+        if (activeTab === 'analytics' && (userRole === 'superadmin' || userRole === 'admin')) {
+            fetchAnalytics();
+        }
+    }, [activeTab, fetchAnalytics, userRole]);
+
+    // ======= ANALYTICS DATA PROCESSING =======
+    const CHART_COLORS = ['#64ffda', '#7c4dff', '#ff6b6b', '#ffd93d', '#6bcb77', '#4fc3f7', '#f48fb1', '#ce93d8', '#ffab91', '#80cbc4'];
+
+    const dailyVisits = useMemo(() => {
+        if (!visits.length) return [];
+        const grouped = {};
+        visits.forEach(v => {
+            const date = v.date || (v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toISOString().split('T')[0] : null);
+            if (!date) return;
+            if (!grouped[date]) grouped[date] = { total: 0, sessions: new Set() };
+            grouped[date].total++;
+            if (v.sessionId) grouped[date].sessions.add(v.sessionId);
+        });
+        return Object.entries(grouped)
+            .map(([date, data]) => ({ date, visits: data.total, unique: data.sessions.size }))
+            .sort((a, b) => a.date.localeCompare(b.date));
+    }, [visits]);
+
+    const countryData = useMemo(() => {
+        if (!visits.length) return [];
+        const grouped = {};
+        visits.forEach(v => {
+            const country = v.country || 'Unknown';
+            grouped[country] = (grouped[country] || 0) + 1;
+        });
+        return Object.entries(grouped)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 8);
+    }, [visits]);
+
+    const topPages = useMemo(() => {
+        if (!visits.length) return [];
+        const grouped = {};
+        visits.forEach(v => {
+            const path = v.path || '/';
+            grouped[path] = (grouped[path] || 0) + 1;
+        });
+        return Object.entries(grouped)
+            .map(([path, count]) => ({ path: path === '/' ? 'Home' : path.replace(/^\//, ''), count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 8);
+    }, [visits]);
+
+    const deviceData = useMemo(() => {
+        if (!visits.length) return [];
+        const grouped = {};
+        visits.forEach(v => {
+            const device = v.device || 'unknown';
+            const label = device.charAt(0).toUpperCase() + device.slice(1);
+            grouped[label] = (grouped[label] || 0) + 1;
+        });
+        return Object.entries(grouped)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+    }, [visits]);
+
+    const summaryStats = useMemo(() => {
+        if (!visits.length) return { total: 0, unique: 0, topCountry: '-', topPage: '-' };
+        const uniqueSessions = new Set(visits.map(v => v.sessionId).filter(Boolean));
+        const topCountry = countryData.length > 0 ? countryData[0].name : '-';
+        const topPage = topPages.length > 0 ? topPages[0].path : '-';
+        return { total: visits.length, unique: uniqueSessions.size, topCountry, topPage };
+    }, [visits, countryData, topPages]);
+
+    const cityData = useMemo(() => {
+        if (!visits.length) return [];
+        const grouped = {};
+        visits.forEach(v => {
+            const city = v.city || 'Unknown';
+            const country = v.country || '';
+            const key = `${city}, ${country}`.replace(/, $/, '');
+            grouped[key] = (grouped[key] || 0) + 1;
+        });
+        return Object.entries(grouped)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 10);
+    }, [visits]);
+
+    const referrerData = useMemo(() => {
+        if (!visits.length) return [];
+        const grouped = {};
+        visits.forEach(v => {
+            const ref = v.referrer || 'Direct';
+            grouped[ref] = (grouped[ref] || 0) + 1;
+        });
+        return Object.entries(grouped)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 10);
+    }, [visits]);
+
+    const parseBrowser = (ua) => {
+        if (!ua) return 'Unknown';
+        if (ua.includes('Edg/')) return 'Edge';
+        if (ua.includes('OPR/') || ua.includes('Opera')) return 'Opera';
+        if (ua.includes('Chrome/') && !ua.includes('Edg/')) return 'Chrome';
+        if (ua.includes('Firefox/')) return 'Firefox';
+        if (ua.includes('Safari/') && !ua.includes('Chrome/')) return 'Safari';
+        return 'Other';
+    };
+
     const handleSavePost = async (e) => {
         e.preventDefault();
         if (userRole === 'pending') {
@@ -1584,8 +1743,8 @@ const Admin = () => {
                 invalidateCache();
                 showToast('Restore completed successfully!');
 
-                if (activeTab === 'projects') fetchProjects();
-                else if (activeTab === 'experience') fetchExperiences();
+                if (activeTab === 'audit') fetchAuditLogs();
+                if (activeTab === 'analytics') fetchAnalytics();
                 else if (activeTab === 'messages') fetchMessages();
                 else if (activeTab === 'blog') fetchPosts();
                 else if (activeTab === 'users') fetchUsers();
@@ -2899,31 +3058,429 @@ const Admin = () => {
                 {/* ========== ANALYTICS TAB ========== */}
                 {activeTab === 'analytics' && (
                     <div className={styles.section} style={{ paddingBottom: '4rem' }}>
-                        <div className={styles.card}>
-                            <div className={styles.cardHeader} style={{ paddingBottom: '0.5rem' }}>
-                                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <BarChart2 size={24} style={{ color: 'var(--primary-color)' }} />
-                                    Google Analytics 4 Dashboard
-                                </h3>
+                        {analyticsLoading ? (
+                            <div className={styles.analyticsLoading}>
+                                <div className={styles.analyticsSpinner} />
+                                <span>Loading analytics data…</span>
                             </div>
-                            <div className={styles.formContainer}>
-                                {/* Looker Studio setup instructions removed as setup is complete */}
-                                <div style={{ minHeight: '600px', display: 'flex', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', overflow: 'hidden', background: '#fff' }}>
-                                    <iframe
-                                        width="100%"
-                                        height="800"
-                                        src="https://lookerstudio.google.com/embed/reporting/3da11f3d-4807-4df3-9a02-7eda732bf3df/page/kIV1C"
-                                        frameBorder="0"
-                                        style={{ border: 0 }}
-                                        allowFullScreen
-                                        sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                                    ></iframe>
+                        ) : (
+                            <>
+                                {/* ---- Date Range Filter ---- */}
+                                <div className={styles.dateFilterBar}>
+                                    <div className={styles.datePresets}>
+                                        {[{ label: '7D', value: '7d' }, { label: '30D', value: '30d' }, { label: '90D', value: '90d' }, { label: 'All', value: 'all' }].map(p => (
+                                            <button key={p.value} className={`${styles.presetBtn} ${analyticsRange.preset === p.value ? styles.presetActive : ''}`} onClick={() => handleAnalyticsPreset(p.value)}>{p.label}</button>
+                                        ))}
+                                    </div>
+                                    <div className={styles.dateInputs}>
+                                        <Calendar size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+                                        <input type="date" value={analyticsRange.start} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, start: e.target.value, preset: '' }))} className={styles.dateInput} />
+                                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>to</span>
+                                        <input type="date" value={analyticsRange.end} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, end: e.target.value, preset: '' }))} className={styles.dateInput} />
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+
+                                {/* ---- Stat Summary Cards ---- */}
+                                <div className={styles.analyticsGrid}>
+                                    <div className={styles.statCard}>
+                                        <div className={styles.statIcon}><EyeIcon size={20} /></div>
+                                        <div className={styles.statValue}>{summaryStats.total.toLocaleString()}</div>
+                                        <div className={styles.statLabel}>Total Page Views</div>
+                                    </div>
+                                    <div className={styles.statCard}>
+                                        <div className={styles.statIcon}><Users size={20} /></div>
+                                        <div className={styles.statValue}>{summaryStats.unique.toLocaleString()}</div>
+                                        <div className={styles.statLabel}>Unique Visitors</div>
+                                    </div>
+                                    <div className={styles.statCard}>
+                                        <div className={styles.statIcon}><Globe size={20} /></div>
+                                        <div className={styles.statValue} style={{ fontSize: '1.3rem' }}>{summaryStats.topCountry}</div>
+                                        <div className={styles.statLabel}>Top Country</div>
+                                    </div>
+                                    <div className={styles.statCard}>
+                                        <div className={styles.statIcon}><TrendingUp size={20} /></div>
+                                        <div className={styles.statValue} style={{ fontSize: '1.3rem' }}>{summaryStats.topPage}</div>
+                                        <div className={styles.statLabel}>Most Visited Page</div>
+                                    </div>
+                                </div>
+
+                                {/* ---- Visits Over Time (Line Chart) ---- */}
+                                <div className={styles.chartCard}>
+                                    <div className={styles.chartTitle}>
+                                        <TrendingUp size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                        Visits Over Time {analyticsRange.preset === '7d' ? '(Last 7 Days)' : analyticsRange.preset === '30d' ? '(Last 30 Days)' : analyticsRange.preset === '90d' ? '(Last 90 Days)' : analyticsRange.preset === 'all' ? '(All Time)' : `(${analyticsRange.start} — ${analyticsRange.end})`}
+                                        <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('visits')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                        <button className={styles.analyticsRefreshBtn} onClick={fetchAnalytics} disabled={analyticsLoading}>
+                                            <RefreshCw size={14} /> Refresh
+                                        </button>
+                                    </div>
+                                    {dailyVisits.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={320}>
+                                            <LineChart data={dailyVisits} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                                <XAxis dataKey="date" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickFormatter={(v) => { const d = new Date(v + 'T00:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }} />
+                                                <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
+                                                <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} />
+                                                <Line type="monotone" dataKey="visits" stroke="#64ffda" strokeWidth={2} dot={false} name="Page Views" />
+                                                <Line type="monotone" dataKey="unique" stroke="#7c4dff" strokeWidth={2} dot={false} name="Unique Visitors" />
+                                                <Legend wrapperStyle={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }} />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className={styles.emptyState}><p>No visit data available yet.</p></div>
+                                    )}
+                                </div>
+
+                                {/* ---- Country Breakdown + Device Breakdown ---- */}
+                                <div className={styles.chartRow}>
+                                    <div className={styles.chartCard}>
+                                        <div className={styles.chartTitle}>
+                                            <Globe size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                            Visitors by Country
+                                            <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('countries')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                        </div>
+                                        {countryData.length > 0 ? (
+                                            <>
+                                                <ResponsiveContainer width="100%" height={250}>
+                                                    <PieChart>
+                                                        <Pie data={countryData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
+                                                            {countryData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                                        </Pie>
+                                                        <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                                <ul className={styles.legendList}>
+                                                    {countryData.map((entry, i) => (
+                                                        <li key={entry.name} className={styles.legendItem}>
+                                                            <span className={styles.legendDot} style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                                            {entry.name} ({entry.value})
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </>
+                                        ) : (
+                                            <div className={styles.emptyState}><p>No country data.</p></div>
+                                        )}
+                                    </div>
+
+                                    <div className={styles.chartCard}>
+                                        <div className={styles.chartTitle}>
+                                            <Monitor size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                            Device Breakdown
+                                            <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('devices')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                        </div>
+                                        {deviceData.length > 0 ? (
+                                            <>
+                                                <ResponsiveContainer width="100%" height={250}>
+                                                    <PieChart>
+                                                        <Pie data={deviceData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
+                                                            {deviceData.map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 3) % CHART_COLORS.length]} />)}
+                                                        </Pie>
+                                                        <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                                <ul className={styles.legendList}>
+                                                    {deviceData.map((entry, i) => (
+                                                        <li key={entry.name} className={styles.legendItem}>
+                                                            <span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 3) % CHART_COLORS.length] }} />
+                                                            {entry.name === 'Desktop' ? <><Monitor size={12} /> </> : entry.name === 'Mobile' ? <><Smartphone size={12} /> </> : entry.name === 'Tablet' ? <><Tablet size={12} /> </> : null}
+                                                            {entry.name} ({entry.value})
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </>
+                                        ) : (
+                                            <div className={styles.emptyState}><p>No device data.</p></div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* ---- City Breakdown + Traffic Sources ---- */}
+                                <div className={styles.chartRow}>
+                                    <div className={styles.chartCard}>
+                                        <div className={styles.chartTitle}>
+                                            <MapPin size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                            Top Cities
+                                            <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('cities')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                        </div>
+                                        {cityData.length > 0 ? (
+                                            <ResponsiveContainer width="100%" height={250}>
+                                                <BarChart data={cityData.slice(0, 6)} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
+                                                    <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
+                                                    <YAxis dataKey="name" type="category" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} width={140} />
+                                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                                    <Bar dataKey="value" name="Visits" radius={[0, 6, 6, 0]}>
+                                                        {cityData.slice(0, 6).map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 2) % CHART_COLORS.length]} />)}
+                                                    </Bar>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        ) : (
+                                            <div className={styles.emptyState}><p>No city data.</p></div>
+                                        )}
+                                    </div>
+
+                                    <div className={styles.chartCard}>
+                                        <div className={styles.chartTitle}>
+                                            <Share2 size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                            Traffic Sources
+                                            <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('referrers')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                        </div>
+                                        {referrerData.length > 0 ? (
+                                            <>
+                                                <ResponsiveContainer width="100%" height={250}>
+                                                    <PieChart>
+                                                        <Pie data={referrerData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
+                                                            {referrerData.map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 5) % CHART_COLORS.length]} />)}
+                                                        </Pie>
+                                                        <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                                <ul className={styles.legendList}>
+                                                    {referrerData.map((entry, i) => (
+                                                        <li key={entry.name} className={styles.legendItem}>
+                                                            <span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 5) % CHART_COLORS.length] }} />
+                                                            {entry.name} ({entry.value})
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </>
+                                        ) : (
+                                            <div className={styles.emptyState}><p>No referrer data.</p></div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* ---- Top Pages (Bar Chart) ---- */}
+                                <div className={styles.chartCard}>
+                                    <div className={styles.chartTitle}>
+                                        <FileText size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                        Top Visited Pages
+                                        <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('pages')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                    </div>
+                                    {topPages.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={Math.max(200, topPages.length * 40)}>
+                                            <BarChart data={topPages} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
+                                                <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
+                                                <YAxis dataKey="path" type="category" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} width={120} />
+                                                <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                                <Bar dataKey="count" name="Page Views" radius={[0, 6, 6, 0]}>
+                                                    {topPages.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className={styles.emptyState}><p>No page data.</p></div>
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
             </main>
+
+            {/* ========== ANALYTICS DETAIL MODAL ========== */}
+            {analyticsDetail && (
+                <div className={styles.modalBackdrop} onClick={() => setAnalyticsDetail(null)}>
+                    <div className={styles.detailModal} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.detailModalHeader}>
+                            <h3>
+                                {analyticsDetail === 'visits' && <><TrendingUp size={20} /> All Visits Log ({visits.length})</>}
+                                {analyticsDetail === 'countries' && <><Globe size={20} /> Visitors by Country</>}
+                                {analyticsDetail === 'devices' && <><Monitor size={20} /> Device Breakdown</>}
+                                {analyticsDetail === 'pages' && <><FileText size={20} /> All Visited Pages</>}
+                                {analyticsDetail === 'cities' && <><MapPin size={20} /> Visitors by City</>}
+                                {analyticsDetail === 'referrers' && <><Share2 size={20} /> Traffic Sources</>}
+                            </h3>
+                            <button onClick={() => setAnalyticsDetail(null)} className={styles.detailCloseBtn}><X size={20} /></button>
+                        </div>
+                        <div className={styles.detailModalBody}>
+                            {analyticsDetail === 'visits' && (
+                                <table className={styles.detailTable}>
+                                    <thead>
+                                        <tr><th>#</th><th>Page</th><th>Country</th><th>City</th><th>Device</th><th>Browser</th><th>IP</th><th>Referrer</th><th>Session</th><th>Date & Time</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {visits.length > 0 ? visits.map((v, i) => (
+                                            <tr key={v.id || i}>
+                                                <td>{i + 1}</td>
+                                                <td>{v.path || '/'}</td>
+                                                <td>{v.countryCode ? <span title={v.country}>{v.countryCode}</span> : (v.country || 'Unknown')}</td>
+                                                <td>{v.city || '-'}</td>
+                                                <td style={{ textTransform: 'capitalize' }}>{v.device || '-'}</td>
+                                                <td>{parseBrowser(v.userAgent)}</td>
+                                                <td style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{v.ip || '-'}</td>
+                                                <td style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.referrer}>{v.referrer || '-'}</td>
+                                                <td style={{ fontSize: '0.7rem', fontFamily: 'monospace', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={v.sessionId}>{v.sessionId ? v.sessionId.slice(0, 8) + '…' : '-'}</td>
+                                                <td style={{ whiteSpace: 'nowrap', fontSize: '0.78rem' }}>{v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toLocaleString() : v.date || '-'}</td>
+                                            </tr>
+                                        )) : <tr><td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No visit data.</td></tr>}
+                                    </tbody>
+                                </table>
+                            )}
+                            {analyticsDetail === 'countries' && (
+                                <table className={styles.detailTable}>
+                                    <thead>
+                                        <tr><th>#</th><th>Country</th><th>Visits</th><th>% Share</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {(() => {
+                                            const allCountries = {};
+                                            visits.forEach(v => { const c = v.country || 'Unknown'; allCountries[c] = (allCountries[c] || 0) + 1; });
+                                            const sorted = Object.entries(allCountries).sort((a, b) => b[1] - a[1]);
+                                            const total = visits.length || 1;
+                                            return sorted.length > 0 ? sorted.map(([name, count], i) => (
+                                                <tr key={name}>
+                                                    <td>{i + 1}</td>
+                                                    <td>{name}</td>
+                                                    <td>{count}</td>
+                                                    <td>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--input-bg)' }}>
+                                                                <div style={{ width: `${(count / total * 100).toFixed(0)}%`, height: '100%', borderRadius: '3px', background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                                            </div>
+                                                            <span style={{ fontSize: '0.78rem', minWidth: '40px' }}>{(count / total * 100).toFixed(1)}%</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )) : <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No country data.</td></tr>;
+                                        })()}
+                                    </tbody>
+                                </table>
+                            )}
+                            {analyticsDetail === 'devices' && (
+                                <table className={styles.detailTable}>
+                                    <thead>
+                                        <tr><th>#</th><th>Device</th><th>Visits</th><th>% Share</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {(() => {
+                                            const allDevices = {};
+                                            visits.forEach(v => { const d = v.device || 'unknown'; const label = d.charAt(0).toUpperCase() + d.slice(1); allDevices[label] = (allDevices[label] || 0) + 1; });
+                                            const sorted = Object.entries(allDevices).sort((a, b) => b[1] - a[1]);
+                                            const total = visits.length || 1;
+                                            return sorted.length > 0 ? sorted.map(([name, count], i) => (
+                                                <tr key={name}>
+                                                    <td>{i + 1}</td>
+                                                    <td style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        {name === 'Desktop' ? <Monitor size={14} /> : name === 'Mobile' ? <Smartphone size={14} /> : name === 'Tablet' ? <Tablet size={14} /> : null}
+                                                        {name}
+                                                    </td>
+                                                    <td>{count}</td>
+                                                    <td>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--input-bg)' }}>
+                                                                <div style={{ width: `${(count / total * 100).toFixed(0)}%`, height: '100%', borderRadius: '3px', background: CHART_COLORS[(i + 3) % CHART_COLORS.length] }} />
+                                                            </div>
+                                                            <span style={{ fontSize: '0.78rem', minWidth: '40px' }}>{(count / total * 100).toFixed(1)}%</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )) : <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No device data.</td></tr>;
+                                        })()}
+                                    </tbody>
+                                </table>
+                            )}
+                            {analyticsDetail === 'pages' && (
+                                <table className={styles.detailTable}>
+                                    <thead>
+                                        <tr><th>#</th><th>Page Path</th><th>Views</th><th>% Share</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {(() => {
+                                            const allPages = {};
+                                            visits.forEach(v => { const p = v.path || '/'; allPages[p] = (allPages[p] || 0) + 1; });
+                                            const sorted = Object.entries(allPages).sort((a, b) => b[1] - a[1]);
+                                            const total = visits.length || 1;
+                                            return sorted.length > 0 ? sorted.map(([path, count], i) => (
+                                                <tr key={path}>
+                                                    <td>{i + 1}</td>
+                                                    <td>{path === '/' ? '/ (Home)' : path}</td>
+                                                    <td>{count}</td>
+                                                    <td>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--input-bg)' }}>
+                                                                <div style={{ width: `${(count / total * 100).toFixed(0)}%`, height: '100%', borderRadius: '3px', background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                                            </div>
+                                                            <span style={{ fontSize: '0.78rem', minWidth: '40px' }}>{(count / total * 100).toFixed(1)}%</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )) : <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No page data.</td></tr>;
+                                        })()}
+                                    </tbody>
+                                </table>
+                            )}
+                            {analyticsDetail === 'cities' && (
+                                <table className={styles.detailTable}>
+                                    <thead>
+                                        <tr><th>#</th><th>City</th><th>Visits</th><th>% Share</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {(() => {
+                                            const allCities = {};
+                                            visits.forEach(v => {
+                                                const city = v.city || 'Unknown';
+                                                const country = v.country || '';
+                                                const key = `${city}${country ? ', ' + country : ''}`;
+                                                allCities[key] = (allCities[key] || 0) + 1;
+                                            });
+                                            const sorted = Object.entries(allCities).sort((a, b) => b[1] - a[1]);
+                                            const total = visits.length || 1;
+                                            return sorted.length > 0 ? sorted.map(([name, count], i) => (
+                                                <tr key={name}>
+                                                    <td>{i + 1}</td>
+                                                    <td><MapPin size={12} style={{ marginRight: '0.4rem', verticalAlign: 'middle', color: 'var(--text-secondary)' }} />{name}</td>
+                                                    <td>{count}</td>
+                                                    <td>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--input-bg)' }}>
+                                                                <div style={{ width: `${(count / total * 100).toFixed(0)}%`, height: '100%', borderRadius: '3px', background: CHART_COLORS[(i + 2) % CHART_COLORS.length] }} />
+                                                            </div>
+                                                            <span style={{ fontSize: '0.78rem', minWidth: '40px' }}>{(count / total * 100).toFixed(1)}%</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )) : <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No city data.</td></tr>;
+                                        })()}
+                                    </tbody>
+                                </table>
+                            )}
+                            {analyticsDetail === 'referrers' && (
+                                <table className={styles.detailTable}>
+                                    <thead>
+                                        <tr><th>#</th><th>Source</th><th>Visits</th><th>% Share</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {(() => {
+                                            const allRefs = {};
+                                            visits.forEach(v => { const r = v.referrer || 'Direct'; allRefs[r] = (allRefs[r] || 0) + 1; });
+                                            const sorted = Object.entries(allRefs).sort((a, b) => b[1] - a[1]);
+                                            const total = visits.length || 1;
+                                            return sorted.length > 0 ? sorted.map(([name, count], i) => (
+                                                <tr key={name}>
+                                                    <td>{i + 1}</td>
+                                                    <td><Share2 size={12} style={{ marginRight: '0.4rem', verticalAlign: 'middle', color: 'var(--text-secondary)' }} />{name}</td>
+                                                    <td>{count}</td>
+                                                    <td>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--input-bg)' }}>
+                                                                <div style={{ width: `${(count / total * 100).toFixed(0)}%`, height: '100%', borderRadius: '3px', background: CHART_COLORS[(i + 5) % CHART_COLORS.length] }} />
+                                                            </div>
+                                                            <span style={{ fontSize: '0.78rem', minWidth: '40px' }}>{(count / total * 100).toFixed(1)}%</span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )) : <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No referrer data.</td></tr>;
+                                        })()}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ========== CUSTOM CONFIRMATION MODAL ========== */}
             {confirmDialog.isOpen && (

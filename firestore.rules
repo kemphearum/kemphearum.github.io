@@ -40,5 +40,11 @@ service cloud.firestore {
       allow read, delete: if request.auth != null && request.auth.token.email == 'kem.phearum@gmail.com';
       allow update: if false; // Logs should be immutable
     }
+
+    // Analytics/Visits Tracking: Anyone can log a visit, only admin/superadmin can read
+    match /visits/{document=**} {
+      allow create;
+      allow read, delete, update: if request.auth != null;
+    }
   }
 }
