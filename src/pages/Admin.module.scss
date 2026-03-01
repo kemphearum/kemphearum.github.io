@@ -1000,9 +1000,8 @@
     }
 
     option {
-        background-color: #151525; // Darker solid background for dropdown items
+        background-color: var(--dropdown-bg);
         color: var(--text-primary);
-        padding: 12px;
     }
 }
 
@@ -1127,29 +1126,28 @@
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    padding: 0.3rem 1.6rem 0.3rem 0.5rem;
-    border-radius: 6px;
-    background: var(--input-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 5l3 3 3-3'/%3E%3C/svg%3E") no-repeat right 0.4rem center;
+    padding: 0.35rem 1.8rem 0.35rem 0.6rem;
+    border-radius: 8px;
+    background: var(--input-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%236C63FF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l3 3 3-3'/%3E%3C/svg%3E") no-repeat right 0.5rem center;
     color: var(--text-primary);
     border: 1px solid var(--input-border);
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
     transition: all 0.2s ease;
-    min-width: 55px;
+    min-width: 65px;
 
-    option {
-        background-color: var(--bg-surface);
-        color: var(--text-primary);
-    }
-
-    &:hover,
-    &:focus {
+    &:hover {
         border-color: rgba($primary-color, 0.4);
         background-color: var(--input-focus-bg);
-        outline: none;
+    }
+
+    option {
+        background-color: var(--dropdown-bg);
+        color: var(--text-primary);
     }
 }
+
 
 .pagination {
     display: flex;

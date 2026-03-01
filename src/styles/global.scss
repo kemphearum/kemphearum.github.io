@@ -45,6 +45,7 @@ html {
     --card-bg-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
     --card-hover: rgba(255, 255, 255, 0.06);
     --primary-color: #6C63FF;
+    --dropdown-bg: #151525;
 }
 
 [data-theme="light"] {
@@ -79,6 +80,7 @@ html {
     --card-bg-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%);
     --card-hover: rgba(108, 99, 255, 0.05);
     --primary-color: #6C63FF;
+    --dropdown-bg: #ffffff;
 }
 
 body {
@@ -116,7 +118,7 @@ select {
 }
 
 option {
-    background-color: var(--bg-surface);
+    background-color: var(--dropdown-bg);
     color: var(--text-primary);
 }
 

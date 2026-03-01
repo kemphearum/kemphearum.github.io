@@ -4410,24 +4410,21 @@ const Admin = () => {
                                                 {viewingUser.role} (You)
                                             </span>
                                         ) : (
-                                            <div className={styles.roleSelectWrapper} style={{ marginTop: '0.4rem' }}>
-                                                <select
-                                                    className={styles.standardSelect}
-                                                    style={{ width: '100%' }}
-                                                    value={viewingUser.role}
-                                                    onChange={(e) => {
-                                                        const newRole = e.target.value;
-                                                        handleRoleChange(viewingUser.id, newRole);
-                                                        setViewingUser({ ...viewingUser, role: newRole });
-                                                    }}
-                                                >
-                                                    <option value="pending">Pending</option>
-                                                    <option value="editor">Editor</option>
-                                                    <option value="admin">Admin</option>
-                                                    <option value="superadmin">Super Admin</option>
-                                                </select>
-                                                <ChevronDown size={14} className={styles.roleSelectIcon} style={{ right: '12px' }} />
-                                            </div>
+                                            <select
+                                                className={styles.standardSelect}
+                                                style={{ width: '100%', marginTop: '0.4rem' }}
+                                                value={viewingUser.role}
+                                                onChange={(e) => {
+                                                    const newRole = e.target.value;
+                                                    handleRoleChange(viewingUser.id, newRole);
+                                                    setViewingUser({ ...viewingUser, role: newRole });
+                                                }}
+                                            >
+                                                <option value="pending">Pending</option>
+                                                <option value="editor">Editor</option>
+                                                <option value="admin">Admin</option>
+                                                <option value="superadmin">Super Admin</option>
+                                            </select>
                                         )}
                                     </div>
                                     <div className={styles.detailItem}>
