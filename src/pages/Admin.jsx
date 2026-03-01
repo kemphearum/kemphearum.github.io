@@ -7,7 +7,7 @@ import styles from './Admin.module.scss';
 import { useNavigate } from 'react-router-dom';
 import { invalidateCache } from '../hooks/useFirebaseData';
 import {
-    LayoutDashboard, Users, LogOut, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Check, X, Shield, Settings, Activity, FileText, Code, Database, Globe, Download, Upload, Mail, Eye, Trash2, Github, ExternalLink, Calendar, Search, FileEdit, Plus, RefreshCw, Smartphone, Key, BarChart2, Folder, Clock, Server, EyeOff, Layout, Type, ShieldAlert, BookOpen, AlertCircle, Edit, Edit2, List, User, UserPlus, Bold, Italic, Link as LinkIcon, Sun, Moon, Star, ArrowUpDown, MailOpen, Monitor, Tablet, TrendingUp, MapPin, Share2, Eye as EyeIcon
+    LayoutDashboard, Users, LogOut, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Check, X, Shield, Settings, Activity, FileText, Code, Database, Globe, Download, Upload, Mail, Eye, Trash2, Github, ExternalLink, Calendar, Search, FileEdit, Plus, RefreshCw, Smartphone, Key, BarChart2, Folder, Clock, Server, EyeOff, Layout, Type, ShieldAlert, BookOpen, AlertCircle, Edit, Edit2, List, User, UserPlus, Bold, Italic, Link as LinkIcon, Sun, Moon, Star, ArrowUpDown, MailOpen, Monitor, Tablet, TrendingUp, MapPin, Share2, Eye as EyeIcon, FileJson, AlertTriangle
 } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useTheme } from '../context/ThemeContext';
@@ -198,6 +198,8 @@ const Admin = () => {
 
     const [toast, setToast] = useState(null);
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
+    const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+    const [restoreFile, setRestoreFile] = useState(null);
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
 
@@ -1977,15 +1979,16 @@ const Admin = () => {
         }
     };
 
-    const handleImportDatabase = async (e) => {
+    const handleImportDatabase = (e) => {
         const file = e.target.files[0];
         if (!file) return;
+        setRestoreFile(file);
+        setShowRestoreConfirm(true);
+        e.target.value = ''; // Reset input
+    };
 
-        if (!window.confirm("WARNING: This will overwrite existing data with the same IDs. Are you sure you want to proceed with the restore?")) {
-            e.target.value = ''; // Reset input
-            return;
-        }
-
+    const processDatabaseRestore = async (file) => {
+        if (!file) return;
         setLoading(true);
         showToast('Restoring backup, please wait...', 'info');
 
@@ -2082,7 +2085,7 @@ const Admin = () => {
                 showToast('Failed to restore database. Invalid file format?', 'error');
             } finally {
                 setLoading(false);
-                e.target.value = '';
+                setRestoreFile(null);
             }
         };
         reader.onerror = () => {
@@ -3443,6 +3446,59 @@ const Admin = () => {
                                 <button onClick={() => setShowArchiveConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
                                 <button onClick={() => handleArchiveData(archiveDays)} className={styles.deleteBtn} style={{ padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Trash2 size={16} /> Confirm & Archive
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ========== CUSTOM RESTORE CONFIRMATION MODAL ========== */}
+                {showRestoreConfirm && (
+                    <div className={styles.modalOverlay} onClick={() => setShowRestoreConfirm(false)} style={{ zIndex: 1100 }}>
+                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', padding: 0 }}>
+                            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(108, 99, 255, 0.05)' }}>
+                                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color)', margin: 0 }}>
+                                    <Database size={20} /> Confirm Database Restore
+                                </h3>
+                                <button onClick={() => setShowRestoreConfirm(false)} className={styles.closeBtn}><X size={20} /></button>
+                            </div>
+                            <div style={{ padding: '1.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', padding: '1rem', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(108, 99, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)' }}>
+                                        <FileJson size={24} />
+                                    </div>
+                                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                                        <div style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.9rem', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {restoreFile?.name}
+                                        </div>
+                                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                                            {(restoreFile?.size / 1024).toFixed(2)} KB • JSON Backup
+                                        </div>
+                                    </div>
+                                </div>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '1.25rem' }}>
+                                    You are about to restore your entire database from this backup file. This will <strong>overwrite existing documents</strong> if they share the same IDs.
+                                </p>
+                                <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.1)', marginBottom: '1.5rem' }}>
+                                    <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                                        <AlertTriangle size={16} /> Warning: This action cannot be undone.
+                                    </p>
+                                </div>
+                                <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center' }}>
+                                    Are you ready to proceed with restoration?
+                                </p>
+                            </div>
+                            <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                                <button onClick={() => setShowRestoreConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
+                                <button
+                                    onClick={() => {
+                                        setShowRestoreConfirm(false);
+                                        processDatabaseRestore(restoreFile);
+                                    }}
+                                    className={styles.primaryBtn}
+                                    style={{ padding: '0.6rem 1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                >
+                                    <Upload size={16} /> Start Restoration
                                 </button>
                             </div>
                         </div>
