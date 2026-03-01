@@ -4,7 +4,7 @@ import { analytics, db } from '../firebase';
 import { logEvent } from 'firebase/analytics';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-const getSessionId = () => {
+export const getSessionId = () => {
     let sessionId = sessionStorage.getItem('analytics_session_id');
     if (!sessionId) {
         sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -13,7 +13,7 @@ const getSessionId = () => {
     return sessionId;
 };
 
-const getDeviceType = () => {
+export const getDeviceType = () => {
     const ua = navigator.userAgent;
     if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) return "tablet";
     if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) return "mobile";
