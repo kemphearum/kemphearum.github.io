@@ -12,6 +12,7 @@ import {
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useTheme } from '../context/ThemeContext';
 import { sortData } from '../utils/sortData';
+import { getSessionId, getDeviceType } from '../hooks/useAnalytics';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 // Icons as small components
@@ -87,13 +88,24 @@ const tabLabels = {
 // Toast notification component
 const Toast = ({ message, type, onClose }) => {
     useEffect(() => {
+        // Reset timer whenever message changes to allow progress updates to stay visible
         const timer = setTimeout(onClose, 4000);
         return () => clearTimeout(timer);
-    }, [onClose]);
+    }, [onClose, message]);
+
+    const getIcon = () => {
+        switch (type) {
+            case 'success': return '✓';
+            case 'error': return '✕';
+            case 'warning': return '⚠️';
+            case 'info': return 'ℹ️';
+            default: return '•';
+        }
+    };
 
     return (
         <div className={`${styles.toast} ${styles[type]} `}>
-            <span>{type === 'success' ? '✓' : '✕'}</span>
+            <span style={{ fontWeight: 'bold' }}>{getIcon()}</span>
             <p>{message}</p>
             <button onClick={onClose} className={styles.toastClose}>×</button>
         </div>
@@ -1853,13 +1865,17 @@ const Admin = () => {
                 }
             }
 
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+            const json = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
             const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("href", url);
             downloadAnchorNode.setAttribute("download", `portfolio_backup_${new Date().toISOString().split('T')[0]}.json`);
             document.body.appendChild(downloadAnchorNode);
             downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+            document.body.removeChild(downloadAnchorNode);
+            // Delay revocation to ensure download starts in all browsers
+            setTimeout(() => URL.revokeObjectURL(url), 150);
 
             showToast("Database exported successfully!", "success");
         } catch (error) {
@@ -1933,13 +1949,16 @@ const Admin = () => {
             }
 
             // 4. Trigger Download
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(archivedData, null, 2));
+            const json = JSON.stringify(archivedData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
             const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("href", url);
             downloadAnchorNode.setAttribute("download", `portfolio_ARCHIVE_${new Date().toISOString().split('T')[0]}.json`);
             document.body.appendChild(downloadAnchorNode);
             downloadAnchorNode.click();
-            downloadAnchorNode.remove();
+            document.body.removeChild(downloadAnchorNode);
+            URL.revokeObjectURL(url);
 
             // 5. Commit Deletion Batch
             await batch.commit();
@@ -1986,23 +2005,73 @@ const Admin = () => {
                     return newObj;
                 };
 
-                const restorePromises = [];
-                for (const [colName, docs] of Object.entries(importData)) {
-                    for (const [docId, docData] of Object.entries(docs)) {
-                        const processedData = restoreTimestamps(docData);
-                        const docRef = doc(db, colName, docId);
-                        restorePromises.push(setDoc(docRef, processedData));
+                if (userRole !== 'superadmin') {
+                    showToast('Only Superadmins can restore the database.', 'error');
+                    setLoading(false);
+                    return;
+                }
+
+                // Detect format
+                const isNewFormat = importData.collections && typeof importData.collections === 'object';
+                const collections = isNewFormat ? importData.collections : importData;
+
+                // Filter out metadata and invalid items
+                const collectionsToProcess = Object.entries(collections).filter(([key, val]) => {
+                    const metaFields = ['exportDate', 'archiveDate', 'cutoffDate', 'date', 'timestamp'];
+                    return !metaFields.includes(key) && val && typeof val === 'object';
+                });
+
+                const totalDocs = collectionsToProcess.reduce((acc, [_, docs]) => acc + Object.keys(docs).length, 0);
+
+                if (totalDocs === 0) {
+                    showToast('No valid database records found in the selected file.', 'warning');
+                    setLoading(false);
+                    return;
+                }
+
+                showToast(`Found ${totalDocs} records in ${collectionsToProcess.length} collections. Restoring...`, 'info');
+
+                let completedCount = 0;
+                let failedCollections = new Set();
+
+                for (const [colName, docs] of collectionsToProcess) {
+                    const docEntries = Object.entries(docs);
+                    // Process in small batches of 25 to avoid connection issues and identify specific failures
+                    for (let i = 0; i < docEntries.length; i += 25) {
+                        const chunk = docEntries.slice(i, i + 25);
+                        const chunkPromises = chunk.map(async ([docId, docData]) => {
+                            try {
+                                const processedData = restoreTimestamps(docData);
+                                const docRef = doc(db, colName, docId);
+                                await setDoc(docRef, processedData);
+                                completedCount++;
+                            } catch (err) {
+                                console.error(`Restore failed for ${colName}/${docId}:`, err);
+                                failedCollections.add(colName);
+                            }
+                        });
+                        await Promise.all(chunkPromises);
+
+                        // Update progress in the toast for better user feedback
+                        const progress = Math.round((completedCount / totalDocs) * 100);
+                        if (progress < 100) {
+                            showToast(`Restoring: ${completedCount} / ${totalDocs} (${progress}%)...`, 'info');
+                        }
                     }
                 }
 
-                await Promise.all(restorePromises);
-                trackWrite(restorePromises.length);
-
+                trackWrite(completedCount);
                 invalidateCache();
-                showToast('Restore completed successfully!');
 
+                if (failedCollections.size > 0) {
+                    showToast(`Restore partially completed (${completedCount}/${totalDocs}). Issues on: ${Array.from(failedCollections).join(', ')}`, 'warning');
+                } else {
+                    showToast(`Successfully restored ${completedCount} records!`);
+                }
+
+                // Refresh the current view
                 if (activeTab === 'audit') fetchAuditLogs();
-                if (activeTab === 'analytics') fetchAnalytics();
+                else if (activeTab === 'analytics') fetchAnalytics();
                 else if (activeTab === 'messages') fetchMessages();
                 else if (activeTab === 'blog') fetchPosts();
                 else if (activeTab === 'users') fetchUsers();
@@ -3302,11 +3371,10 @@ const Admin = () => {
                                     </div>
                                 </div>
 
-                                {/* Maintenance Actions */}
-                                <div className={styles.card} style={{ gridColumn: '1 / -1', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-light)' }}>
-                                    <div className={styles.cardHeader} style={{ paddingBottom: '1rem', borderBottom: '1px solid var(--border-color)', marginBottom: '1.5rem' }}>
-                                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fb923c' }}>
-                                            <Trash2 size={16} /> Archive & Purge Old Data
+                                <div className={styles.card}>
+                                    <div className={styles.cardHeader}>
+                                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                            <Trash2 size={18} /> Archive & Purge Old Data
                                         </h4>
                                     </div>
                                     <div style={{ padding: '0 1.5rem 1.5rem', display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -3319,7 +3387,7 @@ const Admin = () => {
                                                 <select
                                                     value={archiveDays}
                                                     onChange={(e) => setArchiveDays(Number(e.target.value))}
-                                                    style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', background: 'var(--input-bg)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', outline: 'none', cursor: 'pointer' }}
+                                                    className={styles.standardSelect}
                                                 >
                                                     <option value={7}>7 Days (1 Week)</option>
                                                     <option value={14}>14 Days (2 Weeks)</option>
@@ -3334,27 +3402,9 @@ const Admin = () => {
                                             onClick={() => setShowArchiveConfirm(true)}
                                             disabled={loading}
                                             className={styles.deleteBtn}
-                                            style={{
-                                                padding: '0.8rem 1.5rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem',
-                                                whiteSpace: 'nowrap',
-                                                color: '#ef4444',
-                                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                                background: 'rgba(239, 68, 68, 0.1)',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                            onMouseEnter={e => {
-                                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-                                                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)';
-                                            }}
-                                            onMouseLeave={e => {
-                                                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
-                                                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.3)';
-                                            }}
+                                            style={{ padding: '0.85rem 1.75rem' }}
                                         >
-                                            <Trash2 size={16} /> {loading ? 'Archiving...' : `Archive & Delete (>${archiveDays} Days)`}
+                                            <Trash2 size={18} /> {loading ? 'Archiving...' : `Archive & Delete (>${archiveDays} Days)`}
                                         </button>
                                     </div>
                                 </div>
@@ -4209,7 +4259,12 @@ const Admin = () => {
                                     </div>
                                     <div className={styles.formGroup}>
                                         <label>Initial Role</label>
-                                        <select value={newUserRole} onChange={(e) => setNewUserRole(e.target.value)} style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', background: 'var(--input-bg)', color: 'var(--text-primary)', border: '1px solid var(--input-border)' }}>
+                                        <select
+                                            value={newUserRole}
+                                            onChange={(e) => setNewUserRole(e.target.value)}
+                                            className={styles.standardSelect}
+                                            style={{ width: '100%' }}
+                                        >
                                             <option value="pending">Pending</option>
                                             <option value="editor">Editor</option>
                                             <option value="admin">Admin</option>
@@ -4357,8 +4412,8 @@ const Admin = () => {
                                         ) : (
                                             <div className={styles.roleSelectWrapper} style={{ marginTop: '0.4rem' }}>
                                                 <select
-                                                    className={styles.roleSelect}
-                                                    style={{ width: '100%', padding: '0.6rem', background: 'rgba(255,255,255,0.03)' }}
+                                                    className={styles.standardSelect}
+                                                    style={{ width: '100%' }}
                                                     value={viewingUser.role}
                                                     onChange={(e) => {
                                                         const newRole = e.target.value;

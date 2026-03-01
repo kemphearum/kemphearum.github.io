@@ -34,11 +34,10 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.token.email == 'kem.phearum@gmail.com';
     }
 
-    // Login Audit Trail: Any authenticated user can append logs; only Superadmin can view/clear them
+    // Login Audit Trail: Any authenticated user can append logs; only Superadmin can view/clear/restore them
     match /auditLogs/{document=**} {
       allow create: if request.auth != null;
-      allow read, delete: if request.auth != null && request.auth.token.email == 'kem.phearum@gmail.com';
-      allow update: if false; // Logs should be immutable
+      allow read, write: if request.auth != null && request.auth.token.email == 'kem.phearum@gmail.com';
     }
 
     // Analytics/Visits Tracking: Anyone can log a visit, only admin/superadmin can read
