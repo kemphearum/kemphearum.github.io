@@ -3635,19 +3635,24 @@ const Admin = () => {
                                             <div className={styles.emptyState}>{searchUsers ? 'No matching logs found.' : 'No audit logs recorded yet.'}</div>
                                         ) : (
                                             <>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 2fr 1.5fr', gap: '1rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 0.8fr 1.8fr 1.2fr', gap: '0.75rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                                                     <SortableHeader label="User Email" field="email" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                                     <SortableHeader label="IP Address" field="ipAddress" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
+                                                    <SortableHeader label="Device" field="deviceType" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                                     <SortableHeader label="User Agent" field="userAgent" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                                     <SortableHeader label="Timestamp" field="timestamp" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                                 </div>
                                                 {paginatedAuditLogs.map(log => (
-                                                    <div key={log.id} onClick={() => setSelectedAuditLog(log)} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 2fr 1.5fr', gap: '1rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', fontSize: '0.85rem', alignItems: 'center', transition: 'background 0.2s ease', cursor: 'pointer' }} className={styles.userGridRowHover}>
+                                                    <div key={log.id} onClick={() => setSelectedAuditLog(log)} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 0.8fr 1.8fr 1.2fr', gap: '0.75rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', fontSize: '0.85rem', alignItems: 'center', transition: 'background 0.2s ease', cursor: 'pointer' }} className={styles.userGridRowHover}>
                                                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--primary-color)' }}>
                                                             {log.email}
                                                         </div>
                                                         <div style={{ fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
                                                             {log.ipAddress}
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)' }}>
+                                                            {log.deviceType === 'mobile' ? <Smartphone size={14} style={{ color: '#fb923c' }} /> : log.deviceType === 'tablet' ? <Tablet size={14} style={{ color: '#a78bfa' }} /> : <Monitor size={14} style={{ color: '#38bdf8' }} />}
+                                                            <span style={{ textTransform: 'capitalize' }}>{log.deviceType || 'Desktop'}</span>
                                                         </div>
                                                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)', fontSize: '0.8rem' }} title={log.userAgent}>
                                                             {log.userAgent}
