@@ -141,14 +141,14 @@
     position: fixed;
     left: 0;
     top: 56px;
-    background: linear-gradient(180deg, var(--bg-surface-light) 0%, rgba(10, 10, 18, 0.95) 100%);
+    background: var(--sidebar-bg, linear-gradient(180deg, var(--bg-surface-light) 0%, rgba(10, 10, 18, 0.95) 100%));
     backdrop-filter: blur(25px);
-    border-right: 1px solid var(--glass-border);
+    border-right: 1px solid var(--divider);
     display: flex;
     flex-direction: column;
     z-index: 200;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.05);
 
     // Default desktop: expanded
     transform: translateX(0);
@@ -169,10 +169,10 @@
     left: 0;
     width: 100%;
     padding: 0 1.5rem;
-    background: rgba(10, 10, 18, 0.7);
+    background: var(--topnav-bg, rgba(10, 10, 18, 0.7));
     backdrop-filter: blur(25px);
-    border-bottom: 1px solid var(--glass-border);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--divider);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     height: 56px;
     z-index: 300;
 }
@@ -261,22 +261,26 @@
         font-weight: 500;
         transition: all 0.25s ease;
         position: relative;
+        background: transparent;
+        border: none;
+        width: 100%;
+        cursor: pointer;
 
         &:hover {
             color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--card-hover, rgba(255, 255, 255, 0.05));
             transform: translateX(4px);
         }
 
         &.active {
-            color: white;
-            background: linear-gradient(90deg, rgba($primary-color, 0.15) 0%, transparent 100%);
+            color: var(--primary-color, $primary-color);
+            background: linear-gradient(90deg, rgba($primary-color, 0.1) 0%, transparent 100%);
             font-weight: 600;
-            box-shadow: inset 2px 0 0 $primary-color;
+            box-shadow: inset 3px 0 0 var(--primary-color, $primary-color);
 
             svg {
-                color: $primary-color;
-                filter: drop-shadow(0 0 5px rgba($primary-color, 0.5));
+                color: var(--primary-color, $primary-color);
+                filter: drop-shadow(0 0 5px rgba($primary-color, 0.3));
             }
 
             &::before {
@@ -327,8 +331,8 @@
     position: sticky;
     top: 56px;
     z-index: 100;
-    background: var(--bg-surface-light);
-    backdrop-filter: blur(16px);
+    background: var(--topnav-bg, var(--bg-surface-light));
+    backdrop-filter: blur(25px);
     margin-left: -2.5rem;
     margin-right: -2.5rem;
     padding-left: 2.5rem;
@@ -468,13 +472,13 @@
     padding: 2.25rem;
     margin-bottom: 2rem;
     animation: fadeIn 0.4s ease;
-    background: linear-gradient(145deg, var(--glass-surface), rgba(255, 255, 255, 0.01));
+    background: var(--card-bg-gradient, linear-gradient(145deg, var(--glass-surface), rgba(255, 255, 255, 0.01)));
     box-shadow: var(--glass-shadow), inset 0 0 20px rgba(255, 255, 255, 0.02);
     border: 1px solid var(--glass-border);
 
     &:hover {
-        border-color: rgba($primary-color, 0.2);
-        box-shadow: var(--glass-shadow), 0 0 25px rgba($primary-color, 0.05);
+        border-color: rgba($primary-color, 0.3);
+        box-shadow: var(--glass-shadow), 0 0 25px rgba($primary-color, 0.08);
     }
 }
 

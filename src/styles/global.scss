@@ -42,6 +42,9 @@ html {
     --hero-gradient-start: #f0f0f5;
     --hero-gradient-end: rgba(108, 99, 255, 0.9);
     --heading-color: #f0f0f5;
+    --card-bg-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+    --card-hover: rgba(255, 255, 255, 0.06);
+    --primary-color: #6C63FF;
 }
 
 [data-theme="light"] {
@@ -71,6 +74,11 @@ html {
     --hero-gradient-start: #1a1a2e;
     --hero-gradient-end: #6C63FF;
     --heading-color: #1a1a2e;
+    --sidebar-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(244, 244, 251, 0.9) 100%);
+    --topnav-bg: rgba(255, 255, 255, 0.85);
+    --card-bg-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.5) 100%);
+    --card-hover: rgba(108, 99, 255, 0.05);
+    --primary-color: #6C63FF;
 }
 
 body {
