@@ -3666,27 +3666,52 @@ const Admin = () => {
 
                             {/* Audit Details Modal */}
                             {selectedAuditLog && (
-                                <div className={styles.auditDetailsOverlay} onClick={() => setSelectedAuditLog(null)}>
-                                    <div className={styles.auditDetailsModal} onClick={e => e.stopPropagation()}>
-                                        <div className={styles.modalHeader}>
-                                            <h3><Shield size={20} style={{ color: 'var(--primary-color)' }} /> Audit Log Details</h3>
-                                            <button onClick={() => setSelectedAuditLog(null)} className={styles.closeModalBtn}><X size={20} /></button>
+                                <div className={styles.modalOverlay} onClick={() => setSelectedAuditLog(null)} style={{ zIndex: 1100 }}>
+                                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', padding: 0, animation: 'modalFadeIn 0.25s ease forwards' }}>
+                                        <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(100, 255, 218, 0.03)' }}>
+                                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color, #64ffda)', margin: 0 }}>
+                                                <Shield size={20} /> Audit Log Details
+                                            </h3>
+                                            <button onClick={() => setSelectedAuditLog(null)} className={styles.closeBtn}><X size={20} /></button>
                                         </div>
-                                        <div className={styles.modalContent}>
-                                            <div className={styles.detailGrid}>
-                                                <div className={styles.detailItem}><span className={styles.detailLabel}>User Email</span><span className={styles.detailValue}>{selectedAuditLog.email}</span></div>
-                                                <div className={styles.detailItem}><span className={styles.detailLabel}>IP Address</span><span className={styles.detailValue}>{selectedAuditLog.ipAddress}</span></div>
-                                                <div className={styles.detailItem}><span className={styles.detailLabel}>Device</span><span className={styles.detailValue}>{selectedAuditLog.deviceType || 'Unknown'}</span></div>
-                                                <div className={styles.detailItem}><span className={styles.detailLabel}>Country</span><span className={styles.detailValue}>{selectedAuditLog.country || 'Unknown'}</span></div>
-                                                <div className={styles.detailItem}><span className={styles.detailLabel}>City</span><span className={styles.detailValue}>{selectedAuditLog.city || 'Unknown'}</span></div>
-                                                <div className={styles.detailItem}><span className={styles.detailLabel}>Session ID</span><span className={styles.detailValue}>{selectedAuditLog.sessionId || 'Unknown'}</span></div>
-                                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                                    <span className={styles.detailLabel}>Timestamp</span><span className={styles.detailValue}>{selectedAuditLog.timestamp?.seconds ? new Date(selectedAuditLog.timestamp.seconds * 1000).toLocaleString() : 'Unknown'}</span>
-                                                </div>
-                                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                                    <span className={styles.detailLabel}>User Agent</span><span className={styles.detailValue}>{selectedAuditLog.userAgent}</span>
-                                                </div>
+                                        <div style={{ padding: '1.5rem' }}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                                                {[
+                                                    { label: 'User Email', value: selectedAuditLog.email, icon: <Mail size={14} />, color: '#38bdf8', span: false },
+                                                    { label: 'IP Address', value: selectedAuditLog.ipAddress, icon: <Globe size={14} />, color: '#a78bfa', span: false },
+                                                    { label: 'Device', value: selectedAuditLog.deviceType || 'Unknown', icon: <Monitor size={14} />, color: '#fb923c', span: false },
+                                                    { label: 'Country', value: selectedAuditLog.country || 'Unknown', icon: <Globe size={14} />, color: '#34d399', span: false },
+                                                    { label: 'City', value: selectedAuditLog.city || 'Unknown', icon: <MapPin size={14} />, color: '#f472b6', span: false },
+                                                    { label: 'Session ID', value: selectedAuditLog.sessionId || 'Unknown', icon: <Key size={14} />, color: '#fbbf24', span: false },
+                                                    { label: 'Timestamp', value: selectedAuditLog.timestamp?.seconds ? new Date(selectedAuditLog.timestamp.seconds * 1000).toLocaleString() : 'Unknown', icon: <Clock size={14} />, color: '#64ffda', span: true },
+                                                    { label: 'User Agent', value: selectedAuditLog.userAgent || 'Unknown', icon: <Monitor size={14} />, color: '#94a3b8', span: true },
+                                                ].map((item, idx) => (
+                                                    <div key={idx} style={{
+                                                        gridColumn: item.span ? 'span 2' : 'auto',
+                                                        background: 'var(--card-bg, rgba(255,255,255,0.02))',
+                                                        border: '1px solid var(--border-color, rgba(255,255,255,0.06))',
+                                                        borderRadius: '10px',
+                                                        padding: '0.85rem 1rem',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        gap: '0.35rem',
+                                                        transition: 'all 0.2s ease'
+                                                    }}
+                                                        onMouseEnter={e => { e.currentTarget.style.borderColor = `${item.color}40`; e.currentTarget.style.background = `${item.color}08`; }}
+                                                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color, rgba(255,255,255,0.06))'; e.currentTarget.style.background = 'var(--card-bg, rgba(255,255,255,0.02))'; }}
+                                                    >
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: item.color, fontWeight: 600 }}>
+                                                            {item.icon} {item.label}
+                                                        </span>
+                                                        <span style={{ fontSize: '0.88rem', color: 'var(--text-primary)', fontWeight: 500, wordBreak: 'break-word', lineHeight: 1.5 }}>
+                                                            {item.value}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                             </div>
+                                        </div>
+                                        <div className={styles.modalFooter} style={{ padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', display: 'flex', justifyContent: 'flex-end' }}>
+                                            <button onClick={() => setSelectedAuditLog(null)} className={styles.cancelBtn} style={{ padding: '0.5rem 1.25rem' }}>Close</button>
                                         </div>
                                     </div>
                                 </div>
