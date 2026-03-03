@@ -306,7 +306,7 @@ const Admin = () => {
             showToast('Permission error loading settings. Please check Firestore rules.', 'error');
         });
         return () => unsubscribe();
-    }, []);
+    }, [showToast]);
 
     const handleUpdateAuditSetting = async (key, value) => {
         try {
@@ -356,6 +356,53 @@ const Admin = () => {
         fetchHistory();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activityDateRange, dailyUsage.reads, dailyUsage.writes, dailyUsage.deletes]);
+
+    const handleActivityDetail = useCallback(async (type) => {
+        setActivityDetailType(type);
+        setActivityLogs([]);
+        setActivityLogsLoading(true);
+
+        try {
+            const operationType = type === 'reads' ? 'read' : (type === 'writes' ? 'write' : 'delete');
+            let q;
+
+            if (activityDateRange === 'today') {
+                // Fetch today's granular logs from the subcollection
+                q = query(
+                    collection(db, 'dailyUsage', currentDateKey, 'logs'),
+                    where('type', '==', operationType),
+                    orderBy('time', 'desc'),
+                    firestoreLimit(100)
+                );
+            } else {
+                // Fetch historical granular logs using collectionGroup
+                const limitVal = activityDateRange === '7d' ? 300 : (activityDateRange === '30d' ? 500 : 1000);
+
+                // Calculate start date based on range
+                let startDate = new Date();
+                if (activityDateRange === '7d') startDate.setDate(startDate.getDate() - 7);
+                else if (activityDateRange === '30d') startDate.setDate(startDate.getDate() - 30);
+                else startDate.setFullYear(2020); // Beginning of time
+
+                q = query(
+                    collectionGroup(db, 'logs'),
+                    where('type', '==', operationType),
+                    where('time', '>=', Timestamp.fromDate(startDate)),
+                    orderBy('time', 'desc'),
+                    firestoreLimit(limitVal)
+                );
+            }
+
+            const snap = await getDocs(q);
+            const logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setActivityLogs(logs);
+        } catch (error) {
+            console.error(`Error fetching ${type} details:`, error);
+            showToast(`Failed to load activity logs: ${error.message}`, 'error');
+        } finally {
+            setActivityLogsLoading(false);
+        }
+    }, [activityDateRange, currentDateKey, showToast]);
 
     const SOFT_DOC_LIMIT = 50000;
     const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
@@ -3662,11 +3709,355 @@ const Admin = () => {
                     )
                 }
 
+                {
+                    activeTab === 'users' && (
+                        <div className={styles.section} style={{ paddingBottom: '4rem' }}>
+                            <div className={styles.listSection} style={{ marginTop: '0' }}>
+                                <div className={styles.listSectionHeader}>
+                                    <h3 className={styles.listTitle}>User Management</h3>
+                                </div>
+
+                                {userRole !== 'superadmin' ? (
+                                    <div className={styles.emptyState}>Only Super Admins can manage users.</div>
+                                ) : (
+                                    <>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                            <div className={styles.searchBox} style={{ margin: 0, flex: 1, marginRight: '1rem' }}>
+                                                <Search size={16} className={styles.searchIcon} />
+                                                <input type="text" placeholder="Search by email or role..." value={searchUsers} onChange={(e) => { setSearchUsers(e.target.value); setUsersPage(1); }} />
+                                                {searchUsers && <span className={styles.searchResultCount}>{filteredUsers.length} of {usersList.length}</span>}
+                                            </div>
+
+                                            <button
+                                                onClick={() => setShowAddUserForm(!showAddUserForm)}
+                                                className={styles.primaryBtn}
+                                                style={{ margin: 0 }}
+                                            >
+                                                {showAddUserForm ? 'Cancel' : '+ Add User'}
+                                            </button>
+                                        </div>
+
+                                        {/* Add User Button */}
+                                        {filteredUsers.length === 0 ? (
+                                            <div className={styles.emptyState}>{searchUsers ? 'No matching users found.' : 'No users registered yet.'}</div>
+                                        ) : (
+                                            <>
+                                                <div className={styles.userGridHeader}>
+                                                    <SortableHeader label="User" field="email" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
+                                                    <SortableHeader label="Role" field="role" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
+                                                    <SortableHeader label="Registered" field="createdAt" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
+                                                    <div style={{ textAlign: 'right' }}>Actions</div>
+                                                </div>
+                                                {paginatedUsers.map(u => {
+                                                    const initials = (u.displayName || u.email || '??').split(/[@.\s]/).filter(Boolean).slice(0, 2).map(s => s[0]).join('').toUpperCase();
+                                                    const avatarColors = {
+                                                        superadmin: 'linear-gradient(135deg, #10b981, #059669)',
+                                                        admin: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                                        editor: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                                        pending: 'linear-gradient(135deg, #ef4444, #dc2626)'
+                                                    };
+                                                    const roleBadgeClass = {
+                                                        superadmin: styles.roleSuperadmin,
+                                                        admin: styles.roleAdmin,
+                                                        editor: styles.roleEditor,
+                                                        pending: styles.rolePending
+                                                    }[u.role] || styles.rolePending;
+                                                    const roleLabels = { superadmin: '⭐ Super Admin', admin: '🛡️ Admin', editor: '✍️ Editor', pending: '⏳ Pending' };
+
+                                                    const isUserDisabled = u.isActive === false;
+
+                                                    return (
+                                                        <div
+                                                            key={u.id}
+                                                            className={`${styles.userCard} ${styles.userGridRowHover}`}
+                                                            style={{
+                                                                opacity: isUserDisabled ? 0.6 : 1,
+                                                                filter: isUserDisabled ? 'grayscale(100%)' : 'none',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                            onClick={(e) => {
+                                                                if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && !e.target.closest('button') && !e.target.closest('select')) {
+                                                                    setViewingUser(u);
+                                                                }
+                                                            }}
+                                                        >
+                                                            <div className={styles.userIdentity}>
+                                                                <div className={styles.userAvatar} style={{ background: avatarColors[u.role] || avatarColors.pending }}>
+                                                                    {initials}
+                                                                </div>
+                                                                <div className={styles.userIdentityText}>
+                                                                    <span className={styles.userEmailText} title={u.email}>
+                                                                        {isUserDisabled ? <strike>{u.email}</strike> : u.email}
+                                                                    </span>
+                                                                    {u.displayName && <span className={styles.userDisplayName}>{u.displayName}</span>}
+                                                                </div>
+                                                            </div>
+                                                            <div>
+                                                                {isUserDisabled ? (
+                                                                    <span className={`${styles.roleBadge} ${styles.rolePending}`} style={{ background: 'rgba(255,255,255,0.1)', color: '#888', border: '1px solid rgba(255,255,255,0.2)' }}>
+                                                                        🚫 Disabled
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className={`${styles.roleBadge} ${roleBadgeClass}`}>
+                                                                        {roleLabels[u.role] || u.role}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className={styles.userMeta}>
+                                                                {u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown'}
+                                                            </div>
+                                                            <div className={styles.userActions} style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                                                {u.email === user.email ? (
+                                                                    <span className={styles.youBadge} style={{ margin: 'auto 0 auto auto' }}>✓ You</span>
+                                                                ) : (
+                                                                    <>
+                                                                        <button
+                                                                            title="Edit Profile"
+                                                                            className={styles.editBtn}
+                                                                            onClick={(e) => { e.stopPropagation(); setViewingUser(u); }}
+                                                                        >
+                                                                            <Edit size={16} />
+                                                                        </button>
+                                                                        <button
+                                                                            title="Send Password Reset"
+                                                                            className={styles.editBtn}
+                                                                            onClick={(e) => { e.stopPropagation(); handleResetPassword(u.email); }}
+                                                                        >
+                                                                            <Key size={16} />
+                                                                        </button>
+                                                                        <button
+                                                                            title="Remove User"
+                                                                            className={styles.deleteBtn}
+                                                                            disabled={userRole !== 'superadmin' || u.role === 'superadmin'}
+                                                                            onClick={(e) => { e.stopPropagation(); handleRemoveUser(u.email, u.id); }}
+                                                                            style={{ opacity: (userRole !== 'superadmin' || u.role === 'superadmin') ? 0.3 : 1, cursor: (userRole !== 'superadmin' || u.role === 'superadmin') ? 'not-allowed' : 'pointer' }}
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                                <Pagination currentPage={usersPage} totalPages={usersTotalPages} onPageChange={setUsersPage} perPage={usersPerPage} onPerPageChange={(v) => { setUsersPerPage(v); setUsersPage(1); }} totalItems={filteredUsers.length} />
+                                            </>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+
+                            {/* ========== ROLE PERMISSIONS MANAGER ========== */}
+                            {userRole === 'superadmin' && (
+                                <div style={{ marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '2rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                        <div>
+                                            <h3 className={styles.listTitle} style={{ marginBottom: '0.25rem' }}>Role Permissions</h3>
+                                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>Control which sidebar tabs each role can access.</p>
+                                        </div>
+                                        <button onClick={() => {
+                                            if (!showRolePerms) {
+                                                // Initialize editingRolePerms with current state
+                                                const allRoles = ['pending', 'editor', 'admin'];
+                                                const initial = {};
+                                                allRoles.forEach(r => { initial[r] = [...(rolePermissions[r] || [])]; });
+                                                setEditingRolePerms(initial);
+                                            }
+                                            setShowRolePerms(!showRolePerms);
+                                        }} className={styles.primaryBtn}>
+                                            {showRolePerms ? 'Close Editor' : '⚙️ Configure Permissions'}
+                                        </button>
+                                    </div>
+
+                                    {showRolePerms && (() => {
+                                        const managedRoles = ['pending', 'editor', 'admin'];
+                                        const allTabs = Object.keys(tabLabels).filter(t => t !== 'profile' && t !== 'users');
+
+                                        return (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                                {managedRoles.map(role => (
+                                                    <div key={role} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem 1.5rem' }}>
+                                                        <h4 style={{ margin: '0 0 1rem 0', textTransform: 'capitalize', fontSize: '1rem', color: 'var(--text-primary)' }}>
+                                                            {role === 'pending' ? '⏳ Pending' : role === 'editor' ? '✍️ Editor' : '🛡️ Admin'} Role
+                                                        </h4>
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+                                                            {allTabs.map(tab => {
+                                                                const checked = (editingRolePerms[role] || []).includes(tab);
+                                                                return (
+                                                                    <label key={tab} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.85rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: `1px solid ${checked ? 'rgba(100,255,218,0.3)' : 'rgba(255,255,255,0.08)'}`, background: checked ? 'rgba(100,255,218,0.07)' : 'transparent', color: checked ? 'var(--primary-color)' : 'var(--text-secondary)', transition: 'all 0.2s ease' }}>
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={checked}
+                                                                            style={{ accentColor: 'var(--primary-color)' }}
+                                                                            onChange={e => {
+                                                                                const current = [...(editingRolePerms[role] || [])];
+                                                                                const updated = e.target.checked
+                                                                                    ? [...current, tab]
+                                                                                    : current.filter(t => t !== tab);
+                                                                                setEditingRolePerms(prev => ({ ...prev, [role]: updated }));
+                                                                            }}
+                                                                        />
+                                                                        {tabLabels[tab]}
+                                                                    </label>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => saveRolePermissions(role, editingRolePerms[role] || [])}
+                                                            className={styles.primaryBtn}
+                                                            style={{ fontSize: '0.8rem', padding: '0.4rem 1rem' }}
+                                                        >
+                                                            Save {role} permissions
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            )}
+                        </div>
+                    )
+                }
+
                 {/* ========== AUDIT LOGS TAB ========== */}
                 {
                     activeTab === 'audit' && (
-                        <>
-                            <div className={styles.listSectionHeader}>
+                        <div style={{ paddingBottom: '3rem' }}>
+                            {/* ========== ESTIMATED ACTIVITY CARDS ========== */}
+                            <div style={{ marginBottom: '2.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                                    <div>
+                                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, fontSize: '1.25rem' }}>
+                                            <Activity size={22} className={styles.pulse} style={{ color: 'var(--primary-color)' }} /> Estimated Activity
+                                            <div className={styles.tooltipContainer} style={{ marginLeft: '4px' }}>
+                                                <AlertCircle size={14} style={{ opacity: 0.5, cursor: 'help' }} />
+                                                <span className={styles.tooltipText} style={{ width: '200px' }}>Real-time estimation of Firestore document operations. Limits based on free tier usage.</span>
+                                            </div>
+                                        </h3>
+                                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem', marginBottom: 0 }}>
+                                            Manage your portfolio audit
+                                        </p>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.35rem 0.75rem' }}>
+                                            <Filter size={14} style={{ opacity: 0.6 }} />
+                                            <select
+                                                value={activityDateRange}
+                                                onChange={(e) => setActivityDateRange(e.target.value)}
+                                                style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}
+                                            >
+                                                <option value="today">Today</option>
+                                                <option value="7d">Last 7 Days</option>
+                                                <option value="30d">Last 30 Days</option>
+                                                <option value="all">All Time</option>
+                                            </select>
+                                        </div>
+                                        <button
+                                            onClick={async () => {
+                                                setIsRefreshingActivity(true);
+                                                try {
+                                                    await refreshActivity();
+                                                    showToast('Activity data refreshed!', 'success');
+                                                } catch {
+                                                    showToast('Failed to refresh activity', 'error');
+                                                } finally {
+                                                    setIsRefreshingActivity(false);
+                                                }
+                                            }}
+                                            className={styles.iconBtn}
+                                            title="Refresh Stats"
+                                            disabled={isRefreshingActivity}
+                                            style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', height: '36px' }}
+                                        >
+                                            <RefreshCw size={16} className={isRefreshingActivity ? styles.spin : ''} />
+                                            <span style={{ fontSize: '0.7rem', marginLeft: '0.4rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Refresh</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className={styles.analyticsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+                                    {/* READS Card */}
+                                    <div
+                                        className={`${styles.statCard} ${styles.activityDetailCard} ${aggregatedUsage.reads > 40000 ? styles.highUsage : ''}`}
+                                        onClick={() => handleActivityDetail('reads')}
+                                        style={{ borderTop: 'none', borderLeft: '3px solid #38bdf8', background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, rgba(56, 189, 248, 0.01) 100%)' }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <span className={styles.statLabel} style={{ color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                <Eye size={16} /> READS
+                                            </span>
+                                            <div style={{ fontSize: '0.65rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                                                {((aggregatedUsage.reads / SOFT_DOC_LIMIT) * 100).toFixed(1)}%
+                                            </div>
+                                        </div>
+                                        <div className={styles.statValue} style={{ fontSize: '1.8rem', margin: '0.5rem 0' }}>
+                                            {isAggregating ? '...' : ((aggregatedUsage.reads || 0) + (activityDateRange === 'today' ? pendingRef.current.reads : 0)).toLocaleString()}
+                                            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}> / {SOFT_DOC_LIMIT.toLocaleString()}</span>
+                                        </div>
+                                        <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+                                            <div style={{ width: `${Math.min(100, (aggregatedUsage.reads / SOFT_DOC_LIMIT) * 100)}%`, height: '100%', background: '#38bdf8', boxShadow: '0 0 8px rgba(56, 189, 248, 0.4)' }} />
+                                        </div>
+                                        <span className={styles.viewDetailsLink} style={{ color: '#38bdf8' }}>
+                                            View Details <ChevronRight size={14} />
+                                        </span>
+                                    </div>
+
+                                    {/* WRITES Card */}
+                                    <div
+                                        className={`${styles.statCard} ${styles.activityDetailCard} ${aggregatedUsage.writes > 15000 ? styles.highUsage : ''}`}
+                                        onClick={() => handleActivityDetail('writes')}
+                                        style={{ borderTop: 'none', borderLeft: '3px solid #a78bfa', background: 'linear-gradient(135deg, rgba(167, 139, 250, 0.05) 0%, rgba(167, 139, 250, 0.01) 100%)' }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <span className={styles.statLabel} style={{ color: '#a78bfa', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                <Edit2 size={16} /> WRITES
+                                            </span>
+                                            <div style={{ fontSize: '0.65rem', background: 'rgba(167, 139, 250, 0.15)', color: '#a78bfa', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                                                {((aggregatedUsage.writes / 20000) * 100).toFixed(1)}%
+                                            </div>
+                                        </div>
+                                        <div className={styles.statValue} style={{ fontSize: '1.8rem', margin: '0.5rem 0' }}>
+                                            {isAggregating ? '...' : ((aggregatedUsage.writes || 0) + (activityDateRange === 'today' ? pendingRef.current.writes : 0)).toLocaleString()}
+                                            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}> / 20,000</span>
+                                        </div>
+                                        <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+                                            <div style={{ width: `${Math.min(100, (aggregatedUsage.writes / 20000) * 100)}%`, height: '100%', background: '#a78bfa', boxShadow: '0 0 8px rgba(167, 139, 250, 0.4)' }} />
+                                        </div>
+                                        <span className={styles.viewDetailsLink} style={{ color: '#a78bfa' }}>
+                                            View Details <ChevronRight size={14} />
+                                        </span>
+                                    </div>
+
+                                    {/* DELETES Card */}
+                                    <div
+                                        className={`${styles.statCard} ${styles.activityDetailCard} ${aggregatedUsage.deletes > 15000 ? styles.highUsage : ''}`}
+                                        onClick={() => handleActivityDetail('deletes')}
+                                        style={{ borderTop: 'none', borderLeft: '3px solid #fb923c', background: 'linear-gradient(135deg, rgba(251, 146, 60, 0.05) 0%, rgba(251, 146, 60, 0.01) 100%)' }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <span className={styles.statLabel} style={{ color: '#fb923c', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                <Trash2 size={16} /> DELETES
+                                            </span>
+                                            <div style={{ fontSize: '0.65rem', background: 'rgba(251, 146, 60, 0.15)', color: '#fb923c', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                                                {((aggregatedUsage.deletes / 20000) * 100).toFixed(1)}%
+                                            </div>
+                                        </div>
+                                        <div className={styles.statValue} style={{ fontSize: '1.8rem', margin: '0.5rem 0' }}>
+                                            {isAggregating ? '...' : ((aggregatedUsage.deletes || 0) + (activityDateRange === 'today' ? pendingRef.current.deletes : 0)).toLocaleString()}
+                                            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 'normal' }}> / 20,000</span>
+                                        </div>
+                                        <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden', marginBottom: '1rem' }}>
+                                            <div style={{ width: `${Math.min(100, (aggregatedUsage.deletes / 20000) * 100)}%`, height: '100%', background: '#fb923c', boxShadow: '0 0 8px rgba(251, 146, 60, 0.4)' }} />
+                                        </div>
+                                        <span className={styles.viewDetailsLink} style={{ color: '#fb923c' }}>
+                                            View Details <ChevronRight size={14} />
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={styles.listSectionHeader} style={{ marginTop: '3rem', borderTop: '1px solid var(--divider)', paddingTop: '2rem' }}>
                                 <h3 className={styles.listTitle}>Login Audit Trail</h3>
                             </div>
 
@@ -3731,7 +4122,7 @@ const Admin = () => {
                                     )}
                                 </>
                             )}
-                        </>
+                        </div>
                     )
                 }
 
