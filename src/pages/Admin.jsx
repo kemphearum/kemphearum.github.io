@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { auth, db } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from 'firebase/auth';
-import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, query, setDoc, getDoc, updateDoc, where, Timestamp, writeBatch, limit, getCountFromServer } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, query, setDoc, getDoc, updateDoc, where, Timestamp, writeBatch, limit as firestoreLimit, getCountFromServer } from 'firebase/firestore';
 import imageCompression from 'browser-image-compression';
 import styles from './Admin.module.scss';
 import { useNavigate } from 'react-router-dom';
 import { invalidateCache } from '../hooks/useFirebaseData';
 import {
-    LayoutDashboard, Users, LogOut, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Check, X, Shield, Settings, Activity, FileText, Code, Database, Globe, Download, Upload, Mail, Eye, Trash2, Github, ExternalLink, Calendar, Search, FileEdit, Plus, RefreshCw, Smartphone, Key, BarChart2, Folder, Clock, Server, EyeOff, Layout, Type, ShieldAlert, BookOpen, AlertCircle, Edit, Edit2, List, User, UserPlus, Bold, Italic, Link as LinkIcon, Sun, Moon, Star, ArrowUpDown, MailOpen, Monitor, Tablet, TrendingUp, MapPin, Share2, Eye as EyeIcon, FileJson, AlertTriangle
+    LayoutDashboard, Users, LogOut, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Check, X, Shield, Settings, Activity, FileText, Code, Database, Globe, Download, Upload, Mail, Eye, Trash2, Github, ExternalLink, Calendar, Search, FileEdit, Plus, RefreshCw, Smartphone, Key, BarChart2, Folder, Clock, Server, EyeOff, Layout, Type, ShieldAlert, BookOpen, AlertCircle, Edit, Edit2, List, User, UserPlus, Bold, Italic, Link as LinkIcon, Sun, Moon, Star, ArrowUpDown, MailOpen, Monitor, Tablet, TrendingUp, MapPin, Share2, Eye as EyeIcon, FileJson, AlertTriangle, Filter
 } from 'lucide-react';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { useTheme } from '../context/ThemeContext';
+import { useActivity } from '../hooks/useActivity';
 import { sortData } from '../utils/sortData';
 import { getSessionId, getDeviceType } from '../hooks/useAnalytics';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
@@ -269,50 +270,56 @@ const Admin = () => {
         loading: false
     });
 
-    // Daily Usage Tracker State
-    const [dailyUsage, setDailyUsage] = useState(() => {
-        const stored = localStorage.getItem('firebase_daily_usage');
-        const today = new Date().toDateString();
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            if (parsed.date === today) return parsed;
-        }
-        return { date: today, reads: 0, writes: 0, deletes: 0 };
-    });
+    const { dailyUsage, currentDateKey, trackRead, trackWrite, trackDelete, pendingRef, resetActivity } = useActivity();
+    const [activityDetailType, setActivityDetailType] = useState(null);
+    const [activityLogs, setActivityLogs] = useState([]);
+    const [activityLogsLoading, setActivityLogsLoading] = useState(false);
+    const [activityDateRange, setActivityDateRange] = useState('today'); // 'today' | '7d' | '30d' | 'all'
+    const [aggregatedUsage, setAggregatedUsage] = useState({ reads: 0, writes: 0, deletes: 0 });
+    const [isAggregating, setIsAggregating] = useState(false);
 
     useEffect(() => {
-        localStorage.setItem('firebase_daily_usage', JSON.stringify(dailyUsage));
-    }, [dailyUsage]);
+        if (activityDateRange === 'today') {
+            setAggregatedUsage(dailyUsage);
+            return;
+        }
 
-    const trackRead = useCallback((count = 1) => {
-        setDailyUsage(prev => {
-            const today = new Date().toDateString();
-            if (prev.date !== today) return { date: today, reads: count, writes: 0, deletes: 0 };
-            return { ...prev, reads: prev.reads + count };
-        });
-    }, []);
-
-    const trackWrite = useCallback((count = 1) => {
-        setDailyUsage(prev => {
-            const today = new Date().toDateString();
-            if (prev.date !== today) return { date: today, reads: 0, writes: count, deletes: 0 };
-            return { ...prev, writes: prev.writes + count };
-        });
-    }, []);
-
-    const trackDelete = useCallback((count = 1) => {
-        setDailyUsage(prev => {
-            const today = new Date().toDateString();
-            if (prev.date !== today) return { date: today, reads: 0, writes: 0, deletes: count };
-            return { ...prev, deletes: prev.deletes + count };
-        });
-    }, []);
+        const fetchHistory = async () => {
+            setIsAggregating(true);
+            try {
+                const limitVal = activityDateRange === '7d' ? 7 : (activityDateRange === '30d' ? 30 : 365);
+                const q = query(
+                    collection(db, 'dailyUsage'),
+                    orderBy('__name__', 'desc'),
+                    firestoreLimit(limitVal)
+                );
+                const snap = await getDocs(q);
+                let reads = 0, writes = 0, deletes = 0;
+                snap.forEach(d => {
+                    const data = d.data();
+                    reads += data.reads || 0;
+                    writes += data.writes || 0;
+                    deletes += data.deletes || 0;
+                });
+                setAggregatedUsage({ reads, writes, deletes });
+            } catch (err) {
+                console.error('Failed to fetch historical activity:', err);
+                setAggregatedUsage(dailyUsage);
+            } finally {
+                setIsAggregating(false);
+            }
+        };
+        fetchHistory();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activityDateRange, dailyUsage.reads, dailyUsage.writes, dailyUsage.deletes]);
 
     const SOFT_DOC_LIMIT = 50000;
     const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+    const [isRefreshingActivity, setIsRefreshingActivity] = useState(false);
     const [archiveDays, setArchiveDays] = useState(30);
     const [auditLogsList, setAuditLogsList] = useState([]);
     const [selectedAuditLog, setSelectedAuditLog] = useState(null);
+    const [auditDateRange, setAuditDateRange] = useState('all'); // 'all' | 'today' | '7d' | '30d'
 
     // Analytics State
     const [visits, setVisits] = useState([]);
@@ -324,6 +331,9 @@ const Admin = () => {
         return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0], preset: '30d' };
     });
     const [analyticsDetail, setAnalyticsDetail] = useState(null); // 'visits' | 'countries' | 'devices' | 'pages' | null
+    const [analyticsLogs, setAnalyticsLogs] = useState([]);
+    const [analyticsLogsLoading, setAnalyticsLogsLoading] = useState(false);
+    const [analyticsLogsTotal, setAnalyticsLogsTotal] = useState(0);
 
     // Search & Pagination State
     const [searchExperience, setSearchExperience] = useState('');
@@ -433,12 +443,29 @@ const Admin = () => {
     }, [usersList, searchUsers, usersSort]);
 
     const filteredAuditLogs = useMemo(() => {
-        const filtered = auditLogsList.filter(log =>
-            (log.email || '').toLowerCase().includes(searchUsers.toLowerCase()) ||
-            (log.ipAddress || '').includes(searchUsers)
-        );
+        const now = new Date();
+        let startDate = null;
+        if (auditDateRange === 'today') {
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        } else if (auditDateRange === '7d') {
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        } else if (auditDateRange === '30d') {
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        }
+
+        const filtered = auditLogsList.filter(log => {
+            const matchesSearch = (log.email || '').toLowerCase().includes(searchUsers.toLowerCase()) ||
+                (log.ipAddress || '').includes(searchUsers);
+
+            let matchesDate = true;
+            if (startDate && log.timestamp?.seconds) {
+                const logDate = new Date(log.timestamp.seconds * 1000);
+                matchesDate = logDate >= startDate;
+            }
+            return matchesSearch && matchesDate;
+        });
         return sortData(filtered, auditSort);
-    }, [auditLogsList, searchUsers, auditSort]);
+    }, [auditLogsList, searchUsers, auditSort, auditDateRange]);
     const usersTotalPages = Math.ceil(filteredUsers.length / usersPerPage);
     const paginatedUsers = useMemo(() => filteredUsers.slice((usersPage - 1) * usersPerPage, usersPage * usersPerPage), [filteredUsers, usersPage, usersPerPage]);
 
@@ -529,6 +556,7 @@ const Admin = () => {
             }
         });
         return () => unsubscribe();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const compressImageToBase64 = async (file, options = {}) => {
@@ -573,7 +601,7 @@ const Admin = () => {
             await updateDoc(doc(db, "users", userId), {
                 displayName: userDisplayName
             });
-            trackWrite(1);
+            trackWrite(1, 'Updated profile');
             showToast("Profile updated successfully!");
         } catch (error) {
             console.error("Error updating profile:", error);
@@ -598,14 +626,14 @@ const Admin = () => {
             if (section === 'projects') {
                 const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
                 const querySnapshot = await getDocs(q);
-                trackRead(querySnapshot.size);
+                trackRead(querySnapshot.size, 'Fetched projects list');
                 const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setProjects(list);
             }
             if (section === 'blog') {
                 const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
                 const querySnapshot = await getDocs(q);
-                trackRead(querySnapshot.size);
+                trackRead(querySnapshot.size, 'Fetched blog posts list');
                 const list = querySnapshot.docs.map(doc => {
                     const data = doc.data();
                     delete data.id;
@@ -617,6 +645,7 @@ const Admin = () => {
             console.error(`Error fetching ${section} data: `, error);
             showToast(`Failed to load ${section} data.`, 'error');
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showToast]);
 
     const saveSectionData = async (section, data) => {
@@ -645,7 +674,7 @@ const Admin = () => {
         try {
             const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
             const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size);
+            trackRead(querySnapshot.size, 'Fetched users list for management');
 
             // Deduplication logic
             const uniqueUsers = new Map();
@@ -680,7 +709,7 @@ const Admin = () => {
             // Perform cleanup silently in the background
             if (docsToDelete.length > 0) {
                 console.log(`Cleaning up ${docsToDelete.length} duplicate user records...`);
-                Promise.all(docsToDelete.map(id => { trackDelete(1); return deleteDoc(doc(db, "users", id)); })).catch(console.error);
+                Promise.all(docsToDelete.map(id => { trackDelete(1, 'Cleaned duplicate user'); return deleteDoc(doc(db, "users", id)); })).catch(console.error);
             }
 
             let finalList = Array.from(uniqueUsers.values()).map(u => ({ id: u.id, ...u.data }));
@@ -696,15 +725,16 @@ const Admin = () => {
             console.error("Error fetching users:", error);
             showToast("Failed to load users.", "error");
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userRole, showToast]);
 
     const fetchAuditLogs = useCallback(async () => {
         if (userRole !== 'superadmin') return;
         try {
             setLoading(true);
-            const q = query(collection(db, 'auditLogs'), orderBy('timestamp', 'desc'), limit(100)); // Limit to last 100 for performance
+            const q = query(collection(db, 'auditLogs'), orderBy('timestamp', 'desc'), firestoreLimit(100)); // Limit to last 100 for performance
             const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size);
+            trackRead(querySnapshot.size, 'Fetched audit logs list');
             const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setAuditLogsList(data);
         } catch (error) {
@@ -713,6 +743,7 @@ const Admin = () => {
         } finally {
             setLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userRole, showToast]);
 
     // Database Health Functions
@@ -738,7 +769,7 @@ const Admin = () => {
                     try {
                         const snapshot = await getCountFromServer(collRef);
                         counts[key] = snapshot.data().count;
-                    } catch (e) {
+                    } catch {
                         // Some collections might not exist yet or fail perms, default to 0
                         counts[key] = 0;
                     }
@@ -772,7 +803,7 @@ const Admin = () => {
             );
 
             const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size);
+            trackRead(querySnapshot.size, 'Fetched analytics visits history');
             const visitDocs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setVisits(visitDocs);
         } catch (error) {
@@ -781,7 +812,54 @@ const Admin = () => {
         } finally {
             setAnalyticsLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userRole, showToast, analyticsRange]);
+
+    const handleAnalyticsDetail = useCallback(async (type, page = 1) => {
+        setAnalyticsDetail(type);
+        setAnalyticsLogsLoading(true);
+        if (page === 1) {
+            setAnalyticsLogs([]);
+            setAnalyticsLogsTotal(0);
+        }
+
+        try {
+            const startDate = new Date(analyticsRange.start + 'T00:00:00');
+            const endDate = new Date(analyticsRange.end + 'T23:59:59');
+
+            let q = query(
+                collection(db, "visits"),
+                where("timestamp", ">=", startDate),
+                where("timestamp", "<=", endDate)
+            );
+
+            // Add specific filters if type is not just 'visits'
+            if (type === 'countries') {
+                // For countries, we might just want to see the list, but keep it general for now
+            } else if (type === 'devices') {
+                // Example: q = query(q, where('device', '==', selectedDevice));
+            }
+
+            // Get total count for pagination (only on first page load or type change)
+            if (page === 1) {
+                const totalSnap = await getCountFromServer(q);
+                setAnalyticsLogsTotal(totalSnap.data().count);
+            }
+
+
+            const querySnapshot = await getDocs(query(q, orderBy("timestamp", "desc"), firestoreLimit(200)));
+            trackRead(querySnapshot.size, `Fetched details for ${type}`);
+            const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setAnalyticsLogs(data);
+
+        } catch (error) {
+            console.error("Error fetching analytics details:", error);
+            showToast("Failed to load details.", "error");
+        } finally {
+            setAnalyticsLogsLoading(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [analyticsRange, showToast]);
 
     const handleAnalyticsPreset = useCallback((preset) => {
         const end = new Date();
@@ -888,7 +966,7 @@ const Admin = () => {
             // 0. Strict validation: Check if email already exists in Firestore first
             const existingQ = query(collection(db, "users"), where("email", "==", newUserEmail.toLowerCase().trim()));
             const existingSnap = await getDocs(existingQ);
-            trackRead(existingSnap.size);
+            trackRead(existingSnap.size, 'Checked existing user');
 
             if (!existingSnap.empty) {
                 showToast("This email is already registered in the database.", "error");
@@ -953,7 +1031,7 @@ const Admin = () => {
         try {
             const q = query(collection(db, "rolePermissions"));
             const snap = await getDocs(q);
-            trackRead(snap.size);
+            trackRead(snap.size, 'Fetched role permissions');
             const perms = {};
             snap.docs.forEach(d => {
                 perms[d.data().role] = d.data().allowedTabs || [];
@@ -962,6 +1040,7 @@ const Admin = () => {
         } catch (error) {
             console.error("Error fetching role permissions:", error);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const saveRolePermissions = async (role, allowedTabs) => {
@@ -975,10 +1054,10 @@ const Admin = () => {
             const snap = await getDocs(q);
             if (snap.empty) {
                 await addDoc(collection(db, "rolePermissions"), { role, allowedTabs });
-                trackWrite(1);
+                trackWrite(1, `Created ${role} permissions`);
             } else {
                 await updateDoc(snap.docs[0].ref, { allowedTabs });
-                trackWrite(1);
+                trackWrite(1, `Updated ${role} permissions`);
             }
             setRolePermissions(prev => ({ ...prev, [role]: allowedTabs }));
             showToast(`Permissions for '${role}' saved!`);
@@ -988,18 +1067,17 @@ const Admin = () => {
         }
     };
 
-
-
     // Project Functions
     const fetchProjects = useCallback(async () => {
         try {
             const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
             const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size);
+            trackRead(querySnapshot.size, 'Fetched projects');
             setProjects(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
         } catch (error) {
             console.error("Error fetching projects:", error);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleDeleteProject = async (id) => {
@@ -1010,7 +1088,7 @@ const Admin = () => {
         if (!window.confirm("Are you sure you want to delete this project?")) return;
         try {
             await deleteDoc(doc(db, "projects", id));
-            trackDelete(1);
+            trackDelete(1, 'Deleted project');
             invalidateCache('collection:projects');
             setProjects(projects.filter(p => p.id !== id));
             showToast('Project deleted.');
@@ -1056,7 +1134,7 @@ const Admin = () => {
                 featured: false,
                 createdAt: serverTimestamp()
             });
-            trackWrite(1);
+            trackWrite(1, 'Added new project');
             invalidateCache('collection:projects');
             showToast('Project added successfully!');
             setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
@@ -1112,7 +1190,7 @@ const Admin = () => {
                 techStack: project.techStack.split(',').map(item => item.trim()),
                 imageUrl
             });
-            trackWrite(1);
+            trackWrite(1, 'Updated project');
             showToast('Project updated successfully!');
             setEditingProject(null);
             setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
@@ -1131,11 +1209,12 @@ const Admin = () => {
         try {
             const q = query(collection(db, "experience"), orderBy("createdAt", "desc"));
             const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size);
+            trackRead(querySnapshot.size, 'Fetched experience');
             setExperiences(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
         } catch (error) {
             console.error("Error fetching experience:", error);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleDeleteExperience = async (id) => {
@@ -1146,7 +1225,7 @@ const Admin = () => {
         if (!window.confirm("Are you sure you want to delete this experience?")) return;
         try {
             await deleteDoc(doc(db, "experience", id));
-            trackDelete(1);
+            trackDelete(1, 'Deleted experience');
             invalidateCache('collection:experience');
             setExperiences(experiences.filter(e => e.id !== id));
             showToast('Experience deleted.');
@@ -1192,7 +1271,7 @@ const Admin = () => {
                 visible: true,
                 createdAt: serverTimestamp()
             });
-            trackWrite(1);
+            trackWrite(1, 'Added new experience');
             invalidateCache('collection:experience');
             showToast('Experience added successfully!');
             setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false });
@@ -1243,7 +1322,7 @@ const Admin = () => {
         try {
             const dataToSave = prepareExperienceForSave();
             await updateDoc(doc(db, "experience", editingExperience), { ...dataToSave });
-            trackWrite(1);
+            trackWrite(1, 'Updated experience');
             showToast('Experience updated successfully!');
             setEditingExperience(null);
             setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false });
@@ -1264,7 +1343,7 @@ const Admin = () => {
         }
         try {
             await updateDoc(doc(db, collectionName, id), { visible: !currentVisible });
-            trackWrite(1);
+            trackWrite(1, `Toggled visibility for ${collectionName}`);
             invalidateCache(`collection:${collectionName} `);
             if (collectionName === 'projects') {
                 setProjects(prev => prev.map(p => p.id === id ? { ...p, visible: !currentVisible } : p));
@@ -1287,7 +1366,7 @@ const Admin = () => {
         }
         try {
             await updateDoc(doc(db, 'projects', id), { featured: !currentFeatured });
-            trackWrite(1);
+            trackWrite(1, 'Toggled featured project');
             invalidateCache('collection:projects');
             setProjects(prev => prev.map(p => p.id === id ? { ...p, featured: !currentFeatured } : p));
             showToast(`Project ${!currentFeatured ? 'featured' : 'unfeatured'}.`);
@@ -1304,7 +1383,7 @@ const Admin = () => {
         }
         try {
             await updateDoc(doc(db, 'posts', id), { featured: !currentFeatured });
-            trackWrite(1);
+            trackWrite(1, 'Toggled featured blog post');
             invalidateCache('collection:posts');
             setPosts(prev => prev.map(p => p.id === id ? { ...p, featured: !currentFeatured } : p));
             showToast(`Post ${!currentFeatured ? 'featured' : 'unfeatured'}.`);
@@ -1318,11 +1397,12 @@ const Admin = () => {
         try {
             const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
             const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size);
+            trackRead(querySnapshot.size, 'Fetched inbox messages');
             setMessages(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
         } catch (error) {
             console.error("Error fetching messages:", error);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleToggleMessageRead = async (id, currentStatus) => {
@@ -1337,7 +1417,7 @@ const Admin = () => {
 
         try {
             await updateDoc(doc(db, "messages", id), { isRead: !currentStatus });
-            trackWrite(1);
+            trackWrite(1, 'Toggled message read status');
         } catch {
             // Revert on error
             setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: currentStatus } : m));
@@ -1391,7 +1471,7 @@ const Admin = () => {
                 batch.update(docRef, { isRead });
             });
             await batch.commit();
-            trackWrite(selectedMessages.length);
+            trackWrite(selectedMessages.length, 'Batch marked messages');
             setMessages(prev => prev.map(m => selectedMessages.includes(m.id) ? { ...m, isRead } : m));
             setSelectedMessages([]);
             showToast(`Marked ${selectedMessages.length} messages as ${isRead ? 'read' : 'unread'}.`);
@@ -1415,7 +1495,7 @@ const Admin = () => {
                 batch.delete(docRef);
             });
             await batch.commit();
-            trackDelete(selectedMessages.length);
+            trackDelete(selectedMessages.length, 'Batch deleted messages');
             setMessages(prev => prev.filter(m => !selectedMessages.includes(m.id)));
             setSelectedMessages([]);
             showToast(`Deleted ${selectedMessages.length} messages.`);
@@ -1432,7 +1512,7 @@ const Admin = () => {
         if (!window.confirm("Delete this message?")) return;
         try {
             await deleteDoc(doc(db, "messages", id));
-            trackDelete(1);
+            trackDelete(1, 'Deleted message');
             setMessages(messages.filter(m => m.id !== id));
             setSelectedMessages(prev => prev.filter(mid => mid !== id));
             if (viewingMessage && viewingMessage.id === id) {
@@ -1499,7 +1579,7 @@ const Admin = () => {
         try {
             const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
             const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size);
+            trackRead(querySnapshot.size, 'Fetched blog posts');
             setPosts(querySnapshot.docs.map(d => {
                 const data = d.data();
                 delete data.id; // ensure id from form state doesn't overwrite doc.id
@@ -1508,6 +1588,7 @@ const Admin = () => {
         } catch (error) {
             console.error("Error fetching posts:", error);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -1690,11 +1771,11 @@ const Admin = () => {
 
             if (postForm.id) {
                 await updateDoc(doc(db, "posts", postForm.id), postData);
-                trackWrite(1);
+                trackWrite(1, 'Updated blog post');
                 showToast('Post updated successfully!');
             } else {
                 await addDoc(collection(db, "posts"), { ...postData, featured: false, createdAt: serverTimestamp() });
-                trackWrite(1);
+                trackWrite(1, 'Created new blog post');
                 showToast('Post created successfully!');
             }
             invalidateCache('collection:posts');
@@ -1719,7 +1800,7 @@ const Admin = () => {
         setLoading(true);
         try {
             await deleteDoc(doc(db, "posts", id));
-            trackDelete(1);
+            trackDelete(1, 'Deleted blog post');
             invalidateCache('collection:posts');
             showToast('Post deleted.');
             fetchPosts();
@@ -1837,7 +1918,7 @@ const Admin = () => {
     };
 
     // Database Maintenance
-    const handleExportDatabase = async () => {
+    const handleBackupDatabase = async () => {
         if (userRole !== 'superadmin') return;
 
         try {
@@ -1854,7 +1935,7 @@ const Admin = () => {
                 try {
                     const q = query(collection(dbRef, collName));
                     const querySnapshot = await getDocs(q);
-                    trackRead(querySnapshot.size);
+                    trackRead(querySnapshot.size, `Exported ${collName}`);
 
                     if (!querySnapshot.empty) {
                         exportData.collections[collName] = {};
@@ -1909,17 +1990,17 @@ const Admin = () => {
             // 1. Fetch old Messages
             const oldMessagesQ = query(collection(db, 'messages'), where('createdAt', '<', cutoffTimestamp));
             const oldMessagesSnap = await getDocs(oldMessagesQ);
-            trackRead(oldMessagesSnap.size);
+            trackRead(oldMessagesSnap.size, 'Fetched old messages for archive');
 
             // 2. Fetch old Audit Logs
             const oldLogsQ = query(collection(db, 'auditLogs'), where('timestamp', '<', cutoffTimestamp));
             const oldLogsSnap = await getDocs(oldLogsQ);
-            trackRead(oldLogsSnap.size);
+            trackRead(oldLogsSnap.size, 'Fetched old audit logs for archive');
 
             // 3. Fetch old Analytics (visits)
             const oldVisitsQ = query(collection(db, 'visits'), where('timestamp', '<', cutoffTimestamp));
             const oldVisitsSnap = await getDocs(oldVisitsQ);
-            trackRead(oldVisitsSnap.size);
+            trackRead(oldVisitsSnap.size, 'Fetched old analytics for archive');
 
             // 4. Build Backup JSON
             const batch = writeBatch(db);
@@ -1964,7 +2045,7 @@ const Admin = () => {
 
             // 5. Commit Deletion Batch
             await batch.commit();
-            trackDelete(deletionCount);
+            trackDelete(deletionCount, 'Archived old records');
 
             showToast(`Successfully archived and deleted ${deletionCount} old records.`, "success");
             fetchDatabaseHealth(); // Refresh counts
@@ -1977,14 +2058,6 @@ const Admin = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleImportDatabase = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setRestoreFile(file);
-        setShowRestoreConfirm(true);
-        e.target.value = ''; // Reset input
     };
 
     const processDatabaseRestore = async (file) => {
@@ -2024,7 +2097,7 @@ const Admin = () => {
                     return !metaFields.includes(key) && val && typeof val === 'object';
                 });
 
-                const totalDocs = collectionsToProcess.reduce((acc, [_, docs]) => acc + Object.keys(docs).length, 0);
+                const totalDocs = collectionsToProcess.reduce((acc, [, docs]) => acc + Object.keys(docs).length, 0);
 
                 if (totalDocs === 0) {
                     showToast('No valid database records found in the selected file.', 'warning');
@@ -2063,7 +2136,7 @@ const Admin = () => {
                     }
                 }
 
-                trackWrite(completedCount);
+                trackWrite(completedCount, 'Restored database');
                 invalidateCache();
 
                 if (failedCollections.size > 0) {
@@ -2095,11 +2168,6 @@ const Admin = () => {
         reader.readAsText(file);
     };
 
-    const handleClearCache = () => {
-        invalidateCache();
-        showToast('Local app cache cleared successfully!');
-    };
-
     // Auth
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -2111,7 +2179,7 @@ const Admin = () => {
                 // Add default pending role to users collection if not exists
                 const q = query(collection(db, "users"), where("email", "==", email));
                 const snap = await getDocs(q);
-                trackRead(snap.size);
+                trackRead(snap.size, 'Checked user existence on registration');
                 if (snap.empty) {
                     await addDoc(collection(db, "users"), {
                         email: email,
@@ -2119,7 +2187,7 @@ const Admin = () => {
                         isActive: true,
                         createdAt: serverTimestamp()
                     });
-                    trackWrite(1);
+                    trackWrite(1, 'Created user record');
                 }
                 showToast('Account created! You are now logged in.');
             } else {
@@ -2128,7 +2196,7 @@ const Admin = () => {
                 // Verify the user is not disabled in Firestore
                 const q = query(collection(db, "users"), where("email", "==", email));
                 const snap = await getDocs(q);
-                trackRead(snap.size);
+                trackRead(snap.size, 'Verified user status on login');
                 if (!snap.empty) {
                     const userData = snap.docs[0].data();
                     if (userData.isActive === false) {
@@ -2148,12 +2216,14 @@ const Admin = () => {
                     if (ipData.ip) currentIp = ipData.ip;
                     if (ipData.country_name) locData.country = ipData.country_name;
                     if (ipData.city) locData.city = ipData.city;
-                } catch (e) {
+                } catch {
                     try {
                         const fallbackRes = await fetch('https://api.ipify.org?format=json');
                         const fallbackData = await fallbackRes.json();
                         if (fallbackData.ip) currentIp = fallbackData.ip;
-                    } catch (fallbackErr) { }
+                    } catch {
+                        // Intentionally ignored fallback failure
+                    }
                 }
 
                 // Record the login event
@@ -2167,7 +2237,7 @@ const Admin = () => {
                     sessionId: getSessionId(),
                     timestamp: serverTimestamp()
                 });
-                trackWrite(1);
+                trackWrite(1, 'Recorded auth audit trail');
             } catch (auditError) {
                 console.error("Failed to write audit log:", auditError);
                 // We intentionally don't throw or show an error toast here to prevent blocking standard login flow
@@ -2361,7 +2431,7 @@ const Admin = () => {
                                     <div className={styles.emptyState}>{searchExperience ? 'No matching experience found.' : 'No experience entries yet.'}</div>
                                 ) : (
                                     <>
-                                        <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'var(--editor-toolbar-bg, var(--card-bg))', border: '1px solid var(--editor-border, var(--divider))', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
                                             <SortableHeader label="Role" field="role" sortField={expSort.field} sortDirection={expSort.dir} onSort={handleExpSort} />
                                             <SortableHeader label="Company" field="company" sortField={expSort.field} sortDirection={expSort.dir} onSort={handleExpSort} />
                                             <SortableHeader label="Period" field="period" sortField={expSort.field} sortDirection={expSort.dir} onSort={handleExpSort} />
@@ -2486,7 +2556,7 @@ const Admin = () => {
                                         </div>
                                     </div>
                                     <div className={styles.modalFooter}>
-                                        <button onClick={() => setViewingExperience(null)} className={styles.confirmBtn} style={{ background: 'var(--primary-color)', color: '#000' }}>Done</button>
+                                        <button onClick={() => setViewingExperience(null)} className={styles.confirmBtn}>Done</button>
                                     </div>
                                 </div>
                             </div>
@@ -2514,7 +2584,7 @@ const Admin = () => {
                                     <div className={styles.emptyState}>{searchProjects ? 'No matching projects found.' : 'No projects yet.'}</div>
                                 ) : (
                                     <>
-                                        <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'var(--editor-toolbar-bg, var(--card-bg))', border: '1px solid var(--editor-border, var(--divider))', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
                                             <SortableHeader label="Title" field="title" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
                                             <SortableHeader label="Featured" field="featured" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
                                             <SortableHeader label="Visibility" field="visible" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
@@ -2661,7 +2731,7 @@ const Admin = () => {
                                                 <span className={styles.detailLabel}>Tech Stack</span>
                                                 <div className={styles.techTags} style={{ marginTop: '0.25rem' }}>
                                                     {(Array.isArray(viewingProject.techStack) ? viewingProject.techStack : []).map((t, i) => (
-                                                        <span key={i} className={styles.techTag} style={{ background: 'rgba(255,255,255,0.1)' }}>{t}</span>
+                                                        <span key={i} className={styles.techTag} style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)' }}>{t}</span>
                                                     ))}
                                                 </div>
                                             </div>
@@ -2675,7 +2745,7 @@ const Admin = () => {
                                         </div>
                                     </div>
                                     <div className={styles.modalFooter}>
-                                        <button onClick={() => setViewingProject(null)} className={styles.confirmBtn} style={{ background: 'var(--primary-color)', color: '#000' }}>Done</button>
+                                        <button onClick={() => setViewingProject(null)} className={styles.confirmBtn}>Done</button>
                                     </div>
                                 </div>
                             </div>
@@ -2704,7 +2774,7 @@ const Admin = () => {
                                     <div className={styles.emptyState}>{searchPosts ? 'No matching posts found.' : 'No posts yet.'}</div>
                                 ) : (
                                     <>
-                                        <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'var(--editor-toolbar-bg, var(--card-bg))', border: '1px solid var(--editor-border, var(--divider))', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
                                             <SortableHeader label="Title" field="title" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
                                             <SortableHeader label="Date" field="createdAt" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
                                             <SortableHeader label="Status" field="visible" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
@@ -2848,7 +2918,7 @@ const Admin = () => {
                                                 <span className={styles.detailLabel}>Tags</span>
                                                 <div className={styles.techTags} style={{ marginTop: '0.25rem' }}>
                                                     {(Array.isArray(viewingPost.tags) ? viewingPost.tags : (viewingPost.tags ? viewingPost.tags.split(',') : [])).map((t, i) => t.trim() && (
-                                                        <span key={i} className={styles.techTag} style={{ background: 'rgba(255,255,255,0.1)' }}>{t.trim()}</span>
+                                                        <span key={i} className={styles.techTag} style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)' }}>{t.trim()}</span>
                                                     ))}
                                                 </div>
                                             </div>
@@ -2863,7 +2933,7 @@ const Admin = () => {
                                         </div>
                                     </div>
                                     <div className={styles.modalFooter}>
-                                        <button onClick={() => setViewingPost(null)} className={styles.confirmBtn} style={{ background: 'var(--primary-color)', color: '#000' }}>Done</button>
+                                        <button onClick={() => setViewingPost(null)} className={styles.confirmBtn}>Done</button>
                                     </div>
                                 </div>
                             </div>
@@ -3010,7 +3080,7 @@ const Admin = () => {
                                         <input
                                             type="checkbox"
                                             checked={sidebarPersistent}
-                                            onChange={(e) => {
+                                            onChange={() => {
                                                 // Handled by div onClick to make the whole row clickable
                                             }}
                                             style={{ width: '18px', height: '18px', cursor: 'pointer' }}
@@ -3044,7 +3114,7 @@ const Admin = () => {
                     )
                 }
 
-                {/* ========== MESSAGES TAB ========== */}
+                {/* ========== PROFILE TAB ========== */}
                 {
                     activeTab === 'profile' && (
                         <div className={styles.card}>
@@ -3117,7 +3187,7 @@ const Admin = () => {
                                     </div>
                                 ) : (
                                     <>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '1rem', padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                        <div className={styles.messageHeader}>
                                             <input
                                                 type="checkbox"
                                                 checked={paginatedMessages.length > 0 && paginatedMessages.every(msg => selectedMessages.includes(msg.id))}
@@ -3125,8 +3195,11 @@ const Admin = () => {
                                                 style={{ cursor: 'pointer', accentColor: 'var(--primary-color)' }}
                                                 title="Select All on this page"
                                             />
-                                            <SortableHeader label="Message Details" field="name" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={handleMsgSort} />
-                                            <SortableHeader label="Date" field="createdAt" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={handleMsgSort} style={{ justifyContent: 'flex-end' }} />
+                                            <SortableHeader label="Sender" field="name" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={handleMsgSort} />
+                                            <SortableHeader label="Email" field="email" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={handleMsgSort} />
+                                            <SortableHeader label="Message" field="message" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={handleMsgSort} />
+                                            <SortableHeader label="Date" field="createdAt" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={handleMsgSort} />
+                                            <div style={{ textAlign: 'right', paddingRight: '0.5rem' }}>Actions</div>
                                         </div>
 
                                         {paginatedMessages.map(msg => {
@@ -3136,23 +3209,8 @@ const Admin = () => {
                                             return (
                                                 <div
                                                     key={msg.id}
-                                                    style={{
-                                                        display: 'grid',
-                                                        gridTemplateColumns: 'auto 1fr auto',
-                                                        gap: '1rem',
-                                                        padding: '1rem 1.5rem',
-                                                        background: isSelected ? 'rgba(100, 255, 218, 0.05)' : (isUnread ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.015)'),
-                                                        border: `1px solid ${isSelected ? 'rgba(100, 255, 218, 0.2)' : 'rgba(255,255,255,0.04)'}`,
-                                                        borderLeft: isUnread ? '3px solid var(--primary-color)' : `1px solid ${isSelected ? 'rgba(100, 255, 218, 0.2)' : 'rgba(255,255,255,0.04)'}`,
-                                                        borderRadius: '8px',
-                                                        alignItems: 'center',
-                                                        transition: 'all 0.2s ease',
-                                                        marginBottom: '0.5rem',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                    className={styles.userGridRowHover}
+                                                    className={`${styles.messageGrid} ${isUnread ? styles.unread : ''} ${isSelected ? styles.selected : ''}`}
                                                     onClick={(e) => {
-                                                        // Don't open if clicking checkbox or action buttons
                                                         if (e.target.type !== 'checkbox' && !e.target.closest('button')) {
                                                             handleViewMessage(msg);
                                                         }
@@ -3164,35 +3222,35 @@ const Admin = () => {
                                                         onChange={() => handleToggleSelectMessage(msg.id)}
                                                         style={{ cursor: 'pointer', accentColor: 'var(--primary-color)' }}
                                                     />
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', overflow: 'hidden' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                            <span style={{ fontWeight: isUnread ? 'bold' : 'normal', color: isUnread ? 'white' : 'var(--text-primary)', fontSize: '0.95rem' }}>{msg.name}</span>
-                                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>&lt;{msg.email}&gt;</span>
-                                                        </div>
-                                                        <div style={{ color: isUnread ? 'var(--text-primary)' : 'var(--text-secondary)', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                            {msg.message}
-                                                        </div>
+                                                    <div className={`${styles.messageCell} ${styles.primary} ${isUnread ? styles.unread : ''}`}>
+                                                        {msg.name}
                                                     </div>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-                                                        <span style={{ color: isUnread ? 'var(--primary-color)' : 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: isUnread ? 'bold' : 'normal' }}>
-                                                            {msg.createdAt?.seconds ? new Date(msg.createdAt.seconds * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now'}
-                                                        </span>
-                                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleToggleMessageRead(msg.id, msg.isRead); }}
-                                                                className={styles.editBtn}
-                                                                title={msg.isRead ? "Mark as Unread" : "Mark as Read"}
-                                                            >
-                                                                {msg.isRead ? <MailOpen size={16} /> : <Mail size={16} />}
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
-                                                                className={styles.deleteBtn}
-                                                                title="Delete"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </div>
+                                                    <div className={styles.messageCell}>
+                                                        {msg.email}
+                                                    </div>
+                                                    <div className={`${styles.messageCell} ${isUnread ? styles.unread : ''}`} title={msg.message}>
+                                                        {msg.message}
+                                                    </div>
+                                                    <div className={styles.messageCell} style={{ fontSize: '0.8rem', color: isUnread ? 'var(--primary-color)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                                                        {msg.createdAt?.seconds ? new Date(msg.createdAt.seconds * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                                                    </div>
+                                                    <div className={styles.messageActions}>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleToggleMessageRead(msg.id, msg.isRead); }}
+                                                            className={styles.editBtn}
+                                                            title={msg.isRead ? "Mark as Unread" : "Mark as Read"}
+                                                            style={{ padding: '0.3rem' }}
+                                                        >
+                                                            {msg.isRead ? <MailOpen size={15} /> : <Mail size={15} />}
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }}
+                                                            className={styles.deleteBtn}
+                                                            title="Delete"
+                                                            style={{ padding: '0.3rem' }}
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </button>
                                                     </div>
                                                 </div>
                                             );
@@ -3202,8 +3260,8 @@ const Admin = () => {
                                 )}
                             </div>
                         </div>
-                    )
-                }
+                    )}
+
                 {/* ========== DATABASE TAB ========== */}
                 {
                     activeTab === 'database' && (
@@ -3254,161 +3312,128 @@ const Admin = () => {
                                     );
                                 })()}
                                 <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-                                    <div className={styles.detailItem} style={{ background: 'rgba(56, 189, 248, 0.05)', border: '1px solid rgba(56, 189, 248, 0.1)' }}>
+                                    <div className={styles.detailItem} style={{ background: 'rgba(56, 189, 248, 0.05)', border: '1px solid rgba(56, 189, 248, 0.1)', cursor: 'pointer' }} onClick={() => setActiveTab('blog')}>
                                         <span className={styles.detailLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><FileText size={14} /> Posts</span>
-                                        <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#38bdf8' }}>{dbHealth.loading ? '...' : dbHealth.posts}</span>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#38bdf8' }}>{dbHealth.loading ? '...' : dbHealth.posts}</span>
+                                            <span style={{ fontSize: '0.65rem', color: '#38bdf8', opacity: 0.7, fontWeight: 'bold' }}>Manage →</span>
+                                        </div>
                                     </div>
-                                    <div className={styles.detailItem} style={{ background: 'rgba(167, 139, 250, 0.05)', border: '1px solid rgba(167, 139, 250, 0.1)' }}>
+                                    <div className={styles.detailItem} style={{ background: 'rgba(167, 139, 250, 0.05)', border: '1px solid rgba(167, 139, 250, 0.1)', cursor: 'pointer' }} onClick={() => setActiveTab('projects')}>
                                         <span className={styles.detailLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Code size={14} /> Projects</span>
-                                        <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#a78bfa' }}>{dbHealth.loading ? '...' : dbHealth.projects}</span>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#a78bfa' }}>{dbHealth.loading ? '...' : dbHealth.projects}</span>
+                                            <span style={{ fontSize: '0.65rem', color: '#a78bfa', opacity: 0.7, fontWeight: 'bold' }}>Manage →</span>
+                                        </div>
                                     </div>
-                                    <div className={styles.detailItem} style={{ background: 'rgba(52, 211, 153, 0.05)', border: '1px solid rgba(52, 211, 153, 0.1)' }}>
+                                    <div className={styles.detailItem} style={{ background: 'rgba(52, 211, 153, 0.05)', border: '1px solid rgba(52, 211, 153, 0.1)', cursor: 'pointer' }} onClick={() => setActiveTab('messages')}>
                                         <span className={styles.detailLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Mail size={14} /> Messages</span>
-                                        <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#34d399' }}>{dbHealth.loading ? '...' : dbHealth.messages}</span>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#34d399' }}>{dbHealth.loading ? '...' : dbHealth.messages}</span>
+                                            <span style={{ fontSize: '0.65rem', color: '#34d399', opacity: 0.7, fontWeight: 'bold' }}>View →</span>
+                                        </div>
                                     </div>
-                                    <div className={styles.detailItem} style={{ background: 'rgba(251, 146, 60, 0.05)', border: '1px solid rgba(251, 146, 60, 0.1)' }}>
+                                    <div className={styles.detailItem} style={{ background: 'rgba(251, 146, 60, 0.05)', border: '1px solid rgba(251, 146, 60, 0.1)', cursor: 'pointer' }} onClick={() => setActiveTab('audit')}>
                                         <span className={styles.detailLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Shield size={14} /> Audit Logs</span>
-                                        <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#fb923c' }}>{dbHealth.loading ? '...' : dbHealth.auditLogs}</span>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#fb923c' }}>{dbHealth.loading ? '...' : dbHealth.auditLogs}</span>
+                                            <span style={{ fontSize: '0.65rem', color: '#fb923c', opacity: 0.7, fontWeight: 'bold' }}>Review →</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Today's Estimated Activity Section */}
+
+                            {/* Database Actions Section */}
                             <div style={{ marginBottom: '2.5rem' }}>
                                 <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <Activity size={18} /> Today's Estimated Activity
-                                    <span
-                                        title="This tracks estimated Firebase operations from this Admin Panel session only. Actual billing usage may differ slightly. Counters reset automatically at midnight."
-                                        style={{ marginLeft: '0.25rem', cursor: 'help', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '18px', height: '18px', borderRadius: '50%', background: 'var(--card-bg)', border: '1px solid var(--border-color)', fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}
-                                    >?</span>
-                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'normal', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <button
-                                            onClick={() => setDailyUsage({ date: new Date().toDateString(), reads: 0, writes: 0, deletes: 0 })}
-                                            title="Reset today's counters"
-                                            style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.25rem 0.6rem', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem', transition: 'all 0.2s ease' }}
-                                            onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = '#ef4444'; }}
-                                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
-                                        >
-                                            <RefreshCw size={10} /> Reset
-                                        </button>
-                                    </span>
+                                    <Server size={18} /> Database Actions
                                 </h4>
-
-                                <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-                                    {[
-                                        { label: 'Reads', value: dailyUsage.reads, limit: 50000, color: '#38bdf8', bgTint: 'rgba(56, 189, 248, 0.06)', borderTint: 'rgba(56, 189, 248, 0.15)', icon: <Eye size={15} /> },
-                                        { label: 'Writes', value: dailyUsage.writes, limit: 20000, color: '#a78bfa', bgTint: 'rgba(167, 139, 250, 0.06)', borderTint: 'rgba(167, 139, 250, 0.15)', icon: <Edit2 size={15} /> },
-                                        { label: 'Deletes', value: dailyUsage.deletes, limit: 20000, color: '#fb923c', bgTint: 'rgba(251, 146, 60, 0.06)', borderTint: 'rgba(251, 146, 60, 0.15)', icon: <Trash2 size={15} /> }
-                                    ].map(({ label, value, limit, color, bgTint, borderTint, icon }) => {
-                                        let pct = (value / limit) * 100;
-                                        if (pct > 100) pct = 100;
-                                        let barColor = color;
-                                        if (pct > 75) barColor = '#f59e0b';
-                                        if (pct > 90) barColor = '#ef4444';
-
-                                        return (
-                                            <div key={label} className={styles.detailItem} style={{ background: bgTint, border: `1px solid ${borderTint}`, borderTop: `3px solid ${color}`, padding: '1.1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                                                        {icon} {label}
-                                                    </span>
-                                                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', background: 'var(--card-bg)', padding: '0.15rem 0.45rem', borderRadius: '4px', border: '1px solid var(--border-color)' }}>
-                                                        {pct.toFixed(1)}%
-                                                    </span>
-                                                </div>
-                                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
-                                                    <span style={{ fontSize: '1.5rem', fontWeight: '700', color: barColor, lineHeight: 1 }}>
-                                                        {value.toLocaleString()}
-                                                    </span>
-                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                                        / {limit.toLocaleString()}
-                                                    </span>
-                                                </div>
-                                                <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.06)', borderRadius: '5px', overflow: 'hidden' }}>
-                                                    <div style={{
-                                                        width: `${Math.max(pct, 1)}%`,
-                                                        height: '100%',
-                                                        background: `linear-gradient(90deg, ${barColor}, ${barColor}dd)`,
-                                                        borderRadius: '5px',
-                                                        transition: 'width 0.8s ease-out',
-                                                        boxShadow: `0 0 8px ${barColor}40`
-                                                    }}></div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-
-                            <div className={styles.grid}>
-                                <div className={styles.card}>
-                                    <div className={styles.cardHeader}>
-                                        <h4>Full Data Export</h4>
-                                    </div>
-                                    <div style={{ padding: '1.5rem' }}>
-                                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: '1.5' }}>
-                                            Download a complete JSON backup of all your portfolio collections. Keep this safe on your local drive!
-                                        </p>
-                                        <button onClick={handleExportDatabase} disabled={loading} className={styles.submitBtn} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                                            <Database size={16} /> {loading ? 'Processing...' : 'Download Full Backup'}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className={styles.card}>
-                                    <div className={styles.cardHeader}>
-                                        <h4>Full Data Restore</h4>
-                                    </div>
-                                    <div style={{ padding: '1.5rem' }}>
-                                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: '1.5' }}>
-                                            Upload a previously exported JSON backup file to overwrite and restore your entire database. <strong>Warning: This cannot be undone.</strong>
-                                        </p>
-                                        <div className={styles.fileDropzone} style={{ padding: '1rem', minHeight: 'auto' }}>
-                                            <input type="file" accept=".json,application/json" onChange={handleImportDatabase} disabled={loading} />
-                                            <div className={styles.fileDropzoneContent} style={{ flexDirection: 'row', gap: '1rem', height: '100px' }}>
-                                                <Upload size={20} />
-                                                <span style={{ fontSize: '0.9rem' }}>{loading ? 'Restoring...' : 'Select Backup JSON'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className={styles.card}>
-                                    <div className={styles.cardHeader}>
-                                        <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                            <Trash2 size={18} /> Archive & Purge Old Data
-                                        </h4>
-                                    </div>
-                                    <div style={{ padding: '0 1.5rem 1.5rem', display: 'flex', gap: '2rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                        <div style={{ flex: 1, minWidth: '300px' }}>
-                                            <p style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', fontSize: '0.9rem', lineHeight: '1.5' }}>
-                                                Prevent your Firebase Free Tier from filling up. This tool downloads old <strong>Messages</strong>, <strong>Audit Logs</strong>, and <strong>Analytics</strong> as a JSON file, and then <strong>permanently deletes them</strong> from Firestore.
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
+                                    {/* Full Backup */}
+                                    <div style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div>
+                                            <h5 style={{ margin: '0 0 0.4rem 0', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <Download size={18} /> Full JSON Backup
+                                            </h5>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                                                Download all database collections in a single JSON file. Recommended before any major changes.
                                             </p>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
-                                                <label style={{ color: 'var(--text-primary)', fontSize: '0.85rem', fontWeight: 'bold' }}>Delete records older than:</label>
-                                                <select
-                                                    value={archiveDays}
-                                                    onChange={(e) => setArchiveDays(Number(e.target.value))}
-                                                    className={styles.standardSelect}
-                                                >
-                                                    <option value={7}>7 Days (1 Week)</option>
-                                                    <option value={14}>14 Days (2 Weeks)</option>
-                                                    <option value={30}>30 Days (1 Month)</option>
-                                                    <option value={90}>90 Days (3 Months)</option>
-                                                    <option value={180}>180 Days (6 Months)</option>
-                                                    <option value={365}>365 Days (1 Year)</option>
-                                                </select>
-                                            </div>
                                         </div>
                                         <button
-                                            onClick={() => setShowArchiveConfirm(true)}
+                                            onClick={handleBackupDatabase}
                                             disabled={loading}
-                                            className={styles.deleteBtn}
-                                            style={{ padding: '0.85rem 1.75rem' }}
+                                            className={styles.primaryBtn}
+                                            style={{ margin: 0, background: '#10b981', color: '#fff', border: 'none', alignSelf: 'flex-start' }}
                                         >
-                                            <Trash2 size={18} /> {loading ? 'Archiving...' : `Archive & Delete (>${archiveDays} Days)`}
+                                            <Download size={16} /> Backup Database
                                         </button>
+                                    </div>
+
+                                    {/* Data Restoration */}
+                                    <div style={{ background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99, 102, 241, 0.15)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div>
+                                            <h5 style={{ margin: '0 0 0.4rem 0', color: '#6366f1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <Upload size={18} /> Restore from Backup
+                                            </h5>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                                                Restore your database using a previously downloaded JSON file. <strong>Warning:</strong> May overwrite existing data.
+                                            </p>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                            <input
+                                                type="file"
+                                                id="restore-upload"
+                                                hidden
+                                                accept=".json"
+                                                onChange={(e) => {
+                                                    if (e.target.files?.[0]) {
+                                                        setRestoreFile(e.target.files[0]);
+                                                        setShowRestoreConfirm(true);
+                                                    }
+                                                }}
+                                            />
+                                            <button
+                                                onClick={() => document.getElementById('restore-upload').click()}
+                                                disabled={loading}
+                                                className={styles.primaryBtn}
+                                                style={{ margin: 0, background: '#6366f1', color: '#fff', border: 'none' }}
+                                            >
+                                                <Upload size={16} /> Select File
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Archive Cleanup */}
+                                    <div style={{ background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                        <div>
+                                            <h5 style={{ margin: '0 0 0.4rem 0', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <Trash2 size={18} /> Archive Old Records
+                                            </h5>
+                                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                                                Clear messages, audit logs, and analytics older than a specified period. A backup will be downloaded before deletion.
+                                            </p>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                                            <select
+                                                value={archiveDays}
+                                                onChange={(e) => setArchiveDays(Number(e.target.value))}
+                                                style={{ padding: '0.5rem', borderRadius: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
+                                            >
+                                                <option value={30}>Older than 30 Days</option>
+                                                <option value={90}>Older than 90 Days</option>
+                                                <option value={180}>Older than 6 Months</option>
+                                                <option value={365}>Older than 1 Year</option>
+                                            </select>
+                                            <button
+                                                onClick={() => setShowArchiveConfirm(true)}
+                                                disabled={loading}
+                                                className={styles.primaryBtn}
+                                                style={{ margin: 0, background: '#ef4444', color: '#fff', border: 'none' }}
+                                            >
+                                                <ShieldAlert size={16} /> Archive Now
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -3417,93 +3442,99 @@ const Admin = () => {
                 }
 
                 {/* ========== CUSTOM ARCHIVE CONFIRMATION MODAL ========== */}
-                {showArchiveConfirm && (
-                    <div className={styles.modalOverlay} onClick={() => setShowArchiveConfirm(false)} style={{ zIndex: 1100 }}>
-                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', padding: 0 }}>
-                            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(239, 68, 68, 0.05)' }}>
-                                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', margin: 0 }}>
-                                    <Trash2 size={20} /> Confirm Permanent Archive
-                                </h3>
-                                <button onClick={() => setShowArchiveConfirm(false)} className={styles.closeBtn}><X size={20} /></button>
-                            </div>
-                            <div style={{ padding: '1.5rem' }}>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '1.25rem' }}>
-                                    You are about to permanently delete all <strong>Messages</strong>, <strong>Audit Logs</strong>, and <strong>Analytics</strong> older than {archiveDays} days from your active Firebase database.
-                                </p>
-                                <div style={{ background: 'var(--card-bg)', pading: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '1.5rem', padding: '1rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                                        <Database size={16} style={{ color: '#38bdf8' }} /> <strong>Step 1:</strong> Download full JSON Backup
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
-                                        <Trash2 size={16} style={{ color: '#ef4444' }} /> <strong>Step 2:</strong> Permanently Delete from Database
-                                    </div>
+                {
+                    showArchiveConfirm && (
+                        <div className={styles.modalOverlay} onClick={() => setShowArchiveConfirm(false)} style={{ zIndex: 1100 }}>
+                            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', padding: 0 }}>
+                                <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(239, 68, 68, 0.05)' }}>
+                                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', margin: 0 }}>
+                                        <Trash2 size={20} /> Confirm Permanent Archive
+                                    </h3>
+                                    <button onClick={() => setShowArchiveConfirm(false)} className={styles.closeBtn}><X size={20} /></button>
                                 </div>
-                                <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center' }}>
-                                    Are you absolutely sure you wish to proceed?
-                                </p>
-                            </div>
-                            <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                                <button onClick={() => setShowArchiveConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
-                                <button onClick={() => handleArchiveData(archiveDays)} className={styles.deleteBtn} style={{ padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Trash2 size={16} /> Confirm & Archive
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* ========== CUSTOM RESTORE CONFIRMATION MODAL ========== */}
-                {showRestoreConfirm && (
-                    <div className={styles.modalOverlay} onClick={() => setShowRestoreConfirm(false)} style={{ zIndex: 1100 }}>
-                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', padding: 0 }}>
-                            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(108, 99, 255, 0.05)' }}>
-                                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color)', margin: 0 }}>
-                                    <Database size={20} /> Confirm Database Restore
-                                </h3>
-                                <button onClick={() => setShowRestoreConfirm(false)} className={styles.closeBtn}><X size={20} /></button>
-                            </div>
-                            <div style={{ padding: '1.5rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', padding: '1rem', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-                                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(108, 99, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)' }}>
-                                        <FileJson size={24} />
-                                    </div>
-                                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                                        <div style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.9rem', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                            {restoreFile?.name}
+                                <div style={{ padding: '1.5rem' }}>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '1.25rem' }}>
+                                        You are about to permanently delete all <strong>Messages</strong>, <strong>Audit Logs</strong>, and <strong>Analytics</strong> older than {archiveDays} days from your active Firebase database.
+                                    </p>
+                                    <div style={{ background: 'var(--card-bg)', pading: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '1.5rem', padding: '1rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+                                            <Database size={16} style={{ color: '#38bdf8' }} /> <strong>Step 1:</strong> Download full JSON Backup
                                         </div>
-                                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
-                                            {(restoreFile?.size / 1024).toFixed(2)} KB • JSON Backup
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+                                            <Trash2 size={16} style={{ color: '#ef4444' }} /> <strong>Step 2:</strong> Permanently Delete from Database
                                         </div>
                                     </div>
-                                </div>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '1.25rem' }}>
-                                    You are about to restore your entire database from this backup file. This will <strong>overwrite existing documents</strong> if they share the same IDs.
-                                </p>
-                                <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.1)', marginBottom: '1.5rem' }}>
-                                    <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                                        <AlertTriangle size={16} /> Warning: This action cannot be undone.
+                                    <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center' }}>
+                                        Are you absolutely sure you wish to proceed?
                                     </p>
                                 </div>
-                                <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center' }}>
-                                    Are you ready to proceed with restoration?
-                                </p>
-                            </div>
-                            <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                                <button onClick={() => setShowRestoreConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
-                                <button
-                                    onClick={() => {
-                                        setShowRestoreConfirm(false);
-                                        processDatabaseRestore(restoreFile);
-                                    }}
-                                    className={styles.primaryBtn}
-                                    style={{ padding: '0.6rem 1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                                >
-                                    <Upload size={16} /> Start Restoration
-                                </button>
+                                <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                                    <button onClick={() => setShowArchiveConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
+                                    <button onClick={() => handleArchiveData(archiveDays)} className={styles.deleteBtn} style={{ padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Trash2 size={16} /> Confirm & Archive
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
+
+
+
+                {/* ========== CUSTOM RESTORE CONFIRMATION MODAL ========== */}
+                {
+                    showRestoreConfirm && (
+                        <div className={styles.modalOverlay} onClick={() => setShowRestoreConfirm(false)} style={{ zIndex: 1100 }}>
+                            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', padding: 0 }}>
+                                <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(108, 99, 255, 0.05)' }}>
+                                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color)', margin: 0 }}>
+                                        <Database size={20} /> Confirm Database Restore
+                                    </h3>
+                                    <button onClick={() => setShowRestoreConfirm(false)} className={styles.closeBtn}><X size={20} /></button>
+                                </div>
+                                <div style={{ padding: '1.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', padding: '1rem', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+                                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(108, 99, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)' }}>
+                                            <FileJson size={24} />
+                                        </div>
+                                        <div style={{ flex: 1, overflow: 'hidden' }}>
+                                            <div style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.9rem', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                {restoreFile?.name}
+                                            </div>
+                                            <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>
+                                                {(restoreFile?.size / 1024).toFixed(2)} KB • JSON Backup
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '1.25rem' }}>
+                                        You are about to restore your entire database from this backup file. This will <strong>overwrite existing documents</strong> if they share the same IDs.
+                                    </p>
+                                    <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.1)', marginBottom: '1.5rem' }}>
+                                        <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                                            <AlertTriangle size={16} /> Warning: This action cannot be undone.
+                                        </p>
+                                    </div>
+                                    <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center' }}>
+                                        Are you ready to proceed with restoration?
+                                    </p>
+                                </div>
+                                <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                                    <button onClick={() => setShowRestoreConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
+                                    <button
+                                        onClick={() => {
+                                            setShowRestoreConfirm(false);
+                                            processDatabaseRestore(restoreFile);
+                                        }}
+                                        className={styles.primaryBtn}
+                                        style={{ padding: '0.6rem 1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                    >
+                                        <Upload size={16} /> Start Restoration
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
 
                 {/* ========== USERS TAB ========== */}
                 {
@@ -3534,7 +3565,8 @@ const Admin = () => {
                                             </button>
                                         </div>
 
-                                        {/* Add User Button */}                                        {filteredUsers.length === 0 ? (
+                                        {/* Add User Button */}
+                                        {filteredUsers.length === 0 ? (
                                             <div className={styles.emptyState}>{searchUsers ? 'No matching users found.' : 'No users registered yet.'}</div>
                                         ) : (
                                             <>
@@ -3721,6 +3753,146 @@ const Admin = () => {
                     activeTab === 'audit' && (
                         <div className={styles.section} style={{ paddingBottom: '4rem' }}>
                             <div className={styles.listSection} style={{ marginTop: '0' }}>
+
+                                {/* Estimated Activity Section */}
+                                <div style={{ marginBottom: '2.5rem' }}>
+                                    <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <Activity size={18} /> Estimated Activity
+                                        {isAggregating && <span className={styles.spinner} style={{ width: '14px', height: '14px', marginLeft: '0.5rem' }} />}
+                                        <span
+                                            title="This tracks estimated Firebase operations. Actual billing usage may differ slightly. Today's counter resets automatically at midnight."
+                                            style={{ marginLeft: '0.25rem', cursor: 'help', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '18px', height: '18px', borderRadius: '50%', background: 'var(--card-bg)', border: '1px solid var(--border-color)', fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}
+                                        >?</span>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'normal', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <div className={styles.filterWrapper} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.2rem 0.5rem' }}>
+                                                <Filter size={14} style={{ color: 'var(--text-secondary)' }} />
+                                                <select
+                                                    value={activityDateRange}
+                                                    onChange={(e) => setActivityDateRange(e.target.value)}
+                                                    style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
+                                                >
+                                                    <option value="today">Today</option>
+                                                    <option value="7d">Last 7 Days</option>
+                                                    <option value="30d">Last 30 Days</option>
+                                                    <option value="all">All Time</option>
+                                                </select>
+                                            </div>
+
+                                            {activityDateRange === 'today' && (
+                                                <button
+                                                    onClick={async () => {
+                                                        if (isRefreshingActivity) return;
+                                                        setIsRefreshingActivity(true);
+                                                        try {
+                                                            await resetActivity();
+                                                            showToast('Activity counters refreshed.');
+                                                        } catch (err) {
+                                                            console.error('Refresh error:', err);
+                                                            showToast('Failed to refresh counters.', 'error');
+                                                        } finally {
+                                                            setIsRefreshingActivity(false);
+                                                        }
+                                                    }}
+                                                    disabled={isRefreshingActivity}
+                                                    title="Refresh today's counters"
+                                                    style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.25rem 0.6rem', cursor: isRefreshingActivity ? 'not-allowed' : 'pointer', color: 'var(--text-secondary)', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem', transition: 'all 0.2s ease', opacity: isRefreshingActivity ? 0.7 : 1 }}
+                                                    onMouseEnter={e => { if (!isRefreshingActivity) { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = '#ef4444'; } }}
+                                                    onMouseLeave={e => { if (!isRefreshingActivity) { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-color)'; } }}
+                                                >
+                                                    {isRefreshingActivity ? <span className={styles.spinner} style={{ width: '10px', height: '10px' }} /> : <RefreshCw size={10} />}
+                                                    {isRefreshingActivity ? 'Refreshing...' : 'Refresh'}
+                                                </button>
+                                            )}
+                                        </span>
+                                    </h4>
+
+                                    <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(3, 1fr)', opacity: isAggregating ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+                                        {[
+                                            { label: 'Reads', type: 'reads', value: aggregatedUsage.reads + (activityDateRange === 'today' ? pendingRef.current.reads : 0), activityLimit: activityDateRange === 'today' ? 50000 : (activityDateRange === '7d' ? 350000 : (activityDateRange === '30d' ? 1500000 : 5000000)), color: '#38bdf8', bgTint: 'rgba(56, 189, 248, 0.06)', borderTint: 'rgba(56, 189, 248, 0.15)', icon: <Eye size={15} /> },
+                                            { label: 'Writes', type: 'writes', value: aggregatedUsage.writes + (activityDateRange === 'today' ? pendingRef.current.writes : 0), activityLimit: activityDateRange === 'today' ? 20000 : (activityDateRange === '7d' ? 140000 : (activityDateRange === '30d' ? 600000 : 2000000)), color: '#a78bfa', bgTint: 'rgba(167, 139, 250, 0.06)', borderTint: 'rgba(167, 139, 250, 0.15)', icon: <Edit2 size={15} /> },
+                                            { label: 'Deletes', type: 'deletes', value: aggregatedUsage.deletes + (activityDateRange === 'today' ? pendingRef.current.deletes : 0), activityLimit: activityDateRange === 'today' ? 20000 : (activityDateRange === '7d' ? 140000 : (activityDateRange === '30d' ? 600000 : 2000000)), color: '#fb923c', bgTint: 'rgba(251, 146, 60, 0.06)', borderTint: 'rgba(251, 146, 60, 0.15)', icon: <Trash2 size={15} /> }
+                                        ].map(({ label, type, value, activityLimit, color, bgTint, borderTint, icon }) => {
+                                            let pct = (value / activityLimit) * 100;
+                                            if (pct > 100) pct = 100;
+                                            const isHighUsage = pct >= 80;
+                                            let barColor = color;
+                                            if (pct > 75) barColor = '#f59e0b';
+                                            if (pct > 90) barColor = '#ef4444';
+
+                                            return (
+                                                <div
+                                                    key={label}
+                                                    className={`${styles.detailItem} ${styles.activityDetailCard} ${isHighUsage ? styles.highUsage : ''}`}
+                                                    style={{
+                                                        background: bgTint,
+                                                        border: `1px solid ${isHighUsage ? '#ef4444' : borderTint}`,
+                                                        borderTop: `3px solid ${isHighUsage ? '#ef4444' : color}`,
+                                                        padding: '1.1rem 1.25rem',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        gap: '0.75rem',
+                                                        cursor: 'pointer',
+                                                        position: 'relative'
+                                                    }}
+                                                    onClick={async () => {
+                                                        if (activityDateRange !== 'today') {
+                                                            showToast("Detailed operation logs are only viewable for today's activity.", 'error');
+                                                            return;
+                                                        }
+                                                        setActivityDetailType(type);
+                                                        setActivityLogsLoading(true);
+                                                        setActivityLogs([]);
+                                                        try {
+                                                            const typeMap = { reads: 'read', writes: 'write', deletes: 'delete' };
+                                                            const logsQ = query(
+                                                                collection(db, 'dailyUsage', currentDateKey, 'logs'),
+                                                                where('type', '==', typeMap[type]),
+                                                                orderBy('time', 'desc'),
+                                                                firestoreLimit(200)
+                                                            );
+                                                            const snap = await getDocs(logsQ);
+                                                            setActivityLogs(snap.docs.map(d => d.data()));
+                                                        } catch (err) {
+                                                            console.error('Failed to load activity logs:', err);
+                                                        } finally {
+                                                            setActivityLogsLoading(false);
+                                                        }
+                                                    }}
+                                                >
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                                                            {icon} {label}
+                                                        </span>
+                                                        <span style={{ fontSize: '0.65rem', color: isHighUsage ? '#fff' : 'var(--text-secondary)', background: isHighUsage ? '#ef4444' : 'var(--card-bg)', padding: '0.15rem 0.45rem', borderRadius: '4px', border: `1px solid ${isHighUsage ? '#ef4444' : 'var(--border-color)'}`, fontWeight: isHighUsage ? 'bold' : 'normal' }}>
+                                                            {isHighUsage && '⚠️ '}{pct.toFixed(1)}%
+                                                        </span>
+                                                    </div>
+                                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
+                                                        <span style={{ fontSize: '1.5rem', fontWeight: '700', color: barColor, lineHeight: 1 }}>
+                                                            {value.toLocaleString()}
+                                                        </span>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                                            / {(activityLimit >= 5000000 ? '∞' : activityLimit.toLocaleString())}
+                                                        </span>
+                                                    </div>
+                                                    <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.06)', borderRadius: '5px', overflow: 'hidden' }}>
+                                                        <div style={{
+                                                            width: `${Math.max(pct, 1)}%`,
+                                                            height: '100%',
+                                                            background: `linear-gradient(90deg, ${barColor}, ${barColor}dd)`,
+                                                            borderRadius: '5px',
+                                                            boxShadow: `0 0 8px ${barColor}40`
+                                                        }}></div>
+                                                    </div>
+                                                    <div style={{ marginTop: 'auto', paddingTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', color: color, fontWeight: '600', opacity: 0.8 }}>
+                                                        View Details <ChevronRight size={12} />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
                                 <div className={styles.listSectionHeader}>
                                     <h3 className={styles.listTitle}>Login Audit Trail</h3>
                                 </div>
@@ -3735,18 +3907,31 @@ const Admin = () => {
                                                 <input type="text" placeholder="Search by email or IP..." value={searchUsers} onChange={(e) => { setSearchUsers(e.target.value); setAuditPage(1); }} />
                                                 {searchUsers && <span className={styles.searchResultCount}>{filteredAuditLogs.length} of {auditLogsList.length}</span>}
                                             </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Filter size={14} /> Filter:</span>
+                                                <select
+                                                    value={auditDateRange}
+                                                    onChange={(e) => { setAuditDateRange(e.target.value); setAuditPage(1); }}
+                                                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer', outline: 'none' }}
+                                                >
+                                                    <option value="all">All Time</option>
+                                                    <option value="today">Today</option>
+                                                    <option value="7d">Last 7 Days</option>
+                                                    <option value="30d">Last 30 Days</option>
+                                                </select>
+                                            </div>
                                         </div>
 
                                         {filteredAuditLogs.length === 0 ? (
                                             <div className={styles.emptyState}>{searchUsers ? 'No matching logs found.' : 'No audit logs recorded yet.'}</div>
                                         ) : (
                                             <>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 0.8fr 1.8fr 1.2fr', gap: '0.75rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 0.8fr 1.8fr 1.2fr', gap: '0.75rem', padding: '1rem 1.5rem', background: 'var(--card-bg)', border: '1px solid var(--divider)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
                                                     <SortableHeader label="User Email" field="email" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                                     <SortableHeader label="IP Address" field="ipAddress" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                                     <SortableHeader label="Device" field="deviceType" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                                     <SortableHeader label="User Agent" field="userAgent" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
-                                                    <SortableHeader label="Timestamp" field="timestamp" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
+                                                    <SortableHeader label="Timestamp" field="timestamp" sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                                 </div>
                                                 {paginatedAuditLogs.map(log => (
                                                     <div key={log.id} onClick={() => setSelectedAuditLog(log)} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 0.8fr 1.8fr 1.2fr', gap: '0.75rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', fontSize: '0.85rem', alignItems: 'center', transition: 'background 0.2s ease', cursor: 'pointer' }} className={styles.userGridRowHover}>
@@ -3886,7 +4071,7 @@ const Admin = () => {
                                         <div className={styles.chartTitle}>
                                             <TrendingUp size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
                                             Visits Over Time {analyticsRange.preset === '7d' ? '(Last 7 Days)' : analyticsRange.preset === '30d' ? '(Last 30 Days)' : analyticsRange.preset === '90d' ? '(Last 90 Days)' : analyticsRange.preset === 'all' ? '(All Time)' : `(${analyticsRange.start} — ${analyticsRange.end})`}
-                                            <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('visits')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                            <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('visits')} style={{ marginLeft: 'auto' }}>View Details</button>
                                             <button className={styles.analyticsRefreshBtn} onClick={fetchAnalytics} disabled={analyticsLoading}>
                                                 <RefreshCw size={14} /> Refresh
                                             </button>
@@ -3914,7 +4099,7 @@ const Admin = () => {
                                             <div className={styles.chartTitle}>
                                                 <Globe size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
                                                 Visitors by Country
-                                                <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('countries')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                                <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('countries')} style={{ marginLeft: 'auto' }}>View Details</button>
                                             </div>
                                             {countryData.length > 0 ? (
                                                 <>
@@ -3944,7 +4129,7 @@ const Admin = () => {
                                             <div className={styles.chartTitle}>
                                                 <Monitor size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
                                                 Device Breakdown
-                                                <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('devices')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                                <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('devices')} style={{ marginLeft: 'auto' }}>View Details</button>
                                             </div>
                                             {deviceData.length > 0 ? (
                                                 <>
@@ -3978,7 +4163,7 @@ const Admin = () => {
                                             <div className={styles.chartTitle}>
                                                 <MapPin size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
                                                 Top Cities
-                                                <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('cities')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                                <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('cities')} style={{ marginLeft: 'auto' }}>View Details</button>
                                             </div>
                                             {cityData.length > 0 ? (
                                                 <ResponsiveContainer width="100%" height={250}>
@@ -4001,7 +4186,7 @@ const Admin = () => {
                                             <div className={styles.chartTitle}>
                                                 <Share2 size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
                                                 Traffic Sources
-                                                <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('referrers')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                                <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('referrers')} style={{ marginLeft: 'auto' }}>View Details</button>
                                             </div>
                                             {referrerData.length > 0 ? (
                                                 <>
@@ -4033,7 +4218,7 @@ const Admin = () => {
                                         <div className={styles.chartTitle}>
                                             <FileText size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
                                             Top Visited Pages
-                                            <button className={styles.detailBtn} onClick={() => setAnalyticsDetail('pages')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                            <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('pages')} style={{ marginLeft: 'auto' }}>View Details</button>
                                         </div>
                                         {topPages.length > 0 ? (
                                             <ResponsiveContainer width="100%" height={Math.max(200, topPages.length * 40)}>
@@ -4065,7 +4250,7 @@ const Admin = () => {
                         <div className={styles.detailModal} onClick={(e) => e.stopPropagation()}>
                             <div className={styles.detailModalHeader}>
                                 <h3>
-                                    {analyticsDetail === 'visits' && <><TrendingUp size={20} /> All Visits Log ({visits.length})</>}
+                                    {analyticsDetail === 'visits' && <><TrendingUp size={20} /> All Visits Log ({analyticsLogsTotal || analyticsLogs.length})</>}
                                     {analyticsDetail === 'countries' && <><Globe size={20} /> Visitors by Country</>}
                                     {analyticsDetail === 'devices' && <><Monitor size={20} /> Device Breakdown</>}
                                     {analyticsDetail === 'pages' && <><FileText size={20} /> All Visited Pages</>}
@@ -4075,190 +4260,212 @@ const Admin = () => {
                                 <button onClick={() => setAnalyticsDetail(null)} className={styles.detailCloseBtn}><X size={20} /></button>
                             </div>
                             <div className={styles.detailModalBody}>
-                                {analyticsDetail === 'visits' && (
-                                    <table className={styles.detailTable}>
-                                        <thead>
-                                            <tr><th>#</th><th>Page</th><th>Country</th><th>City</th><th>Device</th><th>Browser</th><th>IP</th><th>Referrer</th><th>Session</th><th>Date & Time</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {visits.length > 0 ? visits.map((v, i) => (
-                                                <tr key={v.id || i}>
-                                                    <td>{i + 1}</td>
-                                                    <td>{v.path || '/'}</td>
-                                                    <td>{v.countryCode ? <span title={v.country}>{v.countryCode}</span> : (v.country || 'Unknown')}</td>
-                                                    <td>{v.city || '-'}</td>
-                                                    <td style={{ textTransform: 'capitalize' }}>{v.device || '-'}</td>
-                                                    <td>{parseBrowser(v.userAgent)}</td>
-                                                    <td style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{v.ip || '-'}</td>
-                                                    <td style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.referrer}>{v.referrer || '-'}</td>
-                                                    <td style={{ fontSize: '0.7rem', fontFamily: 'monospace', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={v.sessionId}>{v.sessionId ? v.sessionId.slice(0, 8) + '…' : '-'}</td>
-                                                    <td style={{ whiteSpace: 'nowrap', fontSize: '0.78rem' }}>{v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toLocaleString() : v.date || '-'}</td>
-                                                </tr>
-                                            )) : <tr><td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No visit data.</td></tr>}
-                                        </tbody>
-                                    </table>
+                                {analyticsLogsLoading ? (
+                                    <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                        <RefreshCw size={32} className={styles.spin} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+                                        <p>Loading detailed analytics from Firestore...</p>
+                                    </div>
+                                ) : analyticsDetail === 'visits' && (
+                                    <>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                                            Showing top {analyticsLogs.length} results from Firestore fetch.
+                                        </p>
+                                        <table className={styles.detailTable}>
+                                            <thead>
+                                                <tr><th>#</th><th>Page</th><th>Country</th><th>City</th><th>Device</th><th>Browser</th><th>IP</th><th>Referrer</th><th>Session</th><th>Date & Time</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                {analyticsLogs.length > 0 ? analyticsLogs.map((v, i) => (
+                                                    <tr key={v.id || i}>
+                                                        <td>{i + 1}</td>
+                                                        <td>{v.path || '/'}</td>
+                                                        <td>{v.countryCode ? <span title={v.country}>{v.countryCode}</span> : (v.country || 'Unknown')}</td>
+                                                        <td>{v.city || '-'}</td>
+                                                        <td style={{ textTransform: 'capitalize' }}>{v.device || '-'}</td>
+                                                        <td>{parseBrowser(v.userAgent)}</td>
+                                                        <td style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{v.ip || '-'}</td>
+                                                        <td style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.referrer}>{v.referrer || '-'}</td>
+                                                        <td style={{ fontSize: '0.7rem', fontFamily: 'monospace', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={v.sessionId}>{v.sessionId ? v.sessionId.slice(0, 8) + '…' : '-'}</td>
+                                                        <td style={{ whiteSpace: 'nowrap', fontSize: '0.78rem' }}>{v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toLocaleString() : v.date || '-'}</td>
+                                                    </tr>
+                                                )) : <tr><td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No visit data for this range.</td></tr>}
+                                            </tbody>
+                                        </table>
+                                        {analyticsLogsTotal > analyticsLogs.length && (
+                                            <div style={{ padding: '2rem', textAlign: 'center', borderTop: '1px solid var(--divider)' }}>
+                                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                                                    Showing {analyticsLogs.length} of {analyticsLogsTotal} total visits in this range.
+                                                </p>
+                                                <p style={{ fontSize: '0.8rem', opacity: 0.6, fontStyle: 'italic' }}>
+                                                    For full export or deeper analysis, please use a dedicated analytics tool or request a raw CSV export.
+                                                </p>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                                 {analyticsDetail === 'countries' && (
-                                    <table className={styles.detailTable}>
-                                        <thead>
-                                            <tr><th>#</th><th>Country</th><th>Visits</th><th>% Share</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {(() => {
-                                                const allCountries = {};
-                                                visits.forEach(v => { const c = v.country || 'Unknown'; allCountries[c] = (allCountries[c] || 0) + 1; });
-                                                const sorted = Object.entries(allCountries).sort((a, b) => b[1] - a[1]);
-                                                const total = visits.length || 1;
-                                                return sorted.length > 0 ? sorted.map(([name, count], i) => (
-                                                    <tr key={name}>
-                                                        <td>{i + 1}</td>
-                                                        <td>{name}</td>
-                                                        <td>{count}</td>
-                                                        <td>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                                <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--input-bg)' }}>
-                                                                    <div style={{ width: `${(count / total * 100).toFixed(0)}%`, height: '100%', borderRadius: '3px', background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                                                                </div>
-                                                                <span style={{ fontSize: '0.78rem', minWidth: '40px' }}>{(count / total * 100).toFixed(1)}%</span>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                )) : <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No country data.</td></tr>;
-                                            })()}
-                                        </tbody>
-                                    </table>
+                                    <div className={styles.detailCardGrid}>
+                                        <div className={styles.detailCardFull}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                <h4 style={{ margin: 0 }}>Country Breakdown</h4>
+                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
+                                            </div>
+                                            <table className={styles.detailTable}>
+                                                <thead>
+                                                    <tr><th>Country</th><th>Visits</th><th>Percentage</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(() => {
+                                                        const allCountries = {};
+                                                        analyticsLogs.forEach(v => { const c = v.country || 'Unknown'; allCountries[c] = (allCountries[c] || 0) + 1; });
+                                                        const total = analyticsLogs.length || 1;
+                                                        return Object.entries(allCountries)
+                                                            .sort(([, a], [, b]) => b - a)
+                                                            .map(([name, count]) => (
+                                                                <tr key={name}>
+                                                                    <td style={{ fontWeight: '600' }}>{name}</td>
+                                                                    <td>{count}</td>
+                                                                    <td>{((count / total) * 100).toFixed(1)}%</td>
+                                                                </tr>
+                                                            ));
+                                                    })()}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 )}
                                 {analyticsDetail === 'devices' && (
-                                    <table className={styles.detailTable}>
-                                        <thead>
-                                            <tr><th>#</th><th>Device</th><th>Visits</th><th>% Share</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {(() => {
-                                                const allDevices = {};
-                                                visits.forEach(v => { const d = v.device || 'unknown'; const label = d.charAt(0).toUpperCase() + d.slice(1); allDevices[label] = (allDevices[label] || 0) + 1; });
-                                                const sorted = Object.entries(allDevices).sort((a, b) => b[1] - a[1]);
-                                                const total = visits.length || 1;
-                                                return sorted.length > 0 ? sorted.map(([name, count], i) => (
-                                                    <tr key={name}>
-                                                        <td>{i + 1}</td>
-                                                        <td style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                            {name === 'Desktop' ? <Monitor size={14} /> : name === 'Mobile' ? <Smartphone size={14} /> : name === 'Tablet' ? <Tablet size={14} /> : null}
-                                                            {name}
-                                                        </td>
-                                                        <td>{count}</td>
-                                                        <td>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                                <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--input-bg)' }}>
-                                                                    <div style={{ width: `${(count / total * 100).toFixed(0)}%`, height: '100%', borderRadius: '3px', background: CHART_COLORS[(i + 3) % CHART_COLORS.length] }} />
-                                                                </div>
-                                                                <span style={{ fontSize: '0.78rem', minWidth: '40px' }}>{(count / total * 100).toFixed(1)}%</span>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                )) : <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No device data.</td></tr>;
-                                            })()}
-                                        </tbody>
-                                    </table>
+                                    <div className={styles.detailCardGrid}>
+                                        <div className={styles.detailCardFull}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                <h4 style={{ margin: 0 }}>Device Breakdown</h4>
+                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
+                                            </div>
+                                            <table className={styles.detailTable}>
+                                                <thead>
+                                                    <tr><th>Device Type</th><th>Visits</th><th>Percentage</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(() => {
+                                                        const allDevices = {};
+                                                        analyticsLogs.forEach(v => { const d = v.device || 'unknown'; const label = d.charAt(0).toUpperCase() + d.slice(1); allDevices[label] = (allDevices[label] || 0) + 1; });
+                                                        const total = analyticsLogs.length || 1;
+                                                        return Object.entries(allDevices)
+                                                            .sort(([, a], [, b]) => b - a)
+                                                            .map(([name, count]) => (
+                                                                <tr key={name}>
+                                                                    <td style={{ fontWeight: '600' }}>{name}</td>
+                                                                    <td>{count}</td>
+                                                                    <td>{((count / total) * 100).toFixed(1)}%</td>
+                                                                </tr>
+                                                            ));
+                                                    })()}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 )}
                                 {analyticsDetail === 'pages' && (
-                                    <table className={styles.detailTable}>
-                                        <thead>
-                                            <tr><th>#</th><th>Page Path</th><th>Views</th><th>% Share</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {(() => {
-                                                const allPages = {};
-                                                visits.forEach(v => { const p = v.path || '/'; allPages[p] = (allPages[p] || 0) + 1; });
-                                                const sorted = Object.entries(allPages).sort((a, b) => b[1] - a[1]);
-                                                const total = visits.length || 1;
-                                                return sorted.length > 0 ? sorted.map(([path, count], i) => (
-                                                    <tr key={path}>
-                                                        <td>{i + 1}</td>
-                                                        <td>{path === '/' ? '/ (Home)' : path}</td>
-                                                        <td>{count}</td>
-                                                        <td>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                                <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--input-bg)' }}>
-                                                                    <div style={{ width: `${(count / total * 100).toFixed(0)}%`, height: '100%', borderRadius: '3px', background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                                                                </div>
-                                                                <span style={{ fontSize: '0.78rem', minWidth: '40px' }}>{(count / total * 100).toFixed(1)}%</span>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                )) : <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No page data.</td></tr>;
-                                            })()}
-                                        </tbody>
-                                    </table>
+                                    <div className={styles.detailCardGrid}>
+                                        <div className={styles.detailCardFull}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                <h4 style={{ margin: 0 }}>Page Popularity</h4>
+                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
+                                            </div>
+                                            <table className={styles.detailTable}>
+                                                <thead>
+                                                    <tr><th>Page Path</th><th>Views</th><th>Percentage</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(() => {
+                                                        const allPages = {};
+                                                        analyticsLogs.forEach(v => { const p = v.path || '/'; allPages[p] = (allPages[p] || 0) + 1; });
+                                                        const total = analyticsLogs.length || 1;
+                                                        return Object.entries(allPages)
+                                                            .sort(([, a], [, b]) => b - a)
+                                                            .map(([path, count]) => (
+                                                                <tr key={path}>
+                                                                    <td style={{ fontWeight: '500', fontFamily: 'monospace', fontSize: '0.8rem' }}>{path}</td>
+                                                                    <td>{count}</td>
+                                                                    <td>{((count / total) * 100).toFixed(1)}%</td>
+                                                                </tr>
+                                                            ));
+                                                    })()}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 )}
                                 {analyticsDetail === 'cities' && (
-                                    <table className={styles.detailTable}>
-                                        <thead>
-                                            <tr><th>#</th><th>City</th><th>Visits</th><th>% Share</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {(() => {
-                                                const allCities = {};
-                                                visits.forEach(v => {
-                                                    const city = v.city || 'Unknown';
-                                                    const country = v.country || '';
-                                                    const key = `${city}${country ? ', ' + country : ''}`;
-                                                    allCities[key] = (allCities[key] || 0) + 1;
-                                                });
-                                                const sorted = Object.entries(allCities).sort((a, b) => b[1] - a[1]);
-                                                const total = visits.length || 1;
-                                                return sorted.length > 0 ? sorted.map(([name, count], i) => (
-                                                    <tr key={name}>
-                                                        <td>{i + 1}</td>
-                                                        <td><MapPin size={12} style={{ marginRight: '0.4rem', verticalAlign: 'middle', color: 'var(--text-secondary)' }} />{name}</td>
-                                                        <td>{count}</td>
-                                                        <td>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                                <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--input-bg)' }}>
-                                                                    <div style={{ width: `${(count / total * 100).toFixed(0)}%`, height: '100%', borderRadius: '3px', background: CHART_COLORS[(i + 2) % CHART_COLORS.length] }} />
-                                                                </div>
-                                                                <span style={{ fontSize: '0.78rem', minWidth: '40px' }}>{(count / total * 100).toFixed(1)}%</span>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                )) : <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No city data.</td></tr>;
-                                            })()}
-                                        </tbody>
-                                    </table>
+                                    <div className={styles.detailCardGrid}>
+                                        <div className={styles.detailCardFull}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                <h4 style={{ margin: 0 }}>Top Cities</h4>
+                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
+                                            </div>
+                                            <table className={styles.detailTable}>
+                                                <thead>
+                                                    <tr><th>City & Country</th><th>Visits</th><th>Percentage</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(() => {
+                                                        const allCities = {};
+                                                        analyticsLogs.forEach(v => {
+                                                            const city = v.city || 'Unknown';
+                                                            const country = v.country || '';
+                                                            const key = `${city}, ${country}`.replace(/, $/, '');
+                                                            allCities[key] = (allCities[key] || 0) + 1;
+                                                        });
+                                                        const total = analyticsLogs.length || 1;
+                                                        return Object.entries(allCities)
+                                                            .sort(([, a], [, b]) => b - a)
+                                                            .map(([name, count]) => (
+                                                                <tr key={name}>
+                                                                    <td style={{ fontWeight: '600' }}>{name}</td>
+                                                                    <td>{count}</td>
+                                                                    <td>{((count / total) * 100).toFixed(1)}%</td>
+                                                                </tr>
+                                                            ));
+                                                    })()}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 )}
                                 {analyticsDetail === 'referrers' && (
-                                    <table className={styles.detailTable}>
-                                        <thead>
-                                            <tr><th>#</th><th>Source</th><th>Visits</th><th>% Share</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {(() => {
-                                                const allRefs = {};
-                                                visits.forEach(v => { const r = v.referrer || 'Direct'; allRefs[r] = (allRefs[r] || 0) + 1; });
-                                                const sorted = Object.entries(allRefs).sort((a, b) => b[1] - a[1]);
-                                                const total = visits.length || 1;
-                                                return sorted.length > 0 ? sorted.map(([name, count], i) => (
-                                                    <tr key={name}>
-                                                        <td>{i + 1}</td>
-                                                        <td><Share2 size={12} style={{ marginRight: '0.4rem', verticalAlign: 'middle', color: 'var(--text-secondary)' }} />{name}</td>
-                                                        <td>{count}</td>
-                                                        <td>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                                <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'var(--input-bg)' }}>
-                                                                    <div style={{ width: `${(count / total * 100).toFixed(0)}%`, height: '100%', borderRadius: '3px', background: CHART_COLORS[(i + 5) % CHART_COLORS.length] }} />
-                                                                </div>
-                                                                <span style={{ fontSize: '0.78rem', minWidth: '40px' }}>{(count / total * 100).toFixed(1)}%</span>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                )) : <tr><td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No referrer data.</td></tr>;
-                                            })()}
-                                        </tbody>
-                                    </table>
+                                    <div className={styles.detailCardGrid}>
+                                        <div className={styles.detailCardFull}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                <h4 style={{ margin: 0 }}>Traffic Sources</h4>
+                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
+                                            </div>
+                                            <table className={styles.detailTable}>
+                                                <thead>
+                                                    <tr><th>Source Referrer</th><th>Visits</th><th>Percentage</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(() => {
+                                                        const allRefs = {};
+                                                        analyticsLogs.forEach(v => { const r = v.referrer || 'Direct'; allRefs[r] = (allRefs[r] || 0) + 1; });
+                                                        const total = analyticsLogs.length || 1;
+                                                        return Object.entries(allRefs)
+                                                            .sort(([, a], [, b]) => b - a)
+                                                            .map(([name, count]) => (
+                                                                <tr key={name}>
+                                                                    <td style={{ fontWeight: '600' }}>{name === 'Direct' ? 'Direct / Bookmark' : name}</td>
+                                                                    <td>{count}</td>
+                                                                    <td>{((count / total) * 100).toFixed(1)}%</td>
+                                                                </tr>
+                                                            ));
+                                                    })()}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </div >
                 )
             }
 
@@ -4431,6 +4638,150 @@ const Admin = () => {
                     </div>
                 )
             }
+            {/* ========== ACTIVITY DETAIL MODAL ========== */}
+            {
+                activityDetailType && (
+                    <div className={styles.modalOverlay} onClick={() => setActivityDetailType(null)} style={{ zIndex: 1100 }}>
+                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '850px', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
+                            <div className={styles.modalHeader} style={{
+                                borderBottom: '1px solid var(--divider)',
+                                padding: '1.5rem 2rem',
+                                background: activityDetailType === 'reads' ? 'rgba(56, 189, 248, 0.08)' :
+                                    (activityDetailType === 'writes' ? 'rgba(167, 139, 250, 0.08)' : 'rgba(251, 146, 60, 0.08)')
+                            }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                    <h3 style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.75rem',
+                                        margin: 0,
+                                        fontSize: '1.4rem',
+                                        color: activityDetailType === 'reads' ? '#38bdf8' :
+                                            (activityDetailType === 'writes' ? '#a78bfa' : '#fb923c')
+                                    }}>
+                                        {activityDetailType === 'reads' && <Eye size={24} />}
+                                        {activityDetailType === 'writes' && <Edit2 size={24} />}
+                                        {activityDetailType === 'deletes' && <Trash2 size={24} />}
+                                        {activityDetailType.charAt(0).toUpperCase() + activityDetailType.slice(1)} Activity Logs
+                                    </h3>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', opacity: 0.8 }}>
+                                        Detailed breakdown of all {activityDetailType} for {currentDateKey}
+                                    </p>
+                                </div>
+                                <button onClick={() => setActivityDetailType(null)} className={styles.closeBtn} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.4rem' }}>
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div style={{ padding: '0', maxHeight: '65vh', overflowY: 'auto', background: 'var(--bg-card)' }}>
+                                {activityLogsLoading ? (
+                                    <div style={{ padding: '5rem 3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                        <RefreshCw size={32} style={{ animation: 'spin 1.5s linear infinite', opacity: 0.3, marginBottom: '1rem' }} />
+                                        <p style={{ fontWeight: '500', letterSpacing: '0.02em' }}>Fetching granular logs...</p>
+                                    </div>
+                                ) : (
+                                    <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '0.9rem' }}>
+                                        <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-surface)', zIndex: 10, backdropFilter: 'blur(8px)' }}>
+                                            <tr>
+                                                <th style={{ textAlign: 'left', padding: '1.25rem 2rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Operation & Target</th>
+                                                <th style={{ textAlign: 'center', padding: '1.25rem 1rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', width: '90px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Count</th>
+                                                <th style={{ textAlign: 'left', padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', width: '200px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>User Attribution</th>
+                                                <th style={{ textAlign: 'right', padding: '1.25rem 2rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', width: '140px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Timestamp</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {activityLogs.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan="4" style={{ padding: '5rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                                        <Activity size={48} style={{ opacity: 0.1, marginBottom: '1rem' }} />
+                                                        <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>No {activityDetailType} recorded yet.</p>
+                                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0.5rem auto' }}>
+                                                            Activity will appear here as users interact with the site.
+                                                            {dailyUsage[activityDetailType] > 0 && activityLogs.length === 0 && (
+                                                                <span style={{ display: 'block', marginTop: '1rem', fontSize: '0.75rem', opacity: 0.7, fontStyle: 'italic' }}>
+                                                                    Note: Some operations (like background counts or previous sessions) may not have detailed logs recorded.
+                                                                </span>
+                                                            )}
+                                                        </p>
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                activityLogs.map((log, i) => {
+                                                    const isSystem = log.user === 'Anonymous' || !log.user;
+                                                    return (
+                                                        <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                            <td style={{ padding: '1rem 2rem' }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                                    <div style={{
+                                                                        padding: '0.4rem',
+                                                                        borderRadius: '8px',
+                                                                        background: log.type === 'read' ? 'rgba(56, 189, 248, 0.1)' : (log.type === 'write' ? 'rgba(167, 139, 250, 0.1)' : 'rgba(251, 146, 60, 0.1)'),
+                                                                        color: log.type === 'read' ? '#38bdf8' : (log.type === 'write' ? '#a78bfa' : '#fb923c')
+                                                                    }}>
+                                                                        {log.type === 'read' ? <Eye size={14} /> : (log.type === 'write' ? <Edit2 size={14} /> : <Trash2 size={14} />)}
+                                                                    </div>
+                                                                    <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
+                                                                        {log.label || <span style={{ opacity: 0.4, fontStyle: 'italic' }}>General {log.type}</span>}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                                                <span style={{
+                                                                    background: 'rgba(255,255,255,0.04)',
+                                                                    padding: '0.25rem 0.6rem',
+                                                                    borderRadius: '6px',
+                                                                    fontWeight: '700',
+                                                                    fontSize: '0.85rem',
+                                                                    fontFamily: 'monospace',
+                                                                    color: 'var(--text-primary)'
+                                                                }}>
+                                                                    {log.count}
+                                                                </span>
+                                                            </td>
+                                                            <td style={{ padding: '1rem 1.5rem' }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                    <div style={{
+                                                                        width: '8px',
+                                                                        height: '8px',
+                                                                        borderRadius: '50%',
+                                                                        background: isSystem ? '#94a3b8' : '#10b981',
+                                                                        boxShadow: isSystem ? 'none' : '0 0 6px #10b98140'
+                                                                    }}></div>
+                                                                    <span style={{
+                                                                        color: isSystem ? 'var(--text-secondary)' : 'var(--text-primary)',
+                                                                        fontSize: '0.85rem',
+                                                                        fontWeight: isSystem ? '400' : '600'
+                                                                    }}>
+                                                                        {log.user || 'Public Visitor'}
+                                                                    </span>
+                                                                </div>
+                                                            </td>
+                                                            <td style={{ padding: '1rem 2rem', textAlign: 'right', color: 'var(--text-secondary)', fontSize: '0.85rem', fontFamily: 'monospace' }}>
+                                                                {log.time?.seconds ? new Date(log.time.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Pending...'}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+
+                            <div className={styles.modalFooter} style={{ padding: '1.5rem 2rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid var(--divider)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Activity size={16} />
+                                    <span>Total cumulative <strong>{activityDetailType}</strong> tracked today: <strong>{dailyUsage[activityDetailType]?.toLocaleString()}</strong></span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <button onClick={() => setActivityDetailType(null)} className={styles.submitBtn} style={{ margin: 0, background: 'transparent', border: '1px solid var(--divider)', color: 'var(--text-primary)' }}>Close</button>
+                                    <button onClick={() => setActivityDetailType(null)} className={styles.confirmBtn} style={{ margin: 0 }}>Done</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
             {/* ========== USER VIEW MODAL ========== */}
             {
                 viewingUser && (
@@ -4525,7 +4876,6 @@ const Admin = () => {
                                     </button>
                                     <button
                                         className={styles.confirmBtn}
-                                        style={{ background: 'var(--primary-color)', color: '#000', border: 'none', padding: '0.5rem 1.5rem', borderRadius: '8px', fontWeight: '600' }}
                                         onClick={() => setViewingUser(null)}
                                     >
                                         Done

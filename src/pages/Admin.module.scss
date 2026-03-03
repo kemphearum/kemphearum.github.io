@@ -78,12 +78,9 @@
     background: linear-gradient(135deg, $primary-color, $primary-light);
     border: none;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 4px 15px rgba($primary-color, 0.25);
+    @include wow-hover;
 
     &:hover:not(:disabled) {
-        box-shadow: 0 8px 25px rgba($primary-color, 0.4), 0 0 10px rgba($primary-color, 0.2);
-        transform: translateY(-2px);
         filter: brightness(1.1);
     }
 
@@ -269,7 +266,7 @@
         &:hover {
             color: var(--text-primary);
             background: var(--card-hover, rgba(255, 255, 255, 0.05));
-            transform: translateX(4px);
+            // Removed transform to fix the "stickiness" or "freeze" sensation
         }
 
         &.active {
@@ -633,20 +630,15 @@
     border-radius: 12px;
     font-size: 0.92rem;
     font-weight: 600;
-    color: white;
-    background: linear-gradient(135deg, $primary-color, $primary-light);
+    color: white !important;
+    background: $primary-color;
     border: none;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba($primary-color, 0.2);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
+    transition: all 0.2s ease;
 
     &:hover:not(:disabled) {
-        box-shadow: 0 6px 25px rgba($primary-color, 0.3);
-        transform: translateY(-1px);
+        background: $primary-dark;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     &:disabled {
@@ -929,19 +921,18 @@
     border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: white;
-    background: linear-gradient(135deg, $primary-color, $primary-light);
+    color: white !important;
+    background: $primary-color;
     border: none;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba($primary-color, 0.2);
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     gap: 0.4rem;
 
     &:hover {
-        box-shadow: 0 6px 15px rgba($primary-color, 0.3);
-        transform: translateY(-1px);
+        background: $primary-dark;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     }
 }
 
@@ -950,20 +941,19 @@
     border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: white;
-    background: linear-gradient(135deg, $primary-color, $primary-light);
+    color: white !important;
+    background: $primary-color;
     border: none;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba($primary-color, 0.2);
+    transition: all 0.2s ease;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
     white-space: nowrap;
 
     &:hover:not(:disabled) {
-        box-shadow: 0 6px 15px rgba($primary-color, 0.3);
-        transform: translateY(-1px);
+        background: $primary-dark;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     }
 
     &:disabled {
@@ -1255,6 +1245,13 @@
     color: $primary-color;
     background: rgba($primary-color, 0.08);
     border: 1px solid rgba($primary-color, 0.12);
+    cursor: default;
+    @include wow-hover;
+
+    &:hover {
+        background: rgba($primary-color, 0.15);
+        border-color: rgba($primary-color, 0.3);
+    }
 }
 
 .listItemActions {
@@ -1270,13 +1267,13 @@
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-secondary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease;
+    border: 1px solid var(--input-border);
+    @include wow-hover;
 
     &:hover {
         color: $primary-color;
         border-color: rgba($primary-color, 0.3);
-        background: rgba($primary-color, 0.06);
+        background: var(--card-hover);
     }
 }
 
@@ -1298,8 +1295,8 @@
         color: white;
         background: #ef4444;
         border-color: #ef4444;
-        box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
-        transform: translateY(-1px);
+        box-shadow: none;
+        transform: none;
     }
 
     &:active:not(:disabled) {
@@ -2011,6 +2008,42 @@
     }
 }
 
+.activityDetailCard {
+    cursor: pointer !important;
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+        filter: brightness(1.15) !important;
+    }
+
+    &:active {
+        transform: translateY(-1px) !important;
+        filter: brightness(1) !important;
+    }
+
+    &.highUsage {
+        animation: pulseHazard 2s infinite;
+        border-color: #ef4444 !important;
+    }
+}
+
+@keyframes pulseHazard {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
 .detailLabel {
     font-size: 0.7rem;
     text-transform: uppercase;
@@ -2318,22 +2351,22 @@
 
 .formatGroup {
     display: flex;
-    background: var(--card-bg);
-    border-radius: 6px;
-    padding: 0.2rem;
-    border: 1px solid var(--input-border);
+    background: var(--editor-toolbar-bg, var(--card-bg));
+    border-radius: 8px;
+    padding: 0.3rem;
+    border: 1px solid var(--editor-border, var(--input-border));
 
     button {
         background: transparent;
         border: none;
-        color: rgba(255, 255, 255, 0.7);
-        padding: 0.4rem;
+        color: var(--text-secondary);
+        padding: 0.5rem;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 4px;
-        transition: all 0.2s ease;
+        border-radius: 6px;
+        transition: $transition;
 
         &:hover {
             color: $primary-color;
@@ -2469,6 +2502,13 @@
     cursor: pointer;
     font-weight: 600;
     transition: all 0.2s ease;
+    background: $primary-color;
+    color: white !important;
+
+    &:hover {
+        background: $primary-dark;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
 
     &.danger {
         background: #ef4444;
@@ -2587,4 +2627,75 @@
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+}
+
+.messageGrid {
+    display: grid;
+    grid-template-columns: 40px 1fr 1.2fr 2fr 160px 80px;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+
+    &.unread {
+        background: rgba(255, 255, 255, 0.06);
+        border-left: 3px solid var(--primary-color);
+    }
+
+    &.selected {
+        background: rgba($primary-color, 0.08);
+        border: 1px solid rgba($primary-color, 0.3);
+        box-shadow: 0 0 15px rgba($primary-color, 0.05);
+    }
+}
+
+.messageHeader {
+    display: grid;
+    grid-template-columns: 40px 1fr 1.2fr 2fr 160px 80px;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.messageCell {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+
+    &.primary {
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    &.unread {
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+}
+
+.messageActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
 }

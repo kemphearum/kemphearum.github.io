@@ -81,6 +81,8 @@ html {
     --card-hover: rgba(108, 99, 255, 0.05);
     --primary-color: #6C63FF;
     --dropdown-bg: #ffffff;
+    --editor-toolbar-bg: rgba(108, 99, 255, 0.05);
+    --editor-border: rgba(108, 99, 255, 0.15);
 }
 
 body {
@@ -158,7 +160,11 @@ h6 {
     padding: 0.8rem 1.5rem;
     border-radius: $border-radius;
     font-size: 1rem;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    @include wow-hover;
 
     &-primary {
         background-color: $primary-color;
@@ -166,8 +172,6 @@ h6 {
         box-shadow: $shadow-sm;
 
         &:hover {
-            transform: translateY(-2px);
-            box-shadow: $shadow-md;
             background-color: $primary-dark;
         }
     }

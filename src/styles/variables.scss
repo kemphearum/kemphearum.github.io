@@ -30,7 +30,19 @@ $shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.3);
 $neon-glow: var(--neon-glow);
 
 // Transitions
-$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+$transition: all 0.2s ease-in-out;
+
+@mixin wow-hover {
+  transition: $transition;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.15);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+  }
+}
 
 @mixin glass {
   background: $glass-bg;

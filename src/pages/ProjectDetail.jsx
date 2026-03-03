@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useActivity } from '../hooks/useActivity';
 import { Helmet } from 'react-helmet-async';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 // eslint-disable-next-line no-unused-vars
@@ -24,6 +25,7 @@ const ProjectDetail = () => {
     const [readProgress, setReadProgress] = useState(0);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [copied, setCopied] = useState(false);
+    const { trackRead } = useActivity();
 
     // Scroll tracking
     const handleScroll = useCallback(() => {
@@ -65,6 +67,7 @@ const ProjectDetail = () => {
                         setError('Project not found');
                     } else {
                         setProject({ id: querySnapshot.docs[0].id, ...docData });
+                        trackRead(querySnapshot.size, `Viewed project: ${docData.title}`);
                     }
                 } else {
                     setError('Project not found');
@@ -77,7 +80,7 @@ const ProjectDetail = () => {
             }
         };
         if (slug) fetchProject();
-    }, [slug]);
+    }, [slug, trackRead]);
 
     // Share helpers
     const currentUrl = window.location.href;

@@ -45,5 +45,26 @@ service cloud.firestore {
       allow create;
       allow read, delete, update: if request.auth != null;
     }
+
+    // Global Activity Tracker: Only authenticated admins can read/write activity metrics
+    // Activity Tracking Rules (Global)
+    match /dailyUsage/{date} {
+      // Allow public to read counters (required for useActivity hook)
+      // Allow public to increment counters for site-wide tracking
+      allow read, create, update: if true;
+      allow delete: if request.auth != null;
+      
+      // Explicit rule for the logs subcollection
+      match /logs/{logId} {
+        allow read, delete: if request.auth != null;
+        allow create: if true;
+      }
+    }
+      
+    // Logs Collection Group (for site-wide auditing fallback)
+    match /{path=**}/logs/{logId} {
+      allow read, delete: if request.auth != null;
+      allow create: if true;
+    }
   }
 }

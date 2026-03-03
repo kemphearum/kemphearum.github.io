@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { doc, getDoc, collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useActivity } from './useActivity';
 
 // In-memory cache shared across all hook instances
 const cache = {};
@@ -14,6 +15,7 @@ export const useFirebaseDoc = (collectionName, docId, defaultValue = {}) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const mountedRef = useRef(true);
+    const { trackRead } = useActivity();
 
     useEffect(() => {
         mountedRef.current = true;
@@ -53,6 +55,7 @@ export const useFirebaseDoc = (collectionName, docId, defaultValue = {}) => {
                 if (docSnap.exists()) {
                     const result = docSnap.data();
                     cache[cacheKey] = result;
+                    trackRead(1, `Fetched ${collectionName}/${docId}`);
                     return result;
                 }
                 return null;
@@ -83,6 +86,7 @@ export const useFirebaseDoc = (collectionName, docId, defaultValue = {}) => {
         return () => {
             mountedRef.current = false;
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [collectionName, docId]);
 
     return { data, loading, error };
@@ -96,6 +100,7 @@ export const useFirebaseCollection = (collectionName, orderField = 'createdAt', 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const mountedRef = useRef(true);
+    const { trackRead } = useActivity();
 
     useEffect(() => {
         mountedRef.current = true;
@@ -139,6 +144,7 @@ export const useFirebaseCollection = (collectionName, orderField = 'createdAt', 
                     ...docSnap.data()
                 }));
                 cache[cacheKey] = result;
+                trackRead(querySnapshot.size || 1, `Fetched collection: ${collectionName}`);
                 return result;
             })();
 
@@ -167,6 +173,7 @@ export const useFirebaseCollection = (collectionName, orderField = 'createdAt', 
         return () => {
             mountedRef.current = false;
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [collectionName, orderField, orderDirection]);
 
     return { data, loading, error };

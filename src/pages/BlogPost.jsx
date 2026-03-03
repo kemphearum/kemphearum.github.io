@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useActivity } from '../hooks/useActivity';
 import { Helmet } from 'react-helmet-async';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { calculateReadTime } from '../utils/helpers';
@@ -26,6 +27,7 @@ const BlogPost = () => {
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [readProgress, setReadProgress] = useState(0);
     const [copied, setCopied] = useState(false);
+    const { trackRead } = useActivity();
 
     // Scroll tracking
     const handleScroll = useCallback(() => {
@@ -55,6 +57,7 @@ const BlogPost = () => {
                         setError('Post not found');
                     } else {
                         setPost({ id: querySnapshot.docs[0].id, ...docData });
+                        trackRead(querySnapshot.size, `Viewed blog: ${docData.title}`);
                     }
                 } else {
                     setError('Post not found');
@@ -68,7 +71,7 @@ const BlogPost = () => {
         };
 
         if (slug) fetchPost();
-    }, [slug]);
+    }, [slug, trackRead]);
 
     // Share helpers
     const currentUrl = window.location.href;
