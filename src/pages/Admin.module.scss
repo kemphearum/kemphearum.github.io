@@ -2028,6 +2028,33 @@
         animation: pulseHazard 2s infinite;
         border-color: #ef4444 !important;
     }
+
+    &:hover {
+        .viewDetailsLink {
+            opacity: 1 !important;
+            text-decoration: underline;
+
+            svg {
+                transform: translateX(3px);
+            }
+        }
+    }
+}
+
+.viewDetailsLink {
+    margin-top: auto;
+    padding-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    opacity: 0.7;
+    transition: all 0.2s ease;
+
+    svg {
+        transition: transform 0.2s ease;
+    }
 }
 
 @keyframes pulseHazard {

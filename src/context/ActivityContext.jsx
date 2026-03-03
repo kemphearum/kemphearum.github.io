@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { db, auth } from '../firebase';
-import { doc, setDoc, collection, writeBatch, increment as firestoreIncrement, onSnapshot, serverTimestamp, deleteDoc, getDocs } from 'firebase/firestore';
+import { doc, setDoc, collection, writeBatch, increment as firestoreIncrement, onSnapshot, serverTimestamp, getDocs, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
 import { getTodayDateKey } from '../utils/dateUtils';
@@ -13,6 +13,13 @@ export const ActivityProvider = ({ children }) => {
     const [currentDateKey, setCurrentDateKey] = useState(getTodayDateKey());
     const [user, setUser] = useState(null);
     const [trackerTick, setTrackerTick] = useState(0);
+    const [loggingConfig, setLoggingConfig] = useState({
+        logAll: true,
+        logReads: true,
+        logWrites: true,
+        logDeletes: true,
+        logAnonymous: true
+    });
 
     // Refs for debounced writes
     const activityFlushTimerRef = useRef(null);
@@ -23,6 +30,24 @@ export const ActivityProvider = ({ children }) => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    // Listen to logging configuration rules
+    useEffect(() => {
+        const settingsRef = doc(db, 'settings', 'admin');
+        const unsubscribe = onSnapshot(settingsRef, (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                setLoggingConfig({
+                    logAll: data.logAll !== false,
+                    logReads: data.logReads !== false,
+                    logWrites: data.logWrites !== false,
+                    logDeletes: data.logDeletes !== false,
+                    logAnonymous: data.logAnonymous !== false,
+                });
+            }
         });
         return () => unsubscribe();
     }, []);
@@ -71,25 +96,25 @@ export const ActivityProvider = ({ children }) => {
             return;
         }
 
-        const { reads, writes, deletes, logs } = pendingRef.current;
+        const { reads, writes, deletes, logs } = { ...pendingRef.current };
         if (reads === 0 && writes === 0 && deletes === 0 && logs.length === 0) return;
 
         isFlushing.current = true;
-        const dateKey = getTodayDateKey(); // Use fresh key in case of midnight flush
+        const dateKey = getTodayDateKey();
 
         try {
             const batch = writeBatch(db);
             const counterRef = doc(db, 'dailyUsage', dateKey);
 
-            // Update main counters
-            await setDoc(counterRef, {
+            // 1. Update main counters (Now part of the batch for atomicity)
+            batch.set(counterRef, {
                 reads: firestoreIncrement(reads),
                 writes: firestoreIncrement(writes),
                 deletes: firestoreIncrement(deletes),
                 lastUpdated: serverTimestamp()
             }, { merge: true });
 
-            // Add history logs
+            // 2. Add history logs
             logs.forEach(log => {
                 const logRef = doc(collection(counterRef, 'logs'));
                 batch.set(logRef, {
@@ -100,8 +125,13 @@ export const ActivityProvider = ({ children }) => {
             });
 
             await batch.commit();
-            // Clear what we just flushed
-            pendingRef.current = { reads: 0, writes: 0, deletes: 0, logs: [] };
+
+            // 3. Subtract what we just flushed (Fixes race condition)
+            pendingRef.current.reads -= reads;
+            pendingRef.current.writes -= writes;
+            pendingRef.current.deletes -= deletes;
+            pendingRef.current.logs = pendingRef.current.logs.slice(logs.length);
+
         } catch (err) {
             console.error('Failed to flush activity tracking:', err);
         } finally {
@@ -115,29 +145,62 @@ export const ActivityProvider = ({ children }) => {
         setTrackerTick(t => t + 1); // Trigger optimistic UI update
     }, [flushToFirestore]);
 
+    const shouldLogDetailedInfo = useCallback((type) => {
+        if (!loggingConfig.logAll) return false;
+
+        const isAnon = !user || user.email === undefined;
+        if (isAnon && !loggingConfig.logAnonymous) return false;
+
+        if (type === 'read' && !loggingConfig.logReads) return false;
+        if (type === 'write' && !loggingConfig.logWrites) return false;
+        if (type === 'delete' && !loggingConfig.logDeletes) return false;
+
+        return true;
+    }, [loggingConfig, user]);
+
     const trackRead = useCallback((count = 1, label = '') => {
-        pendingRef.current.reads += count;
-        if (label) {
-            pendingRef.current.logs.push({ type: 'read', label, count });
+        const validCount = Number.isFinite(count) ? count : 1;
+        pendingRef.current.reads += validCount;
+        if (label && shouldLogDetailedInfo('read')) {
+            pendingRef.current.logs.push({ type: 'read', label, count: validCount });
         }
         queueFlush();
-    }, [queueFlush]);
+    }, [queueFlush, shouldLogDetailedInfo]);
 
     const trackWrite = useCallback((count = 1, label = '') => {
-        pendingRef.current.writes += count;
-        if (label) {
-            pendingRef.current.logs.push({ type: 'write', label, count });
+        const validCount = Number.isFinite(count) ? count : 1;
+        pendingRef.current.writes += validCount;
+        if (label && shouldLogDetailedInfo('write')) {
+            pendingRef.current.logs.push({ type: 'write', label, count: validCount });
         }
         queueFlush();
-    }, [queueFlush]);
+    }, [queueFlush, shouldLogDetailedInfo]);
 
     const trackDelete = useCallback((count = 1, label = '') => {
-        pendingRef.current.deletes += count;
-        if (label) {
-            pendingRef.current.logs.push({ type: 'delete', label, count });
+        const validCount = Number.isFinite(count) ? count : 1;
+        pendingRef.current.deletes += validCount;
+        if (label && shouldLogDetailedInfo('delete')) {
+            pendingRef.current.logs.push({ type: 'delete', label, count: validCount });
         }
         queueFlush();
-    }, [queueFlush]);
+    }, [queueFlush, shouldLogDetailedInfo]);
+
+    const refreshActivity = useCallback(async () => {
+        if (!currentDateKey) return;
+        try {
+            const docRef = doc(db, 'dailyUsage', currentDateKey);
+            const snapshot = await getDoc(docRef);
+            if (snapshot.exists()) {
+                setDailyUsage(snapshot.data());
+            }
+            // Trigger a re-count of pending anyway
+            setTrackerTick(t => t + 1);
+            return true;
+        } catch (err) {
+            console.error('Failed to refresh activity:', err);
+            throw err;
+        }
+    }, [currentDateKey]);
 
     const resetActivity = useCallback(async () => {
         const dateKey = getTodayDateKey();
@@ -150,17 +213,44 @@ export const ActivityProvider = ({ children }) => {
             }
             setTrackerTick(t => t + 1);
 
-            // 2. Delete all logs in subcollection FIRST
             const counterRef = doc(db, 'dailyUsage', dateKey);
-            const logsSnap = await getDocs(collection(counterRef, 'logs'));
-            if (!logsSnap.empty) {
-                const batch = writeBatch(db);
-                logsSnap.docs.forEach(d => batch.delete(d.ref));
-                await batch.commit();
+
+            // 2. Delete logs in subcollection in chunks
+            try {
+                const logsSnap = await getDocs(collection(counterRef, 'logs'));
+                if (!logsSnap.empty) {
+                    const batches = [];
+                    let currentBatch = writeBatch(db);
+                    let opCount = 0;
+
+                    logsSnap.docs.forEach((d) => {
+                        currentBatch.delete(d.ref);
+                        opCount++;
+                        if (opCount === 450) { // Limit to 450
+                            batches.push(currentBatch.commit());
+                            currentBatch = writeBatch(db);
+                            opCount = 0;
+                        }
+                    });
+
+                    if (opCount > 0) {
+                        batches.push(currentBatch.commit());
+                    }
+                    await Promise.all(batches);
+                }
+            } catch (logErr) {
+                console.warn('Failed to delete activity logs subcollection:', logErr);
+                // Continue to reset counters even if log deletion fails
             }
 
-            // 3. Delete the parent counter doc second
-            await deleteDoc(counterRef);
+            // 3. Reset the parent counter doc instead of deleting
+            await setDoc(counterRef, {
+                reads: 0,
+                writes: 0,
+                deletes: 0,
+                lastUpdated: serverTimestamp()
+            }, { merge: true });
+
             return true;
         } catch (err) {
             console.error('Failed to reset activity tracking:', err);
@@ -176,6 +266,7 @@ export const ActivityProvider = ({ children }) => {
         trackWrite,
         trackDelete,
         resetActivity,
+        refreshActivity,
         pendingRef,
         setTrackerTick
     };

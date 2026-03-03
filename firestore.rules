@@ -6,6 +6,13 @@ service cloud.firestore {
     match /projects/{document=**} { allow read; allow write: if request.auth != null; }
     match /experience/{document=**} { allow read; allow write: if request.auth != null; }
     
+    // Application Settings (Logo, Page Title, Audit Log Config, etc.)
+    // Application Settings (Logo, Page Title, Audit Log Config, etc.)
+    match /settings/{document=**} {
+      allow read;
+      allow write: if request.auth != null && request.auth.token.email == 'kem.phearum@gmail.com';
+    }
+
     // Blog Posts Rules
     match /posts/{document=**} { 
       allow read; 

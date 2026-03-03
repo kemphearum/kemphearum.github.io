@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { auth, db } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from 'firebase/auth';
-import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, query, setDoc, getDoc, updateDoc, where, Timestamp, writeBatch, limit as firestoreLimit, getCountFromServer } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, query, setDoc, getDoc, updateDoc, where, Timestamp, writeBatch, limit as firestoreLimit, getCountFromServer, onSnapshot, collectionGroup } from 'firebase/firestore';
 import imageCompression from 'browser-image-compression';
 import styles from './Admin.module.scss';
 import { useNavigate } from 'react-router-dom';
@@ -270,13 +270,57 @@ const Admin = () => {
         loading: false
     });
 
-    const { dailyUsage, currentDateKey, trackRead, trackWrite, trackDelete, pendingRef, resetActivity } = useActivity();
+    const { dailyUsage, currentDateKey, trackRead, trackWrite, trackDelete, pendingRef, refreshActivity } = useActivity();
     const [activityDetailType, setActivityDetailType] = useState(null);
     const [activityLogs, setActivityLogs] = useState([]);
     const [activityLogsLoading, setActivityLogsLoading] = useState(false);
     const [activityDateRange, setActivityDateRange] = useState('today'); // 'today' | '7d' | '30d' | 'all'
     const [aggregatedUsage, setAggregatedUsage] = useState({ reads: 0, writes: 0, deletes: 0 });
     const [isAggregating, setIsAggregating] = useState(false);
+    const [isRefreshingActivity, setIsRefreshingActivity] = useState(false);
+
+    // Audit Settings State
+    const [auditSettings, setAuditSettings] = useState({
+        logAll: true,
+        logReads: true,
+        logWrites: true,
+        logDeletes: true,
+        logAnonymous: true
+    });
+
+    useEffect(() => {
+        const settingsRef = doc(db, 'settings', 'admin');
+        const unsubscribe = onSnapshot(settingsRef, (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                setAuditSettings({
+                    logAll: data.logAll !== false,
+                    logReads: data.logReads !== false,
+                    logWrites: data.logWrites !== false,
+                    logDeletes: data.logDeletes !== false,
+                    logAnonymous: data.logAnonymous !== false,
+                });
+            }
+        }, (err) => {
+            console.error('Audit settings listener error:', err.code, err.message);
+            showToast('Permission error loading settings. Please check Firestore rules.', 'error');
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleUpdateAuditSetting = async (key, value) => {
+        try {
+            const settingsRef = doc(db, 'settings', 'admin');
+            await setDoc(settingsRef, { [key]: value }, { merge: true });
+
+            // Optimistic update
+            setAuditSettings(prev => ({ ...prev, [key]: value }));
+            showToast(`Audit log setting updated successfully!`, 'success');
+        } catch (err) {
+            console.error('Failed to update audit setting:', err.code, err.message, err);
+            showToast(`Permission error: ${err.message}`, 'error');
+        }
+    };
 
     useEffect(() => {
         if (activityDateRange === 'today') {
@@ -315,7 +359,6 @@ const Admin = () => {
 
     const SOFT_DOC_LIMIT = 50000;
     const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
-    const [isRefreshingActivity, setIsRefreshingActivity] = useState(false);
     const [archiveDays, setArchiveDays] = useState(30);
     const [auditLogsList, setAuditLogsList] = useState([]);
     const [selectedAuditLog, setSelectedAuditLog] = useState(null);
@@ -896,7 +939,7 @@ const Admin = () => {
             // Reverting to Soft Disable instead of harsh deletion as requested
             const userRef = doc(db, "users", userId);
             await updateDoc(userRef, { isActive: false });
-            trackWrite(1);
+            trackDelete(1, 'Disabled user');
             showToast(`User ${userEmail} successfully disabled.`);
             fetchUsers();
         } catch (error) {
@@ -3437,6 +3480,89 @@ const Admin = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Audit Log Configuration Section */}
+                            <div style={{ marginTop: '2rem' }}>
+                                <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Shield size={18} /> Audit Log Configuration
+                                </h4>
+                                <div style={{ background: 'rgba(108, 99, 255, 0.03)', border: '1px solid rgba(108, 99, 255, 0.1)', borderRadius: '16px', padding: '1.5rem' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                                        {/* Master Toggle */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--card-bg)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', gridColumn: '1 / -1' }}>
+                                            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: auditSettings.logAll ? 'rgba(108, 99, 255, 0.15)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: auditSettings.logAll ? 'var(--primary-color)' : 'var(--text-secondary)', transition: 'all 0.3s ease' }}>
+                                                <Shield size={24} />
+                                            </div>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: '600', color: 'var(--text-primary)', marginBottom: '0.2rem' }}>Master Audit Tracking</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Enable or disable all database activity logging globally.</div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleUpdateAuditSetting('logAll', !auditSettings.logAll)}
+                                                style={{ padding: '0.6rem 1.2rem', borderRadius: '8px', background: auditSettings.logAll ? 'var(--primary-color)' : 'rgba(255,255,255,0.05)', color: auditSettings.logAll ? '#fff' : 'var(--text-secondary)', border: 'none', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s ease' }}
+                                            >
+                                                {auditSettings.logAll ? 'Enabled' : 'Disabled'}
+                                            </button>
+                                        </div>
+
+                                        {/* Reads Toggle */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>Log Read Operations</div>
+                                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Track when documents are fetched.</div>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={auditSettings.logReads}
+                                                onChange={(e) => handleUpdateAuditSetting('logReads', e.target.checked)}
+                                                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary-color)' }}
+                                            />
+                                        </div>
+
+                                        {/* Writes Toggle */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>Log Write Operations</div>
+                                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Track creates and updates.</div>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={auditSettings.logWrites}
+                                                onChange={(e) => handleUpdateAuditSetting('logWrites', e.target.checked)}
+                                                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary-color)' }}
+                                            />
+                                        </div>
+
+                                        {/* Deletes Toggle */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>Log Delete Operations</div>
+                                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Track document removals.</div>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={auditSettings.logDeletes}
+                                                onChange={(e) => handleUpdateAuditSetting('logDeletes', e.target.checked)}
+                                                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary-color)' }}
+                                            />
+                                        </div>
+
+                                        {/* Anonymous Toggle */}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>Log Anonymous Actions</div>
+                                                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Track public visitors.</div>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={auditSettings.logAnonymous}
+                                                onChange={(e) => handleUpdateAuditSetting('logAnonymous', e.target.checked)}
+                                                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary-color)' }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     )
                 }
@@ -3536,482 +3662,130 @@ const Admin = () => {
                     )
                 }
 
-                {/* ========== USERS TAB ========== */}
-                {
-                    activeTab === 'users' && (
-                        <div className={styles.section} style={{ paddingBottom: '4rem' }}>
-                            <div className={styles.listSection} style={{ marginTop: '0' }}>
-                                <div className={styles.listSectionHeader}>
-                                    <h3 className={styles.listTitle}>User Management</h3>
-                                </div>
-
-                                {userRole !== 'superadmin' ? (
-                                    <div className={styles.emptyState}>Only Super Admins can manage users.</div>
-                                ) : (
-                                    <>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                            <div className={styles.searchBox} style={{ margin: 0, flex: 1, marginRight: '1rem' }}>
-                                                <Search size={16} className={styles.searchIcon} />
-                                                <input type="text" placeholder="Search by email or role..." value={searchUsers} onChange={(e) => { setSearchUsers(e.target.value); setUsersPage(1); }} />
-                                                {searchUsers && <span className={styles.searchResultCount}>{filteredUsers.length} of {usersList.length}</span>}
-                                            </div>
-
-                                            <button
-                                                onClick={() => setShowAddUserForm(!showAddUserForm)}
-                                                className={styles.primaryBtn}
-                                                style={{ margin: 0 }}
-                                            >
-                                                {showAddUserForm ? 'Cancel' : '+ Add User'}
-                                            </button>
-                                        </div>
-
-                                        {/* Add User Button */}
-                                        {filteredUsers.length === 0 ? (
-                                            <div className={styles.emptyState}>{searchUsers ? 'No matching users found.' : 'No users registered yet.'}</div>
-                                        ) : (
-                                            <>
-                                                <div className={styles.userGridHeader}>
-                                                    <SortableHeader label="User" field="email" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
-                                                    <SortableHeader label="Role" field="role" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
-                                                    <SortableHeader label="Registered" field="createdAt" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
-                                                    <div style={{ textAlign: 'right' }}>Actions</div>
-                                                </div>
-                                                {paginatedUsers.map(u => {
-                                                    const initials = (u.displayName || u.email || '??').split(/[@.\s]/).filter(Boolean).slice(0, 2).map(s => s[0]).join('').toUpperCase();
-                                                    const avatarColors = {
-                                                        superadmin: 'linear-gradient(135deg, #10b981, #059669)',
-                                                        admin: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                                        editor: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                                                        pending: 'linear-gradient(135deg, #ef4444, #dc2626)'
-                                                    };
-                                                    const roleBadgeClass = {
-                                                        superadmin: styles.roleSuperadmin,
-                                                        admin: styles.roleAdmin,
-                                                        editor: styles.roleEditor,
-                                                        pending: styles.rolePending
-                                                    }[u.role] || styles.rolePending;
-                                                    const roleLabels = { superadmin: '⭐ Super Admin', admin: '🛡 Admin', editor: '✏️ Editor', pending: '⏳ Pending' };
-
-                                                    const isUserDisabled = u.isActive === false;
-
-                                                    return (
-                                                        <div
-                                                            key={u.id}
-                                                            className={`${styles.userCard} ${styles.userGridRowHover}`}
-                                                            style={{
-                                                                opacity: isUserDisabled ? 0.6 : 1,
-                                                                filter: isUserDisabled ? 'grayscale(100%)' : 'none',
-                                                                cursor: 'pointer'
-                                                            }}
-                                                            onClick={(e) => {
-                                                                if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && !e.target.closest('button') && !e.target.closest('select')) {
-                                                                    setViewingUser(u);
-                                                                }
-                                                            }}
-                                                        >
-                                                            <div className={styles.userIdentity}>
-                                                                <div className={styles.userAvatar} style={{ background: avatarColors[u.role] || avatarColors.pending }}>
-                                                                    {initials}
-                                                                </div>
-                                                                <div className={styles.userIdentityText}>
-                                                                    <span className={styles.userEmailText} title={u.email}>
-                                                                        {isUserDisabled ? <strike>{u.email}</strike> : u.email}
-                                                                    </span>
-                                                                    {u.displayName && <span className={styles.userDisplayName}>{u.displayName}</span>}
-                                                                </div>
-                                                            </div>
-                                                            <div>
-                                                                {isUserDisabled ? (
-                                                                    <span className={`${styles.roleBadge} ${styles.rolePending}`} style={{ background: 'rgba(255,255,255,0.1)', color: '#888', border: '1px solid rgba(255,255,255,0.2)' }}>
-                                                                        🚫 Disabled
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className={`${styles.roleBadge} ${roleBadgeClass}`}>
-                                                                        {roleLabels[u.role] || u.role}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <div className={styles.userMeta}>
-                                                                {u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown'}
-                                                            </div>
-                                                            <div className={styles.userActions} style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                                                {u.email === user.email ? (
-                                                                    <span className={styles.youBadge} style={{ margin: 'auto 0 auto auto' }}>✓ You</span>
-                                                                ) : (
-                                                                    <>
-                                                                        <button
-                                                                            title="Edit Profile"
-                                                                            className={styles.editBtn}
-                                                                            onClick={(e) => { e.stopPropagation(); setViewingUser(u); }}
-                                                                        >
-                                                                            <Edit size={16} />
-                                                                        </button>
-                                                                        <button
-                                                                            title="Send Password Reset"
-                                                                            className={styles.editBtn}
-                                                                            onClick={(e) => { e.stopPropagation(); handleResetPassword(u.email); }}
-                                                                        >
-                                                                            <Key size={16} />
-                                                                        </button>
-                                                                        <button
-                                                                            title="Remove User"
-                                                                            className={styles.deleteBtn}
-                                                                            disabled={userRole !== 'superadmin' || u.role === 'superadmin'}
-                                                                            onClick={(e) => { e.stopPropagation(); handleRemoveUser(u.email, u.id); }}
-                                                                            style={{ opacity: (userRole !== 'superadmin' || u.role === 'superadmin') ? 0.3 : 1, cursor: (userRole !== 'superadmin' || u.role === 'superadmin') ? 'not-allowed' : 'pointer' }}
-                                                                        >
-                                                                            <Trash2 size={16} />
-                                                                        </button>
-                                                                    </>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                                <Pagination currentPage={usersPage} totalPages={usersTotalPages} onPageChange={setUsersPage} perPage={usersPerPage} onPerPageChange={(v) => { setUsersPerPage(v); setUsersPage(1); }} totalItems={filteredUsers.length} />
-                                            </>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-
-                            {/* ========== ROLE PERMISSIONS MANAGER ========== */}
-                            {userRole === 'superadmin' && (
-                                <div style={{ marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '2rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                        <div>
-                                            <h3 className={styles.listTitle} style={{ marginBottom: '0.25rem' }}>Role Permissions</h3>
-                                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>Control which sidebar tabs each role can access.</p>
-                                        </div>
-                                        <button onClick={() => {
-                                            if (!showRolePerms) {
-                                                // Initialize editingRolePerms with current state
-                                                const allRoles = ['pending', 'editor', 'admin'];
-                                                const initial = {};
-                                                allRoles.forEach(r => { initial[r] = [...(rolePermissions[r] || [])]; });
-                                                setEditingRolePerms(initial);
-                                            }
-                                            setShowRolePerms(!showRolePerms);
-                                        }} className={styles.primaryBtn}>
-                                            {showRolePerms ? 'Close Editor' : '⚙ Configure Permissions'}
-                                        </button>
-                                    </div>
-
-                                    {showRolePerms && (() => {
-                                        const managedRoles = ['pending', 'editor', 'admin'];
-                                        const allTabs = Object.keys(tabLabels).filter(t => t !== 'profile' && t !== 'users');
-
-                                        return (
-                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                                {managedRoles.map(role => (
-                                                    <div key={role} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1.25rem 1.5rem' }}>
-                                                        <h4 style={{ margin: '0 0 1rem 0', textTransform: 'capitalize', fontSize: '1rem', color: 'var(--text-primary)' }}>
-                                                            {role === 'pending' ? '⏳ Pending' : role === 'editor' ? '✏️ Editor' : '🛡 Admin'} Role
-                                                        </h4>
-                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
-                                                            {allTabs.map(tab => {
-                                                                const checked = (editingRolePerms[role] || []).includes(tab);
-                                                                return (
-                                                                    <label key={tab} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: 'pointer', fontSize: '0.85rem', padding: '0.4rem 0.75rem', borderRadius: '8px', border: `1px solid ${checked ? 'rgba(100,255,218,0.3)' : 'rgba(255,255,255,0.08)'}`, background: checked ? 'rgba(100,255,218,0.07)' : 'transparent', color: checked ? 'var(--primary-color)' : 'var(--text-secondary)', transition: 'all 0.2s ease' }}>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            checked={checked}
-                                                                            style={{ accentColor: 'var(--primary-color)' }}
-                                                                            onChange={e => {
-                                                                                const current = [...(editingRolePerms[role] || [])];
-                                                                                const updated = e.target.checked
-                                                                                    ? [...current, tab]
-                                                                                    : current.filter(t => t !== tab);
-                                                                                setEditingRolePerms(prev => ({ ...prev, [role]: updated }));
-                                                                            }}
-                                                                        />
-                                                                        {tabLabels[tab]}
-                                                                    </label>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                        <button
-                                                            onClick={() => saveRolePermissions(role, editingRolePerms[role] || [])}
-                                                            className={styles.primaryBtn}
-                                                            style={{ fontSize: '0.8rem', padding: '0.4rem 1rem' }}
-                                                        >
-                                                            Save {role} permissions
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        );
-                                    })()}
-                                </div>
-                            )}
-                        </div>
-                    )
-                }
-
                 {/* ========== AUDIT LOGS TAB ========== */}
                 {
                     activeTab === 'audit' && (
-                        <div className={styles.section} style={{ paddingBottom: '4rem' }}>
-                            <div className={styles.listSection} style={{ marginTop: '0' }}>
-
-                                {/* Estimated Activity Section */}
-                                <div style={{ marginBottom: '2.5rem' }}>
-                                    <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                        <Activity size={18} /> Estimated Activity
-                                        {isAggregating && <span className={styles.spinner} style={{ width: '14px', height: '14px', marginLeft: '0.5rem' }} />}
-                                        <span
-                                            title="This tracks estimated Firebase operations. Actual billing usage may differ slightly. Today's counter resets automatically at midnight."
-                                            style={{ marginLeft: '0.25rem', cursor: 'help', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '18px', height: '18px', borderRadius: '50%', background: 'var(--card-bg)', border: '1px solid var(--border-color)', fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}
-                                        >?</span>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 'normal', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <div className={styles.filterWrapper} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.2rem 0.5rem' }}>
-                                                <Filter size={14} style={{ color: 'var(--text-secondary)' }} />
-                                                <select
-                                                    value={activityDateRange}
-                                                    onChange={(e) => setActivityDateRange(e.target.value)}
-                                                    style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.8rem', outline: 'none', cursor: 'pointer' }}
-                                                >
-                                                    <option value="today">Today</option>
-                                                    <option value="7d">Last 7 Days</option>
-                                                    <option value="30d">Last 30 Days</option>
-                                                    <option value="all">All Time</option>
-                                                </select>
-                                            </div>
-
-                                            {activityDateRange === 'today' && (
-                                                <button
-                                                    onClick={async () => {
-                                                        if (isRefreshingActivity) return;
-                                                        setIsRefreshingActivity(true);
-                                                        try {
-                                                            await resetActivity();
-                                                            showToast('Activity counters refreshed.');
-                                                        } catch (err) {
-                                                            console.error('Refresh error:', err);
-                                                            showToast('Failed to refresh counters.', 'error');
-                                                        } finally {
-                                                            setIsRefreshingActivity(false);
-                                                        }
-                                                    }}
-                                                    disabled={isRefreshingActivity}
-                                                    title="Refresh today's counters"
-                                                    style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0.25rem 0.6rem', cursor: isRefreshingActivity ? 'not-allowed' : 'pointer', color: 'var(--text-secondary)', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem', transition: 'all 0.2s ease', opacity: isRefreshingActivity ? 0.7 : 1 }}
-                                                    onMouseEnter={e => { if (!isRefreshingActivity) { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.borderColor = '#ef4444'; } }}
-                                                    onMouseLeave={e => { if (!isRefreshingActivity) { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.borderColor = 'var(--border-color)'; } }}
-                                                >
-                                                    {isRefreshingActivity ? <span className={styles.spinner} style={{ width: '10px', height: '10px' }} /> : <RefreshCw size={10} />}
-                                                    {isRefreshingActivity ? 'Refreshing...' : 'Refresh'}
-                                                </button>
-                                            )}
-                                        </span>
-                                    </h4>
-
-                                    <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(3, 1fr)', opacity: isAggregating ? 0.5 : 1, transition: 'opacity 0.2s' }}>
-                                        {[
-                                            { label: 'Reads', type: 'reads', value: aggregatedUsage.reads + (activityDateRange === 'today' ? pendingRef.current.reads : 0), activityLimit: activityDateRange === 'today' ? 50000 : (activityDateRange === '7d' ? 350000 : (activityDateRange === '30d' ? 1500000 : 5000000)), color: '#38bdf8', bgTint: 'rgba(56, 189, 248, 0.06)', borderTint: 'rgba(56, 189, 248, 0.15)', icon: <Eye size={15} /> },
-                                            { label: 'Writes', type: 'writes', value: aggregatedUsage.writes + (activityDateRange === 'today' ? pendingRef.current.writes : 0), activityLimit: activityDateRange === 'today' ? 20000 : (activityDateRange === '7d' ? 140000 : (activityDateRange === '30d' ? 600000 : 2000000)), color: '#a78bfa', bgTint: 'rgba(167, 139, 250, 0.06)', borderTint: 'rgba(167, 139, 250, 0.15)', icon: <Edit2 size={15} /> },
-                                            { label: 'Deletes', type: 'deletes', value: aggregatedUsage.deletes + (activityDateRange === 'today' ? pendingRef.current.deletes : 0), activityLimit: activityDateRange === 'today' ? 20000 : (activityDateRange === '7d' ? 140000 : (activityDateRange === '30d' ? 600000 : 2000000)), color: '#fb923c', bgTint: 'rgba(251, 146, 60, 0.06)', borderTint: 'rgba(251, 146, 60, 0.15)', icon: <Trash2 size={15} /> }
-                                        ].map(({ label, type, value, activityLimit, color, bgTint, borderTint, icon }) => {
-                                            let pct = (value / activityLimit) * 100;
-                                            if (pct > 100) pct = 100;
-                                            const isHighUsage = pct >= 80;
-                                            let barColor = color;
-                                            if (pct > 75) barColor = '#f59e0b';
-                                            if (pct > 90) barColor = '#ef4444';
-
-                                            return (
-                                                <div
-                                                    key={label}
-                                                    className={`${styles.detailItem} ${styles.activityDetailCard} ${isHighUsage ? styles.highUsage : ''}`}
-                                                    style={{
-                                                        background: bgTint,
-                                                        border: `1px solid ${isHighUsage ? '#ef4444' : borderTint}`,
-                                                        borderTop: `3px solid ${isHighUsage ? '#ef4444' : color}`,
-                                                        padding: '1.1rem 1.25rem',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        gap: '0.75rem',
-                                                        cursor: 'pointer',
-                                                        position: 'relative'
-                                                    }}
-                                                    onClick={async () => {
-                                                        if (activityDateRange !== 'today') {
-                                                            showToast("Detailed operation logs are only viewable for today's activity.", 'error');
-                                                            return;
-                                                        }
-                                                        setActivityDetailType(type);
-                                                        setActivityLogsLoading(true);
-                                                        setActivityLogs([]);
-                                                        try {
-                                                            const typeMap = { reads: 'read', writes: 'write', deletes: 'delete' };
-                                                            const logsQ = query(
-                                                                collection(db, 'dailyUsage', currentDateKey, 'logs'),
-                                                                where('type', '==', typeMap[type]),
-                                                                orderBy('time', 'desc'),
-                                                                firestoreLimit(200)
-                                                            );
-                                                            const snap = await getDocs(logsQ);
-                                                            setActivityLogs(snap.docs.map(d => d.data()));
-                                                        } catch (err) {
-                                                            console.error('Failed to load activity logs:', err);
-                                                        } finally {
-                                                            setActivityLogsLoading(false);
-                                                        }
-                                                    }}
-                                                >
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                                                            {icon} {label}
-                                                        </span>
-                                                        <span style={{ fontSize: '0.65rem', color: isHighUsage ? '#fff' : 'var(--text-secondary)', background: isHighUsage ? '#ef4444' : 'var(--card-bg)', padding: '0.15rem 0.45rem', borderRadius: '4px', border: `1px solid ${isHighUsage ? '#ef4444' : 'var(--border-color)'}`, fontWeight: isHighUsage ? 'bold' : 'normal' }}>
-                                                            {isHighUsage && '⚠️ '}{pct.toFixed(1)}%
-                                                        </span>
-                                                    </div>
-                                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem' }}>
-                                                        <span style={{ fontSize: '1.5rem', fontWeight: '700', color: barColor, lineHeight: 1 }}>
-                                                            {value.toLocaleString()}
-                                                        </span>
-                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                                            / {(activityLimit >= 5000000 ? '∞' : activityLimit.toLocaleString())}
-                                                        </span>
-                                                    </div>
-                                                    <div style={{ width: '100%', height: '10px', background: 'rgba(255,255,255,0.06)', borderRadius: '5px', overflow: 'hidden' }}>
-                                                        <div style={{
-                                                            width: `${Math.max(pct, 1)}%`,
-                                                            height: '100%',
-                                                            background: `linear-gradient(90deg, ${barColor}, ${barColor}dd)`,
-                                                            borderRadius: '5px',
-                                                            boxShadow: `0 0 8px ${barColor}40`
-                                                        }}></div>
-                                                    </div>
-                                                    <div style={{ marginTop: 'auto', paddingTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.7rem', color: color, fontWeight: '600', opacity: 0.8 }}>
-                                                        View Details <ChevronRight size={12} />
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                <div className={styles.listSectionHeader}>
-                                    <h3 className={styles.listTitle}>Login Audit Trail</h3>
-                                </div>
-
-                                {userRole !== 'superadmin' ? (
-                                    <div className={styles.emptyState}>Only Super Admins can view audit logs.</div>
-                                ) : (
-                                    <>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                            <div className={styles.searchBox} style={{ margin: 0, flex: 1, marginRight: '1rem' }}>
-                                                <Search size={16} className={styles.searchIcon} />
-                                                <input type="text" placeholder="Search by email or IP..." value={searchUsers} onChange={(e) => { setSearchUsers(e.target.value); setAuditPage(1); }} />
-                                                {searchUsers && <span className={styles.searchResultCount}>{filteredAuditLogs.length} of {auditLogsList.length}</span>}
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Filter size={14} /> Filter:</span>
-                                                <select
-                                                    value={auditDateRange}
-                                                    onChange={(e) => { setAuditDateRange(e.target.value); setAuditPage(1); }}
-                                                    style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer', outline: 'none' }}
-                                                >
-                                                    <option value="all">All Time</option>
-                                                    <option value="today">Today</option>
-                                                    <option value="7d">Last 7 Days</option>
-                                                    <option value="30d">Last 30 Days</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        {filteredAuditLogs.length === 0 ? (
-                                            <div className={styles.emptyState}>{searchUsers ? 'No matching logs found.' : 'No audit logs recorded yet.'}</div>
-                                        ) : (
-                                            <>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 0.8fr 1.8fr 1.2fr', gap: '0.75rem', padding: '1rem 1.5rem', background: 'var(--card-bg)', border: '1px solid var(--divider)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                                                    <SortableHeader label="User Email" field="email" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
-                                                    <SortableHeader label="IP Address" field="ipAddress" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
-                                                    <SortableHeader label="Device" field="deviceType" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
-                                                    <SortableHeader label="User Agent" field="userAgent" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
-                                                    <SortableHeader label="Timestamp" field="timestamp" sortDirection={auditSort.dir} onSort={handleAuditSort} />
-                                                </div>
-                                                {paginatedAuditLogs.map(log => (
-                                                    <div key={log.id} onClick={() => setSelectedAuditLog(log)} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 0.8fr 1.8fr 1.2fr', gap: '0.75rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', fontSize: '0.85rem', alignItems: 'center', transition: 'background 0.2s ease', cursor: 'pointer' }} className={styles.userGridRowHover}>
-                                                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--primary-color)' }}>
-                                                            {log.email}
-                                                        </div>
-                                                        <div style={{ fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
-                                                            {log.ipAddress}
-                                                        </div>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)' }}>
-                                                            {log.deviceType === 'mobile' ? <Smartphone size={14} style={{ color: '#fb923c' }} /> : log.deviceType === 'tablet' ? <Tablet size={14} style={{ color: '#a78bfa' }} /> : <Monitor size={14} style={{ color: '#38bdf8' }} />}
-                                                            <span style={{ textTransform: 'capitalize' }}>{log.deviceType || 'Desktop'}</span>
-                                                        </div>
-                                                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)', fontSize: '0.8rem' }} title={log.userAgent}>
-                                                            {log.userAgent}
-                                                        </div>
-                                                        <div style={{ color: 'var(--text-primary)' }}>
-                                                            {log.timestamp?.seconds ? new Date(log.timestamp.seconds * 1000).toLocaleString() : 'Unknown'}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                <Pagination currentPage={auditPage} totalPages={auditTotalPages} onPageChange={setAuditPage} perPage={auditPerPage} onPerPageChange={(v) => { setAuditPerPage(v); setAuditPage(1); }} totalItems={filteredAuditLogs.length} />
-                                            </>
-                                        )}
-                                    </>
-                                )}
+                        <>
+                            <div className={styles.listSectionHeader}>
+                                <h3 className={styles.listTitle}>Login Audit Trail</h3>
                             </div>
 
-                            {/* Audit Details Modal */}
-                            {selectedAuditLog && (
-                                <div className={styles.modalOverlay} onClick={() => setSelectedAuditLog(null)} style={{ zIndex: 1100 }}>
-                                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', padding: 0, animation: 'modalFadeIn 0.25s ease forwards' }}>
-                                        <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(100, 255, 218, 0.03)' }}>
-                                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color, #64ffda)', margin: 0 }}>
-                                                <Shield size={20} /> Audit Log Details
-                                            </h3>
-                                            <button onClick={() => setSelectedAuditLog(null)} className={styles.closeBtn}><X size={20} /></button>
+                            {userRole !== 'superadmin' ? (
+                                <div className={styles.emptyState}>Only Super Admins can view audit logs.</div>
+                            ) : (
+                                <>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                        <div className={styles.searchBox} style={{ margin: 0, flex: 1, marginRight: '1rem' }}>
+                                            <Search size={16} className={styles.searchIcon} />
+                                            <input type="text" placeholder="Search by email or IP..." value={searchUsers} onChange={(e) => { setSearchUsers(e.target.value); setAuditPage(1); }} />
+                                            {searchUsers && <span className={styles.searchResultCount}>{filteredAuditLogs.length} of {auditLogsList.length}</span>}
                                         </div>
-                                        <div style={{ padding: '1.5rem' }}>
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
-                                                {[
-                                                    { label: 'User Email', value: selectedAuditLog.email, icon: <Mail size={14} />, color: '#38bdf8', span: false },
-                                                    { label: 'IP Address', value: selectedAuditLog.ipAddress, icon: <Globe size={14} />, color: '#a78bfa', span: false },
-                                                    { label: 'Device', value: selectedAuditLog.deviceType || 'Unknown', icon: <Monitor size={14} />, color: '#fb923c', span: false },
-                                                    { label: 'Country', value: selectedAuditLog.country || 'Unknown', icon: <Globe size={14} />, color: '#34d399', span: false },
-                                                    { label: 'City', value: selectedAuditLog.city || 'Unknown', icon: <MapPin size={14} />, color: '#f472b6', span: false },
-                                                    { label: 'Session ID', value: selectedAuditLog.sessionId || 'Unknown', icon: <Key size={14} />, color: '#fbbf24', span: false },
-                                                    { label: 'Timestamp', value: selectedAuditLog.timestamp?.seconds ? new Date(selectedAuditLog.timestamp.seconds * 1000).toLocaleString() : 'Unknown', icon: <Clock size={14} />, color: '#64ffda', span: true },
-                                                    { label: 'User Agent', value: selectedAuditLog.userAgent || 'Unknown', icon: <Monitor size={14} />, color: '#94a3b8', span: true },
-                                                ].map((item, idx) => (
-                                                    <div key={idx} style={{
-                                                        gridColumn: item.span ? 'span 2' : 'auto',
-                                                        background: 'var(--card-bg, rgba(255,255,255,0.02))',
-                                                        border: '1px solid var(--border-color, rgba(255,255,255,0.06))',
-                                                        borderRadius: '10px',
-                                                        padding: '0.85rem 1rem',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        gap: '0.35rem',
-                                                        transition: 'all 0.2s ease'
-                                                    }}
-                                                        onMouseEnter={e => { e.currentTarget.style.borderColor = `${item.color}40`; e.currentTarget.style.background = `${item.color}08`; }}
-                                                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color, rgba(255,255,255,0.06))'; e.currentTarget.style.background = 'var(--card-bg, rgba(255,255,255,0.02))'; }}
-                                                    >
-                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: item.color, fontWeight: 600 }}>
-                                                            {item.icon} {item.label}
-                                                        </span>
-                                                        <span style={{ fontSize: '0.88rem', color: 'var(--text-primary)', fontWeight: 500, wordBreak: 'break-word', lineHeight: 1.5 }}>
-                                                            {item.value}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className={styles.modalFooter} style={{ padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', display: 'flex', justifyContent: 'flex-end' }}>
-                                            <button onClick={() => setSelectedAuditLog(null)} className={styles.cancelBtn} style={{ padding: '0.5rem 1.25rem' }}>Close</button>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}><Filter size={14} /> Filter:</span>
+                                            <select
+                                                value={auditDateRange}
+                                                onChange={(e) => { setAuditDateRange(e.target.value); setAuditPage(1); }}
+                                                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.4rem 0.8rem', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer', outline: 'none' }}
+                                            >
+                                                <option value="all">All Time</option>
+                                                <option value="today">Today</option>
+                                                <option value="7d">Last 7 Days</option>
+                                                <option value="30d">Last 30 Days</option>
+                                            </select>
                                         </div>
                                     </div>
-                                </div>
+
+                                    {filteredAuditLogs.length === 0 ? (
+                                        <div className={styles.emptyState}>{searchUsers ? 'No matching logs found.' : 'No audit logs recorded yet.'}</div>
+                                    ) : (
+                                        <>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 0.8fr 1.8fr 1.2fr', gap: '0.75rem', padding: '1rem 1.5rem', background: 'var(--card-bg)', border: '1px solid var(--divider)', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                                                <SortableHeader label="User Email" field="email" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
+                                                <SortableHeader label="IP Address" field="ipAddress" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
+                                                <SortableHeader label="Device" field="deviceType" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
+                                                <SortableHeader label="User Agent" field="userAgent" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
+                                                <SortableHeader label="Timestamp" field="timestamp" sortDirection={auditSort.dir} onSort={handleAuditSort} />
+                                            </div>
+                                            {paginatedAuditLogs.map(log => (
+                                                <div key={log.id} onClick={() => setSelectedAuditLog(log)} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 0.8fr 1.8fr 1.2fr', gap: '0.75rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '8px', fontSize: '0.85rem', alignItems: 'center', transition: 'background 0.2s ease', cursor: 'pointer' }} className={styles.userGridRowHover}>
+                                                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--primary-color)' }}>
+                                                        {log.email}
+                                                    </div>
+                                                    <div style={{ fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
+                                                        {log.ipAddress}
+                                                    </div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)' }}>
+                                                        {log.deviceType === 'mobile' ? <Smartphone size={14} style={{ color: '#fb923c' }} /> : log.deviceType === 'tablet' ? <Tablet size={14} style={{ color: '#a78bfa' }} /> : <Monitor size={14} style={{ color: '#38bdf8' }} />}
+                                                        <span style={{ textTransform: 'capitalize' }}>{log.deviceType || 'Desktop'}</span>
+                                                    </div>
+                                                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)', fontSize: '0.8rem' }} title={log.userAgent}>
+                                                        {log.userAgent}
+                                                    </div>
+                                                    <div style={{ color: 'var(--text-primary)' }}>
+                                                        {log.timestamp?.seconds ? new Date(log.timestamp.seconds * 1000).toLocaleString() : 'Unknown'}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <Pagination currentPage={auditPage} totalPages={auditTotalPages} onPageChange={setAuditPage} perPage={auditPerPage} onPerPageChange={(v) => { setAuditPerPage(v); setAuditPage(1); }} totalItems={filteredAuditLogs.length} />
+                                        </>
+                                    )}
+                                </>
                             )}
+                        </>
+                    )
+                }
+
+                {/* Audit Details Modal */}
+                {
+                    selectedAuditLog && (
+                        <div className={styles.modalOverlay} onClick={() => setSelectedAuditLog(null)} style={{ zIndex: 1100 }}>
+                            <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', padding: 0, animation: 'modalFadeIn 0.25s ease forwards' }}>
+                                <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(100, 255, 218, 0.03)' }}>
+                                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color, #64ffda)', margin: 0 }}>
+                                        <Shield size={20} /> Audit Log Details
+                                    </h3>
+                                    <button onClick={() => setSelectedAuditLog(null)} className={styles.closeBtn}><X size={20} /></button>
+                                </div>
+                                <div style={{ padding: '1.5rem' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                                        {[
+                                            { label: 'User Email', value: selectedAuditLog.email, icon: <Mail size={14} />, color: '#38bdf8', span: false },
+                                            { label: 'IP Address', value: selectedAuditLog.ipAddress, icon: <Globe size={14} />, color: '#a78bfa', span: false },
+                                            { label: 'Device', value: selectedAuditLog.deviceType || 'Unknown', icon: <Monitor size={14} />, color: '#fb923c', span: false },
+                                            { label: 'Country', value: selectedAuditLog.country || 'Unknown', icon: <Globe size={14} />, color: '#34d399', span: false },
+                                            { label: 'City', value: selectedAuditLog.city || 'Unknown', icon: <MapPin size={14} />, color: '#f472b6', span: false },
+                                            { label: 'Session ID', value: selectedAuditLog.sessionId || 'Unknown', icon: <Key size={14} />, color: '#fbbf24', span: false },
+                                            { label: 'Timestamp', value: selectedAuditLog.timestamp?.seconds ? new Date(selectedAuditLog.timestamp.seconds * 1000).toLocaleString() : 'Unknown', icon: <Clock size={14} />, color: '#64ffda', span: true },
+                                            { label: 'User Agent', value: selectedAuditLog.userAgent || 'Unknown', icon: <Monitor size={14} />, color: '#94a3b8', span: true },
+                                        ].map((item, idx) => (
+                                            <div key={idx} style={{
+                                                gridColumn: item.span ? 'span 2' : 'auto',
+                                                background: 'var(--card-bg, rgba(255,255,255,0.02))',
+                                                border: '1px solid var(--border-color, rgba(255,255,255,0.06))',
+                                                borderRadius: '10px',
+                                                padding: '0.85rem 1rem',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '0.35rem',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                                onMouseEnter={e => { e.currentTarget.style.borderColor = `${item.color}40`; e.currentTarget.style.background = `${item.color}08`; }}
+                                                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color, rgba(255,255,255,0.06))'; e.currentTarget.style.background = 'var(--card-bg, rgba(255,255,255,0.02))'; }}
+                                            >
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: item.color, fontWeight: 600 }}>
+                                                    {item.icon} {item.label}
+                                                </span>
+                                                <span style={{ fontSize: '0.88rem', color: 'var(--text-primary)', fontWeight: 500, wordBreak: 'break-word', lineHeight: 1.5 }}>
+                                                    {item.value}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className={styles.modalFooter} style={{ padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', display: 'flex', justifyContent: 'flex-end' }}>
+                                    <button onClick={() => setSelectedAuditLog(null)} className={styles.cancelBtn} style={{ padding: '0.5rem 1.25rem' }}>Close</button>
+                                </div>
+                            </div>
                         </div>
                     )
                 }
@@ -4019,873 +3793,844 @@ const Admin = () => {
                 {/* ========== ANALYTICS TAB ========== */}
                 {
                     activeTab === 'analytics' && (
-                        <div className={styles.section} style={{ paddingBottom: '4rem' }}>
-                            {analyticsLoading ? (
-                                <div className={styles.analyticsLoading}>
-                                    <div className={styles.analyticsSpinner} />
-                                    <span>Loading analytics data…</span>
+                        analyticsLoading ? (
+                            <div className={styles.analyticsLoading}>
+                                <div className={styles.analyticsSpinner} />
+                                <span>Loading analytics data…</span>
+                            </div>
+                        ) : (
+                            <>
+                                {/* ---- Date Range Filter ---- */}
+                                <div className={styles.dateFilterBar}>
+                                    <div className={styles.datePresets}>
+                                        {[{ label: '7D', value: '7d' }, { label: '30D', value: '30d' }, { label: '90D', value: '90d' }, { label: 'All', value: 'all' }].map(p => (
+                                            <button key={p.value} className={`${styles.presetBtn} ${analyticsRange.preset === p.value ? styles.presetActive : ''}`} onClick={() => handleAnalyticsPreset(p.value)}>{p.label}</button>
+                                        ))}
+                                    </div>
+                                    <div className={styles.dateInputs}>
+                                        <Calendar size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+                                        <input type="date" value={analyticsRange.start} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, start: e.target.value, preset: '' }))} className={styles.dateInput} />
+                                        <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>to</span>
+                                        <input type="date" value={analyticsRange.end} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, end: e.target.value, preset: '' }))} className={styles.dateInput} />
+                                    </div>
                                 </div>
-                            ) : (
-                                <>
-                                    {/* ---- Date Range Filter ---- */}
-                                    <div className={styles.dateFilterBar}>
-                                        <div className={styles.datePresets}>
-                                            {[{ label: '7D', value: '7d' }, { label: '30D', value: '30d' }, { label: '90D', value: '90d' }, { label: 'All', value: 'all' }].map(p => (
-                                                <button key={p.value} className={`${styles.presetBtn} ${analyticsRange.preset === p.value ? styles.presetActive : ''}`} onClick={() => handleAnalyticsPreset(p.value)}>{p.label}</button>
-                                            ))}
-                                        </div>
-                                        <div className={styles.dateInputs}>
-                                            <Calendar size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
-                                            <input type="date" value={analyticsRange.start} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, start: e.target.value, preset: '' }))} className={styles.dateInput} />
-                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>to</span>
-                                            <input type="date" value={analyticsRange.end} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, end: e.target.value, preset: '' }))} className={styles.dateInput} />
-                                        </div>
-                                    </div>
 
-                                    {/* ---- Stat Summary Cards ---- */}
-                                    <div className={styles.analyticsGrid}>
-                                        <div className={styles.statCard}>
-                                            <div className={styles.statIcon}><EyeIcon size={20} /></div>
-                                            <div className={styles.statValue}>{summaryStats.total.toLocaleString()}</div>
-                                            <div className={styles.statLabel}>Total Page Views</div>
-                                        </div>
-                                        <div className={styles.statCard}>
-                                            <div className={styles.statIcon}><Users size={20} /></div>
-                                            <div className={styles.statValue}>{summaryStats.unique.toLocaleString()}</div>
-                                            <div className={styles.statLabel}>Unique Visitors</div>
-                                        </div>
-                                        <div className={styles.statCard}>
-                                            <div className={styles.statIcon}><Globe size={20} /></div>
-                                            <div className={styles.statValue} style={{ fontSize: '1.3rem' }}>{summaryStats.topCountry}</div>
-                                            <div className={styles.statLabel}>Top Country</div>
-                                        </div>
-                                        <div className={styles.statCard}>
-                                            <div className={styles.statIcon}><TrendingUp size={20} /></div>
-                                            <div className={styles.statValue} style={{ fontSize: '1.3rem' }}>{summaryStats.topPage}</div>
-                                            <div className={styles.statLabel}>Most Visited Page</div>
-                                        </div>
+                                {/* ---- Stat Summary Cards ---- */}
+                                <div className={styles.analyticsGrid}>
+                                    <div className={styles.statCard}>
+                                        <div className={styles.statIcon}><EyeIcon size={20} /></div>
+                                        <div className={styles.statValue}>{summaryStats.total.toLocaleString()}</div>
+                                        <div className={styles.statLabel}>Total Page Views</div>
                                     </div>
+                                    <div className={styles.statCard}>
+                                        <div className={styles.statIcon}><Users size={20} /></div>
+                                        <div className={styles.statValue}>{summaryStats.unique.toLocaleString()}</div>
+                                        <div className={styles.statLabel}>Unique Visitors</div>
+                                    </div>
+                                    <div className={styles.statCard}>
+                                        <div className={styles.statIcon}><Globe size={20} /></div>
+                                        <div className={styles.statValue} style={{ fontSize: '1.3rem' }}>{summaryStats.topCountry}</div>
+                                        <div className={styles.statLabel}>Top Country</div>
+                                    </div>
+                                    <div className={styles.statCard}>
+                                        <div className={styles.statIcon}><TrendingUp size={20} /></div>
+                                        <div className={styles.statValue} style={{ fontSize: '1.3rem' }}>{summaryStats.topPage}</div>
+                                        <div className={styles.statLabel}>Most Visited Page</div>
+                                    </div>
+                                </div>
 
-                                    {/* ---- Visits Over Time (Line Chart) ---- */}
+                                {/* ---- Visits Over Time (Line Chart) ---- */}
+                                <div className={styles.chartCard}>
+                                    <div className={styles.chartTitle}>
+                                        <TrendingUp size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                        Visits Over Time {analyticsRange.preset === '7d' ? '(Last 7 Days)' : analyticsRange.preset === '30d' ? '(Last 30 Days)' : analyticsRange.preset === '90d' ? '(Last 90 Days)' : analyticsRange.preset === 'all' ? '(All Time)' : `(${analyticsRange.start} — ${analyticsRange.end})`}
+                                        <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('visits')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                        <button className={styles.analyticsRefreshBtn} onClick={fetchAnalytics} disabled={analyticsLoading}>
+                                            <RefreshCw size={14} /> Refresh
+                                        </button>
+                                    </div>
+                                    {dailyVisits.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={320}>
+                                            <LineChart data={dailyVisits} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                                                <XAxis dataKey="date" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickFormatter={(v) => { const d = new Date(v + 'T00:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }} />
+                                                <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
+                                                <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} />
+                                                <Line type="monotone" dataKey="visits" stroke="#64ffda" strokeWidth={2} dot={false} name="Page Views" />
+                                                <Line type="monotone" dataKey="unique" stroke="#7c4dff" strokeWidth={2} dot={false} name="Unique Visitors" />
+                                                <Legend wrapperStyle={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }} />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className={styles.emptyState}><p>No visit data available yet.</p></div>
+                                    )}
+                                </div>
+
+                                {/* ---- Country Breakdown + Device Breakdown ---- */}
+                                <div className={styles.chartRow}>
                                     <div className={styles.chartCard}>
                                         <div className={styles.chartTitle}>
-                                            <TrendingUp size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
-                                            Visits Over Time {analyticsRange.preset === '7d' ? '(Last 7 Days)' : analyticsRange.preset === '30d' ? '(Last 30 Days)' : analyticsRange.preset === '90d' ? '(Last 90 Days)' : analyticsRange.preset === 'all' ? '(All Time)' : `(${analyticsRange.start} — ${analyticsRange.end})`}
-                                            <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('visits')} style={{ marginLeft: 'auto' }}>View Details</button>
-                                            <button className={styles.analyticsRefreshBtn} onClick={fetchAnalytics} disabled={analyticsLoading}>
-                                                <RefreshCw size={14} /> Refresh
-                                            </button>
+                                            <Globe size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                            Visitors by Country
+                                            <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('countries')} style={{ marginLeft: 'auto' }}>View Details</button>
                                         </div>
-                                        {dailyVisits.length > 0 ? (
-                                            <ResponsiveContainer width="100%" height={320}>
-                                                <LineChart data={dailyVisits} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                                                    <XAxis dataKey="date" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickFormatter={(v) => { const d = new Date(v + 'T00:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }} />
-                                                    <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
-                                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} />
-                                                    <Line type="monotone" dataKey="visits" stroke="#64ffda" strokeWidth={2} dot={false} name="Page Views" />
-                                                    <Line type="monotone" dataKey="unique" stroke="#7c4dff" strokeWidth={2} dot={false} name="Unique Visitors" />
-                                                    <Legend wrapperStyle={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }} />
-                                                </LineChart>
-                                            </ResponsiveContainer>
+                                        {countryData.length > 0 ? (
+                                            <>
+                                                <ResponsiveContainer width="100%" height={250}>
+                                                    <PieChart>
+                                                        <Pie data={countryData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
+                                                            {countryData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                                        </Pie>
+                                                        <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                                <ul className={styles.legendList}>
+                                                    {countryData.map((entry, i) => (
+                                                        <li key={entry.name} className={styles.legendItem}>
+                                                            <span className={styles.legendDot} style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                                            {entry.name} ({entry.value})
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </>
                                         ) : (
-                                            <div className={styles.emptyState}><p>No visit data available yet.</p></div>
+                                            <div className={styles.emptyState}><p>No country data.</p></div>
                                         )}
                                     </div>
 
-                                    {/* ---- Country Breakdown + Device Breakdown ---- */}
-                                    <div className={styles.chartRow}>
-                                        <div className={styles.chartCard}>
-                                            <div className={styles.chartTitle}>
-                                                <Globe size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
-                                                Visitors by Country
-                                                <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('countries')} style={{ marginLeft: 'auto' }}>View Details</button>
-                                            </div>
-                                            {countryData.length > 0 ? (
-                                                <>
-                                                    <ResponsiveContainer width="100%" height={250}>
-                                                        <PieChart>
-                                                            <Pie data={countryData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
-                                                                {countryData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                                                            </Pie>
-                                                            <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                                        </PieChart>
-                                                    </ResponsiveContainer>
-                                                    <ul className={styles.legendList}>
-                                                        {countryData.map((entry, i) => (
-                                                            <li key={entry.name} className={styles.legendItem}>
-                                                                <span className={styles.legendDot} style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                                                                {entry.name} ({entry.value})
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </>
-                                            ) : (
-                                                <div className={styles.emptyState}><p>No country data.</p></div>
-                                            )}
-                                        </div>
-
-                                        <div className={styles.chartCard}>
-                                            <div className={styles.chartTitle}>
-                                                <Monitor size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
-                                                Device Breakdown
-                                                <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('devices')} style={{ marginLeft: 'auto' }}>View Details</button>
-                                            </div>
-                                            {deviceData.length > 0 ? (
-                                                <>
-                                                    <ResponsiveContainer width="100%" height={250}>
-                                                        <PieChart>
-                                                            <Pie data={deviceData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
-                                                                {deviceData.map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 3) % CHART_COLORS.length]} />)}
-                                                            </Pie>
-                                                            <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                                        </PieChart>
-                                                    </ResponsiveContainer>
-                                                    <ul className={styles.legendList}>
-                                                        {deviceData.map((entry, i) => (
-                                                            <li key={entry.name} className={styles.legendItem}>
-                                                                <span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 3) % CHART_COLORS.length] }} />
-                                                                {entry.name === 'Desktop' ? <><Monitor size={12} /> </> : entry.name === 'Mobile' ? <><Smartphone size={12} /> </> : entry.name === 'Tablet' ? <><Tablet size={12} /> </> : null}
-                                                                {entry.name} ({entry.value})
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </>
-                                            ) : (
-                                                <div className={styles.emptyState}><p>No device data.</p></div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* ---- City Breakdown + Traffic Sources ---- */}
-                                    <div className={styles.chartRow}>
-                                        <div className={styles.chartCard}>
-                                            <div className={styles.chartTitle}>
-                                                <MapPin size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
-                                                Top Cities
-                                                <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('cities')} style={{ marginLeft: 'auto' }}>View Details</button>
-                                            </div>
-                                            {cityData.length > 0 ? (
-                                                <ResponsiveContainer width="100%" height={250}>
-                                                    <BarChart data={cityData.slice(0, 6)} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
-                                                        <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
-                                                        <YAxis dataKey="name" type="category" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} width={140} />
-                                                        <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                                        <Bar dataKey="value" name="Visits" radius={[0, 6, 6, 0]}>
-                                                            {cityData.slice(0, 6).map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 2) % CHART_COLORS.length]} />)}
-                                                        </Bar>
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-                                            ) : (
-                                                <div className={styles.emptyState}><p>No city data.</p></div>
-                                            )}
-                                        </div>
-
-                                        <div className={styles.chartCard}>
-                                            <div className={styles.chartTitle}>
-                                                <Share2 size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
-                                                Traffic Sources
-                                                <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('referrers')} style={{ marginLeft: 'auto' }}>View Details</button>
-                                            </div>
-                                            {referrerData.length > 0 ? (
-                                                <>
-                                                    <ResponsiveContainer width="100%" height={250}>
-                                                        <PieChart>
-                                                            <Pie data={referrerData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
-                                                                {referrerData.map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 5) % CHART_COLORS.length]} />)}
-                                                            </Pie>
-                                                            <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                                        </PieChart>
-                                                    </ResponsiveContainer>
-                                                    <ul className={styles.legendList}>
-                                                        {referrerData.map((entry, i) => (
-                                                            <li key={entry.name} className={styles.legendItem}>
-                                                                <span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 5) % CHART_COLORS.length] }} />
-                                                                {entry.name} ({entry.value})
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                </>
-                                            ) : (
-                                                <div className={styles.emptyState}><p>No referrer data.</p></div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* ---- Top Pages (Bar Chart) ---- */}
                                     <div className={styles.chartCard}>
                                         <div className={styles.chartTitle}>
-                                            <FileText size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
-                                            Top Visited Pages
-                                            <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('pages')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                            <Monitor size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                            Device Breakdown
+                                            <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('devices')} style={{ marginLeft: 'auto' }}>View Details</button>
                                         </div>
-                                        {topPages.length > 0 ? (
-                                            <ResponsiveContainer width="100%" height={Math.max(200, topPages.length * 40)}>
-                                                <BarChart data={topPages} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                                        {deviceData.length > 0 ? (
+                                            <>
+                                                <ResponsiveContainer width="100%" height={250}>
+                                                    <PieChart>
+                                                        <Pie data={deviceData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
+                                                            {deviceData.map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 3) % CHART_COLORS.length]} />)}
+                                                        </Pie>
+                                                        <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                                <ul className={styles.legendList}>
+                                                    {deviceData.map((entry, i) => (
+                                                        <li key={entry.name} className={styles.legendItem}>
+                                                            <span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 3) % CHART_COLORS.length] }} />
+                                                            {entry.name === 'Desktop' ? <><Monitor size={12} /> </> : entry.name === 'Mobile' ? <><Smartphone size={12} /> </> : entry.name === 'Tablet' ? <><Tablet size={12} /> </> : null}
+                                                            {entry.name} ({entry.value})
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </>
+                                        ) : (
+                                            <div className={styles.emptyState}><p>No device data.</p></div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* ---- City Breakdown + Traffic Sources ---- */}
+                                <div className={styles.chartRow}>
+                                    <div className={styles.chartCard}>
+                                        <div className={styles.chartTitle}>
+                                            <MapPin size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                            Top Cities
+                                            <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('cities')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                        </div>
+                                        {cityData.length > 0 ? (
+                                            <ResponsiveContainer width="100%" height={250}>
+                                                <BarChart data={cityData.slice(0, 6)} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
                                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
                                                     <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
-                                                    <YAxis dataKey="path" type="category" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} width={120} />
+                                                    <YAxis dataKey="name" type="category" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} width={140} />
                                                     <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                                    <Bar dataKey="count" name="Page Views" radius={[0, 6, 6, 0]}>
-                                                        {topPages.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                                    <Bar dataKey="value" name="Visits" radius={[0, 6, 6, 0]}>
+                                                        {cityData.slice(0, 6).map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 2) % CHART_COLORS.length]} />)}
                                                     </Bar>
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         ) : (
-                                            <div className={styles.emptyState}><p>No page data.</p></div>
+                                            <div className={styles.emptyState}><p>No city data.</p></div>
                                         )}
                                     </div>
-                                </>
-                            )}
-                        </div>
+
+                                    <div className={styles.chartCard}>
+                                        <div className={styles.chartTitle}>
+                                            <Share2 size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                            Traffic Sources
+                                            <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('referrers')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                        </div>
+                                        {referrerData.length > 0 ? (
+                                            <>
+                                                <ResponsiveContainer width="100%" height={250}>
+                                                    <PieChart>
+                                                        <Pie data={referrerData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
+                                                            {referrerData.map((_, i) => <Cell key={i} fill={CHART_COLORS[(i + 5) % CHART_COLORS.length]} />)}
+                                                        </Pie>
+                                                        <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                                    </PieChart>
+                                                </ResponsiveContainer>
+                                                <ul className={styles.legendList}>
+                                                    {referrerData.map((entry, i) => (
+                                                        <li key={entry.name} className={styles.legendItem}>
+                                                            <span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 5) % CHART_COLORS.length] }} />
+                                                            {entry.name} ({entry.value})
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </>
+                                        ) : (
+                                            <div className={styles.emptyState}><p>No referrer data.</p></div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* ---- Top Pages (Bar Chart) ---- */}
+                                <div className={styles.chartCard}>
+                                    <div className={styles.chartTitle}>
+                                        <FileText size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
+                                        Top Visited Pages
+                                        <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('pages')} style={{ marginLeft: 'auto' }}>View Details</button>
+                                    </div>
+                                    {topPages.length > 0 ? (
+                                        <ResponsiveContainer width="100%" height={Math.max(200, topPages.length * 40)}>
+                                            <BarChart data={topPages} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
+                                                <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
+                                                <YAxis dataKey="path" type="category" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} width={120} />
+                                                <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                                <Bar dataKey="count" name="Page Views" radius={[0, 6, 6, 0]}>
+                                                    {topPages.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    ) : (
+                                        <div className={styles.emptyState}><p>No page data.</p></div>
+                                    )}
+                                </div>
+                            </>
+                        )
                     )
                 }
-            </main >
 
-            {/* ========== ANALYTICS DETAIL MODAL ========== */}
-            {
-                analyticsDetail && (
-                    <div className={styles.modalBackdrop} onClick={() => setAnalyticsDetail(null)}>
-                        <div className={styles.detailModal} onClick={(e) => e.stopPropagation()}>
-                            <div className={styles.detailModalHeader}>
-                                <h3>
-                                    {analyticsDetail === 'visits' && <><TrendingUp size={20} /> All Visits Log ({analyticsLogsTotal || analyticsLogs.length})</>}
-                                    {analyticsDetail === 'countries' && <><Globe size={20} /> Visitors by Country</>}
-                                    {analyticsDetail === 'devices' && <><Monitor size={20} /> Device Breakdown</>}
-                                    {analyticsDetail === 'pages' && <><FileText size={20} /> All Visited Pages</>}
-                                    {analyticsDetail === 'cities' && <><MapPin size={20} /> Visitors by City</>}
-                                    {analyticsDetail === 'referrers' && <><Share2 size={20} /> Traffic Sources</>}
-                                </h3>
-                                <button onClick={() => setAnalyticsDetail(null)} className={styles.detailCloseBtn}><X size={20} /></button>
-                            </div>
-                            <div className={styles.detailModalBody}>
-                                {analyticsLogsLoading ? (
-                                    <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                        <RefreshCw size={32} className={styles.spin} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                                        <p>Loading detailed analytics from Firestore...</p>
-                                    </div>
-                                ) : analyticsDetail === 'visits' && (
-                                    <>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                                            Showing top {analyticsLogs.length} results from Firestore fetch.
-                                        </p>
-                                        <table className={styles.detailTable}>
-                                            <thead>
-                                                <tr><th>#</th><th>Page</th><th>Country</th><th>City</th><th>Device</th><th>Browser</th><th>IP</th><th>Referrer</th><th>Session</th><th>Date & Time</th></tr>
-                                            </thead>
-                                            <tbody>
-                                                {analyticsLogs.length > 0 ? analyticsLogs.map((v, i) => (
-                                                    <tr key={v.id || i}>
-                                                        <td>{i + 1}</td>
-                                                        <td>{v.path || '/'}</td>
-                                                        <td>{v.countryCode ? <span title={v.country}>{v.countryCode}</span> : (v.country || 'Unknown')}</td>
-                                                        <td>{v.city || '-'}</td>
-                                                        <td style={{ textTransform: 'capitalize' }}>{v.device || '-'}</td>
-                                                        <td>{parseBrowser(v.userAgent)}</td>
-                                                        <td style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{v.ip || '-'}</td>
-                                                        <td style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.referrer}>{v.referrer || '-'}</td>
-                                                        <td style={{ fontSize: '0.7rem', fontFamily: 'monospace', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={v.sessionId}>{v.sessionId ? v.sessionId.slice(0, 8) + '…' : '-'}</td>
-                                                        <td style={{ whiteSpace: 'nowrap', fontSize: '0.78rem' }}>{v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toLocaleString() : v.date || '-'}</td>
-                                                    </tr>
-                                                )) : <tr><td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No visit data for this range.</td></tr>}
-                                            </tbody>
-                                        </table>
-                                        {analyticsLogsTotal > analyticsLogs.length && (
-                                            <div style={{ padding: '2rem', textAlign: 'center', borderTop: '1px solid var(--divider)' }}>
-                                                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                                                    Showing {analyticsLogs.length} of {analyticsLogsTotal} total visits in this range.
-                                                </p>
-                                                <p style={{ fontSize: '0.8rem', opacity: 0.6, fontStyle: 'italic' }}>
-                                                    For full export or deeper analysis, please use a dedicated analytics tool or request a raw CSV export.
-                                                </p>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-                                {analyticsDetail === 'countries' && (
-                                    <div className={styles.detailCardGrid}>
-                                        <div className={styles.detailCardFull}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                                <h4 style={{ margin: 0 }}>Country Breakdown</h4>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
-                                            </div>
-                                            <table className={styles.detailTable}>
-                                                <thead>
-                                                    <tr><th>Country</th><th>Visits</th><th>Percentage</th></tr>
-                                                </thead>
-                                                <tbody>
-                                                    {(() => {
-                                                        const allCountries = {};
-                                                        analyticsLogs.forEach(v => { const c = v.country || 'Unknown'; allCountries[c] = (allCountries[c] || 0) + 1; });
-                                                        const total = analyticsLogs.length || 1;
-                                                        return Object.entries(allCountries)
-                                                            .sort(([, a], [, b]) => b - a)
-                                                            .map(([name, count]) => (
-                                                                <tr key={name}>
-                                                                    <td style={{ fontWeight: '600' }}>{name}</td>
-                                                                    <td>{count}</td>
-                                                                    <td>{((count / total) * 100).toFixed(1)}%</td>
-                                                                </tr>
-                                                            ));
-                                                    })()}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
-                                {analyticsDetail === 'devices' && (
-                                    <div className={styles.detailCardGrid}>
-                                        <div className={styles.detailCardFull}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                                <h4 style={{ margin: 0 }}>Device Breakdown</h4>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
-                                            </div>
-                                            <table className={styles.detailTable}>
-                                                <thead>
-                                                    <tr><th>Device Type</th><th>Visits</th><th>Percentage</th></tr>
-                                                </thead>
-                                                <tbody>
-                                                    {(() => {
-                                                        const allDevices = {};
-                                                        analyticsLogs.forEach(v => { const d = v.device || 'unknown'; const label = d.charAt(0).toUpperCase() + d.slice(1); allDevices[label] = (allDevices[label] || 0) + 1; });
-                                                        const total = analyticsLogs.length || 1;
-                                                        return Object.entries(allDevices)
-                                                            .sort(([, a], [, b]) => b - a)
-                                                            .map(([name, count]) => (
-                                                                <tr key={name}>
-                                                                    <td style={{ fontWeight: '600' }}>{name}</td>
-                                                                    <td>{count}</td>
-                                                                    <td>{((count / total) * 100).toFixed(1)}%</td>
-                                                                </tr>
-                                                            ));
-                                                    })()}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
-                                {analyticsDetail === 'pages' && (
-                                    <div className={styles.detailCardGrid}>
-                                        <div className={styles.detailCardFull}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                                <h4 style={{ margin: 0 }}>Page Popularity</h4>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
-                                            </div>
-                                            <table className={styles.detailTable}>
-                                                <thead>
-                                                    <tr><th>Page Path</th><th>Views</th><th>Percentage</th></tr>
-                                                </thead>
-                                                <tbody>
-                                                    {(() => {
-                                                        const allPages = {};
-                                                        analyticsLogs.forEach(v => { const p = v.path || '/'; allPages[p] = (allPages[p] || 0) + 1; });
-                                                        const total = analyticsLogs.length || 1;
-                                                        return Object.entries(allPages)
-                                                            .sort(([, a], [, b]) => b - a)
-                                                            .map(([path, count]) => (
-                                                                <tr key={path}>
-                                                                    <td style={{ fontWeight: '500', fontFamily: 'monospace', fontSize: '0.8rem' }}>{path}</td>
-                                                                    <td>{count}</td>
-                                                                    <td>{((count / total) * 100).toFixed(1)}%</td>
-                                                                </tr>
-                                                            ));
-                                                    })()}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
-                                {analyticsDetail === 'cities' && (
-                                    <div className={styles.detailCardGrid}>
-                                        <div className={styles.detailCardFull}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                                <h4 style={{ margin: 0 }}>Top Cities</h4>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
-                                            </div>
-                                            <table className={styles.detailTable}>
-                                                <thead>
-                                                    <tr><th>City & Country</th><th>Visits</th><th>Percentage</th></tr>
-                                                </thead>
-                                                <tbody>
-                                                    {(() => {
-                                                        const allCities = {};
-                                                        analyticsLogs.forEach(v => {
-                                                            const city = v.city || 'Unknown';
-                                                            const country = v.country || '';
-                                                            const key = `${city}, ${country}`.replace(/, $/, '');
-                                                            allCities[key] = (allCities[key] || 0) + 1;
-                                                        });
-                                                        const total = analyticsLogs.length || 1;
-                                                        return Object.entries(allCities)
-                                                            .sort(([, a], [, b]) => b - a)
-                                                            .map(([name, count]) => (
-                                                                <tr key={name}>
-                                                                    <td style={{ fontWeight: '600' }}>{name}</td>
-                                                                    <td>{count}</td>
-                                                                    <td>{((count / total) * 100).toFixed(1)}%</td>
-                                                                </tr>
-                                                            ));
-                                                    })()}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
-                                {analyticsDetail === 'referrers' && (
-                                    <div className={styles.detailCardGrid}>
-                                        <div className={styles.detailCardFull}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                                <h4 style={{ margin: 0 }}>Traffic Sources</h4>
-                                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
-                                            </div>
-                                            <table className={styles.detailTable}>
-                                                <thead>
-                                                    <tr><th>Source Referrer</th><th>Visits</th><th>Percentage</th></tr>
-                                                </thead>
-                                                <tbody>
-                                                    {(() => {
-                                                        const allRefs = {};
-                                                        analyticsLogs.forEach(v => { const r = v.referrer || 'Direct'; allRefs[r] = (allRefs[r] || 0) + 1; });
-                                                        const total = analyticsLogs.length || 1;
-                                                        return Object.entries(allRefs)
-                                                            .sort(([, a], [, b]) => b - a)
-                                                            .map(([name, count]) => (
-                                                                <tr key={name}>
-                                                                    <td style={{ fontWeight: '600' }}>{name === 'Direct' ? 'Direct / Bookmark' : name}</td>
-                                                                    <td>{count}</td>
-                                                                    <td>{((count / total) * 100).toFixed(1)}%</td>
-                                                                </tr>
-                                                            ));
-                                                    })()}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div >
-                )
-            }
-
-            {/* ========== CUSTOM CONFIRMATION MODAL ========== */}
-            {
-                confirmDialog.isOpen && (
-                    <div className={styles.modalBackdrop}>
-                        <div className={styles.confirmModal}>
-                            <div className={`${styles.modalHeader} ${styles[confirmDialog.type]}`}>
-                                <h3>{confirmDialog.title}</h3>
-                            </div>
-                            <div className={styles.modalContent}>
-                                <p style={{ whiteSpace: 'pre-wrap' }}>{confirmDialog.message}</p>
-                            </div>
-                            <div className={styles.modalFooter}>
-                                <button
-                                    className={styles.cancelBtn}
-                                    onClick={() => setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' })}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className={`${styles.confirmBtn} ${styles[confirmDialog.type]}`}
-                                    onClick={confirmDialog.onConfirm}
-                                >
-                                    {confirmDialog.confirmText}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* ========== ADD USER MODAL ========== */}
-            {
-                showAddUserForm && (
-                    <div className={styles.modalOverlay} onClick={() => setShowAddUserForm(false)} style={{ zIndex: 1100 }}>
-                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', padding: 0 }}>
-                            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)' }}>
-                                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', margin: 0 }}>
-                                    <UserPlus size={20} /> Create New User
-                                </h3>
-                                <button onClick={() => setShowAddUserForm(false)} className={styles.closeBtn}><X size={20} /></button>
-                            </div>
-                            <form onSubmit={handleAddUser}>
-                                <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                                    <div className={styles.formGroup}>
-                                        <label>Email Address</label>
-                                        <input type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} required placeholder="user@example.com" />
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label>Temporary Password</label>
-                                        <input type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} required minLength={6} placeholder="Min 6 characters" />
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label>Initial Role</label>
-                                        <select
-                                            value={newUserRole}
-                                            onChange={(e) => setNewUserRole(e.target.value)}
-                                            className={styles.standardSelect}
-                                            style={{ width: '100%' }}
-                                        >
-                                            <option value="pending">Pending</option>
-                                            <option value="editor">Editor</option>
-                                            <option value="admin">Admin</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <button type="button" onClick={() => setShowAddUserForm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
-                                    <button type="submit" className={styles.primaryBtn} disabled={loading} style={{ margin: 0, padding: '0.6rem 1.25rem' }}>
-                                        {loading ? 'Creating...' : 'Create User'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* ========== CONFIRM DIALOG MODAL ========== */}
-            {
-                confirmDialog.isOpen && (
-                    <div className={styles.modalOverlay} onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} style={{ zIndex: 1200 }}>
-                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', padding: 0 }}>
-                            <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: confirmDialog.type === 'danger' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(251, 146, 60, 0.05)' }}>
-                                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: confirmDialog.type === 'danger' ? '#ef4444' : '#f97316', margin: 0 }}>
-                                    {confirmDialog.type === 'danger' ? <Trash2 size={20} /> : <Key size={20} />} {confirmDialog.title}
-                                </h3>
-                                <button onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} className={styles.closeBtn}><X size={20} /></button>
-                            </div>
-                            <div style={{ padding: '1.5rem' }}>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>
-                                    {confirmDialog.message}
-                                </p>
-                            </div>
-                            <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                <button onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
-                                <button onClick={confirmDialog.onConfirm} className={confirmDialog.type === 'danger' ? styles.deleteBtn : styles.primaryBtn} style={{ padding: '0.6rem 1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    {loading ? 'Processing...' : confirmDialog.confirmText}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-            {/* ========== MESSAGE VIEW MODAL ========== */}
-            {
-                viewingMessage && (
-                    <div className={styles.modalOverlay} onClick={() => setViewingMessage(null)} style={{ zIndex: 1200 }}>
-                        <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', padding: 0 }}>
-                            <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)' }}>
-                                <h3>
-                                    <Mail size={20} style={{ color: 'var(--primary-color)' }} />
-                                    Message Details
-                                </h3>
-                                <button onClick={() => setViewingMessage(null)} className={styles.closeBtn}>
-                                    <X size={20} />
-                                </button>
-                            </div>
-                            <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '60vh' }}>
-                                <div className={styles.detailGrid}>
-                                    <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                        <span className={styles.detailLabel}>From</span>
-                                        <span className={styles.detailValue}>
-                                            <span style={{ fontWeight: 'bold' }}>{viewingMessage.name}</span><br />
-                                            <a href={`mailto:${viewingMessage.email}`} style={{ color: 'var(--primary-color)', textDecoration: 'none', display: 'inline-block', marginTop: '0.2rem' }}>{viewingMessage.email}</a>
-                                        </span>
-                                    </div>
-                                    <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                        <span className={styles.detailLabel}>Date</span>
-                                        <span className={styles.detailValue}>
-                                            {viewingMessage.createdAt?.seconds ? new Date(viewingMessage.createdAt.seconds * 1000).toLocaleString() : 'Just now'}
-                                        </span>
-                                    </div>
-                                    <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                        <span className={styles.detailLabel}>Message</span>
-                                        <p className={styles.detailValue} style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', margin: 0, padding: '1rem', background: 'var(--input-bg)', borderRadius: '8px' }}>
-                                            {viewingMessage.message}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className={styles.modalFooter} style={{ justifyContent: 'space-between', marginTop: 'auto' }}>
-                                <button
-                                    className={styles.deleteBtn}
-                                    onClick={() => { handleDeleteMessage(viewingMessage.id); setViewingMessage(null); }}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem' }}
-                                >
-                                    <Trash2 size={16} /> Delete
-                                </button>
-                                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                    <a
-                                        href={`mailto:${viewingMessage.email}?subject=Re: Inquiry from ${encodeURIComponent(viewingMessage.name)}`}
-                                        className={styles.submitBtn}
-                                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none', background: 'transparent', border: '1px solid var(--glass-border, rgba(255,255,255,0.1))', color: 'var(--text-primary)', padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '8px' }}
-                                    >
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg> Reply
-                                    </a>
-                                    <button
-                                        className={styles.editBtn}
-                                        onClick={() => { handleToggleMessageRead(viewingMessage.id, viewingMessage.isRead); }}
-                                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem' }}
-                                    >
-                                        {viewingMessage.isRead ? <><MailOpen size={16} /> Mark Unread</> : <><Mail size={16} /> Mark Read</>}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-            {/* ========== ACTIVITY DETAIL MODAL ========== */}
-            {
-                activityDetailType && (
-                    <div className={styles.modalOverlay} onClick={() => setActivityDetailType(null)} style={{ zIndex: 1100 }}>
-                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '850px', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
-                            <div className={styles.modalHeader} style={{
-                                borderBottom: '1px solid var(--divider)',
-                                padding: '1.5rem 2rem',
-                                background: activityDetailType === 'reads' ? 'rgba(56, 189, 248, 0.08)' :
-                                    (activityDetailType === 'writes' ? 'rgba(167, 139, 250, 0.08)' : 'rgba(251, 146, 60, 0.08)')
-                            }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                    <h3 style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.75rem',
-                                        margin: 0,
-                                        fontSize: '1.4rem',
-                                        color: activityDetailType === 'reads' ? '#38bdf8' :
-                                            (activityDetailType === 'writes' ? '#a78bfa' : '#fb923c')
-                                    }}>
-                                        {activityDetailType === 'reads' && <Eye size={24} />}
-                                        {activityDetailType === 'writes' && <Edit2 size={24} />}
-                                        {activityDetailType === 'deletes' && <Trash2 size={24} />}
-                                        {activityDetailType.charAt(0).toUpperCase() + activityDetailType.slice(1)} Activity Logs
+                {/* ========== ANALYTICS DETAIL MODAL ========== */}
+                {
+                    analyticsDetail && (
+                        <div className={styles.modalBackdrop} onClick={() => setAnalyticsDetail(null)}>
+                            <div className={styles.detailModal} onClick={(e) => e.stopPropagation()}>
+                                <div className={styles.detailModalHeader}>
+                                    <h3>
+                                        {analyticsDetail === 'visits' && <><TrendingUp size={20} /> All Visits Log ({analyticsLogsTotal || analyticsLogs.length})</>}
+                                        {analyticsDetail === 'countries' && <><Globe size={20} /> Visitors by Country</>}
+                                        {analyticsDetail === 'devices' && <><Monitor size={20} /> Device Breakdown</>}
+                                        {analyticsDetail === 'pages' && <><FileText size={20} /> All Visited Pages</>}
+                                        {analyticsDetail === 'cities' && <><MapPin size={20} /> Visitors by City</>}
+                                        {analyticsDetail === 'referrers' && <><Share2 size={20} /> Traffic Sources</>}
                                     </h3>
-                                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', opacity: 0.8 }}>
-                                        Detailed breakdown of all {activityDetailType} for {currentDateKey}
-                                    </p>
+                                    <button onClick={() => setAnalyticsDetail(null)} className={styles.detailCloseBtn}><X size={20} /></button>
                                 </div>
-                                <button onClick={() => setActivityDetailType(null)} className={styles.closeBtn} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.4rem' }}>
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-                            <div style={{ padding: '0', maxHeight: '65vh', overflowY: 'auto', background: 'var(--bg-card)' }}>
-                                {activityLogsLoading ? (
-                                    <div style={{ padding: '5rem 3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                        <RefreshCw size={32} style={{ animation: 'spin 1.5s linear infinite', opacity: 0.3, marginBottom: '1rem' }} />
-                                        <p style={{ fontWeight: '500', letterSpacing: '0.02em' }}>Fetching granular logs...</p>
-                                    </div>
-                                ) : (
-                                    <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '0.9rem' }}>
-                                        <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-surface)', zIndex: 10, backdropFilter: 'blur(8px)' }}>
-                                            <tr>
-                                                <th style={{ textAlign: 'left', padding: '1.25rem 2rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Operation & Target</th>
-                                                <th style={{ textAlign: 'center', padding: '1.25rem 1rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', width: '90px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Count</th>
-                                                <th style={{ textAlign: 'left', padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', width: '200px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>User Attribution</th>
-                                                <th style={{ textAlign: 'right', padding: '1.25rem 2rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', width: '140px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Timestamp</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {activityLogs.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan="4" style={{ padding: '5rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                                        <Activity size={48} style={{ opacity: 0.1, marginBottom: '1rem' }} />
-                                                        <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>No {activityDetailType} recorded yet.</p>
-                                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0.5rem auto' }}>
-                                                            Activity will appear here as users interact with the site.
-                                                            {dailyUsage[activityDetailType] > 0 && activityLogs.length === 0 && (
-                                                                <span style={{ display: 'block', marginTop: '1rem', fontSize: '0.75rem', opacity: 0.7, fontStyle: 'italic' }}>
-                                                                    Note: Some operations (like background counts or previous sessions) may not have detailed logs recorded.
-                                                                </span>
-                                                            )}
-                                                        </p>
-                                                    </td>
-                                                </tr>
-                                            ) : (
-                                                activityLogs.map((log, i) => {
-                                                    const isSystem = log.user === 'Anonymous' || !log.user;
-                                                    return (
-                                                        <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                                            <td style={{ padding: '1rem 2rem' }}>
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                                    <div style={{
-                                                                        padding: '0.4rem',
-                                                                        borderRadius: '8px',
-                                                                        background: log.type === 'read' ? 'rgba(56, 189, 248, 0.1)' : (log.type === 'write' ? 'rgba(167, 139, 250, 0.1)' : 'rgba(251, 146, 60, 0.1)'),
-                                                                        color: log.type === 'read' ? '#38bdf8' : (log.type === 'write' ? '#a78bfa' : '#fb923c')
-                                                                    }}>
-                                                                        {log.type === 'read' ? <Eye size={14} /> : (log.type === 'write' ? <Edit2 size={14} /> : <Trash2 size={14} />)}
-                                                                    </div>
-                                                                    <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
-                                                                        {log.label || <span style={{ opacity: 0.4, fontStyle: 'italic' }}>General {log.type}</span>}
-                                                                    </span>
-                                                                </div>
-                                                            </td>
-                                                            <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                                                <span style={{
-                                                                    background: 'rgba(255,255,255,0.04)',
-                                                                    padding: '0.25rem 0.6rem',
-                                                                    borderRadius: '6px',
-                                                                    fontWeight: '700',
-                                                                    fontSize: '0.85rem',
-                                                                    fontFamily: 'monospace',
-                                                                    color: 'var(--text-primary)'
-                                                                }}>
-                                                                    {log.count}
-                                                                </span>
-                                                            </td>
-                                                            <td style={{ padding: '1rem 1.5rem' }}>
-                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                                    <div style={{
-                                                                        width: '8px',
-                                                                        height: '8px',
-                                                                        borderRadius: '50%',
-                                                                        background: isSystem ? '#94a3b8' : '#10b981',
-                                                                        boxShadow: isSystem ? 'none' : '0 0 6px #10b98140'
-                                                                    }}></div>
-                                                                    <span style={{
-                                                                        color: isSystem ? 'var(--text-secondary)' : 'var(--text-primary)',
-                                                                        fontSize: '0.85rem',
-                                                                        fontWeight: isSystem ? '400' : '600'
-                                                                    }}>
-                                                                        {log.user || 'Public Visitor'}
-                                                                    </span>
-                                                                </div>
-                                                            </td>
-                                                            <td style={{ padding: '1rem 2rem', textAlign: 'right', color: 'var(--text-secondary)', fontSize: '0.85rem', fontFamily: 'monospace' }}>
-                                                                {log.time?.seconds ? new Date(log.time.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Pending...'}
-                                                            </td>
+                                <div className={styles.detailModalBody}>
+                                    {analyticsLogsLoading ? (
+                                        <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                            <RefreshCw size={32} className={styles.spin} style={{ opacity: 0.2, marginBottom: '1rem' }} />
+                                            <p>Loading detailed analytics from Firestore...</p>
+                                        </div>
+                                    ) : analyticsDetail === 'visits' && (
+                                        <>
+                                            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                                                Showing top {analyticsLogs.length} results from Firestore fetch.
+                                            </p>
+                                            <table className={styles.detailTable}>
+                                                <thead>
+                                                    <tr><th>#</th><th>Page</th><th>Country</th><th>City</th><th>Device</th><th>Browser</th><th>IP</th><th>Referrer</th><th>Session</th><th>Date & Time</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    {analyticsLogs.length > 0 ? analyticsLogs.map((v, i) => (
+                                                        <tr key={v.id || i}>
+                                                            <td>{i + 1}</td>
+                                                            <td>{v.path || '/'}</td>
+                                                            <td>{v.countryCode ? <span title={v.country}>{v.countryCode}</span> : (v.country || 'Unknown')}</td>
+                                                            <td>{v.city || '-'}</td>
+                                                            <td style={{ textTransform: 'capitalize' }}>{v.device || '-'}</td>
+                                                            <td>{parseBrowser(v.userAgent)}</td>
+                                                            <td style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{v.ip || '-'}</td>
+                                                            <td style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.referrer}>{v.referrer || '-'}</td>
+                                                            <td style={{ fontSize: '0.7rem', fontFamily: 'monospace', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={v.sessionId}>{v.sessionId ? v.sessionId.slice(0, 8) + '…' : '-'}</td>
+                                                            <td style={{ whiteSpace: 'nowrap', fontSize: '0.78rem' }}>{v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toLocaleString() : v.date || '-'}</td>
                                                         </tr>
-                                                    );
-                                                })
+                                                    )) : <tr><td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No visit data for this range.</td></tr>}
+                                                </tbody>
+                                            </table>
+                                            {analyticsLogsTotal > analyticsLogs.length && (
+                                                <div style={{ padding: '2rem', textAlign: 'center', borderTop: '1px solid var(--divider)' }}>
+                                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                                                        Showing {analyticsLogs.length} of {analyticsLogsTotal} total visits in this range.
+                                                    </p>
+                                                    <p style={{ fontSize: '0.8rem', opacity: 0.6, fontStyle: 'italic' }}>
+                                                        For full export or deeper analysis, please use a dedicated analytics tool or request a raw CSV export.
+                                                    </p>
+                                                </div>
                                             )}
-                                        </tbody>
-                                    </table>
-                                )}
+                                        </>
+                                    )}
+                                    {analyticsDetail === 'countries' && (
+                                        <div className={styles.detailCardGrid}>
+                                            <div className={styles.detailCardFull}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                    <h4 style={{ margin: 0 }}>Country Breakdown</h4>
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
+                                                </div>
+                                                <table className={styles.detailTable}>
+                                                    <thead>
+                                                        <tr><th>Country</th><th>Visits</th><th>Percentage</th></tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {(() => {
+                                                            const allCountries = {};
+                                                            analyticsLogs.forEach(v => { const c = v.country || 'Unknown'; allCountries[c] = (allCountries[c] || 0) + 1; });
+                                                            const total = analyticsLogs.length || 1;
+                                                            return Object.entries(allCountries)
+                                                                .sort(([, a], [, b]) => b - a)
+                                                                .map(([name, count]) => (
+                                                                    <tr key={name}>
+                                                                        <td style={{ fontWeight: '600' }}>{name}</td>
+                                                                        <td>{count}</td>
+                                                                        <td>{((count / total) * 100).toFixed(1)}%</td>
+                                                                    </tr>
+                                                                ));
+                                                        })()}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {analyticsDetail === 'devices' && (
+                                        <div className={styles.detailCardGrid}>
+                                            <div className={styles.detailCardFull}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                    <h4 style={{ margin: 0 }}>Device Breakdown</h4>
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
+                                                </div>
+                                                <table className={styles.detailTable}>
+                                                    <thead>
+                                                        <tr><th>Device Type</th><th>Visits</th><th>Percentage</th></tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {(() => {
+                                                            const allDevices = {};
+                                                            analyticsLogs.forEach(v => { const d = v.device || 'unknown'; const label = d.charAt(0).toUpperCase() + d.slice(1); allDevices[label] = (allDevices[label] || 0) + 1; });
+                                                            const total = analyticsLogs.length || 1;
+                                                            return Object.entries(allDevices)
+                                                                .sort(([, a], [, b]) => b - a)
+                                                                .map(([name, count]) => (
+                                                                    <tr key={name}>
+                                                                        <td style={{ fontWeight: '600' }}>{name}</td>
+                                                                        <td>{count}</td>
+                                                                        <td>{((count / total) * 100).toFixed(1)}%</td>
+                                                                    </tr>
+                                                                ));
+                                                        })()}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {analyticsDetail === 'pages' && (
+                                        <div className={styles.detailCardGrid}>
+                                            <div className={styles.detailCardFull}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                    <h4 style={{ margin: 0 }}>Page Popularity</h4>
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
+                                                </div>
+                                                <table className={styles.detailTable}>
+                                                    <thead>
+                                                        <tr><th>Page Path</th><th>Views</th><th>Percentage</th></tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {(() => {
+                                                            const allPages = {};
+                                                            analyticsLogs.forEach(v => { const p = v.path || '/'; allPages[p] = (allPages[p] || 0) + 1; });
+                                                            const total = analyticsLogs.length || 1;
+                                                            return Object.entries(allPages)
+                                                                .sort(([, a], [, b]) => b - a)
+                                                                .map(([path, count]) => (
+                                                                    <tr key={path}>
+                                                                        <td style={{ fontWeight: '500', fontFamily: 'monospace', fontSize: '0.8rem' }}>{path}</td>
+                                                                        <td>{count}</td>
+                                                                        <td>{((count / total) * 100).toFixed(1)}%</td>
+                                                                    </tr>
+                                                                ));
+                                                        })()}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {analyticsDetail === 'cities' && (
+                                        <div className={styles.detailCardGrid}>
+                                            <div className={styles.detailCardFull}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                    <h4 style={{ margin: 0 }}>Top Cities</h4>
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
+                                                </div>
+                                                <table className={styles.detailTable}>
+                                                    <thead>
+                                                        <tr><th>City & Country</th><th>Visits</th><th>Percentage</th></tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {(() => {
+                                                            const allCities = {};
+                                                            analyticsLogs.forEach(v => {
+                                                                const city = v.city || 'Unknown';
+                                                                const country = v.country || '';
+                                                                const key = `${city}, ${country}`.replace(/, $/, '');
+                                                                allCities[key] = (allCities[key] || 0) + 1;
+                                                            });
+                                                            const total = analyticsLogs.length || 1;
+                                                            return Object.entries(allCities)
+                                                                .sort(([, a], [, b]) => b - a)
+                                                                .map(([name, count]) => (
+                                                                    <tr key={name}>
+                                                                        <td style={{ fontWeight: '600' }}>{name}</td>
+                                                                        <td>{count}</td>
+                                                                        <td>{((count / total) * 100).toFixed(1)}%</td>
+                                                                    </tr>
+                                                                ));
+                                                        })()}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {analyticsDetail === 'referrers' && (
+                                        <div className={styles.detailCardGrid}>
+                                            <div className={styles.detailCardFull}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                    <h4 style={{ margin: 0 }}>Traffic Sources</h4>
+                                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Based on last {analyticsLogs.length} records</span>
+                                                </div>
+                                                <table className={styles.detailTable}>
+                                                    <thead>
+                                                        <tr><th>Source Referrer</th><th>Visits</th><th>Percentage</th></tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {(() => {
+                                                            const allRefs = {};
+                                                            analyticsLogs.forEach(v => { const r = v.referrer || 'Direct'; allRefs[r] = (allRefs[r] || 0) + 1; });
+                                                            const total = analyticsLogs.length || 1;
+                                                            return Object.entries(allRefs)
+                                                                .sort(([, a], [, b]) => b - a)
+                                                                .map(([name, count]) => (
+                                                                    <tr key={name}>
+                                                                        <td style={{ fontWeight: '600' }}>{name === 'Direct' ? 'Direct / Bookmark' : name}</td>
+                                                                        <td>{count}</td>
+                                                                        <td>{((count / total) * 100).toFixed(1)}%</td>
+                                                                    </tr>
+                                                                ));
+                                                        })()}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+                        </div >
+                    )
+                }
 
-                            <div className={styles.modalFooter} style={{ padding: '1.5rem 2rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid var(--divider)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Activity size={16} />
-                                    <span>Total cumulative <strong>{activityDetailType}</strong> tracked today: <strong>{dailyUsage[activityDetailType]?.toLocaleString()}</strong></span>
+
+                {/* ========== ADD USER MODAL ========== */}
+                {
+                    showAddUserForm && (
+                        <div className={styles.modalOverlay} onClick={() => setShowAddUserForm(false)} style={{ zIndex: 1100 }}>
+                            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', padding: 0 }}>
+                                <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)' }}>
+                                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', margin: 0 }}>
+                                        <UserPlus size={20} /> Create New User
+                                    </h3>
+                                    <button onClick={() => setShowAddUserForm(false)} className={styles.closeBtn}><X size={20} /></button>
                                 </div>
-                                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                    <button onClick={() => setActivityDetailType(null)} className={styles.submitBtn} style={{ margin: 0, background: 'transparent', border: '1px solid var(--divider)', color: 'var(--text-primary)' }}>Close</button>
-                                    <button onClick={() => setActivityDetailType(null)} className={styles.confirmBtn} style={{ margin: 0 }}>Done</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-            {/* ========== USER VIEW MODAL ========== */}
-            {
-                viewingUser && (
-                    <div className={styles.modalOverlay} onClick={() => setViewingUser(null)} style={{ zIndex: 1200 }}>
-                        <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', padding: 0 }}>
-                            <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)' }}>
-                                <h3>
-                                    <Users size={20} style={{ color: 'var(--primary-color)' }} />
-                                    User Details
-                                </h3>
-                                <button onClick={() => setViewingUser(null)} className={styles.closeBtn}>
-                                    <X size={20} />
-                                </button>
-                            </div>
-                            <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '60vh' }}>
-                                <div className={styles.detailGrid}>
-                                    <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                        <span className={styles.detailLabel}>Email Address</span>
-                                        <span className={styles.detailValue} style={{ fontSize: '1rem', fontWeight: 'bold' }}>
-                                            {viewingUser.email}
-                                        </span>
-                                    </div>
-                                    <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                        <span className={styles.detailLabel}>Display Name</span>
-                                        <span className={styles.detailValue}>
-                                            {viewingUser.displayName || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Not provided</span>}
-                                        </span>
-                                    </div>
-                                    <div className={styles.detailItem}>
-                                        <span className={styles.detailLabel}>Account Role</span>
-                                        {viewingUser.email === user.email ? (
-                                            <span className={styles.detailValue} style={{ textTransform: 'capitalize', color: viewingUser.role === 'superadmin' ? '#10b981' : (viewingUser.role === 'admin' ? '#8b5cf6' : (viewingUser.role === 'editor' ? '#f59e0b' : 'var(--text-primary)')) }}>
-                                                {viewingUser.role} (You)
-                                            </span>
-                                        ) : (
+                                <form onSubmit={handleAddUser}>
+                                    <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                        <div className={styles.formGroup}>
+                                            <label>Email Address</label>
+                                            <input type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} required placeholder="user@example.com" />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label>Temporary Password</label>
+                                            <input type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} required minLength={6} placeholder="Min 6 characters" />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label>Initial Role</label>
                                             <select
+                                                value={newUserRole}
+                                                onChange={(e) => setNewUserRole(e.target.value)}
                                                 className={styles.standardSelect}
-                                                style={{ width: '100%', marginTop: '0.4rem' }}
-                                                value={viewingUser.role}
-                                                onChange={(e) => {
-                                                    const newRole = e.target.value;
-                                                    handleRoleChange(viewingUser.id, newRole);
-                                                    setViewingUser({ ...viewingUser, role: newRole });
-                                                }}
+                                                style={{ width: '100%' }}
                                             >
                                                 <option value="pending">Pending</option>
                                                 <option value="editor">Editor</option>
                                                 <option value="admin">Admin</option>
-                                                <option value="superadmin">Super Admin</option>
                                             </select>
-                                        )}
+                                        </div>
                                     </div>
-                                    <div className={styles.detailItem}>
-                                        <span className={styles.detailLabel}>Status</span>
-                                        <span className={styles.detailValue}>
-                                            {viewingUser.isActive === false ? <span style={{ color: '#ef4444' }}>Disabled</span> : <span style={{ color: '#10b981' }}>Active</span>}
-                                        </span>
-                                    </div>
-                                    <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                        <span className={styles.detailLabel}>Registration Date</span>
-                                        <span className={styles.detailValue}>
-                                            {viewingUser.createdAt?.seconds ? new Date(viewingUser.createdAt.seconds * 1000).toLocaleString() : 'Unknown'}
-                                        </span>
-                                    </div>
-                                    <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                        <span className={styles.detailLabel}>User ID</span>
-                                        <span className={styles.detailValue} style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                            {viewingUser.id}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className={styles.modalFooter} style={{ justifyContent: 'space-between', marginTop: 'auto' }}>
-                                <div>
-                                    {viewingUser.email !== user.email && (
-                                        <button
-                                            className={styles.deleteBtn}
-                                            onClick={() => { handleRemoveUser(viewingUser.email, viewingUser.id); setViewingUser(null); }}
-                                            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem' }}
-                                        >
-                                            <Trash2 size={16} /> Remove
+                                    <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <button type="button" onClick={() => setShowAddUserForm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
+                                        <button type="submit" className={styles.primaryBtn} disabled={loading} style={{ margin: 0, padding: '0.6rem 1.25rem' }}>
+                                            {loading ? 'Creating...' : 'Create User'}
                                         </button>
-                                    )}
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )
+                }
+
+                {/* ========== CONFIRM DIALOG MODAL ========== */}
+                {
+                    confirmDialog.isOpen && (
+                        <div className={styles.modalOverlay} onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} style={{ zIndex: 1200 }}>
+                            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', padding: 0 }}>
+                                <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: confirmDialog.type === 'danger' ? 'rgba(239, 68, 68, 0.05)' : 'rgba(251, 146, 60, 0.05)' }}>
+                                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: confirmDialog.type === 'danger' ? '#ef4444' : '#f97316', margin: 0 }}>
+                                        {confirmDialog.type === 'danger' ? <Trash2 size={20} /> : <Key size={20} />} {confirmDialog.title}
+                                    </h3>
+                                    <button onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} className={styles.closeBtn}><X size={20} /></button>
                                 </div>
-                                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                    <button
-                                        className={styles.submitBtn}
-                                        onClick={() => { handleResetPassword(viewingUser.email); setViewingUser(null); }}
-                                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'transparent', border: '1px solid var(--glass-border, rgba(255,255,255,0.1))', color: 'var(--text-primary)', padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '8px' }}
-                                    >
-                                        🔑 Reset Password
-                                    </button>
-                                    <button
-                                        className={styles.confirmBtn}
-                                        onClick={() => setViewingUser(null)}
-                                    >
-                                        Done
+                                <div style={{ padding: '1.5rem' }}>
+                                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', margin: 0, whiteSpace: 'pre-wrap' }}>
+                                        {confirmDialog.message}
+                                    </p>
+                                </div>
+                                <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <button onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
+                                    <button onClick={confirmDialog.onConfirm} className={confirmDialog.type === 'danger' ? styles.deleteBtn : styles.primaryBtn} style={{ padding: '0.6rem 1.25rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        {loading ? 'Processing...' : confirmDialog.confirmText}
                                     </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )
-            }
+                    )
+                }
+                {/* ========== MESSAGE VIEW MODAL ========== */}
+                {
+                    viewingMessage && (
+                        <div className={styles.modalOverlay} onClick={() => setViewingMessage(null)} style={{ zIndex: 1200 }}>
+                            <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', padding: 0 }}>
+                                <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)' }}>
+                                    <h3>
+                                        <Mail size={20} style={{ color: 'var(--primary-color)' }} />
+                                        Message Details
+                                    </h3>
+                                    <button onClick={() => setViewingMessage(null)} className={styles.closeBtn}>
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                                <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '60vh' }}>
+                                    <div className={styles.detailGrid}>
+                                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                            <span className={styles.detailLabel}>From</span>
+                                            <span className={styles.detailValue}>
+                                                <span style={{ fontWeight: 'bold' }}>{viewingMessage.name}</span><br />
+                                                <a href={`mailto:${viewingMessage.email}`} style={{ color: 'var(--primary-color)', textDecoration: 'none', display: 'inline-block', marginTop: '0.2rem' }}>{viewingMessage.email}</a>
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                            <span className={styles.detailLabel}>Date</span>
+                                            <span className={styles.detailValue}>
+                                                {viewingMessage.createdAt?.seconds ? new Date(viewingMessage.createdAt.seconds * 1000).toLocaleString() : 'Just now'}
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                            <span className={styles.detailLabel}>Message</span>
+                                            <p className={styles.detailValue} style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', margin: 0, padding: '1rem', background: 'var(--input-bg)', borderRadius: '8px' }}>
+                                                {viewingMessage.message}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={styles.modalFooter} style={{ justifyContent: 'space-between', marginTop: 'auto' }}>
+                                    <button
+                                        className={styles.deleteBtn}
+                                        onClick={() => { handleDeleteMessage(viewingMessage.id); setViewingMessage(null); }}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem' }}
+                                    >
+                                        <Trash2 size={16} /> Delete
+                                    </button>
+                                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                        <a
+                                            href={`mailto:${viewingMessage.email}?subject=Re: Inquiry from ${encodeURIComponent(viewingMessage.name)}`}
+                                            className={styles.submitBtn}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none', background: 'transparent', border: '1px solid var(--glass-border, rgba(255,255,255,0.1))', color: 'var(--text-primary)', padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '8px' }}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg> Reply
+                                        </a>
+                                        <button
+                                            className={styles.editBtn}
+                                            onClick={() => { handleToggleMessageRead(viewingMessage.id, viewingMessage.isRead); }}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem' }}
+                                        >
+                                            {viewingMessage.isRead ? <><MailOpen size={16} /> Mark Unread</> : <><Mail size={16} /> Mark Read</>}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+                {/* ========== ACTIVITY DETAIL MODAL ========== */}
+                {
+                    activityDetailType && (
+                        <div className={styles.modalOverlay} onClick={() => setActivityDetailType(null)} style={{ zIndex: 1100 }}>
+                            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '850px', padding: 0, borderRadius: '16px', overflow: 'hidden' }}>
+                                <div className={styles.modalHeader} style={{
+                                    borderBottom: '1px solid var(--divider)',
+                                    padding: '1.5rem 2rem',
+                                    background: activityDetailType === 'reads' ? 'rgba(56, 189, 248, 0.08)' :
+                                        (activityDetailType === 'writes' ? 'rgba(167, 139, 250, 0.08)' : 'rgba(251, 146, 60, 0.08)')
+                                }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                        <h3 style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.75rem',
+                                            margin: 0,
+                                            fontSize: '1.4rem',
+                                            color: activityDetailType === 'reads' ? '#38bdf8' :
+                                                (activityDetailType === 'writes' ? '#a78bfa' : '#fb923c')
+                                        }}>
+                                            {activityDetailType === 'reads' && <Eye size={24} />}
+                                            {activityDetailType === 'writes' && <Edit2 size={24} />}
+                                            {activityDetailType === 'deletes' && <Trash2 size={24} />}
+                                            {activityDetailType.charAt(0).toUpperCase() + activityDetailType.slice(1)} Activity Logs
+                                        </h3>
+                                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', opacity: 0.8 }}>
+                                            Detailed breakdown of all {activityDetailType} for {
+                                                activityDateRange === 'today' ? currentDateKey :
+                                                    (activityDateRange === '7d' ? 'the Last 7 Days' :
+                                                        (activityDateRange === '30d' ? 'the Last 30 Days' : 'All Time'))
+                                            }
+                                        </p>
+                                    </div>
+                                    <button onClick={() => setActivityDetailType(null)} className={styles.closeBtn} style={{ background: 'rgba(0,0,0,0.2)', padding: '0.4rem' }}>
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <div style={{ padding: '0', maxHeight: '65vh', overflowY: 'auto', background: 'var(--bg-card)' }}>
+                                    {activityLogsLoading ? (
+                                        <div style={{ padding: '5rem 3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                            <RefreshCw size={32} style={{ animation: 'spin 1.5s linear infinite', opacity: 0.3, marginBottom: '1rem' }} />
+                                            <p style={{ fontWeight: '500', letterSpacing: '0.02em' }}>Fetching granular logs...</p>
+                                        </div>
+                                    ) : (
+                                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '0.9rem' }}>
+                                            <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-surface)', zIndex: 10, backdropFilter: 'blur(8px)' }}>
+                                                <tr>
+                                                    <th style={{ textAlign: 'left', padding: '1.25rem 2rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Operation & Target</th>
+                                                    <th style={{ textAlign: 'center', padding: '1.25rem 1rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', width: '90px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Count</th>
+                                                    <th style={{ textAlign: 'left', padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', width: '200px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>User Attribution</th>
+                                                    <th style={{ textAlign: 'right', padding: '1.25rem 2rem', color: 'var(--text-secondary)', fontWeight: '600', borderBottom: '1px solid var(--divider)', width: '140px', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Timestamp</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {activityLogs.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="4" style={{ padding: '5rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                                            <Activity size={48} style={{ opacity: 0.1, marginBottom: '1rem' }} />
+                                                            <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>No {activityDetailType} recorded yet.</p>
+                                                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0.5rem auto' }}>
+                                                                Activity will appear here as users interact with the site.
+                                                                {dailyUsage[activityDetailType] > 0 && activityLogs.length === 0 && (
+                                                                    <span style={{ display: 'block', marginTop: '1rem', fontSize: '0.75rem', opacity: 0.7, fontStyle: 'italic' }}>
+                                                                        Note: Some operations (like background counts or previous sessions) may not have detailed logs recorded.
+                                                                    </span>
+                                                                )}
+                                                            </p>
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    activityLogs.map((log, i) => {
+                                                        const isSystem = log.user === 'Anonymous' || !log.user;
+                                                        return (
+                                                            <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'all 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                                <td style={{ padding: '1rem 2rem' }}>
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                                        <div style={{
+                                                                            padding: '0.4rem',
+                                                                            borderRadius: '8px',
+                                                                            background: log.type === 'read' ? 'rgba(56, 189, 248, 0.1)' : (log.type === 'write' ? 'rgba(167, 139, 250, 0.1)' : 'rgba(251, 146, 60, 0.1)'),
+                                                                            color: log.type === 'read' ? '#38bdf8' : (log.type === 'write' ? '#a78bfa' : '#fb923c')
+                                                                        }}>
+                                                                            {log.type === 'read' ? <Eye size={14} /> : (log.type === 'write' ? <Edit2 size={14} /> : <Trash2 size={14} />)}
+                                                                        </div>
+                                                                        <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
+                                                                            {log.label || <span style={{ opacity: 0.4, fontStyle: 'italic' }}>General {log.type}</span>}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td style={{ padding: '1rem', textAlign: 'center' }}>
+                                                                    <span style={{
+                                                                        background: 'rgba(255,255,255,0.04)',
+                                                                        padding: '0.25rem 0.6rem',
+                                                                        borderRadius: '6px',
+                                                                        fontWeight: '700',
+                                                                        fontSize: '0.85rem',
+                                                                        fontFamily: 'monospace',
+                                                                        color: 'var(--text-primary)'
+                                                                    }}>
+                                                                        {log.count}
+                                                                    </span>
+                                                                </td>
+                                                                <td style={{ padding: '1rem 1.5rem' }}>
+                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                        <div style={{
+                                                                            width: '8px',
+                                                                            height: '8px',
+                                                                            borderRadius: '50%',
+                                                                            background: isSystem ? '#94a3b8' : '#10b981',
+                                                                            boxShadow: isSystem ? 'none' : '0 0 6px #10b98140'
+                                                                        }}></div>
+                                                                        <span style={{
+                                                                            color: isSystem ? 'var(--text-secondary)' : 'var(--text-primary)',
+                                                                            fontSize: '0.85rem',
+                                                                            fontWeight: isSystem ? '400' : '600'
+                                                                        }}>
+                                                                            {log.user || 'Public Visitor'}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td style={{ padding: '1rem 2rem', textAlign: 'right', color: 'var(--text-secondary)', fontSize: '0.85rem', fontFamily: 'monospace' }}>
+                                                                    {log.time?.seconds ? new Date(log.time.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Pending...'}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    )}
+                                </div>
+
+                                <div className={styles.modalFooter} style={{ padding: '1.5rem 2rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid var(--divider)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Activity size={16} />
+                                        <span>Total cumulative <strong>{activityDetailType}</strong> tracked today: <strong>{dailyUsage[activityDetailType]?.toLocaleString()}</strong></span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                        <button onClick={() => setActivityDetailType(null)} className={styles.confirmBtn} style={{ margin: 0, padding: '0.6rem 1.5rem' }}>Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }
+                {/* ========== USER VIEW MODAL ========== */}
+                {
+                    viewingUser && (
+                        <div className={styles.modalOverlay} onClick={() => setViewingUser(null)} style={{ zIndex: 1200 }}>
+                            <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', padding: 0 }}>
+                                <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)' }}>
+                                    <h3>
+                                        <Users size={20} style={{ color: 'var(--primary-color)' }} />
+                                        User Details
+                                    </h3>
+                                    <button onClick={() => setViewingUser(null)} className={styles.closeBtn}>
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                                <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '60vh' }}>
+                                    <div className={styles.detailGrid}>
+                                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                            <span className={styles.detailLabel}>Email Address</span>
+                                            <span className={styles.detailValue} style={{ fontSize: '1rem', fontWeight: 'bold' }}>
+                                                {viewingUser.email}
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                            <span className={styles.detailLabel}>Display Name</span>
+                                            <span className={styles.detailValue}>
+                                                {viewingUser.displayName || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Not provided</span>}
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem}>
+                                            <span className={styles.detailLabel}>Account Role</span>
+                                            {viewingUser.email === user.email ? (
+                                                <span className={styles.detailValue} style={{ textTransform: 'capitalize', color: viewingUser.role === 'superadmin' ? '#10b981' : (viewingUser.role === 'admin' ? '#8b5cf6' : (viewingUser.role === 'editor' ? '#f59e0b' : 'var(--text-primary)')) }}>
+                                                    {viewingUser.role} (You)
+                                                </span>
+                                            ) : (
+                                                <select
+                                                    className={styles.standardSelect}
+                                                    style={{ width: '100%', marginTop: '0.4rem' }}
+                                                    value={viewingUser.role}
+                                                    onChange={(e) => {
+                                                        const newRole = e.target.value;
+                                                        handleRoleChange(viewingUser.id, newRole);
+                                                        setViewingUser({ ...viewingUser, role: newRole });
+                                                    }}
+                                                >
+                                                    <option value="pending">Pending</option>
+                                                    <option value="editor">Editor</option>
+                                                    <option value="admin">Admin</option>
+                                                    <option value="superadmin">Super Admin</option>
+                                                </select>
+                                            )}
+                                        </div>
+                                        <div className={styles.detailItem}>
+                                            <span className={styles.detailLabel}>Status</span>
+                                            <span className={styles.detailValue}>
+                                                {viewingUser.isActive === false ? <span style={{ color: '#ef4444' }}>Disabled</span> : <span style={{ color: '#10b981' }}>Active</span>}
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                            <span className={styles.detailLabel}>Registration Date</span>
+                                            <span className={styles.detailValue}>
+                                                {viewingUser.createdAt?.seconds ? new Date(viewingUser.createdAt.seconds * 1000).toLocaleString() : 'Unknown'}
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                            <span className={styles.detailLabel}>User ID</span>
+                                            <span className={styles.detailValue} style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                {viewingUser.id}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={styles.modalFooter} style={{ justifyContent: 'space-between', marginTop: 'auto' }}>
+                                    <div>
+                                        {viewingUser.email !== user.email && (
+                                            <button
+                                                className={styles.deleteBtn}
+                                                onClick={() => { handleRemoveUser(viewingUser.email, viewingUser.id); setViewingUser(null); }}
+                                                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem' }}
+                                            >
+                                                <Trash2 size={16} /> Remove
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                        <button
+                                            className={styles.submitBtn}
+                                            onClick={() => { handleResetPassword(viewingUser.email); setViewingUser(null); }}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'transparent', border: '1px solid var(--glass-border, rgba(255,255,255,0.1))', color: 'var(--text-primary)', padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '8px' }}
+                                        >
+                                            🔑 Reset Password
+                                        </button>
+                                        <button
+                                            className={styles.confirmBtn}
+                                            onClick={() => setViewingUser(null)}
+                                        >
+                                            Done
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                }            </main >
         </div >
     );
 };
