@@ -483,8 +483,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.25rem;
     border-bottom: 1px solid var(--divider);
 
     h3 {
@@ -514,6 +514,14 @@
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
+}
+
+.formFooter {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--divider);
+    display: flex;
+    justify-content: flex-end;
 }
 
 .formGrid {
@@ -626,9 +634,14 @@
 }
 
 .submitBtn {
-    padding: 0.85rem 1.5rem;
-    border-radius: 12px;
-    font-size: 0.92rem;
+    height: 42px;
+    padding: 0 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
     font-weight: 600;
     color: white !important;
     background: $primary-color;
@@ -907,7 +920,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    padding-top: 0.5rem;
     flex-wrap: wrap;
     gap: 1rem;
 
@@ -917,7 +931,8 @@
 }
 
 .addBtn {
-    padding: 0.5rem 1rem;
+    height: 42px;
+    padding: 0 1.25rem;
     border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -937,7 +952,8 @@
 }
 
 .primaryBtn {
-    padding: 0.55rem 1.2rem;
+    height: 42px;
+    padding: 0 1.25rem;
     border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 600;
@@ -1802,9 +1818,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.25rem 1.5rem;
+    padding: 1.5rem 1.75rem;
     border-bottom: 1px solid var(--divider, rgba(255, 255, 255, 0.05));
     flex-shrink: 0;
+    position: relative;
 
     h3 {
         margin: 0;
@@ -1821,23 +1838,6 @@
     }
 }
 
-.detailCloseBtn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.4rem;
-    border-radius: 8px;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-        background: rgba(255, 255, 255, 0.06);
-        color: var(--text-primary);
-    }
-}
 
 .detailModalBody {
     flex: 1;
@@ -1940,7 +1940,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1rem 1.25rem;
+    padding: 1.5rem 1.75rem;
     background: rgba(255, 255, 255, 0.02);
     border-bottom: 1px solid var(--divider, rgba(255, 255, 255, 0.06));
     flex-shrink: 0;
@@ -1966,11 +1966,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.05);
-        color: var(--text-primary);
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+        transform: scale(1.05);
+    }
+
+    &:active {
+        transform: scale(0.95);
     }
 }
 
@@ -2501,10 +2507,20 @@
 .modalFooter {
     padding: 1rem 1.5rem;
     background: var(--input-bg);
-    border-top: 1px solid var(--divider);
+    position: relative;
     display: flex;
     justify-content: flex-end;
     gap: 0.8rem;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 1.5rem;
+        right: 1.5rem;
+        height: 1px;
+        background: var(--divider);
+    }
 }
 
 .cancelBtn {
@@ -2519,6 +2535,28 @@
 
     &:hover {
         background: var(--card-bg);
+    }
+}
+
+.closeBtnFooter {
+    padding: 0.5rem 1.25rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    &:active {
+        transform: scale(0.98);
     }
 }
 
@@ -2599,12 +2637,13 @@
 }
 
 .modalHeader {
-    padding: 1.25rem 1.5rem;
+    padding: 1.5rem 1.75rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: rgba(255, 255, 255, 0.02);
+    position: relative; // Added for absolute positioned close buttons
 
     h3 {
         margin: 0;
@@ -2618,11 +2657,21 @@
 
 .modalFooter {
     padding: 1.25rem 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
     background: rgba(255, 255, 255, 0.02);
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 1.5rem;
+        right: 1.5rem;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.06);
+    }
 }
 
 .closeModalBtn,
@@ -2631,16 +2680,47 @@
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 0.3rem;
+    padding: 0.6rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 6px;
-    transition: all 0.2s ease;
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+    width: fit-content;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: var(--text-primary);
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        transform: scale(1.05);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+}
+
+.iconBtn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+
+    &:hover {
+        background: rgba($primary-color, 0.1);
+        color: $primary-color;
+        transform: scale(1.05);
+    }
+
+    &:active {
+        transform: scale(0.95);
     }
 }
 

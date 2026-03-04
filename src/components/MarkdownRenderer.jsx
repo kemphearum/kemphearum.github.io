@@ -63,6 +63,10 @@ const MarkdownRenderer = ({ content }) => {
                 rehypePlugins={[rehypeRaw, rehypeSlug]}
                 components={{
                     code: CodeBlock,
+                    iframe: ({ node, allowFullScreen, allowfullscreen, ...props }) => {
+                        const isFullScreen = allowFullScreen === "true" || allowFullScreen === true || allowfullscreen === "true" || allowfullscreen === "";
+                        return <iframe {...props} allowFullScreen={isFullScreen} />;
+                    },
                     a: ({ ...props }) => {
                         const url = props.href;
                         if (url) {
@@ -71,7 +75,7 @@ const MarkdownRenderer = ({ content }) => {
                             if (ytMatch) {
                                 return (
                                     <div className={styles.videoWrapper}>
-                                        <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${ytMatch[1]}`} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+                                        <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${ytMatch[1]}`} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen={true}></iframe>
                                     </div>
                                 );
                             }
@@ -80,7 +84,7 @@ const MarkdownRenderer = ({ content }) => {
                             if (tkMatch) {
                                 return (
                                     <div className={styles.videoWrapper}>
-                                        <iframe src={`https://www.tiktok.com/embed/v2/${tkMatch[1]}`} style={{ width: '100%', height: '100%' }} frameBorder="0" allow="encrypted-media;" allowFullScreen></iframe>
+                                        <iframe src={`https://www.tiktok.com/embed/v2/${tkMatch[1]}`} style={{ width: '100%', height: '100%' }} frameBorder="0" allow="encrypted-media;" allowFullScreen={true}></iframe>
                                     </div>
                                 );
                             }
