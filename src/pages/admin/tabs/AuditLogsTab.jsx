@@ -74,24 +74,53 @@ const AuditLogsTab = ({ userRole, showToast }) => {
         setActivityLogsLoading(true);
         try {
             const operationType = type === 'reads' ? 'read' : (type === 'writes' ? 'write' : 'delete');
-            let q;
-            if (activityDateRange === 'today') {
-                q = query(collection(db, 'dailyUsage', currentDateKey, 'logs'), orderBy('time', 'desc'), firestoreLimit(200));
-            } else {
-                const limitVal = activityDateRange === '7d' ? 300 : (activityDateRange === '30d' ? 500 : 1000);
-                let startDate = new Date();
-                if (activityDateRange === '7d') startDate.setDate(startDate.getDate() - 7);
-                else if (activityDateRange === '30d') startDate.setDate(startDate.getDate() - 30);
-                else startDate.setFullYear(2020);
-                q = query(collectionGroup(db, 'logs'), where('time', '>=', Timestamp.fromDate(startDate)), orderBy('time', 'desc'), firestoreLimit(limitVal));
-            }
-            const snap = await getDocs(q);
-            // Filter by type in memory to avoid requiring a composite index for every operation type
-            const logs = snap.docs
-                .map(doc => ({ id: doc.id, ...doc.data() }))
-                .filter(log => log.type === operationType);
+            let logs = [];
 
-            setActivityLogs(logs);
+            if (activityDateRange === 'today') {
+                const q = query(collection(db, 'dailyUsage', currentDateKey, 'logs'), orderBy('time', 'desc'), firestoreLimit(250));
+                const snap = await getDocs(q);
+                logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } else {
+                // To avoid Collection Group index requirements, we fetch from individual days for 7/30d
+                const daysToFetch = activityDateRange === '7d' ? 7 : (activityDateRange === '30d' ? 30 : 0);
+
+                if (daysToFetch > 0) {
+                    // Get the list of last X days from the counter collection
+                    const qDays = query(collection(db, 'dailyUsage'), firestoreLimit(daysToFetch));
+                    const daysSnap = await getDocs(qDays);
+
+                    // Sort descending by ID (date string)
+                    const sortedDays = [...daysSnap.docs].sort((a, b) => b.id.localeCompare(a.id)).slice(0, daysToFetch);
+
+                    // Fetch logs for each day in parallel
+                    const logPromises = sortedDays.map(async (dayDoc) => {
+                        const qLogs = query(collection(db, 'dailyUsage', dayDoc.id, 'logs'), firestoreLimit(100));
+                        const lSnap = await getDocs(qLogs);
+                        return lSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    });
+
+                    const logResults = await Promise.all(logPromises);
+                    logs = logResults.flat();
+                    // Sort combined logs by time
+                    logs.sort((a, b) => (b.time?.seconds || 0) - (a.time?.seconds || 0));
+                } else {
+                    // For "All Time", we catch the index error specifically
+                    try {
+                        const q = query(collectionGroup(db, 'logs'), orderBy('time', 'desc'), firestoreLimit(500));
+                        const snap = await getDocs(q);
+                        logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    } catch (cgErr) {
+                        if (cgErr.code === 'failed-precondition') {
+                            throw new Error("Historical cross-day logs require a Firestore Index. Please check the browser console for the setup link.");
+                        }
+                        throw cgErr;
+                    }
+                }
+            }
+
+            // Finally filter by operation type
+            const filteredLogs = logs.filter(log => log.type === operationType);
+            setActivityLogs(filteredLogs.slice(0, 500));
         } catch (error) { console.error(`Error fetching ${type} details:`, error); showToast(`Failed to load activity logs: ${error.message}`, 'error'); }
         finally { setActivityLogsLoading(false); }
     }, [activityDateRange, currentDateKey, showToast]);
