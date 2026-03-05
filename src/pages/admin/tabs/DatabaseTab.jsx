@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { db } from '../../../firebase';
-import { collection, getDocs, query, where, doc, updateDoc, writeBatch, setDoc, Timestamp } from 'firebase/firestore';
 import { Database, RefreshCw, Download, Upload, Trash2, ShieldAlert, Shield, Server, X, FileText, Code, Mail, BarChart2, AlertTriangle, FileJson, Check } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { invalidateCache } from '../../../hooks/useFirebaseData';
 import styles from '../../Admin.module.scss';
-
-const SOFT_DOC_LIMIT = 50000;
+import DatabaseService from '../../../services/DatabaseService';
 
 const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
     const [dbHealth, setDbHealth] = useState({ posts: 0, projects: 0, messages: 0, auditLogs: 0, users: 0, loading: true, lastUpdated: null });
@@ -21,128 +18,63 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
     const fetchDatabaseHealth = useCallback(async () => {
         setDbHealth(prev => ({ ...prev, loading: true }));
         try {
-            const collections = ['posts', 'projects', 'messages', 'auditLogs', 'users'];
-            const counts = {};
-            for (const col of collections) {
-                try {
-                    const snap = await getDocs(collection(db, col));
-                    trackRead(snap.size, `Counted ${col} for health`);
-                    counts[col] = snap.size;
-                } catch { counts[col] = 0; }
-            }
+            const counts = await DatabaseService.getHealth(trackRead);
             setDbHealth({ ...counts, loading: false, lastUpdated: new Date() });
         } catch (error) { console.error("Error fetching db health:", error); setDbHealth(prev => ({ ...prev, loading: false })); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchAuditSettings = useCallback(async () => {
-        try {
-            const snap = await getDocs(collection(db, 'settings'));
-            const settingsDoc = snap.docs.find(d => d.id === 'auditConfig');
-            if (settingsDoc) setAuditSettings(settingsDoc.data());
-        } catch (error) { console.error("Error fetching audit settings:", error); }
+        const settings = await DatabaseService.getAuditSettings();
+        if (settings) setAuditSettings(settings);
     }, []);
 
     useEffect(() => { fetchDatabaseHealth(); fetchAuditSettings(); }, [fetchDatabaseHealth, fetchAuditSettings]);
 
     const handleUpdateAuditSetting = async (key, value) => {
-        if (userRole !== 'superadmin') { showToast("Only Superadmins can configure audit settings.", "error"); return; }
-
-        // If toggling the master switch, update all individual switches too
-        let newSettings = { [key]: value };
-        if (key === 'logAll') {
-            newSettings = {
-                logAll: value,
-                logReads: value,
-                logWrites: value,
-                logDeletes: value,
-                logAnonymous: value
-            };
-        } else {
-            // If an individual toggle was clicked, check if all of them are now on
-            const merged = { ...auditSettings, ...newSettings };
-            const allOthersEnabled = ['logReads', 'logWrites', 'logDeletes', 'logAnonymous'].every(k => merged[k]);
-            newSettings.logAll = allOthersEnabled;
-        }
-
         try {
-            const ref = doc(db, 'settings', 'auditConfig');
-            await updateDoc(ref, newSettings).catch(async () => {
-                await setDoc(ref, { ...auditSettings, ...newSettings });
-            });
-            trackWrite(1, `Updated audit setting: ${key}`);
+            const newSettings = await DatabaseService.updateAuditSettings(userRole, key, value, auditSettings, trackWrite);
             setAuditSettings(prev => ({ ...prev, ...newSettings }));
             showToast(key === 'logAll' ? `All audit settings ${value ? 'enabled' : 'disabled'}.` : `Audit setting updated: ${key} = ${value}`);
-        } catch (error) { console.error("Error updating audit setting:", error); showToast("Failed to update audit setting.", "error"); }
+        } catch (error) {
+            console.error("Error updating audit setting:", error);
+            showToast(error.message || "Failed to update audit setting.", "error");
+        }
     };
 
     const handleBackupDatabase = async () => {
-        if (userRole !== 'superadmin') return;
         try {
             setLoading(true);
-            const collectionsToExport = ['posts', 'projects', 'experience', 'messages', 'auditLogs', 'users', 'content'];
-            let exportData = { exportDate: new Date().toISOString(), collections: {} };
-            for (const collName of collectionsToExport) {
-                try {
-                    const q = query(collection(db, collName));
-                    const querySnapshot = await getDocs(q);
-                    trackRead(querySnapshot.size, `Exported ${collName}`);
-                    if (!querySnapshot.empty) {
-                        exportData.collections[collName] = {};
-                        querySnapshot.forEach((d) => { exportData.collections[collName][d.id] = d.data(); });
-                    }
-                } catch (colError) { console.warn(`Skipping collection ${collName}:`, colError); }
-            }
-            const json = JSON.stringify(exportData, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute("href", url);
-            a.setAttribute("download", `portfolio_backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 150);
+            await DatabaseService.backup(userRole, trackRead);
             showToast("Database exported successfully!", "success");
-        } catch (error) { console.error("Error exporting:", error); showToast("Failed to export database.", "error"); }
-        finally { setLoading(false); }
+        } catch (error) {
+            console.error("Error exporting:", error);
+            showToast(error.message || "Failed to export database.", "error");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleArchiveData = async (daysOld = 30) => {
-        if (userRole !== 'superadmin') return;
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-        const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
         try {
             setShowArchiveConfirm(false);
             setLoading(true);
             showToast("Gathering data to archive...", "success");
-            const archivedData = { archiveDate: new Date().toISOString(), cutoffDate: cutoffDate.toISOString(), collections: { messages: {}, auditLogs: {} } };
-            const oldMessagesQ = query(collection(db, 'messages'), where('createdAt', '<', cutoffTimestamp));
-            const oldMessagesSnap = await getDocs(oldMessagesQ);
-            trackRead(oldMessagesSnap.size, 'Fetched old messages for archive');
-            const oldLogsQ = query(collection(db, 'auditLogs'), where('timestamp', '<', cutoffTimestamp));
-            const oldLogsSnap = await getDocs(oldLogsQ);
-            trackRead(oldLogsSnap.size, 'Fetched old audit logs for archive');
-            const oldVisitsQ = query(collection(db, 'visits'), where('timestamp', '<', cutoffTimestamp));
-            const oldVisitsSnap = await getDocs(oldVisitsQ);
-            trackRead(oldVisitsSnap.size, 'Fetched old analytics for archive');
-            const batch = writeBatch(db);
-            let deletionCount = 0;
-            oldMessagesSnap.forEach(docSnap => { archivedData.collections.messages[docSnap.id] = docSnap.data(); batch.delete(docSnap.ref); deletionCount++; });
-            oldLogsSnap.forEach(docSnap => { archivedData.collections.auditLogs[docSnap.id] = docSnap.data(); batch.delete(docSnap.ref); deletionCount++; });
-            oldVisitsSnap.forEach(docSnap => { if (!archivedData.collections.visits) archivedData.collections.visits = {}; archivedData.collections.visits[docSnap.id] = docSnap.data(); batch.delete(docSnap.ref); deletionCount++; });
-            if (deletionCount === 0) { showToast(`No records found older than ${daysOld} days.`, "success"); setLoading(false); return; }
-            const json = JSON.stringify(archivedData, null, 2);
-            const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.setAttribute("href", url); a.setAttribute("download", `portfolio_ARCHIVE_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            await batch.commit();
-            trackDelete(deletionCount, 'Archived old records');
-            showToast(`Successfully archived and deleted ${deletionCount} old records.`, "success");
-            fetchDatabaseHealth();
-        } catch (error) { console.error("Error archiving:", error); showToast("Failed to archive data.", "error"); }
-        finally { setLoading(false); }
+
+            const result = await DatabaseService.archive(userRole, daysOld, trackRead, trackDelete);
+
+            if (result.deleted === 0) {
+                showToast(`No records found older than ${daysOld} days.`, "success");
+            } else {
+                showToast(`Successfully archived and deleted ${result.deleted} old records.`, "success");
+                fetchDatabaseHealth();
+            }
+        } catch (error) {
+            console.error("Error archiving:", error);
+            showToast(error.message || "Failed to archive data.", "error");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const processDatabaseRestore = async (file) => {
@@ -152,57 +84,28 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
-                const importData = JSON.parse(event.target.result);
-                const restoreTimestamps = (obj) => {
-                    if (obj === null || typeof obj !== 'object') return obj;
-                    if (Array.isArray(obj)) return obj.map(item => restoreTimestamps(item));
-                    if (Object.keys(obj).length === 2 && 'seconds' in obj && 'nanoseconds' in obj) return new Timestamp(obj.seconds, obj.nanoseconds);
-                    const newObj = {};
-                    for (const key in obj) newObj[key] = restoreTimestamps(obj[key]);
-                    return newObj;
-                };
-                if (userRole !== 'superadmin') { showToast('Only Superadmins can restore.', 'error'); setLoading(false); return; }
-                const isNewFormat = importData.collections && typeof importData.collections === 'object';
-                const collections = isNewFormat ? importData.collections : importData;
-                const collectionsToProcess = Object.entries(collections).filter(([key, val]) => {
-                    const metaFields = ['exportDate', 'archiveDate', 'cutoffDate', 'date', 'timestamp'];
-                    return !metaFields.includes(key) && val && typeof val === 'object';
-                });
-                const totalDocs = collectionsToProcess.reduce((acc, [, docs]) => acc + Object.keys(docs).length, 0);
-                if (totalDocs === 0) { showToast('No valid records found in file.', 'warning'); setLoading(false); return; }
-                showToast(`Found ${totalDocs} records. Restoring...`, 'info');
-                let completedCount = 0;
-                let failedCollections = new Set();
-                for (const [colName, docs] of collectionsToProcess) {
-                    const docEntries = Object.entries(docs);
-                    for (let i = 0; i < docEntries.length; i += 25) {
-                        const chunk = docEntries.slice(i, i + 25);
-                        await Promise.all(chunk.map(async ([docId, docData]) => {
-                            try {
-                                const processedData = restoreTimestamps(docData);
-                                const docRef = doc(db, colName, docId);
-                                await setDoc(docRef, processedData);
-                                completedCount++;
-                            } catch (err) { console.error(`Restore failed for ${colName}/${docId}:`, err); failedCollections.add(colName); }
-                        }));
-                        const progress = Math.round((completedCount / totalDocs) * 100);
-                        if (progress < 100) showToast(`Restoring: ${completedCount} / ${totalDocs} (${progress}%)...`, 'info');
-                    }
-                }
-                trackWrite(completedCount, 'Restored database');
+                const result = await DatabaseService.restore(userRole, event.target.result, trackWrite);
                 invalidateCache();
-                if (failedCollections.size > 0) showToast(`Partially completed (${completedCount}/${totalDocs}). Issues on: ${Array.from(failedCollections).join(', ')}`, 'warning');
-                else showToast(`Successfully restored ${completedCount} records!`);
+                if (result.failedCollections.length > 0) {
+                    showToast(`Partially completed (${result.completedCount}/${result.totalDocs}). Issues on: ${result.failedCollections.join(', ')}`, 'warning');
+                } else {
+                    showToast(`Successfully restored ${result.completedCount} records!`);
+                }
                 fetchDatabaseHealth();
-            } catch (error) { console.error("Import error:", error); showToast('Failed to restore. Invalid format?', 'error'); }
-            finally { setLoading(false); setRestoreFile(null); }
+            } catch (error) {
+                console.error("Import error:", error);
+                showToast(error.message || 'Failed to restore. Invalid format?', 'error');
+            } finally {
+                setLoading(false);
+                setRestoreFile(null);
+            }
         };
         reader.onerror = () => { showToast('Failed to read file.', 'error'); setLoading(false); };
         reader.readAsText(file);
     };
 
     const totalDocs = (dbHealth.posts || 0) + (dbHealth.projects || 0) + (dbHealth.messages || 0) + (dbHealth.auditLogs || 0) + (dbHealth.users || 0);
-    let capacityPercentage = Math.min((totalDocs / SOFT_DOC_LIMIT) * 100, 100);
+    let capacityPercentage = Math.min((totalDocs / DatabaseService.SOFT_DOC_LIMIT) * 100, 100);
     let barColor = capacityPercentage > 90 ? '#ef4444' : capacityPercentage > 75 ? '#f59e0b' : '#10b981';
 
     return (

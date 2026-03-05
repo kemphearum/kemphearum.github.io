@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { db } from '../../../firebase';
-import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, query, updateDoc } from 'firebase/firestore';
 import { Search, Eye, EyeOff, Edit2, Trash2, X, Bold, Italic, Link as LinkIcon, Code, Save, Plus, ArrowLeft } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { invalidateCache } from '../../../hooks/useFirebaseData';
@@ -10,6 +8,7 @@ import MarkdownRenderer from '../../../components/MarkdownRenderer';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
 import styles from '../../Admin.module.scss';
+import ExperienceService from '../../../services/ExperienceService';
 
 const ExperienceTab = ({ userRole, showToast }) => {
     const [experiences, setExperiences] = useState([]);
@@ -32,10 +31,9 @@ const ExperienceTab = ({ userRole, showToast }) => {
 
     const fetchExperiences = useCallback(async () => {
         try {
-            const q = query(collection(db, "experience"), orderBy("createdAt", "desc"));
-            const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size, 'Fetched experience');
-            setExperiences(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+            const allExperience = await ExperienceService.getAll("createdAt", "desc");
+            trackRead(allExperience.length, 'Fetched experience');
+            setExperiences(allExperience);
         } catch (error) {
             console.error("Error fetching experience:", error);
         }
@@ -63,97 +61,60 @@ const ExperienceTab = ({ userRole, showToast }) => {
     }, [filteredExperiences, expPage, expPerPage]);
 
     const toggleVisibility = async (id, currentVisible) => {
-        if (userRole === 'pending') { showToast("Pending accounts are not authorized.", "error"); return; }
         try {
-            await updateDoc(doc(db, 'experience', id), { visible: !currentVisible });
-            trackWrite(1, 'Toggled visibility for experience');
+            await ExperienceService.toggleVisibility(userRole, id, currentVisible, trackWrite);
             invalidateCache('collection:experience');
             setExperiences(prev => prev.map(e => e.id === id ? { ...e, visible: !currentVisible } : e));
             showToast(`Item ${!currentVisible ? 'visible' : 'hidden'} on homepage.`);
-        } catch { showToast('Failed to toggle visibility.', 'error'); }
+        } catch (error) { showToast(error.message || 'Failed to toggle visibility.', 'error'); }
     };
 
     const handleDeleteExperience = async (id) => {
-        if (userRole === 'pending') { showToast("Pending accounts are not authorized.", "error"); return; }
         if (!window.confirm("Are you sure you want to delete this experience?")) return;
         try {
-            await deleteDoc(doc(db, "experience", id));
-            trackDelete(1, 'Deleted experience');
+            await ExperienceService.deleteExperience(userRole, id, trackDelete);
             invalidateCache('collection:experience');
             setExperiences(experiences.filter(e => e.id !== id));
             showToast('Experience deleted.');
-        } catch { showToast('Failed to delete experience.', 'error'); }
+        } catch (error) { showToast(error.message || 'Failed to delete experience.', 'error'); }
     };
 
-    const prepareExperienceForSave = () => {
-        const formatMonthYear = (yyyyMm) => {
-            if (!yyyyMm) return '';
-            const [y, m] = yyyyMm.split('-');
-            const d = new Date(y, m - 1);
-            return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-        };
-        let start = formatMonthYear(experience.startDate);
-        let end = experience.isPresent ? 'Present' : formatMonthYear(experience.endDate);
-        let finalPeriod = experience.period;
-        if (start || end) {
-            if (start && end) finalPeriod = `${start} - ${end}`;
-            else if (start) finalPeriod = start;
-            else if (end) finalPeriod = end;
-        }
-        // eslint-disable-next-line no-unused-vars
-        const { startDate, endDate, isPresent, ...dataToSave } = experience;
-        dataToSave.period = finalPeriod;
-        return dataToSave;
-    };
-
-    const handleAddExperience = async (e) => {
+    const handleSaveExperience = async (e) => {
         e.preventDefault();
-        if (userRole === 'pending') { showToast("Pending accounts are not authorized to make changes.", "error"); return; }
         setLoading(true);
         try {
-            const dataToSave = prepareExperienceForSave();
-            await addDoc(collection(db, "experience"), { ...dataToSave, visible: true, createdAt: serverTimestamp() });
-            trackWrite(1, 'Added new experience');
+            const formData = {
+                company: experience.company,
+                role: experience.role,
+                startMonthYear: experience.startDate, // In UI this was called startDate, but the DatePicker is month format (yyyy-mm)
+                endMonthYear: experience.endDate,
+                current: experience.isPresent,
+                description: experience.description,
+                id: editingExperience
+            };
+            const result = await ExperienceService.saveExperience(userRole, formData, trackWrite);
             invalidateCache('collection:experience');
-            showToast('Experience added successfully!');
+            setEditingExperience(null);
             setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false });
             setShowExperienceForm(false);
             fetchExperiences();
-        } catch { showToast('Error adding experience.', 'error'); }
+            showToast(`Experience ${result.isNew ? 'added' : 'updated'} successfully!`);
+        } catch (error) { showToast(error.message || 'Error saving experience.', 'error'); }
         finally { setLoading(false); }
     };
 
     const handleEditExperienceClick = (exp) => {
         setEditingExperience(exp.id);
-        let sDate = '', eDate = '', isPres = false;
-        if (exp.period) {
-            const parts = exp.period.split('-');
-            if (parts.length > 0) { const s = new Date(parts[0].trim()); if (!isNaN(s.getTime())) sDate = s.toISOString().substring(0, 7); }
-            if (parts.length > 1) {
-                if (parts[1].toLowerCase().includes('present')) isPres = true;
-                else { const end = new Date(parts[1].trim()); if (!isNaN(end.getTime())) eDate = end.toISOString().substring(0, 7); }
-            }
-        }
-        setExperience({ ...exp, startDate: sDate, endDate: eDate, isPresent: isPres });
+        setExperience({
+            company: exp.company || '',
+            role: exp.role || '',
+            startDate: exp.startMonthYear || '',
+            endDate: exp.endMonthYear || '',
+            isPresent: exp.current || false,
+            description: exp.description || ''
+        });
         setShowExperienceForm(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const handleUpdateExperience = async (e) => {
-        e.preventDefault();
-        if (userRole === 'pending') { showToast("Pending accounts are not authorized to make changes.", "error"); return; }
-        setLoading(true);
-        try {
-            const dataToSave = prepareExperienceForSave();
-            await updateDoc(doc(db, "experience", editingExperience), { ...dataToSave });
-            trackWrite(1, 'Updated experience');
-            showToast('Experience updated successfully!');
-            setEditingExperience(null);
-            setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false });
-            setShowExperienceForm(false);
-            fetchExperiences();
-        } catch { showToast('Error updating experience.', 'error'); }
-        finally { setLoading(false); }
     };
 
     const insertMarkdownExp = (syntax) => {
@@ -230,7 +191,7 @@ const ExperienceTab = ({ userRole, showToast }) => {
                             <ArrowLeft size={18} /> Cancel & Return
                         </button>
                     </div>
-                    <form onSubmit={editingExperience ? handleUpdateExperience : handleAddExperience} className={styles.form}>
+                    <form onSubmit={handleSaveExperience} className={styles.form}>
                         <div className={styles.formGrid}>
                             <div className={styles.inputGroup}>
                                 <label>Company Name</label>

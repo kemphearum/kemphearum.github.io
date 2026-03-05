@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { doc, getDoc, collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db } from '../firebase';
+import BaseService from '../services/BaseService';
 import { useActivity } from './useActivity';
 
 // In-memory cache shared across all hook instances
@@ -48,12 +47,13 @@ export const useFirebaseDoc = (collectionName, docId, defaultValue = {}) => {
                 return;
             }
 
-            // Start new fetch
+            // Start new fetch via BaseService
+            const service = new BaseService(collectionName);
             const fetchPromise = (async () => {
-                const docRef = doc(db, collectionName, docId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const result = docSnap.data();
+                const docResult = await service.getById(docId);
+                if (docResult) {
+                    // getById returns { id, ...data }, strip id for cache consistency
+                    const { id, ...result } = docResult;
                     cache[cacheKey] = result;
                     trackRead(1, `Fetched ${collectionName}/${docId}`);
                     return result;
@@ -133,18 +133,11 @@ export const useFirebaseCollection = (collectionName, orderField = 'createdAt', 
                 return;
             }
 
+            const service = new BaseService(collectionName);
             const fetchPromise = (async () => {
-                const q = query(
-                    collection(db, collectionName),
-                    orderBy(orderField, orderDirection)
-                );
-                const querySnapshot = await getDocs(q);
-                const result = querySnapshot.docs.map(docSnap => ({
-                    id: docSnap.id,
-                    ...docSnap.data()
-                }));
+                const result = await service.getAll(orderField, orderDirection);
                 cache[cacheKey] = result;
-                trackRead(querySnapshot.size || 1, `Fetched collection: ${collectionName}`);
+                trackRead(result.length || 1, `Fetched collection: ${collectionName}`);
                 return result;
             })();
 

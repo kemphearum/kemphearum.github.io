@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { db } from '../../../firebase';
-import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, query, updateDoc } from 'firebase/firestore';
 import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { invalidateCache } from '../../../hooks/useFirebaseData';
 import { sortData } from '../../../utils/sortData';
 import { icons } from '../components/constants';
-import { compressImageToBase64 } from '../../../utils/imageCompression';
+import ImageProcessingService from '../../../services/ImageProcessingService';
 import MarkdownRenderer from '../../../components/MarkdownRenderer';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
 import styles from '../../Admin.module.scss';
+import ProjectService from '../../../services/ProjectService';
 
 const ProjectsTab = ({ userRole, showToast }) => {
     const [projects, setProjects] = useState([]);
@@ -34,10 +33,9 @@ const ProjectsTab = ({ userRole, showToast }) => {
 
     const fetchProjects = useCallback(async () => {
         try {
-            const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
-            const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size, 'Fetched projects');
-            setProjects(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+            const allProjects = await ProjectService.getAll("createdAt", "desc");
+            trackRead(allProjects.length, 'Fetched projects');
+            setProjects(allProjects);
         } catch (error) { console.error("Error fetching projects:", error); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -62,61 +60,61 @@ const ProjectsTab = ({ userRole, showToast }) => {
         return filteredProjects.slice(start, start + projPerPage);
     }, [filteredProjects, projPage, projPerPage]);
 
-    const generateSlug = (title) => title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
     const toggleVisibility = async (id, currentVisible) => {
-        if (userRole === 'pending') { showToast("Pending accounts are not authorized.", "error"); return; }
         try {
-            await updateDoc(doc(db, 'projects', id), { visible: !currentVisible });
-            trackWrite(1, 'Toggled project visibility');
+            await ProjectService.toggleVisibility(userRole, id, currentVisible, trackWrite);
             invalidateCache('collection:projects');
             setProjects(prev => prev.map(p => p.id === id ? { ...p, visible: !currentVisible } : p));
             showToast(`Project ${!currentVisible ? 'shown' : 'hidden'}.`);
-        } catch { showToast('Failed to toggle visibility.', 'error'); }
+        } catch (error) { showToast(error.message || 'Failed to toggle visibility.', 'error'); }
     };
 
     const toggleFeatured = async (id, currentFeatured) => {
-        if (userRole === 'pending' || userRole === 'editor') { showToast("Not authorized.", "error"); return; }
         try {
-            await updateDoc(doc(db, 'projects', id), { featured: !currentFeatured });
-            trackWrite(1, 'Toggled project featured');
+            await ProjectService.toggleFeatured(userRole, id, currentFeatured, trackWrite);
             invalidateCache('collection:projects');
             setProjects(prev => prev.map(p => p.id === id ? { ...p, featured: !currentFeatured } : p));
             showToast(!currentFeatured ? 'Featured on homepage!' : 'Removed from homepage.');
-        } catch { showToast('Failed to toggle featured status.', 'error'); }
+        } catch (error) { showToast(error.message || 'Failed to toggle featured status.', 'error'); }
     };
 
     const handleDeleteProject = async (id) => {
-        if (userRole === 'pending' || userRole === 'editor') { showToast("Not authorized.", "error"); return; }
         if (!window.confirm("Delete this project?")) return;
         try {
-            await deleteDoc(doc(db, "projects", id));
-            trackDelete(1, 'Deleted project');
+            await ProjectService.deleteProject(userRole, id, trackDelete);
             invalidateCache('collection:projects');
             setProjects(projects.filter(p => p.id !== id));
             showToast('Project deleted.');
-        } catch { showToast('Failed to delete project.', 'error'); }
+        } catch (error) { showToast(error.message || 'Failed to delete project.', 'error'); }
     };
 
-    const handleAddProject = async (e) => {
+    const handleSaveProject = async (e) => {
         e.preventDefault();
-        if (userRole === 'pending') { showToast("Not authorized.", "error"); return; }
         setLoading(true);
         try {
-            let imageUrl = '';
-            if (projectImage) imageUrl = await compressImageToBase64(projectImage);
-            const techArray = project.techStack.split(',').map(t => t.trim()).filter(t => t);
-            const slug = project.slug || generateSlug(project.title);
-            await addDoc(collection(db, "projects"), { ...project, techStack: techArray, imageUrl, slug, visible: true, featured: false, createdAt: serverTimestamp() });
-            trackWrite(1, 'Added new project');
+            let imageUrl = undefined;
+            if (projectImage) {
+                imageUrl = await ImageProcessingService.compress(projectImage);
+            }
+
+            const formData = {
+                ...project,
+                id: editingProject
+            };
+
+            const result = await ProjectService.saveProject(userRole, formData, imageUrl, trackWrite);
             invalidateCache('collection:projects');
-            showToast('Project added successfully!');
+            setEditingProject(null);
             setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
             setProjectImage(null);
             setShowProjectForm(false);
             fetchProjects();
-        } catch { showToast('Error adding project.', 'error'); }
-        finally { setLoading(false); }
+            showToast(`Project ${result.isNew ? 'added' : 'updated'} successfully!`);
+        } catch (error) {
+            showToast(error.message || 'Error saving project.', 'error');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleEditClick = (p) => {
@@ -126,28 +124,6 @@ const ProjectsTab = ({ userRole, showToast }) => {
         setIsProjectPreviewMode(false);
         setShowProjectForm(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const handleUpdateProject = async (e) => {
-        e.preventDefault();
-        if (userRole === 'pending') { showToast("Not authorized.", "error"); return; }
-        setLoading(true);
-        try {
-            let imageUrl = project.imageUrl || '';
-            if (projectImage) imageUrl = await compressImageToBase64(projectImage);
-            const techArray = project.techStack.split(',').map(t => t.trim()).filter(t => t);
-            const slug = project.slug || generateSlug(project.title);
-            await updateDoc(doc(db, "projects", editingProject), { ...project, techStack: techArray, imageUrl, slug });
-            trackWrite(1, 'Updated project');
-            invalidateCache('collection:projects');
-            showToast('Project updated!');
-            setEditingProject(null);
-            setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
-            setProjectImage(null);
-            setShowProjectForm(false);
-            fetchProjects();
-        } catch { showToast('Error updating project.', 'error'); }
-        finally { setLoading(false); }
     };
 
     const insertMarkdownProject = (syntax) => {
@@ -232,7 +208,7 @@ const ProjectsTab = ({ userRole, showToast }) => {
                             <ArrowLeft size={18} /> Cancel & Return
                         </button>
                     </div>
-                    <form onSubmit={editingProject ? handleUpdateProject : handleAddProject} className={styles.form}>
+                    <form onSubmit={handleSaveProject} className={styles.form}>
                         <div className={styles.inputGroup}><label>Project Title</label><input type="text" placeholder="e.g. Portfolio Website" value={project.title} onChange={(e) => setProject({ ...project, title: e.target.value })} required /></div>
                         <div className={styles.inputGroup}><label>Slug (URL) <span className={styles.hint}>(leave empty to auto-generate)</span></label><input type="text" placeholder="my-project-url" value={project.slug || ''} onChange={(e) => setProject({ ...project, slug: e.target.value })} /></div>
                         <div className={styles.inputGroup} style={{ gridColumn: 'span 2' }}><label>Short Description (Excerpt)</label><textarea placeholder="Describe what this project does..." value={project.description} onChange={(e) => setProject({ ...project, description: e.target.value })} rows="2" required /></div>

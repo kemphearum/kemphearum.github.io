@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Upload, Home, User, Mail, Save, Edit3 } from 'lucide-react';
 import styles from '../../Admin.module.scss';
+import ImageProcessingService from '../../../services/ImageProcessingService';
 
-const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactData, setContactData, loading, saveSectionData, compressImageToBase64 }) => {
+const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactData, setContactData, loading, saveSectionData }) => {
     const [homeImage, setHomeImage] = useState(null);
 
     const handleSaveHome = async (e) => {
         e.preventDefault();
         let imageUrl = homeData.profileImageUrl;
         if (homeImage) {
-            imageUrl = await compressImageToBase64(homeImage);
+            imageUrl = await ImageProcessingService.compress(homeImage);
         }
         await saveSectionData('home', { ...homeData, profileImageUrl: imageUrl });
         setHomeImage(null);

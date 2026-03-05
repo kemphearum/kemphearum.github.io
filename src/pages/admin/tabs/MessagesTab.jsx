@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { db } from '../../../firebase';
-import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, query, updateDoc, writeBatch } from 'firebase/firestore';
 import { Search, Mail, MailOpen, Trash2, X } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { sortData } from '../../../utils/sortData';
 import styles from '../../Admin.module.scss';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
+import MessageService from '../../../services/MessageService';
 
 const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
     const [searchMessages, setSearchMessages] = useState('');
@@ -51,19 +50,14 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
     }, [messages]);
 
     const handleToggleMessageRead = async (id, currentStatus) => {
-        if (userRole === 'pending') {
-            showToast("Pending accounts are not authorized.", "error");
-            return;
-        }
         setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: !currentStatus } : m));
         setViewingMessage(prev => (prev && prev.id === id) ? { ...prev, isRead: !currentStatus } : prev);
         try {
-            await updateDoc(doc(db, "messages", id), { isRead: !currentStatus });
-            trackWrite(1, 'Toggled message read status');
-        } catch {
+            await MessageService.toggleReadStatus(userRole, id, currentStatus, trackWrite);
+        } catch (error) {
             setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: currentStatus } : m));
             setViewingMessage(prev => (prev && prev.id === id) ? { ...prev, isRead: currentStatus } : prev);
-            showToast('Failed to update message status.', 'error');
+            showToast(error.message || 'Failed to update message status.', 'error');
         }
     };
 
@@ -96,56 +90,40 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
     };
 
     const handleBatchMarkMessages = async (isRead) => {
-        if (userRole === 'pending') { showToast("Pending accounts are not authorized.", "error"); return; }
         if (selectedMessages.length === 0) return;
         try {
-            const batch = writeBatch(db);
-            selectedMessages.forEach(id => {
-                const docRef = doc(db, "messages", id);
-                batch.update(docRef, { isRead });
-            });
-            await batch.commit();
-            trackWrite(selectedMessages.length, 'Batch marked messages');
+            await MessageService.batchMarkMessages(userRole, selectedMessages, isRead, trackWrite);
             setMessages(prev => prev.map(m => selectedMessages.includes(m.id) ? { ...m, isRead } : m));
             setSelectedMessages([]);
             showToast(`Marked ${selectedMessages.length} messages as ${isRead ? 'read' : 'unread'}.`);
-        } catch {
-            showToast('Failed to update messages.', 'error');
+        } catch (error) {
+            showToast(error.message || 'Failed to update messages.', 'error');
         }
     };
 
     const handleBatchDeleteMessages = async () => {
-        if (userRole === 'pending') { showToast("Pending accounts are not authorized.", "error"); return; }
         if (selectedMessages.length === 0) return;
         if (!window.confirm(`Delete ${selectedMessages.length} messages?`)) return;
         try {
-            const batch = writeBatch(db);
-            selectedMessages.forEach(id => {
-                const docRef = doc(db, "messages", id);
-                batch.delete(docRef);
-            });
-            await batch.commit();
-            trackDelete(selectedMessages.length, 'Batch deleted messages');
+            await MessageService.batchDeleteMessages(userRole, selectedMessages, trackDelete);
             setMessages(prev => prev.filter(m => !selectedMessages.includes(m.id)));
             setSelectedMessages([]);
             showToast(`Deleted ${selectedMessages.length} messages.`);
-        } catch {
-            showToast('Failed to delete messages.', 'error');
+        } catch (error) {
+            showToast(error.message || 'Failed to delete messages.', 'error');
         }
     };
 
     const handleDeleteMessage = async (id) => {
-        if (userRole === 'pending') { showToast("Pending accounts are not authorized.", "error"); return; }
         if (!window.confirm("Delete this message?")) return;
         try {
-            await deleteDoc(doc(db, "messages", id));
-            trackDelete(1, 'Deleted message');
+            await MessageService.deleteMessage(userRole, id, trackDelete);
             setMessages(messages.filter(m => m.id !== id));
             setSelectedMessages(prev => prev.filter(mid => mid !== id));
             if (viewingMessage && viewingMessage.id === id) setViewingMessage(null);
             showToast('Message deleted.');
-        } catch {
-            showToast('Failed to delete message.', 'error');
+        } catch (error) {
+            showToast(error.message || 'Failed to delete message.', 'error');
         }
     };
 

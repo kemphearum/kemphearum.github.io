@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import BlogService from '../services/BlogService';
 import { useActivity } from '../hooks/useActivity';
 import { Helmet } from 'react-helmet-async';
 import MarkdownRenderer from '../components/MarkdownRenderer';
@@ -48,17 +47,10 @@ const BlogPost = () => {
     useEffect(() => {
         const fetchPost = async () => {
             try {
-                const q = query(collection(db, "posts"), where("slug", "==", slug));
-                const querySnapshot = await getDocs(q);
-
-                if (!querySnapshot.empty) {
-                    const docData = querySnapshot.docs[0].data();
-                    if (docData.visible === false) {
-                        setError('Post not found');
-                    } else {
-                        setPost({ id: querySnapshot.docs[0].id, ...docData });
-                        trackRead(querySnapshot.size, `Viewed blog: ${docData.title}`);
-                    }
+                const postData = await BlogService.fetchPostBySlug(slug, trackRead);
+                if (postData) {
+                    setPost(postData);
+                    trackRead(0, `Viewed blog: ${postData.title}`); // Service handles actual read count
                 } else {
                     setError('Post not found');
                 }

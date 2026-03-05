@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { auth, db } from '../firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, addDoc, serverTimestamp, getDocs, doc, updateDoc, setDoc, getDoc, query, where, orderBy } from 'firebase/firestore';
+import UserService from '../services/UserService';
+import MessageService from '../services/MessageService';
 import styles from './Admin.module.scss';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -11,7 +10,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useActivity } from '../hooks/useActivity';
 import { getSessionId, getDeviceType } from '../hooks/useAnalytics';
 import { invalidateCache } from '../hooks/useFirebaseData';
-import { compressImageToBase64 } from '../utils/imageCompression';
+import ContentService from '../services/ContentService';
+import AuthService from '../services/AuthService';
 
 // Tab components
 import GeneralTab from './admin/tabs/GeneralTab';
@@ -156,19 +156,15 @@ const Admin = () => {
 
     // ====== Auth ======
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        const unsubscribe = AuthService.onAuthChange(async (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
                 try {
-                    const q = query(collection(db, "users"), where("email", "==", currentUser.email));
-                    const querySnapshot = await getDocs(q);
+                    const userData = await UserService.fetchUserByEmail(currentUser.email);
 
-                    if (!querySnapshot.empty) {
-                        const userDoc = querySnapshot.docs[0];
-                        const userData = userDoc.data();
-
+                    if (userData) {
                         if (userData.isActive === false) {
-                            await signOut(auth);
+                            await AuthService.logout();
                             setUser(null); setUserRole(null); setUserId(null); setUserDisplayName('');
                             showToast("Your account has been disabled by an administrator.", "error");
                             setIsAuthLoading(false);
@@ -176,30 +172,30 @@ const Admin = () => {
                         }
 
                         let fetchedRole = userData.role;
-                        setUserId(userDoc.id);
+                        setUserId(userData.id);
                         setUserDisplayName(userData.displayName || '');
 
                         if (currentUser.email === 'kem.phearum@gmail.com' && fetchedRole !== 'superadmin') {
                             fetchedRole = 'superadmin';
-                            updateDoc(userDoc.ref, { role: 'superadmin' }).catch(console.error);
+                            UserService.updateUserField(userData.id, { role: 'superadmin' }).catch(console.error);
                         } else if (fetchedRole === 'owner') {
                             fetchedRole = 'superadmin';
-                            updateDoc(userDoc.ref, { role: 'superadmin' }).catch(console.error);
+                            UserService.updateUserField(userData.id, { role: 'superadmin' }).catch(console.error);
                         }
 
                         setUserRole(fetchedRole);
                     } else if (currentUser.email === 'kem.phearum@gmail.com') {
-                        const newDocRef = await addDoc(collection(db, "users"), {
-                            email: currentUser.email, role: 'superadmin', isActive: true, createdAt: serverTimestamp()
+                        const newId = await UserService.createUserDoc({
+                            email: currentUser.email, role: 'superadmin', isActive: true
                         });
-                        setUserId(newDocRef.id);
+                        setUserId(newId);
                         setUserRole('superadmin');
                     } else {
                         try {
-                            const newDocRef = await addDoc(collection(db, "users"), {
-                                email: currentUser.email, role: 'pending', isActive: true, createdAt: serverTimestamp()
+                            const newId = await UserService.createUserDoc({
+                                email: currentUser.email, role: 'pending', isActive: true
                             });
-                            setUserId(newDocRef.id);
+                            setUserId(newId);
                         } catch (createError) { console.error("Failed to auto-create user document:", createError); }
                         setUserRole('pending');
                     }
@@ -219,11 +215,7 @@ const Admin = () => {
     // ====== Fetch Role Permissions & Messages (for sidebar) ======
     const fetchRolePermissions = useCallback(async () => {
         try {
-            const q = query(collection(db, "rolePermissions"));
-            const snap = await getDocs(q);
-            trackRead(snap.size, 'Fetched role permissions');
-            const perms = {};
-            snap.docs.forEach(d => { perms[d.data().role] = d.data().allowedTabs || []; });
+            const perms = await UserService.fetchRolePermissions(trackRead);
             setRolePermissions(perms);
         } catch (error) { console.error("Error fetching role permissions:", error); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -231,10 +223,9 @@ const Admin = () => {
 
     const fetchMessages = useCallback(async () => {
         try {
-            const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
-            const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size, 'Fetched inbox messages');
-            setMessages(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+            const msgs = await MessageService.getAll('createdAt', 'desc');
+            trackRead(msgs.length, 'Fetched inbox messages');
+            setMessages(msgs);
         } catch (error) { console.error("Error fetching messages:", error); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -242,11 +233,8 @@ const Admin = () => {
     // ====== Content Data Management ======
     const fetchSectionData = useCallback(async (section) => {
         try {
-            const docRef = doc(db, 'content', section);
-            const docSnap = await getDoc(docRef);
-            trackRead(1, `Fetched ${section} content`);
-            if (docSnap.exists()) {
-                const data = docSnap.data();
+            const data = await ContentService.fetchSection(section, trackRead);
+            if (data) {
                 switch (section) {
                     case 'home': setHomeData(prev => ({ ...prev, ...data })); break;
                     case 'about':
@@ -267,10 +255,7 @@ const Admin = () => {
     const saveSectionData = useCallback(async (section, data) => {
         setLoading(true);
         try {
-            const docRef = doc(db, 'content', section);
-            await setDoc(docRef, data, { merge: true });
-            trackWrite(1, `Saved ${section} content`);
-            invalidateCache(`doc:content/${section}`);
+            await ContentService.saveSection(section, data, trackWrite);
             showToast(`${section.charAt(0).toUpperCase() + section.slice(1)} saved!`);
         } catch (error) {
             console.error(`Error saving ${section}:`, error);
@@ -278,21 +263,6 @@ const Admin = () => {
         } finally { setLoading(false); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showToast]);
-
-    const handleSaveProfile = useCallback(async (e) => {
-        e.preventDefault();
-        if (!userId) return;
-        setLoading(true);
-        try {
-            await updateDoc(doc(db, 'users', userId), { displayName: userDisplayName });
-            trackWrite(1, 'Updated display name');
-            showToast('Profile saved!');
-        } catch (error) {
-            console.error('Error saving profile:', error);
-            showToast('Failed to save profile.', 'error');
-        } finally { setLoading(false); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userId, userDisplayName, showToast]);
 
     useEffect(() => {
         if (user) {
@@ -318,7 +288,7 @@ const Admin = () => {
         setLoading(true);
         try {
             if (isRegistering) {
-                await createUserWithEmailAndPassword(auth, email, password);
+                await AuthService.register(email, password);
                 const q = query(collection(db, "users"), where("email", "==", email));
                 const snap = await getDocs(q);
                 trackRead(snap.size, 'Checked user existence on registration');
@@ -328,14 +298,14 @@ const Admin = () => {
                 }
                 showToast('Account created! You are now logged in.');
             } else {
-                await signInWithEmailAndPassword(auth, email, password);
+                await AuthService.login(email, password);
                 const q = query(collection(db, "users"), where("email", "==", email));
                 const snap = await getDocs(q);
                 trackRead(snap.size, 'Verified user status on login');
                 if (!snap.empty) {
                     const userData = snap.docs[0].data();
                     if (userData.isActive === false) {
-                        await signOut(auth);
+                        await AuthService.logout();
                         throw new Error("Your account has been disabled by an administrator.");
                     }
                 }
@@ -379,11 +349,11 @@ const Admin = () => {
 
         switch (activeTab) {
             case 'general':
-                return <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} loading={loading} saveSectionData={saveSectionData} compressImageToBase64={compressImageToBase64} />;
+                return <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} loading={loading} saveSectionData={saveSectionData} />;
             case 'profile':
-                return <ProfileTab {...commonProps} user={user} setUserDisplayName={setUserDisplayName} loading={loading} handleSaveProfile={handleSaveProfile} />;
+                return <ProfileTab {...commonProps} user={user} setUserDisplayName={setUserDisplayName} />;
             case 'settings':
-                return <SettingsTab {...commonProps} settingsData={settingsData} setSettingsData={setSettingsData} loading={loading} saveSectionData={saveSectionData} sidebarPersistent={sidebarPersistent} setSidebarPersistent={setSidebarPersistent} compressImageToBase64={compressImageToBase64} />;
+                return <SettingsTab {...commonProps} settingsData={settingsData} setSettingsData={setSettingsData} loading={loading} saveSectionData={saveSectionData} sidebarPersistent={sidebarPersistent} setSidebarPersistent={setSidebarPersistent} />;
             case 'messages':
                 return <MessagesTab {...commonProps} messages={messages} setMessages={setMessages} />;
             case 'experience':
@@ -401,7 +371,7 @@ const Admin = () => {
             case 'analytics':
                 return <AnalyticsTab {...commonProps} />;
             default:
-                return <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} loading={loading} saveSectionData={saveSectionData} compressImageToBase64={compressImageToBase64} />;
+                return <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} loading={loading} saveSectionData={saveSectionData} />;
         }
     };
 

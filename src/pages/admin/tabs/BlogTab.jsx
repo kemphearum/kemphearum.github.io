@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { db } from '../../../firebase';
-import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, query, updateDoc } from 'firebase/firestore';
 import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { invalidateCache } from '../../../hooks/useFirebaseData';
 import { sortData } from '../../../utils/sortData';
 import { icons } from '../components/constants';
-import { compressImageToBase64 } from '../../../utils/imageCompression';
+import ImageProcessingService from '../../../services/ImageProcessingService';
 import MarkdownRenderer from '../../../components/MarkdownRenderer';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
 import styles from '../../Admin.module.scss';
+import BlogService from '../../../services/BlogService';
 
 const BlogTab = ({ userRole, showToast }) => {
     const [posts, setPosts] = useState([]);
@@ -33,10 +33,9 @@ const BlogTab = ({ userRole, showToast }) => {
 
     const fetchPosts = useCallback(async () => {
         try {
-            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-            const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size, 'Fetched blog posts');
-            setPosts(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+            const allPosts = await BlogService.getAll("createdAt", "desc");
+            trackRead(allPosts.length, 'Fetched blog posts');
+            setPosts(allPosts);
         } catch (error) { console.error("Error fetching posts:", error); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -64,37 +63,37 @@ const BlogTab = ({ userRole, showToast }) => {
     const generateSlug = (title) => title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
     const toggleVisibility = async (id, currentVisible) => {
-        if (userRole === 'pending') { showToast("Not authorized.", "error"); return; }
         try {
-            await updateDoc(doc(db, 'posts', id), { visible: !currentVisible });
-            trackWrite(1, 'Toggled post visibility');
+            await BlogService.toggleVisibility(userRole, id, currentVisible, trackWrite);
             invalidateCache('collection:posts');
             setPosts(prev => prev.map(p => p.id === id ? { ...p, visible: !currentVisible } : p));
             showToast(`Post ${!currentVisible ? 'published' : 'set to draft'}.`);
-        } catch { showToast('Failed to toggle visibility.', 'error'); }
+        } catch (error) {
+            showToast(error.message || 'Failed to toggle visibility.', 'error');
+        }
     };
 
     const toggleFeaturedPost = async (id, currentFeatured) => {
-        if (userRole === 'pending' || userRole === 'editor') { showToast("Not authorized.", "error"); return; }
         try {
-            await updateDoc(doc(db, 'posts', id), { featured: !currentFeatured });
-            trackWrite(1, 'Toggled post featured');
+            await BlogService.toggleFeatured(userRole, id, currentFeatured, trackWrite);
             invalidateCache('collection:posts');
             setPosts(prev => prev.map(p => p.id === id ? { ...p, featured: !currentFeatured } : p));
             showToast(!currentFeatured ? 'Featured on homepage!' : 'Removed from homepage.');
-        } catch { showToast('Failed to toggle featured status.', 'error'); }
+        } catch (error) {
+            showToast(error.message || 'Failed to toggle featured status.', 'error');
+        }
     };
 
     const handleDeletePost = async (id) => {
-        if (userRole === 'pending' || userRole === 'editor') { showToast("Not authorized.", "error"); return; }
         if (!window.confirm("Delete this post?")) return;
         try {
-            await deleteDoc(doc(db, "posts", id));
-            trackDelete(1, 'Deleted blog post');
+            await BlogService.deletePost(userRole, id, trackDelete);
             invalidateCache('collection:posts');
             setPosts(posts.filter(p => p.id !== id));
             showToast('Post deleted.');
-        } catch { showToast('Failed to delete post.', 'error'); }
+        } catch (error) {
+            showToast(error.message || 'Failed to delete post.', 'error');
+        }
     };
 
     const handleSavePost = async (e) => {
@@ -103,17 +102,17 @@ const BlogTab = ({ userRole, showToast }) => {
         setLoading(true);
         try {
             let coverImage = postForm.coverImage || '';
-            if (postImage) coverImage = await compressImageToBase64(postImage);
+            if (postImage) coverImage = await ImageProcessingService.compress(postImage);
             const tagsArray = typeof postForm.tags === 'string' ? postForm.tags.split(',').map(t => t.trim()).filter(t => t) : (Array.isArray(postForm.tags) ? postForm.tags : []);
             const slug = postForm.slug || generateSlug(postForm.title);
 
+            const postData = { title: postForm.title, slug, excerpt: postForm.excerpt, content: postForm.content, coverImage, tags: tagsArray, visible: postForm.visible !== false, featured: !!postForm.featured };
             if (postForm.id) {
-                await updateDoc(doc(db, "posts", postForm.id), { title: postForm.title, slug, excerpt: postForm.excerpt, content: postForm.content, coverImage, tags: tagsArray, visible: postForm.visible !== false, featured: !!postForm.featured });
-                trackWrite(1, 'Updated blog post');
+                await BlogService.update(postForm.id, postData, trackWrite);
                 showToast('Post updated!');
             } else {
-                await addDoc(collection(db, "posts"), { title: postForm.title, slug, excerpt: postForm.excerpt, content: postForm.content, coverImage, tags: tagsArray, visible: true, featured: false, createdAt: serverTimestamp() });
-                trackWrite(1, 'Added new blog post');
+                postData.createdAt = serverTimestamp();
+                await BlogService.create(postData, trackWrite);
                 showToast('Post published!');
             }
             invalidateCache('collection:posts');
@@ -122,7 +121,7 @@ const BlogTab = ({ userRole, showToast }) => {
             setIsPreviewMode(false);
             setShowPostForm(false);
             fetchPosts();
-        } catch { showToast('Error saving post.', 'error'); }
+        } catch (error) { showToast(error.message || 'Error saving post.', 'error'); }
         finally { setLoading(false); }
     };
 

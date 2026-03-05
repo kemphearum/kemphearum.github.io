@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import ProjectService from '../services/ProjectService';
 import { useActivity } from '../hooks/useActivity';
 import { Helmet } from 'react-helmet-async';
 import MarkdownRenderer from '../components/MarkdownRenderer';
@@ -59,16 +58,10 @@ const ProjectDetail = () => {
     useEffect(() => {
         const fetchProject = async () => {
             try {
-                const q = query(collection(db, "projects"), where("slug", "==", slug));
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                    const docData = querySnapshot.docs[0].data();
-                    if (docData.visible === false) {
-                        setError('Project not found');
-                    } else {
-                        setProject({ id: querySnapshot.docs[0].id, ...docData });
-                        trackRead(querySnapshot.size, `Viewed project: ${docData.title}`);
-                    }
+                const projectData = await ProjectService.fetchProjectBySlug(slug, trackRead);
+                if (projectData) {
+                    setProject(projectData);
+                    trackRead(0, `Viewed project: ${projectData.title}`); // Event tracking already handled by Service length
                 } else {
                     setError('Project not found');
                 }

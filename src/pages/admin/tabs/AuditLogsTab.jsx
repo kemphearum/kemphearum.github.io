@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { db } from '../../../firebase';
-import { collection, getDocs, query, where, orderBy, limit as firestoreLimit, collectionGroup, Timestamp } from 'firebase/firestore';
+import AuditLogService from '../../../services/AuditLogService';
 import { Activity, Filter, RefreshCw, Eye, Edit2, Trash2, ChevronRight, Search, X, Shield, Mail, Globe, Monitor, Smartphone, Tablet, MapPin, Key, Clock, BarChart2 } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { sortData } from '../../../utils/sortData';
@@ -47,20 +46,8 @@ const AuditLogsTab = ({ userRole, showToast }) => {
             setIsAggregating(true);
             try {
                 const limitVal = activityDateRange === '7d' ? 7 : (activityDateRange === '30d' ? 30 : 365);
-                const q = query(collection(db, 'dailyUsage'), firestoreLimit(365));
-                const snap = await getDocs(q);
-                let reads = 0, writes = 0, deletes = 0;
-
-                // Sort docs by ID (date) descending and take the limit
-                const sortedDocs = [...snap.docs].sort((a, b) => b.id.localeCompare(a.id)).slice(0, limitVal);
-
-                sortedDocs.forEach(d => {
-                    const data = d.data();
-                    reads += data.reads || 0;
-                    writes += data.writes || 0;
-                    deletes += data.deletes || 0;
-                });
-                setAggregatedUsage({ reads, writes, deletes });
+                const history = await AuditLogService.fetchAggregatedHistory(limitVal);
+                setAggregatedUsage(history);
             } catch (err) { console.error('Failed to fetch historical activity:', err); setAggregatedUsage(dailyUsage); }
             finally { setIsAggregating(false); }
         };
@@ -74,53 +61,8 @@ const AuditLogsTab = ({ userRole, showToast }) => {
         setActivityLogsLoading(true);
         try {
             const operationType = type === 'reads' ? 'read' : (type === 'writes' ? 'write' : 'delete');
-            let logs = [];
-
-            if (activityDateRange === 'today') {
-                const q = query(collection(db, 'dailyUsage', currentDateKey, 'logs'), orderBy('time', 'desc'), firestoreLimit(250));
-                const snap = await getDocs(q);
-                logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            } else {
-                // To avoid Collection Group index requirements, we fetch from individual days for 7/30d
-                const daysToFetch = activityDateRange === '7d' ? 7 : (activityDateRange === '30d' ? 30 : 0);
-
-                if (daysToFetch > 0) {
-                    // Get the list of last X days from the counter collection
-                    const qDays = query(collection(db, 'dailyUsage'), firestoreLimit(daysToFetch));
-                    const daysSnap = await getDocs(qDays);
-
-                    // Sort descending by ID (date string)
-                    const sortedDays = [...daysSnap.docs].sort((a, b) => b.id.localeCompare(a.id)).slice(0, daysToFetch);
-
-                    // Fetch logs for each day in parallel
-                    const logPromises = sortedDays.map(async (dayDoc) => {
-                        const qLogs = query(collection(db, 'dailyUsage', dayDoc.id, 'logs'), firestoreLimit(100));
-                        const lSnap = await getDocs(qLogs);
-                        return lSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    });
-
-                    const logResults = await Promise.all(logPromises);
-                    logs = logResults.flat();
-                    // Sort combined logs by time
-                    logs.sort((a, b) => (b.time?.seconds || 0) - (a.time?.seconds || 0));
-                } else {
-                    // For "All Time", we catch the index error specifically
-                    try {
-                        const q = query(collectionGroup(db, 'logs'), orderBy('time', 'desc'), firestoreLimit(500));
-                        const snap = await getDocs(q);
-                        logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    } catch (cgErr) {
-                        if (cgErr.code === 'failed-precondition') {
-                            throw new Error("Historical cross-day logs require a Firestore Index. Please check the browser console for the setup link.");
-                        }
-                        throw cgErr;
-                    }
-                }
-            }
-
-            // Finally filter by operation type
-            const filteredLogs = logs.filter(log => log.type === operationType);
-            setActivityLogs(filteredLogs.slice(0, 500));
+            const logs = await AuditLogService.fetchActivityDetails(activityDateRange, operationType, currentDateKey);
+            setActivityLogs(logs);
         } catch (error) { console.error(`Error fetching ${type} details:`, error); showToast(`Failed to load activity logs: ${error.message}`, 'error'); }
         finally { setActivityLogsLoading(false); }
     }, [activityDateRange, currentDateKey, showToast]);
@@ -130,10 +72,8 @@ const AuditLogsTab = ({ userRole, showToast }) => {
         if (userRole !== 'superadmin') return;
         try {
             setLoading(true);
-            const q = query(collection(db, 'auditLogs'), orderBy('timestamp', 'desc'), firestoreLimit(100));
-            const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size, 'Fetched audit logs list');
-            setAuditLogsList(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            const data = await AuditLogService.fetchSecurityAuditTrail(userRole, trackRead);
+            setAuditLogsList(data);
         } catch (error) { console.error("Error fetching audit logs:", error); showToast("Failed to load audit logs.", "error"); }
         finally { setLoading(false); }
         // eslint-disable-next-line react-hooks/exhaustive-deps

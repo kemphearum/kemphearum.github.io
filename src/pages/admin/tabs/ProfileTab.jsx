@@ -1,8 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Save } from 'lucide-react';
 import styles from '../../Admin.module.scss';
+import UserService from '../../../services/UserService';
+import { useActivity } from '../../../hooks/useActivity';
 
-const ProfileTab = ({ user, userDisplayName, setUserDisplayName, loading, handleSaveProfile }) => {
+const ProfileTab = ({ user, userId, userDisplayName, setUserDisplayName, showToast }) => {
+    const [isSaving, setIsSaving] = useState(false);
+    const { trackWrite } = useActivity();
+
+    const handleSaveProfile = async (e) => {
+        e.preventDefault();
+        if (!userId) return;
+
+        setIsSaving(true);
+        try {
+            await UserService.updateProfile(userId, userDisplayName, trackWrite);
+            showToast('Profile saved!');
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            showToast(error.message || 'Failed to save profile.', 'error');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     return (
         <div className={styles.card}>
             <div className={styles.cardHeader}><h3>👤 Edit Profile</h3></div>
@@ -17,8 +38,8 @@ const ProfileTab = ({ user, userDisplayName, setUserDisplayName, loading, handle
                     <input type="text" value={user.email} disabled style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)', opacity: 0.7 }} />
                 </div>
                 <div className={styles.formFooter}>
-                    <button type="submit" disabled={loading} className={styles.submitBtn}>
-                        {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
+                    <button type="submit" disabled={isSaving} className={styles.submitBtn}>
+                        {isSaving ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
                     </button>
                 </div>
             </form>

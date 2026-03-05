@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { analytics, db } from '../firebase';
+import { analytics } from '../firebase';
 import { logEvent } from 'firebase/analytics';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import AnalyticsService from '../services/AnalyticsService';
 
 export const getSessionId = () => {
     let sessionId = sessionStorage.getItem('analytics_session_id');
@@ -56,8 +56,6 @@ export const useAnalytics = () => {
                     if (diffMinutes < 30) return; // Don't re-log within 30 minutes
                 }
 
-                const visitsRef = collection(db, 'visits');
-
                 // Fetch basic geo-data (completely free, no API key needed for basic usage)
                 let geoData = { country_name: 'Unknown', city: 'Unknown', ip: 'Unknown', country_code: 'UN' };
 
@@ -82,11 +80,10 @@ export const useAnalytics = () => {
                     console.warn("Could not fetch IP data (adblocker or network error). Logging anyway.", e);
                 }
 
-                // Save to Firestore
-                await addDoc(visitsRef, {
+                // Save to Firestore via Service
+                await AnalyticsService.logVisit({
                     sessionId,
                     path: location.pathname,
-                    timestamp: serverTimestamp(),
                     date: today,
                     userAgent: navigator.userAgent,
                     device: getDeviceType(),

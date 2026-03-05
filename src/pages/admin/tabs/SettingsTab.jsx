@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Upload, Save } from 'lucide-react';
 import styles from '../../Admin.module.scss';
+import ImageProcessingService from '../../../services/ImageProcessingService';
 
-const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, sidebarPersistent, setSidebarPersistent, compressImageToBase64 }) => {
+const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, sidebarPersistent, setSidebarPersistent }) => {
     const [settingsFavicon, setSettingsFavicon] = useState(null);
 
     const handleSaveSettings = async (e) => {
         e.preventDefault();
         let faviconUrl = settingsData.pageFaviconUrl || '';
         if (settingsFavicon) {
-            faviconUrl = await compressImageToBase64(settingsFavicon, { maxSizeMB: 0.05, maxWidthOrHeight: 256 });
+            faviconUrl = await ImageProcessingService.compress(settingsFavicon, { maxSizeMB: 0.05, maxWidthOrHeight: 256 });
         }
         await saveSectionData('settings', {
             ...settingsData,

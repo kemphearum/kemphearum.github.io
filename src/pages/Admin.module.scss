@@ -2680,14 +2680,13 @@
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 0.6rem;
+    padding: 0;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 10;
-    width: fit-content;
 
     &:hover {
         background: rgba(239, 68, 68, 0.1);
@@ -2705,7 +2704,9 @@
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
-    padding: 0.6rem;
+    padding: 0;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;

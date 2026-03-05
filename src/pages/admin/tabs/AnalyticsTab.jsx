@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { db } from '../../../firebase';
-import { collection, getDocs, query, where, orderBy, limit as firestoreLimit, getCountFromServer } from 'firebase/firestore';
 import { Eye as EyeIcon, Users, Globe, TrendingUp, Monitor, Smartphone, Tablet, MapPin, Share2, FileText, Calendar, RefreshCw, X } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { useActivity } from '../../../hooks/useActivity';
 import styles from '../../Admin.module.scss';
+import AnalyticsService from '../../../services/AnalyticsService';
 
 const CHART_COLORS = ['#64ffda', '#7c4dff', '#ff6090', '#ffab40', '#69f0ae', '#40c4ff', '#ea80fc', '#ffd740', '#b388ff', '#84ffff'];
 
@@ -34,15 +33,10 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     const [analyticsLogsTotal, setAnalyticsLogsTotal] = useState(0);
 
     const fetchAnalytics = useCallback(async () => {
-        if (userRole !== 'superadmin' && userRole !== 'admin') return;
         setAnalyticsLoading(true);
         try {
-            const startDate = new Date(analyticsRange.start + 'T00:00:00');
-            const endDate = new Date(analyticsRange.end + 'T23:59:59');
-            const q = query(collection(db, "visits"), where("timestamp", ">=", startDate), where("timestamp", "<=", endDate), orderBy("timestamp", "desc"));
-            const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size, 'Fetched analytics visits history');
-            setVisits(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            const data = await AnalyticsService.fetchAnalytics(userRole, analyticsRange, trackRead);
+            setVisits(data);
         } catch (error) { console.error("Error fetching analytics:", error); showToast("Failed to load analytics data.", "error"); }
         finally { setAnalyticsLoading(false); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -54,18 +48,13 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         setAnalyticsLogs([]);
         setAnalyticsLogsTotal(0);
         try {
-            const startDate = new Date(analyticsRange.start + 'T00:00:00');
-            const endDate = new Date(analyticsRange.end + 'T23:59:59');
-            let q = query(collection(db, "visits"), where("timestamp", ">=", startDate), where("timestamp", "<=", endDate));
-            const totalSnap = await getCountFromServer(q);
-            setAnalyticsLogsTotal(totalSnap.data().count);
-            const querySnapshot = await getDocs(query(q, orderBy("timestamp", "desc"), firestoreLimit(200)));
-            trackRead(querySnapshot.size, `Fetched details for ${type}`);
-            setAnalyticsLogs(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+            const result = await AnalyticsService.fetchAnalyticsDetails(userRole, analyticsRange, type, 200, trackRead);
+            setAnalyticsLogsTotal(result.total);
+            setAnalyticsLogs(result.logs);
         } catch (error) { console.error("Error fetching analytics details:", error); showToast("Failed to load details.", "error"); }
         finally { setAnalyticsLogsLoading(false); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [analyticsRange, showToast]);
+    }, [userRole, analyticsRange, showToast]);
 
     const handleAnalyticsPreset = useCallback((preset) => {
         const end = new Date();

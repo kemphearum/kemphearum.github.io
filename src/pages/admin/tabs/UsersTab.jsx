@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { db, auth } from '../../../firebase';
-import { collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc, orderBy, query, updateDoc, where } from 'firebase/firestore';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import UserService from '../../../services/UserService';
 import { Search, Edit, Trash2, Key, X, UserPlus, Users } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { sortData } from '../../../utils/sortData';
@@ -37,37 +35,8 @@ const UsersTab = ({ user, userRole, showToast }) => {
     const fetchUsers = useCallback(async () => {
         if (userRole !== 'superadmin') return;
         try {
-            const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
-            const querySnapshot = await getDocs(q);
-            trackRead(querySnapshot.size, 'Fetched users list for management');
-            const uniqueUsers = new Map();
-            const docsToDelete = [];
-            querySnapshot.docs.forEach(docSnap => {
-                const data = docSnap.data();
-                const email = data.email?.toLowerCase();
-                if (!email) return;
-                if (uniqueUsers.has(email)) {
-                    const existing = uniqueUsers.get(email);
-                    const roles = { 'superadmin': 4, 'admin': 3, 'editor': 2, 'pending': 1 };
-                    const existingScore = roles[existing.data.role] || 0;
-                    const newScore = roles[data.role] || 0;
-                    if (newScore > existingScore) {
-                        docsToDelete.push(existing.id);
-                        uniqueUsers.set(email, { id: docSnap.id, data });
-                    } else {
-                        docsToDelete.push(docSnap.id);
-                    }
-                } else {
-                    uniqueUsers.set(email, { id: docSnap.id, data });
-                }
-            });
-            if (docsToDelete.length > 0) {
-                Promise.all(docsToDelete.map(id => { trackDelete(1, 'Cleaned duplicate user'); return deleteDoc(doc(db, "users", id)); })).catch(console.error);
-            }
-            let finalList = Array.from(uniqueUsers.values()).map(u => ({ id: u.id, ...u.data }));
-            finalList = finalList.filter(u => u.isActive !== false);
-            finalList.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-            setUsersList(finalList);
+            const users = await UserService.fetchUsers(userRole, trackRead, trackDelete);
+            setUsersList(users);
         } catch (error) {
             console.error("Error fetching users:", error);
             showToast("Failed to load users.", "error");
@@ -77,11 +46,7 @@ const UsersTab = ({ user, userRole, showToast }) => {
 
     const fetchRolePermissions = useCallback(async () => {
         try {
-            const q = query(collection(db, "rolePermissions"));
-            const snap = await getDocs(q);
-            trackRead(snap.size, 'Fetched role permissions');
-            const perms = {};
-            snap.docs.forEach(d => { perms[d.data().role] = d.data().allowedTabs || []; });
+            const perms = await UserService.fetchRolePermissions(trackRead);
             setRolePermissions(perms);
         } catch (error) { console.error("Error fetching role permissions:", error); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -108,23 +73,20 @@ const UsersTab = ({ user, userRole, showToast }) => {
     }, [filteredUsers, usersPage, usersPerPage]);
 
     const handleRoleChange = async (userId, newRole) => {
-        if (userRole !== 'superadmin') { showToast("Only Superadmins can modify users.", "error"); return; }
         try {
-            await updateDoc(doc(db, "users", userId), { role: newRole });
-            trackWrite(1);
+            await UserService.updateRole(userRole, userId, newRole, trackWrite);
             showToast(`Role updated to ${newRole}`);
             fetchUsers();
-        } catch (error) { console.error("Error updating role:", error); showToast('Failed to update role.', 'error'); }
+        } catch (error) { console.error("Error updating role:", error); showToast(error.message || 'Failed to update role.', 'error'); }
     };
 
     const proceedRemoveUser = async (userEmail, userId) => {
         setLoading(true);
         try {
-            await updateDoc(doc(db, "users", userId), { isActive: false });
-            trackDelete(1, 'Disabled user');
+            await UserService.removeUser(userRole, userId, trackDelete);
             showToast(`User ${userEmail} successfully disabled.`);
             fetchUsers();
-        } catch (error) { console.error("Error disabling user:", error); showToast("Failed to disable user.", "error"); }
+        } catch (error) { console.error("Error disabling user:", error); showToast(error.message || "Failed to disable user.", "error"); }
         finally { setLoading(false); setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' }); }
     };
 
@@ -141,9 +103,9 @@ const UsersTab = ({ user, userRole, showToast }) => {
     const proceedResetPassword = async (email) => {
         setLoading(true);
         try {
-            await sendPasswordResetEmail(auth, email);
+            await UserService.sendPasswordReset(userRole, email);
             showToast(`Password reset email sent to ${email}`);
-        } catch (error) { console.error("Error resetting password:", error); showToast("Failed to send reset email.", "error"); }
+        } catch (error) { console.error("Error resetting password:", error); showToast(error.message || "Failed to send reset email.", "error"); }
         finally { setLoading(false); setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' }); }
     };
 
@@ -159,29 +121,15 @@ const UsersTab = ({ user, userRole, showToast }) => {
 
     const handleAddUser = async (e) => {
         e.preventDefault();
-        if (userRole !== 'superadmin') { showToast("Only Superadmins can create users.", "error"); return; }
         setLoading(true);
         try {
-            const existingQ = query(collection(db, "users"), where("email", "==", newUserEmail.toLowerCase().trim()));
-            const existingSnap = await getDocs(existingQ);
-            trackRead(existingSnap.size, 'Checked existing user');
-            if (!existingSnap.empty) { showToast("This email is already registered in the database.", "error"); setLoading(false); return; }
-            const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
-            const signupResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: newUserEmail, password: newUserPassword, returnSecureToken: false })
-            });
-            const signupData = await signupResponse.json();
-            if (!signupResponse.ok) throw new Error(signupData.error?.message || 'Failed to create user in Authentication');
-            await addDoc(collection(db, "users"), { email: newUserEmail, role: newUserRole, isActive: true, createdAt: serverTimestamp() });
+            await UserService.createUser(userRole, newUserEmail, newUserPassword, newUserRole, trackRead);
             showToast('User created successfully.');
             fetchUsers();
             setShowAddUserForm(false); setNewUserEmail(''); setNewUserPassword(''); setNewUserRole('pending');
         } catch (error) {
             console.error("Error creating user:", error);
-            if (error.message.includes('EMAIL_EXISTS')) showToast("This email is already registered.", "error");
-            else if (error.message.includes('WEAK_PASSWORD')) showToast("Password should be at least 6 characters.", "error");
-            else showToast("Failed to create user.", "error");
+            showToast(error.message || "Failed to create user.", "error");
         } finally { setLoading(false); }
     };
 

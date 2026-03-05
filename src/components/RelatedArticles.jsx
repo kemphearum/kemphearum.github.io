@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
 import { Link } from 'react-router-dom';
+import BlogService from '../services/BlogService';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import styles from './RelatedArticles.module.scss'; // Reuse blog card styles where possible or create new
@@ -14,42 +13,8 @@ const RelatedArticles = ({ currentPostId, tags }) => {
         const fetchRelatedPosts = async () => {
             setLoading(true);
             try {
-                let postsData = [];
-
-                // A complex query with 'array-contains-any' and 'orderBy' requires a custom Firestore Index.
-                // To avoid breaking the app deployment flow for the user, we fetch the visible posts 
-                // and locally sort/filter them. It's efficient enough for a portfolio blog.
-                const q = query(
-                    collection(db, "posts"),
-                    where("visible", "==", true)
-                );
-
-                const querySnapshot = await getDocs(q);
-                let allVisiblePosts = querySnapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() }))
-                    .filter(post => post.id !== currentPostId); // Exclude the current post
-
-                // Sort by createdAt descending locally
-                allVisiblePosts.sort((a, b) => {
-                    const timeA = a.createdAt?.seconds || 0;
-                    const timeB = b.createdAt?.seconds || 0;
-                    return timeB - timeA;
-                });
-
-                if (tags && tags.length > 0) {
-                    // Try to find posts with matching tags
-                    postsData = allVisiblePosts.filter(post =>
-                        post.tags && post.tags.some(t => tags.includes(t))
-                    );
-                }
-
-                // If we found matches, slice to 3. If no matches or no tags provided, just use the 3 most recent
-                if (postsData.length > 0) {
-                    postsData = postsData.slice(0, 3);
-                } else {
-                    postsData = allVisiblePosts.slice(0, 3);
-                }
-
+                // Using new OOP Service Endpoint
+                const postsData = await BlogService.fetchRelatedPosts(currentPostId, tags, null);
                 setRelatedPosts(postsData);
             } catch (error) {
                 console.error("Error fetching related articles:", error);
@@ -75,7 +40,7 @@ const RelatedArticles = ({ currentPostId, tags }) => {
             <div className={styles.grid}>
                 {relatedPosts.map((post, index) => (
                     <motion.article
-                        key={post.id}
+                        key={post.id || `related-${index}`}
                         className={styles.postCard}
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}

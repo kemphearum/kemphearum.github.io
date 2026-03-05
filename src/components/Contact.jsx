@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
+import MessageService from '../services/MessageService';
+import { serverTimestamp } from 'firebase/firestore';
 import { useFirebaseDoc } from '../hooks/useFirebaseData';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Contact.module.scss';
@@ -35,11 +35,12 @@ const Contact = () => {
 
         setStatus('sending');
         try {
-            await addDoc(collection(db, "messages"), {
+            await MessageService.create({
                 ...formData,
                 isRead: false,
                 createdAt: serverTimestamp()
-            });
+            }, null); // no trackWrite because this is public frontend
+
             localStorage.setItem('lastContactSubmit', Date.now().toString());
             setStatus('success');
             setFormData({ name: '', email: '', message: '' });

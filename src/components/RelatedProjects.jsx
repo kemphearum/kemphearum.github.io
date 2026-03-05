@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
 import { Link } from 'react-router-dom';
+import ProjectService from '../services/ProjectService';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import ProjectCard from './ProjectCard';
@@ -15,39 +14,8 @@ const RelatedProjects = ({ currentProjectId, techStack }) => {
         const fetchRelatedProjects = async () => {
             setLoading(true);
             try {
-                const q = query(
-                    collection(db, "projects"),
-                    where("visible", "==", true)
-                );
-
-                const querySnapshot = await getDocs(q);
-                let allVisibleProjects = querySnapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() }))
-                    .filter(project => project.id !== currentProjectId);
-
-                // Sort by createdAt descending
-                allVisibleProjects.sort((a, b) => {
-                    const timeA = a.createdAt?.seconds || 0;
-                    const timeB = b.createdAt?.seconds || 0;
-                    return timeB - timeA;
-                });
-
-                let projectsData = [];
-
-                if (techStack && techStack.length > 0) {
-                    // Find projects with matching tech stack
-                    projectsData = allVisibleProjects.filter(project =>
-                        project.techStack && project.techStack.some(t => techStack.includes(t))
-                    );
-                }
-
-                // Use matches if found, otherwise fall back to newest
-                if (projectsData.length > 0) {
-                    projectsData = projectsData.slice(0, 3);
-                } else {
-                    projectsData = allVisibleProjects.slice(0, 3);
-                }
-
+                // Fetch using new ProjectService endpoint
+                const projectsData = await ProjectService.fetchRelatedProjects(currentProjectId, techStack, null);
                 setRelatedProjects(projectsData);
             } catch (error) {
                 console.error("Error fetching related projects:", error);
