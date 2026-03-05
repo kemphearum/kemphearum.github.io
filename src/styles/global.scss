@@ -46,6 +46,7 @@ html {
     --card-hover: rgba(255, 255, 255, 0.06);
     --primary-color: #6C63FF;
     --dropdown-bg: #151525;
+    --calendar-icon-filter: invert(1);
 }
 
 [data-theme="light"] {
@@ -83,6 +84,7 @@ html {
     --dropdown-bg: #ffffff;
     --editor-toolbar-bg: rgba(108, 99, 255, 0.05);
     --editor-border: rgba(108, 99, 255, 0.15);
+    --calendar-icon-filter: none;
 }
 
 body {

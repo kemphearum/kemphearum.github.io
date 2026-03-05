@@ -270,28 +270,34 @@ const UsersTab = ({ user, userRole, showToast }) => {
 
             {/* Add User Modal */}
             {showAddUserForm && (
-                <div className={styles.modalOverlay} onClick={() => setShowAddUserForm(false)} style={{ zIndex: 1100 }}>
-                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', padding: 0 }}>
-                        <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)' }}>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)', margin: 0 }}><UserPlus size={20} /> Create New User</h3>
+                <div className={styles.modalOverlay} onClick={() => setShowAddUserForm(false)} style={{ zIndex: 1300 }}>
+                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px', borderRadius: '20px' }}>
+                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}>
+                            <h3 style={{ fontSize: '1.3rem' }}><UserPlus size={22} style={{ color: 'var(--primary-color)' }} /> Create New User</h3>
                             <button onClick={() => setShowAddUserForm(false)} className={styles.closeBtn}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleAddUser}>
-                            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                                <div className={styles.formGroup}><label>Email Address</label><input type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} required placeholder="user@example.com" /></div>
-                                <div className={styles.formGroup}><label>Temporary Password</label><input type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} required minLength={6} placeholder="Min 6 characters" /></div>
-                                <div className={styles.formGroup}>
+                            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                <div className={styles.inputGroup}>
+                                    <label>Email Address</label>
+                                    <input type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} required placeholder="user@example.com" />
+                                </div>
+                                <div className={styles.inputGroup}>
+                                    <label>Temporary Password</label>
+                                    <input type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} required minLength={6} placeholder="Min 6 characters" />
+                                </div>
+                                <div className={styles.inputGroup}>
                                     <label>Initial Role</label>
-                                    <select value={newUserRole} onChange={(e) => setNewUserRole(e.target.value)} className={styles.standardSelect} style={{ width: '100%' }}>
-                                        <option value="pending">Pending</option>
-                                        <option value="editor">Editor</option>
-                                        <option value="admin">Admin</option>
+                                    <select value={newUserRole} onChange={(e) => setNewUserRole(e.target.value)} className={styles.standardSelect} style={{ width: '100%', marginTop: '0.4rem' }}>
+                                        <option value="pending">⏳ Pending Verification</option>
+                                        <option value="editor">✍️ Content Editor</option>
+                                        <option value="admin">🛡️ System Admin</option>
                                     </select>
                                 </div>
                             </div>
-                            <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                            <div className={styles.modalFooter} style={{ padding: '1.25rem 2rem' }}>
                                 <button type="button" onClick={() => setShowAddUserForm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
-                                <button type="submit" className={styles.primaryBtn} disabled={loading} style={{ margin: 0, padding: '0.6rem 1.25rem' }}>{loading ? 'Creating...' : 'Create User'}</button>
+                                <button type="submit" className={styles.primaryBtn} disabled={loading} style={{ margin: 0, padding: '0.6rem 1.75rem' }}>{loading ? 'Creating...' : 'Create User'}</button>
                             </div>
                         </form>
                     </div>
@@ -301,23 +307,37 @@ const UsersTab = ({ user, userRole, showToast }) => {
             {/* User View Modal */}
             {viewingUser && (
                 <div className={styles.modalOverlay} onClick={() => setViewingUser(null)} style={{ zIndex: 1200 }}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', padding: 0 }}>
-                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)' }}>
-                            <h3><Users size={20} style={{ color: 'var(--primary-color)' }} /> User Details</h3>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '650px', borderRadius: '20px' }}>
+                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}>
+                            <h3 style={{ fontSize: '1.3rem' }}><Users size={22} style={{ color: 'var(--primary-color)' }} /> User Account Profile</h3>
                             <button onClick={() => setViewingUser(null)} className={styles.closeBtn}><X size={20} /></button>
                         </div>
-                        <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '60vh' }}>
-                            <div className={styles.detailGrid}>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}><span className={styles.detailLabel}>Email Address</span><span className={styles.detailValue} style={{ fontSize: '1rem', fontWeight: 'bold' }}>{viewingUser.email}</span></div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}><span className={styles.detailLabel}>Display Name</span><span className={styles.detailValue}>{viewingUser.displayName || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Not provided</span>}</span></div>
+                        <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
+                            <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
+                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                    <span className={styles.detailLabel}>Authentication Email</span>
+                                    <span className={styles.detailValue} style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{viewingUser.email}</span>
+                                </div>
                                 <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Account Role</span>
+                                    <span className={styles.detailLabel}>Display Name</span>
+                                    <span className={styles.detailValue} style={{ fontSize: '1rem' }}>{viewingUser.displayName || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', opacity: 0.6 }}>Not set by user</span>}</span>
+                                </div>
+                                <div className={styles.detailItem}>
+                                    <span className={styles.detailLabel}>Status & Security</span>
+                                    <span className={styles.detailValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        {viewingUser.isActive === false ? <span style={{ color: '#ef4444', fontWeight: 'bold' }}>● Disabled</span> : <span style={{ color: '#10b981', fontWeight: 'bold' }}>● Active Account</span>}
+                                    </span>
+                                </div>
+                                <div className={styles.detailItem}>
+                                    <span className={styles.detailLabel}>Administrative Role</span>
                                     {viewingUser.email === user.email ? (
-                                        <span className={styles.detailValue} style={{ textTransform: 'capitalize', color: viewingUser.role === 'superadmin' ? '#10b981' : (viewingUser.role === 'admin' ? '#8b5cf6' : (viewingUser.role === 'editor' ? '#f59e0b' : 'var(--text-primary)')) }}>
-                                            {viewingUser.role} (You)
-                                        </span>
+                                        <div style={{ marginTop: '0.6rem' }}>
+                                            <span className={`${styles.roleBadge} ${viewingUser.role === 'superadmin' ? styles.roleSuperadmin : (viewingUser.role === 'admin' ? styles.roleAdmin : styles.roleEditor)}`}>
+                                                {viewingUser.role.toUpperCase()} (YOU)
+                                            </span>
+                                        </div>
                                     ) : (
-                                        <select className={styles.standardSelect} style={{ width: '100%', marginTop: '0.4rem' }} value={viewingUser.role}
+                                        <select className={styles.standardSelect} style={{ width: '100%', marginTop: '0.4rem', fontSize: '0.85rem' }} value={viewingUser.role}
                                             onChange={(e) => { const newRole = e.target.value; handleRoleChange(viewingUser.id, newRole); setViewingUser({ ...viewingUser, role: newRole }); }}>
                                             <option value="pending">Pending</option>
                                             <option value="editor">Editor</option>
@@ -326,29 +346,36 @@ const UsersTab = ({ user, userRole, showToast }) => {
                                         </select>
                                     )}
                                 </div>
-                                <div className={styles.detailItem}><span className={styles.detailLabel}>Status</span><span className={styles.detailValue}>{viewingUser.isActive === false ? <span style={{ color: '#ef4444' }}>Disabled</span> : <span style={{ color: '#10b981' }}>Active</span>}</span></div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}><span className={styles.detailLabel}>Registration Date</span><span className={styles.detailValue}>{viewingUser.createdAt?.seconds ? new Date(viewingUser.createdAt.seconds * 1000).toLocaleString() : 'Unknown'}</span></div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}><span className={styles.detailLabel}>User ID</span><span className={styles.detailValue} style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{viewingUser.id}</span></div>
+                                <div className={styles.detailItem}>
+                                    <span className={styles.detailLabel}>Registration Date</span>
+                                    <span className={styles.detailValue} style={{ fontSize: '0.9rem' }}>{viewingUser.createdAt?.seconds ? new Date(viewingUser.createdAt.seconds * 1000).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' }) : 'Unknown'}</span>
+                                </div>
+                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                    <span className={styles.detailLabel}>System Universal ID (UID)</span>
+                                    <span className={styles.detailValue} style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '0.4rem 0.8rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>{viewingUser.id}</span>
+                                </div>
                             </div>
                         </div>
-                        <div className={styles.modalFooter} style={{ justifyContent: 'space-between', marginTop: 'auto' }}>
+                        <div className={styles.modalFooter} style={{ padding: '1.5rem 2rem', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                             <div>
                                 {viewingUser.email !== user.email && (
-                                    <button className={styles.deleteBtn} onClick={() => { handleRemoveUser(viewingUser.email, viewingUser.id); setViewingUser(null); }} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem' }}>
-                                        <Trash2 size={16} /> Remove
+                                    <button className={styles.deleteBtn} onClick={() => { handleRemoveUser(viewingUser.email, viewingUser.id); setViewingUser(null); }} style={{ padding: '0.6rem 1.25rem' }}>
+                                        <Trash2 size={16} /> Disable User Account
                                     </button>
                                 )}
                             </div>
-                            <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                <button className={styles.submitBtn} onClick={() => { handleResetPassword(viewingUser.email); setViewingUser(null); }}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'transparent', border: '1px solid var(--glass-border, rgba(255,255,255,0.1))', color: 'var(--text-primary)', padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '8px' }}>
-                                    🔑 Reset Password
+                            <div style={{ display: 'flex', gap: '0.8rem' }}>
+                                <button className={styles.editBtn} onClick={() => { handleResetPassword(viewingUser.email); setViewingUser(null); }}
+                                    style={{ background: 'transparent', border: '1px solid var(--glass-border)', padding: '0.6rem 1.25rem' }}>
+                                    🔑 Send Reset Email
                                 </button>
+                                <button onClick={() => setViewingUser(null)} className={styles.primaryBtn} style={{ padding: '0.6rem 1.5rem' }}>Done</button>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
+
 
             {/* Confirm Dialog */}
             {confirmDialog.isOpen && (

@@ -167,20 +167,24 @@ export const ActivityProvider = ({ children }) => {
         queueFlush();
     }, [queueFlush, shouldLogDetailedInfo]);
 
-    const trackWrite = useCallback((count = 1, label = '') => {
+    const trackWrite = useCallback((count = 1, label = '', details = null) => {
         const validCount = Number.isFinite(count) ? count : 1;
         pendingRef.current.writes += validCount;
         if (label && shouldLogDetailedInfo('write')) {
-            pendingRef.current.logs.push({ type: 'write', label, count: validCount });
+            const logEntry = { type: 'write', label, count: validCount };
+            if (details) logEntry.details = details;
+            pendingRef.current.logs.push(logEntry);
         }
         queueFlush();
     }, [queueFlush, shouldLogDetailedInfo]);
 
-    const trackDelete = useCallback((count = 1, label = '') => {
+    const trackDelete = useCallback((count = 1, label = '', details = null) => {
         const validCount = Number.isFinite(count) ? count : 1;
         pendingRef.current.deletes += validCount;
         if (label && shouldLogDetailedInfo('delete')) {
-            pendingRef.current.logs.push({ type: 'delete', label, count: validCount });
+            const logEntry = { type: 'delete', label, count: validCount };
+            if (details) logEntry.details = details;
+            pendingRef.current.logs.push(logEntry);
         }
         queueFlush();
     }, [queueFlush, shouldLogDetailedInfo]);

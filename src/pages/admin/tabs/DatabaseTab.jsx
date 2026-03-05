@@ -126,30 +126,18 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
         <div className={styles.section} style={{ paddingBottom: '4rem' }}>
             {/* Progress Alert */}
             {restoreProgress && (
-                <div style={{
-                    position: 'fixed',
-                    top: '20px',
-                    right: '20px',
-                    zIndex: 2000,
-                    minWidth: '300px',
-                    background: 'var(--card-bg)',
-                    border: '1px solid var(--primary-color)',
-                    borderRadius: '12px',
-                    padding: '1.25rem',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                    animation: 'slideInRight 0.3s ease'
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--primary-color)', fontWeight: '600' }}>
+                <div className={styles.floatingProgress}>
+                    <div className={styles.progressHeader}>
+                        <div className={styles.progressTitle}>
                             <RefreshCw size={18} className={styles.spin} />
                             <span>Restoring Database...</span>
                         </div>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{restoreProgress.percentage}%</span>
+                        <span className={styles.progressPercent}>{restoreProgress.percentage}%</span>
                     </div>
-                    <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden', marginBottom: '0.5rem' }}>
-                        <div style={{ width: `${restoreProgress.percentage}%`, height: '100%', background: 'var(--primary-color)', transition: 'width 0.2s ease' }}></div>
+                    <div className={styles.progressBar}>
+                        <div className={styles.progressFill} style={{ width: `${restoreProgress.percentage}%` }}></div>
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'right' }}>
+                    <div className={styles.progressDetails}>
                         {restoreProgress.completed.toLocaleString()} / {restoreProgress.total.toLocaleString()} records processed
                     </div>
                 </div>
@@ -315,23 +303,35 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
 
             {/* Archive Confirmation Modal */}
             {showArchiveConfirm && (
-                <div className={styles.modalOverlay} onClick={() => setShowArchiveConfirm(false)} style={{ zIndex: 1100 }}>
-                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', padding: 0 }}>
-                        <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(239, 68, 68, 0.05)' }}>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ef4444', margin: 0 }}><Trash2 size={20} /> Confirm Permanent Archive</h3>
+                <div className={styles.modalOverlay} onClick={() => setShowArchiveConfirm(false)} style={{ zIndex: 1300 }}>
+                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px', padding: 0, borderRadius: '16px' }}>
+                        <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.5rem 1.75rem', background: 'rgba(239, 68, 68, 0.05)' }}>
+                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#ef4444', margin: 0 }}><Trash2 size={22} strokeWidth={2.5} /> Confirm Archive</h3>
                             <button onClick={() => setShowArchiveConfirm(false)} className={styles.closeBtn} style={{ position: 'absolute', top: '50%', right: '1.5rem', transform: 'translateY(-50%)' }}><X size={20} /></button>
                         </div>
-                        <div style={{ padding: '1.5rem' }}>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '1.25rem' }}>You are about to permanently delete all <strong>Messages</strong>, <strong>Audit Logs</strong>, and <strong>Analytics</strong> older than {archiveDays} days.</p>
-                            <div style={{ background: 'var(--card-bg)', padding: '1rem', border: '1px solid var(--border-color)', borderRadius: '8px', marginBottom: '1.5rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}><Database size={16} style={{ color: '#38bdf8' }} /> <strong>Step 1:</strong> Download full JSON Backup</div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}><Trash2 size={16} style={{ color: '#ef4444' }} /> <strong>Step 2:</strong> Permanently Delete from Database</div>
+                        <div style={{ padding: '1.75rem', lineHeight: '1.6' }}>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+                                You are about to permanently delete all <strong>Messages</strong>, <strong>Audit Logs</strong>, and <strong>Analytics</strong> older than <span style={{ color: '#ef4444', fontWeight: 'bold' }}>{archiveDays} days</span>.
+                            </p>
+
+                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.25rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.8rem', marginBottom: '1rem', color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+                                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'rgba(56, 189, 248, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8', flexShrink: 0, fontWeight: 'bold', fontSize: '0.75rem' }}>1</div>
+                                    <div><strong>Recommended:</strong> Download full JSON Backup before proceeding.</div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.8rem', color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+                                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0, fontWeight: 'bold', fontSize: '0.75rem' }}>2</div>
+                                    <div><strong>Permanent:</strong> Records will be permanently removed from Firebase.</div>
+                                </div>
                             </div>
-                            <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center' }}>Are you absolutely sure?</p>
+
+                            <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: '600', textAlign: 'center', margin: 0 }}>Are you absolutely sure?</p>
                         </div>
-                        <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                            <button onClick={() => setShowArchiveConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
-                            <button onClick={() => handleArchiveData(archiveDays)} className={styles.deleteBtn} style={{ padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Trash2 size={16} /> Confirm & Archive</button>
+                        <div className={styles.modalFooter} style={{ padding: '1.25rem 1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.8rem' }}>
+                            <button onClick={() => setShowArchiveConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>Cancel</button>
+                            <button onClick={() => handleArchiveData(archiveDays)} className={styles.deleteBtn} style={{ padding: '0.6rem 1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Trash2 size={16} /> Delete Forever
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -339,30 +339,42 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
 
             {/* Restore Confirmation Modal */}
             {showRestoreConfirm && (
-                <div className={styles.modalOverlay} onClick={() => setShowRestoreConfirm(false)} style={{ zIndex: 1100 }}>
-                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', padding: 0 }}>
-                        <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(108, 99, 255, 0.05)' }}>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color)', margin: 0 }}><Database size={20} /> Confirm Database Restore</h3>
+                <div className={styles.modalOverlay} onClick={() => setShowRestoreConfirm(false)} style={{ zIndex: 1300 }}>
+                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px', padding: 0, borderRadius: '16px' }}>
+                        <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.5rem 1.75rem', background: 'rgba(99, 102, 241, 0.05)' }}>
+                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--primary-color)', margin: 0 }}><Upload size={22} strokeWidth={2.5} /> Restore Data</h3>
                             <button onClick={() => setShowRestoreConfirm(false)} className={styles.closeBtn} style={{ position: 'absolute', top: '50%', right: '1.5rem', transform: 'translateY(-50%)' }}><X size={20} /></button>
                         </div>
-                        <div style={{ padding: '1.5rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', padding: '1rem', background: 'var(--card-bg)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(108, 99, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary-color)' }}><FileJson size={24} /></div>
+                        <div style={{ padding: '1.75rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem', padding: '1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', flexShrink: 0 }}>
+                                    <FileJson size={28} />
+                                </div>
                                 <div style={{ flex: 1, overflow: 'hidden' }}>
-                                    <div style={{ color: 'var(--text-primary)', fontWeight: '600', fontSize: '0.9rem', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{restoreFile?.name}</div>
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{(restoreFile?.size / 1024).toFixed(2)} KB • JSON Backup</div>
+                                    <div style={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{restoreFile?.name}</div>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366f1' }}></div>
+                                        {(restoreFile?.size / 1024).toFixed(2)} KB • JSON Backup File
+                                    </div>
                                 </div>
                             </div>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '1.25rem' }}>This will <strong>overwrite existing documents</strong> if they share the same IDs.</p>
+
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '1.25rem', textAlign: 'center' }}>
+                                Existing database documents with the same IDs will be <strong>completely overwritten</strong> with the backup data.
+                            </p>
+
                             <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.1)', marginBottom: '1.5rem' }}>
-                                <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}><AlertTriangle size={16} /> Warning: This action cannot be undone.</p>
+                                <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, justifyContent: 'center' }}>
+                                    <AlertTriangle size={18} /> Warning: This action cannot be undone.
+                                </p>
                             </div>
-                            <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center' }}>Are you ready to proceed?</p>
+
+                            <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center', margin: 0 }}>Are you ready to restore?</p>
                         </div>
-                        <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                            <button onClick={() => setShowRestoreConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
-                            <button onClick={() => { setShowRestoreConfirm(false); processDatabaseRestore(restoreFile); }} className={styles.primaryBtn} style={{ padding: '0.6rem 1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Upload size={16} /> Start Restoration
+                        <div className={styles.modalFooter} style={{ padding: '1.25rem 1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.8rem' }}>
+                            <button onClick={() => setShowRestoreConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>Cancel</button>
+                            <button onClick={() => { setShowRestoreConfirm(false); processDatabaseRestore(restoreFile); }} className={styles.primaryBtn} style={{ padding: '0.6rem 1.75rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Upload size={18} /> Start Full Restore
                             </button>
                         </div>
                     </div>

@@ -29,7 +29,9 @@ class ProjectService extends BaseService {
         if (userRole === 'pending' || userRole === 'editor') {
             throw new Error("Not authorized to delete projects.");
         }
-        return this.delete(id, trackDelete);
+        return this.delete(id, (count, label) => {
+            if (trackDelete) trackDelete(count, label, { id, action: 'deleted' });
+        });
     }
 
     /**
@@ -63,11 +65,15 @@ class ProjectService extends BaseService {
         }
 
         if (formData.id) {
-            await this.update(formData.id, dataToSave, trackWrite);
+            await this.update(formData.id, dataToSave, (count, label) => {
+                if (trackWrite) trackWrite(count, label, dataToSave);
+            });
             return { isNew: false, id: formData.id };
         } else {
             dataToSave.createdAt = serverTimestamp();
-            const newId = await this.create(dataToSave, trackWrite);
+            const newId = await this.create(dataToSave, (count, label) => {
+                if (trackWrite) trackWrite(count, label, dataToSave);
+            });
             return { isNew: true, id: newId };
         }
     }

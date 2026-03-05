@@ -17,7 +17,9 @@ class ExperienceService extends BaseService {
         if (userRole === 'pending' || userRole === 'editor') {
             throw new Error("Not authorized to delete experience records.");
         }
-        return this.delete(id, trackDelete);
+        return this.delete(id, (count, label) => {
+            if (trackDelete) trackDelete(count, label, { id, action: 'deleted' });
+        });
     }
 
     /**
@@ -30,19 +32,23 @@ class ExperienceService extends BaseService {
         }
 
         const formatMonthYear = (yyyyMm) => {
-            if (!yyyyMm) return '';
+            if (!yyyyMm || typeof yyyMm !== 'string' || !yyyyMm.includes('-')) return yyyyMm || '';
             const [year, month] = yyyMm.split('-');
             const date = new Date(year, month - 1);
             return date.toLocaleString('default', { month: 'short', year: 'numeric' });
         };
 
+        const startLabel = formatMonthYear(formData.startMonthYear);
+        const endLabel = formData.current ? 'Present' : formatMonthYear(formData.endMonthYear);
+
         const dataToSave = {
             company: formData.company,
             role: formData.role,
-            startDate: formatMonthYear(formData.startMonthYear),
+            startDate: startLabel,
             startMonthYear: formData.startMonthYear,
-            endDate: formData.current ? 'Present' : formatMonthYear(formData.endMonthYear),
+            endDate: endLabel,
             endMonthYear: formData.current ? '' : formData.endMonthYear,
+            period: `${startLabel} - ${endLabel}`,
             current: formData.current,
             description: formData.description,
             visible: formData.visible !== false, // Default to true if undefined
@@ -50,11 +56,15 @@ class ExperienceService extends BaseService {
         };
 
         if (formData.id) {
-            await this.update(formData.id, dataToSave, trackWrite);
+            await this.update(formData.id, dataToSave, (count, label) => {
+                if (trackWrite) trackWrite(count, label, dataToSave);
+            });
             return { isNew: false, id: formData.id };
         } else {
             dataToSave.createdAt = serverTimestamp();
-            const newId = await this.create(dataToSave, trackWrite);
+            const newId = await this.create(dataToSave, (count, label) => {
+                if (trackWrite) trackWrite(count, label, dataToSave);
+            });
             return { isNew: true, id: newId };
         }
     }

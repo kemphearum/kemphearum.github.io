@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft } from 'lucide-react';
+import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft, History } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sortData } from '../../../utils/sortData';
@@ -10,6 +10,8 @@ import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
 import styles from '../../Admin.module.scss';
 import ProjectService from '../../../services/ProjectService';
+import ConfirmDialog from '../components/ConfirmDialog';
+import HistoryModal from '../components/HistoryModal';
 
 const ProjectsTab = ({ userRole, showToast }) => {
     const [project, setProject] = useState({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
@@ -23,6 +25,8 @@ const ProjectsTab = ({ userRole, showToast }) => {
     const [projSort, setProjSort] = useState({ field: 'createdAt', dir: 'desc' });
     const [isProjectPreviewMode, setIsProjectPreviewMode] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
+    const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
     const { trackRead, trackWrite, trackDelete } = useActivity();
     const queryClient = useQueryClient();
 
@@ -62,7 +66,6 @@ const ProjectsTab = ({ userRole, showToast }) => {
         try {
             await ProjectService.toggleVisibility(userRole, id, currentVisible, trackWrite);
             queryClient.invalidateQueries({ queryKey: ['projects'] });
-            setProjects(prev => prev.map(p => p.id === id ? { ...p, visible: !currentVisible } : p));
             showToast(`Project ${!currentVisible ? 'shown' : 'hidden'}.`);
         } catch (error) { showToast(error.message || 'Failed to toggle visibility.', 'error'); }
     };
@@ -71,18 +74,37 @@ const ProjectsTab = ({ userRole, showToast }) => {
         try {
             await ProjectService.toggleFeatured(userRole, id, currentFeatured, trackWrite);
             queryClient.invalidateQueries({ queryKey: ['projects'] });
-            setProjects(prev => prev.map(p => p.id === id ? { ...p, featured: !currentFeatured } : p));
             showToast(!currentFeatured ? 'Featured on homepage!' : 'Removed from homepage.');
         } catch (error) { showToast(error.message || 'Failed to toggle featured status.', 'error'); }
     };
 
-    const handleDeleteProject = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this project?')) return;
-        try {
-            await ProjectService.deleteProject(userRole, id, trackDelete);
-            queryClient.invalidateQueries({ queryKey: ['projects'] });
-            showToast('Project deleted successfully.');
-        } catch (error) { showToast(error.message || 'Failed to delete project.', 'error'); }
+    const handleDeleteProject = (id) => {
+        if (userRole === 'pending' || userRole === 'editor') {
+            showToast("Not authorized to delete projects.", "error");
+            return;
+        }
+
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Delete Project',
+            message: 'Are you sure you want to delete this project? This action cannot be undone.',
+            confirmText: 'Delete',
+            type: 'danger',
+            onConfirm: async () => {
+                setLoading(true);
+                try {
+                    await ProjectService.deleteProject(userRole, id, trackDelete);
+                    queryClient.invalidateQueries({ queryKey: ['projects'] });
+                    queryClient.invalidateQueries({ queryKey: ['history'] });
+                    showToast('Project deleted successfully.');
+                } catch (error) {
+                    showToast(error.message || 'Failed to delete project.', 'error');
+                } finally {
+                    setLoading(false);
+                    setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
+                }
+            }
+        });
     };
 
     const handleSaveProject = async (e) => {
@@ -101,6 +123,7 @@ const ProjectsTab = ({ userRole, showToast }) => {
 
             const result = await ProjectService.saveProject(userRole, formData, imageUrl, trackWrite);
             queryClient.invalidateQueries({ queryKey: ['projects'] });
+            queryClient.invalidateQueries({ queryKey: ['history'] });
             setEditingProject(null);
             setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
             setProjectImage(null);
@@ -187,6 +210,7 @@ const ProjectsTab = ({ userRole, showToast }) => {
                                                 </button>
                                             </>
                                         )}
+                                        <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={styles.editBtn} title="View Edit History"><History size={16} /></button>
                                         <button onClick={(e) => { e.stopPropagation(); handleEditClick(p); }} className={styles.editBtn} title="Edit"><Edit2 size={16} /></button>
                                         {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
                                     </div>
@@ -256,37 +280,64 @@ const ProjectsTab = ({ userRole, showToast }) => {
             )}
 
             {/* Project Details Modal */}
+            {/* Project Details Modal */}
             {viewingProject && (
-                <div className={styles.modalOverlay} onClick={() => setViewingProject(null)}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '700px' }}>
-                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)' }}>
-                            <h3>{icons.projects || '🗂️'} Project Details</h3>
+                <div className={styles.modalOverlay} onClick={() => setViewingProject(null)} style={{ zIndex: 1200 }}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '720px', borderRadius: '20px' }}>
+                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}>
+                            <h3 style={{ fontSize: '1.4rem' }}>{icons.projects || '🗂️'} Project Details</h3>
                             <button onClick={() => setViewingProject(null)} className={styles.closeBtn}><X size={20} /></button>
                         </div>
-                        <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '75vh' }}>
-                            <div className={styles.detailGrid} style={{ marginBottom: '1.5rem' }}>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}><span className={styles.detailLabel}>Title</span><span className={styles.detailValue}>{viewingProject.title}</span></div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}><span className={styles.detailLabel}>Excerpt</span><span className={styles.detailValue}>{viewingProject.description}</span></div>
+                        <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
+                            <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                    <span className={styles.detailLabel}>Title</span>
+                                    <span className={styles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingProject.title}</span>
+                                </div>
+                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                    <span className={styles.detailLabel}>Description</span>
+                                    <span className={styles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingProject.description}</span>
+                                </div>
                                 <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
                                     <span className={styles.detailLabel}>Tech Stack</span>
-                                    <div className={styles.techTags} style={{ marginTop: '0.25rem' }}>
+                                    <div className={styles.techTags} style={{ marginTop: '0.6rem' }}>
                                         {(Array.isArray(viewingProject.techStack) ? viewingProject.techStack : []).map((t, i) => (
-                                            <span key={`preview-tag-${t}-${i}`} className={styles.techTag} style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)' }}>{t}</span>
+                                            <span key={`preview-tag-${t}-${i}`} className={styles.techTag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>{t}</span>
                                         ))}
                                     </div>
                                 </div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'row', gap: '1rem', alignItems: 'center' }}>
-                                    {viewingProject.liveUrl && <a href={viewingProject.liveUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-color)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><ExternalLink size={14} /> Live Demo</a>}
-                                    {viewingProject.githubUrl && <a href={viewingProject.githubUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><LinkIcon size={14} /> GitHub</a>}
+                                <div className={styles.detailItem} style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'row', gap: '1.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                                    {viewingProject.liveUrl && <a href={viewingProject.liveUrl} target="_blank" rel="noopener noreferrer" className={styles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem' }}><ExternalLink size={16} /> Live Demo</a>}
+                                    {viewingProject.githubUrl && <a href={viewingProject.githubUrl} target="_blank" rel="noopener noreferrer" className={styles.editBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><LinkIcon size={16} /> GitHub Repository</a>}
                                 </div>
                             </div>
-                            <div style={{ background: 'var(--input-bg)', padding: '1rem', borderRadius: '8px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
                                 <MarkdownRenderer content={viewingProject.content || '*No extended content...*'} />
                             </div>
+                        </div>
+                        <div className={styles.modalFooter} style={{ padding: '1.25rem 2rem' }}>
+                            <button onClick={() => setViewingProject(null)} className={styles.primaryBtn}>Close</button>
                         </div>
                     </div>
                 </div>
             )}
+
+
+            {/* Confirm Dialog */}
+            {confirmDialog.isOpen && (
+                <ConfirmDialog
+                    confirmDialog={confirmDialog}
+                    setConfirmDialog={setConfirmDialog}
+                />
+            )}
+
+            <HistoryModal
+                isOpen={historyModal.isOpen}
+                onClose={() => setHistoryModal({ isOpen: false, recordId: null, title: '' })}
+                recordId={historyModal.recordId}
+                service={ProjectService}
+                title={historyModal.title}
+            />
         </>
     );
 };

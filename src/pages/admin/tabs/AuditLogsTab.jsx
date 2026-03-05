@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import AuditLogService from '../../../services/AuditLogService';
-import { Activity, Filter, RefreshCw, Eye, Edit2, Trash2, ChevronRight, Search, X, Shield, Mail, Globe, Monitor, Smartphone, Tablet, MapPin, Key, Clock, BarChart2 } from 'lucide-react';
+import { Activity, Search, Filter, Download, Trash2, Eye, Shield, UserX, Clock, MapPin, Monitor, Globe, Edit2, AlertCircle, RefreshCw, BarChart2, ShieldAlert, CheckCircle2, ChevronRight, X, Smartphone, Tablet, Mail, Key } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery } from '@tanstack/react-query';
 import { sortData } from '../../../utils/sortData';
@@ -21,6 +21,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     const [activityDetailType, setActivityDetailType] = useState(null);
     const [activityLogs, setActivityLogs] = useState([]);
     const [activityLogsLoading, setActivityLogsLoading] = useState(false);
+    const [expandedLogId, setExpandedLogId] = useState(null);
 
     // Audit State
     const [selectedAuditLog, setSelectedAuditLog] = useState(null);
@@ -30,10 +31,14 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     const [auditPerPage, setAuditPerPage] = useState(10);
     const [auditSort, setAuditSort] = useState({ field: 'timestamp', dir: 'desc' });
 
+
+
     const handleAuditSort = useCallback((field) => {
         setAuditSort(prev => ({ field, dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc' }));
         setAuditPage(1);
     }, []);
+
+
 
     // Aggregate activity data based on date range
     useEffect(() => {
@@ -62,6 +67,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
             const operationType = type === 'reads' ? 'read' : (type === 'writes' ? 'write' : 'delete');
             const logs = await AuditLogService.fetchActivityDetails(activityDateRange, operationType, currentDateKey);
             setActivityLogs(logs);
+            setExpandedLogId(null);
         } catch (error) { console.error(`Error fetching ${type} details:`, error); showToast(`Failed to load activity logs: ${error.message}`, 'error'); }
         finally { setActivityLogsLoading(false); }
     }, [activityDateRange, currentDateKey, showToast]);
@@ -237,7 +243,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
             {selectedAuditLog && (
                 <div className={styles.modalOverlay} onClick={() => setSelectedAuditLog(null)} style={{ zIndex: 1100 }}>
                     <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', padding: 0, animation: 'modalFadeIn 0.25s ease forwards' }}>
-                        <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.25rem 1.5rem', background: 'rgba(100, 255, 218, 0.03)' }}>
+                        <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '0.75rem 1.5rem', background: 'rgba(100, 255, 218, 0.03)' }}>
                             <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color, #64ffda)', margin: 0 }}><Shield size={20} /> Audit Log Details</h3>
                             <button onClick={() => setSelectedAuditLog(null)} className={styles.closeBtn} style={{ position: 'absolute', top: '50%', right: '1.5rem', transform: 'translateY(-50%)' }}><X size={20} /></button>
                         </div>
@@ -270,18 +276,18 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                 </div>
             )}
 
-            {/* Activity Detail Modal */}
+            {/* Activity Logs Detail Modal Overlay */}
             {activityDetailType && (
-                <div className={styles.modalOverlay} onClick={() => setActivityDetailType(null)} style={{ zIndex: 1100 }}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '850px', maxHeight: '85vh', overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column' }}>
-                        <div className={styles.modalHeader} style={{ position: 'relative', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.5rem', background: 'var(--card-bg)', display: 'block' }}>
-                            <div>
-                                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', margin: '0 0 0.4rem 0', fontSize: '1.25rem', color: activityDetailType === 'reads' ? '#38bdf8' : activityDetailType === 'writes' ? '#a78bfa' : '#fb923c' }}>
-                                    {activityDetailType === 'reads' ? <Eye size={22} /> : activityDetailType === 'writes' ? <Edit2 size={22} /> : <Trash2 size={22} />}
-                                    {activityDetailType.charAt(0).toUpperCase() + activityDetailType.slice(1)} Activity Logs
+                <div className={styles.modalOverlay} onClick={() => setActivityDetailType(null)} style={{ zIndex: 1200 }}>
+                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '750px', maxHeight: '85vh', borderRadius: '20px', display: 'flex', flexDirection: 'column' }}>
+                        <div className={styles.modalHeader} style={{ flexShrink: 0, padding: '0.75rem 1.5rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem', color: activityDetailType === 'reads' ? '#38bdf8' : activityDetailType === 'writes' ? '#6366f1' : '#ef4444' }}>
+                                    {activityDetailType === 'reads' ? <Eye size={16} strokeWidth={2.5} /> : activityDetailType === 'writes' ? <Edit2 size={16} strokeWidth={2.5} /> : <Trash2 size={16} strokeWidth={2.5} />}
+                                    {activityDetailType.charAt(0).toUpperCase() + activityDetailType.slice(1)} Audit History
                                 </h3>
                                 <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                    Detailed breakdown of all {activityDetailType} for {new Date().toISOString().split('T')[0]}
+                                    Activity reports for {new Date().toLocaleDateString('en-US', { dateStyle: 'full' })}
                                 </p>
                             </div>
                             <button
@@ -293,73 +299,108 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                                 <X size={20} />
                             </button>
                         </div>
-                        <div style={{ padding: '0', overflowY: 'auto', flex: 1 }}>
+                        <div style={{ padding: '0', overflowY: 'auto', flex: 1, background: 'rgba(0,0,0,0.1)' }}>
                             {activityLogsLoading ? (
-                                <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-secondary)' }}>
-                                    <RefreshCw size={24} className={styles.spin} style={{ opacity: 0.4, marginBottom: '1rem' }} />
-                                    <p>Loading activity logs...</p>
+                                <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-secondary)' }}>
+                                    <RefreshCw size={32} className={styles.spin} style={{ opacity: 0.3, marginBottom: '1.5rem' }} />
+                                    <p style={{ letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 'bold' }}>Synchronizing Logs...</p>
                                 </div>
                             ) : activityLogs.length === 0 ? (
-                                <div className={styles.emptyState} style={{ padding: '4rem', textAlign: 'center' }}>No {activityDetailType} activity logs found for this period.</div>
+                                <div className={styles.emptyState} style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
+                                    <Activity size={48} style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }} />
+                                    No {activityDetailType} records found for today's session.
+                                </div>
                             ) : (
-                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                                    <thead style={{ position: 'sticky', top: 0, background: 'var(--card-bg)', zIndex: 10 }}>
-                                        <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                                            <th style={{ textAlign: 'left', padding: '1rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.75rem', letterSpacing: '0.5px', textTransform: 'uppercase', fontWeight: 600 }}>Operation & Target</th>
-                                            <th style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.75rem', letterSpacing: '0.5px', textTransform: 'uppercase', fontWeight: 600 }}>Count</th>
-                                            <th style={{ textAlign: 'left', padding: '1rem', color: 'var(--text-secondary)', fontSize: '0.75rem', letterSpacing: '0.5px', textTransform: 'uppercase', fontWeight: 600 }}>User Attribution</th>
-                                            <th style={{ textAlign: 'right', padding: '1rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.75rem', letterSpacing: '0.5px', textTransform: 'uppercase', fontWeight: 600 }}>Timestamp</th>
+                                <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '0.88rem' }}>
+                                    <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary, rgba(30, 41, 59, 0.95))', backdropFilter: 'blur(8px)', zIndex: 10 }}>
+                                        <tr>
+                                            <th style={{ textAlign: 'left', padding: '1.25rem 2rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Operation & Target</th>
+                                            <th style={{ textAlign: 'center', padding: '1.25rem 1rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Count</th>
+                                            <th style={{ textAlign: 'left', padding: '1.25rem 1rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Originator</th>
+                                            <th style={{ textAlign: 'right', padding: '1.25rem 2rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Timestamp</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {activityLogs.map((log, i) => {
                                             const isAnon = !log.user || log.user === 'Anonymous';
+                                            const logId = log.id || i;
+                                            const isExpanded = expandedLogId === logId;
+                                            const hasDetails = log.details && Object.keys(log.details).length > 0;
+
                                             return (
-                                                <tr key={`log-${log.id || i}`} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                                    <td style={{ padding: '1.25rem 1.5rem', color: 'var(--text-primary)' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                            <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-                                                                {activityDetailType === 'reads' ? <Eye size={14} /> : activityDetailType === 'writes' ? <Edit2 size={14} /> : <Trash2 size={14} />}
+                                                <React.Fragment key={`log-${logId}`}>
+                                                    <tr
+                                                        style={{
+                                                            transition: 'all 0.2s ease',
+                                                            cursor: hasDetails ? 'pointer' : 'default',
+                                                            background: isExpanded ? 'var(--bg-tertiary, rgba(255,255,255,0.05))' : 'transparent'
+                                                        }}
+                                                        onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = 'var(--bg-hover, rgba(255,255,255,0.03))'; }}
+                                                        onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = 'transparent'; }}
+                                                        onClick={() => hasDetails && setExpandedLogId(isExpanded ? null : logId)}
+                                                    >
+                                                        <td style={{ padding: '1.25rem 2rem', color: 'var(--text-primary)', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '20px', color: 'var(--text-secondary)' }}>
+                                                                    {hasDetails && (
+                                                                        <ChevronRight size={16} style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+                                                                    )}
+                                                                </div>
+                                                                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: activityDetailType === 'reads' ? 'rgba(56, 189, 248, 0.1)' : activityDetailType === 'writes' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: activityDetailType === 'reads' ? '#38bdf8' : activityDetailType === 'writes' ? '#6366f1' : '#ef4444' }}>
+                                                                    {activityDetailType === 'reads' ? <Eye size={16} /> : activityDetailType === 'writes' ? <Edit2 size={16} /> : <Trash2 size={16} />}
+                                                                </div>
+                                                                <span style={{ fontWeight: 600 }}>{log.label || log.type || '-'}</span>
                                                             </div>
-                                                            <span style={{ fontWeight: 500 }}>{log.label || log.type || '-'}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td style={{ padding: '1.25rem 1rem', textAlign: 'center' }}>
-                                                        <span style={{ display: 'inline-block', padding: '0.2rem 0.6rem', borderRadius: '4px', background: 'rgba(255,255,255,0.05)', fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-primary)' }}>
-                                                            {log.count || 1}
-                                                        </span>
-                                                    </td>
-                                                    <td style={{ padding: '1.25rem 1rem', color: 'var(--text-secondary)' }}>
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: isAnon ? '#94a3b8' : '#10b981' }}></span>
-                                                            <span style={{ fontWeight: isAnon ? 400 : 500, color: isAnon ? 'var(--text-secondary)' : '#e2e8f0' }}>{log.user || 'Anonymous'}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td style={{ padding: '1.25rem 1.5rem', textAlign: 'right', color: 'var(--text-secondary)', fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                                                        {log.time?.seconds ? new Date(log.time.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) : '-'}
-                                                    </td>
-                                                </tr>
+                                                        </td>
+                                                        <td style={{ padding: '1.25rem 1rem', textAlign: 'center', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))' }}>
+                                                            <span style={{ display: 'inline-block', padding: '0.25rem 0.75rem', borderRadius: '6px', background: 'var(--bg-tertiary, rgba(255,255,255,0.04))', border: '1px solid var(--border-color, rgba(255,255,255,0.06))', fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-primary)' }}>
+                                                                {log.count || 1}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '1.25rem 1rem', color: 'var(--text-secondary)', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: isAnon ? '#64748b' : '#10b981', boxShadow: isAnon ? 'none' : '0 0 8px rgba(16, 185, 129, 0.5)' }}></div>
+                                                                <span style={{ fontWeight: isAnon ? 500 : 700, color: isAnon ? 'var(--text-secondary)' : 'var(--text-primary)', fontSize: '0.85rem' }}>{log.user || 'Anonymous'}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td style={{ padding: '1.25rem 2rem', textAlign: 'right', color: 'var(--text-secondary)', fontFamily: 'monospace', fontSize: '0.8rem', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))' }}>
+                                                            {log.time?.seconds ? new Date(log.time.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) : '-'}
+                                                        </td>
+                                                    </tr>
+                                                    {isExpanded && (
+                                                        <tr>
+                                                            <td colSpan="4" style={{ padding: '0 2rem 1.5rem 4.5rem', borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.02))', background: 'var(--bg-tertiary, rgba(255,255,255,0.05))' }}>
+                                                                <div style={{ background: 'var(--bg-primary, rgba(0,0,0,0.2))', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color, rgba(255,255,255,0.05))' }}>
+                                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>Event Payload</div>
+                                                                    <pre style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.85rem', fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowX: 'auto' }}>
+                                                                        {JSON.stringify(log.details, null, 2)}
+                                                                    </pre>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </React.Fragment>
                                             );
                                         })}
                                     </tbody>
                                 </table>
                             )}
                         </div>
-                        <div className={styles.modalFooter} style={{ padding: '1.25rem 1.5rem', background: 'rgba(255,255,255,0.02)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                                <BarChart2 size={16} />
-                                Total cumulative {activityDetailType} tracked today:
-                                <strong style={{ color: 'var(--text-primary)', marginLeft: '0.2rem' }}>
+                        <div className={styles.modalFooter} style={{ flexShrink: 0, padding: '0.75rem 1.5rem', background: 'var(--bg-tertiary, rgba(255,255,255,0.03))', borderTop: '1px solid var(--border-color, rgba(255,255,255,0.05))', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--bg-tertiary, rgba(255,255,255,0.05))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><BarChart2 size={14} /></div>
+                                Total cumulative tracked:
+                                <strong style={{ color: 'var(--primary-color)', marginLeft: '0.2rem', fontSize: '1.1rem' }}>
                                     {activityLogs.reduce((acc, log) => acc + (log.count || 1), 0).toLocaleString()}
                                 </strong>
                             </div>
-                            <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                <button onClick={() => setActivityDetailType(null)} className={styles.closeBtnFooter}>Close</button>
-                            </div>
+                            <button onClick={() => setActivityDetailType(null)} className={styles.primaryBtn} style={{ padding: '0.6rem 2rem', margin: 0 }}>Dismiss</button>
                         </div>
                     </div>
                 </div>
             )}
+
+
         </div>
     );
 };

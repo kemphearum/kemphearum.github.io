@@ -10,6 +10,9 @@ import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
 import styles from '../../Admin.module.scss';
 import BlogService from '../../../services/BlogService';
+import ConfirmDialog from '../components/ConfirmDialog';
+import HistoryModal from '../components/HistoryModal';
+import { History } from 'lucide-react';
 
 const BlogTab = ({ userRole, showToast }) => {
     const [postForm, setPostForm] = useState({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
@@ -22,6 +25,8 @@ const BlogTab = ({ userRole, showToast }) => {
     const [postSort, setPostSort] = useState({ field: 'createdAt', dir: 'desc' });
     const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
+    const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
     const { trackRead, trackWrite, trackDelete } = useActivity();
     const queryClient = useQueryClient();
 
@@ -79,15 +84,33 @@ const BlogTab = ({ userRole, showToast }) => {
         }
     };
 
-    const handleDeletePost = async (id) => {
-        if (!window.confirm("Delete this post?")) return;
-        try {
-            await BlogService.deletePost(userRole, id, trackDelete);
-            queryClient.invalidateQueries({ queryKey: ['posts'] });
-            showToast('Post deleted.');
-        } catch (error) {
-            showToast(error.message || 'Failed to delete post.', 'error');
+    const handleDeletePost = (id) => {
+        if (userRole === 'pending' || userRole === 'editor') {
+            showToast("Not authorized to delete posts.", "error");
+            return;
         }
+
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Delete Post',
+            message: 'Are you sure you want to delete this blog post? This action cannot be undone.',
+            confirmText: 'Delete',
+            type: 'danger',
+            onConfirm: async () => {
+                setLoading(true);
+                try {
+                    await BlogService.deletePost(userRole, id, trackDelete);
+                    queryClient.invalidateQueries({ queryKey: ['posts'] });
+                    queryClient.invalidateQueries({ queryKey: ['history'] });
+                    showToast('Post deleted.');
+                } catch (error) {
+                    showToast(error.message || 'Failed to delete post.', 'error');
+                } finally {
+                    setLoading(false);
+                    setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
+                }
+            }
+        });
     };
 
     const handleSavePost = async (e) => {
@@ -110,6 +133,7 @@ const BlogTab = ({ userRole, showToast }) => {
                 showToast('Post published!');
             }
             queryClient.invalidateQueries({ queryKey: ['posts'] });
+            queryClient.invalidateQueries({ queryKey: ['history'] });
             setPostForm({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
             setPostImage(null);
             setIsPreviewMode(false);
@@ -184,6 +208,7 @@ const BlogTab = ({ userRole, showToast }) => {
                                                 </button>
                                             </>
                                         )}
+                                        <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: post.id, title: post.title }); }} className={styles.editBtn} title="View Edit History"><History size={16} /></button>
                                         <button onClick={(e) => { e.stopPropagation(); setPostForm(post); setShowPostForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} title="Edit" className={styles.editBtn}><Edit2 size={16} /></button>
                                         {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
                                     </div>
@@ -249,38 +274,73 @@ const BlogTab = ({ userRole, showToast }) => {
 
             {/* Blog Details Modal */}
             {viewingPost && (
-                <div className={styles.modalOverlay} onClick={() => setViewingPost(null)}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '800px' }}>
-                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)' }}>
-                            <h3>{icons.blog || '📝'} Post Details</h3>
+                <div className={styles.modalOverlay} onClick={() => setViewingPost(null)} style={{ zIndex: 1200 }}>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', borderRadius: '20px' }}>
+                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}>
+                            <h3 style={{ fontSize: '1.4rem' }}>{icons.blog || '📝'} Post Details</h3>
                             <button onClick={() => setViewingPost(null)} className={styles.closeBtn}><X size={20} /></button>
                         </div>
-                        <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '75vh' }}>
-                            <div className={styles.detailGrid} style={{ marginBottom: '1.5rem' }}>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}><span className={styles.detailLabel}>Title</span><span className={styles.detailValue}>{viewingPost.title}</span></div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}><span className={styles.detailLabel}>Excerpt</span><span className={styles.detailValue}>{viewingPost.excerpt}</span></div>
-                                <div className={styles.detailItem}><span className={styles.detailLabel}>Status</span><span className={styles.detailValue}>{viewingPost.visible ? 'Published' : 'Draft'}</span></div>
-                                <div className={styles.detailItem}><span className={styles.detailLabel}>Date</span><span className={styles.detailValue}>{viewingPost.createdAt?.seconds ? new Date(viewingPost.createdAt.seconds * 1000).toLocaleDateString() : 'Unknown'}</span></div>
+                        <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
+                            <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                    <span className={styles.detailLabel}>Title</span>
+                                    <span className={styles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingPost.title}</span>
+                                </div>
+                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                    <span className={styles.detailLabel}>Excerpt</span>
+                                    <span className={styles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingPost.excerpt}</span>
+                                </div>
+                                <div className={styles.detailItem}>
+                                    <span className={styles.detailLabel}>Status</span>
+                                    <span className={styles.detailValue} style={{ color: viewingPost.visible ? '#10b981' : '#f59e0b', fontWeight: '600' }}>{viewingPost.visible ? 'Published' : 'Draft Mode'}</span>
+                                </div>
+                                <div className={styles.detailItem}>
+                                    <span className={styles.detailLabel}>Published Date</span>
+                                    <span className={styles.detailValue}>{viewingPost.createdAt?.seconds ? new Date(viewingPost.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Pending publication'}</span>
+                                </div>
                                 <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
                                     <span className={styles.detailLabel}>Tags</span>
-                                    <div className={styles.techTags} style={{ marginTop: '0.25rem' }}>
+                                    <div className={styles.techTags} style={{ marginTop: '0.6rem' }}>
                                         {(Array.isArray(viewingPost.tags) ? viewingPost.tags : (viewingPost.tags ? viewingPost.tags.split(',') : [])).map((t, i) => t.trim() && (
-                                            <span key={`${t.trim()}-${i}`} className={styles.techTag} style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)' }}>{t.trim()}</span>
+                                            <span key={`${t.trim()}-${i}`} className={styles.techTag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>{t.trim()}</span>
                                         ))}
                                     </div>
                                 </div>
                             </div>
+
                             {viewingPost.coverImage && (
-                                <div style={{ marginBottom: '1.5rem', borderRadius: '8px', overflow: 'hidden' }}>
-                                    <img src={viewingPost.coverImage} alt="Cover" style={{ width: '100%', maxHeight: '300px', objectFit: 'cover' }} />
+                                <div style={{ marginBottom: '2rem', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+                                    <img src={viewingPost.coverImage} alt="Cover" style={{ width: '100%', maxHeight: '350px', objectFit: 'cover' }} />
                                 </div>
                             )}
-                            <div style={{ background: 'var(--input-bg)', padding: '1rem', borderRadius: '8px' }}>
-                                <MarkdownRenderer content={viewingPost.content || '*No content...*'} />
+
+                            <div style={{ background: 'rgba(255,255,255,0.015)', padding: '2rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
+                                <MarkdownRenderer content={viewingPost.content || '*No extended content provided...*'} />
                             </div>
+                        </div>
+                        <div className={styles.modalFooter} style={{ padding: '1.25rem 2rem' }}>
+                            <button onClick={() => setViewingPost(null)} className={styles.primaryBtn}>Close Preview</button>
                         </div>
                     </div>
                 </div>
+            )}
+
+
+            {/* History Modal */}
+            <HistoryModal
+                isOpen={historyModal.isOpen}
+                onClose={() => setHistoryModal({ isOpen: false, recordId: null, title: '' })}
+                recordId={historyModal.recordId}
+                service={BlogService}
+                title={historyModal.title}
+            />
+
+            {/* Confirm Dialog */}
+            {confirmDialog.isOpen && (
+                <ConfirmDialog
+                    confirmDialog={confirmDialog}
+                    setConfirmDialog={setConfirmDialog}
+                />
             )}
         </div>
     );

@@ -261,12 +261,13 @@ const Admin = () => {
             showToast(`${section.charAt(0).toUpperCase() + section.slice(1)} saved!`);
             // Invalidate the TanStack Query cache for this specific content section
             queryClient.invalidateQueries({ queryKey: ['content', section] });
+            // Also invalidate the history cache so the HistoryModal shows the new entry
+            queryClient.invalidateQueries({ queryKey: ['history', 'content', section] });
         } catch (error) {
             console.error(`Error saving ${section}:`, error);
             showToast(`Failed to save ${section}.`, 'error');
         } finally { setLoading(false); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [showToast]);
+    }, [showToast, trackWrite, queryClient]);
 
     useEffect(() => {
         if (user) {

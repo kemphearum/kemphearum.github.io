@@ -1,11 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Search, Mail, MailOpen, Trash2, X } from 'lucide-react';
+import { Search, Mail, MailOpen, Trash2, X, Reply } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { sortData } from '../../../utils/sortData';
 import styles from '../../Admin.module.scss';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
 import MessageService from '../../../services/MessageService';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
     const [searchMessages, setSearchMessages] = useState('');
@@ -14,6 +15,7 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
     const [selectedMessages, setSelectedMessages] = useState([]);
     const [viewingMessage, setViewingMessage] = useState(null);
     const [msgSort, setMsgSort] = useState({ field: 'createdAt', dir: 'desc' });
+    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
     const { trackRead, trackWrite, trackDelete } = useActivity();
 
     const toggleSort = useCallback((field) => {
@@ -101,30 +103,51 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
         }
     };
 
-    const handleBatchDeleteMessages = async () => {
+    const handleBatchDeleteMessages = () => {
         if (selectedMessages.length === 0) return;
-        if (!window.confirm(`Delete ${selectedMessages.length} messages?`)) return;
-        try {
-            await MessageService.batchDeleteMessages(userRole, selectedMessages, trackDelete);
-            setMessages(prev => prev.filter(m => !selectedMessages.includes(m.id)));
-            setSelectedMessages([]);
-            showToast(`Deleted ${selectedMessages.length} messages.`);
-        } catch (error) {
-            showToast(error.message || 'Failed to delete messages.', 'error');
-        }
+
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Delete Messages',
+            message: `Are you sure you want to delete ${selectedMessages.length} selected messages? This action cannot be undone.`,
+            confirmText: 'Delete All',
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await MessageService.batchDeleteMessages(userRole, selectedMessages, trackDelete);
+                    setMessages(prev => prev.filter(m => !selectedMessages.includes(m.id)));
+                    setSelectedMessages([]);
+                    showToast(`Deleted ${selectedMessages.length} messages.`);
+                } catch (error) {
+                    showToast(error.message || 'Failed to delete messages.', 'error');
+                } finally {
+                    setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
+                }
+            }
+        });
     };
 
-    const handleDeleteMessage = async (id) => {
-        if (!window.confirm("Delete this message?")) return;
-        try {
-            await MessageService.deleteMessage(userRole, id, trackDelete);
-            setMessages(messages.filter(m => m.id !== id));
-            setSelectedMessages(prev => prev.filter(mid => mid !== id));
-            if (viewingMessage && viewingMessage.id === id) setViewingMessage(null);
-            showToast('Message deleted.');
-        } catch (error) {
-            showToast(error.message || 'Failed to delete message.', 'error');
-        }
+    const handleDeleteMessage = (id) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Delete Message',
+            message: 'Are you sure you want to delete this message? This action cannot be undone.',
+            confirmText: 'Delete',
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await MessageService.deleteMessage(userRole, id, trackDelete);
+                    setMessages(messages.filter(m => m.id !== id));
+                    setSelectedMessages(prev => prev.filter(mid => mid !== id));
+                    if (viewingMessage && viewingMessage.id === id) setViewingMessage(null);
+                    showToast('Message deleted.');
+                } catch (error) {
+                    showToast(error.message || 'Failed to delete message.', 'error');
+                } finally {
+                    setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
+                }
+            }
+        });
     };
 
     return (
@@ -238,66 +261,65 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
             {/* Message View Modal */}
             {viewingMessage && (
                 <div className={styles.modalOverlay} onClick={() => setViewingMessage(null)} style={{ zIndex: 1200 }}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '600px', padding: 0 }}>
-                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)' }}>
-                            <h3>
-                                <Mail size={20} style={{ color: 'var(--primary-color)' }} />
-                                Message Details
-                            </h3>
-                            <button onClick={() => setViewingMessage(null)} className={styles.closeBtn}>
-                                <X size={20} />
-                            </button>
+                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '650px', borderRadius: '20px' }}>
+                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}>
+                            <h3 style={{ fontSize: '1.3rem' }}><Mail size={22} style={{ color: 'var(--primary-color)' }} /> Message Details</h3>
+                            <button onClick={() => setViewingMessage(null)} className={styles.closeBtn}><X size={20} /></button>
                         </div>
-                        <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '60vh' }}>
-                            <div className={styles.detailGrid}>
+                        <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
+                            <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', marginBottom: '1.5rem' }}>
                                 <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>From</span>
-                                    <span className={styles.detailValue}>
-                                        <span style={{ fontWeight: 'bold' }}>{viewingMessage.name}</span><br />
-                                        <a href={`mailto:${viewingMessage.email}`} style={{ color: 'var(--primary-color)', textDecoration: 'none', display: 'inline-block', marginTop: '0.2rem' }}>{viewingMessage.email}</a>
-                                    </span>
+                                    <span className={styles.detailLabel}>Sender Information</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginTop: '0.6rem' }}>
+                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
+                                            {viewingMessage.name?.charAt(0).toUpperCase() || '?'}
+                                        </div>
+                                        <div>
+                                            <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-primary)', display: 'block' }}>{viewingMessage.name}</span>
+                                            <a href={`mailto:${viewingMessage.email}`} style={{ color: 'var(--primary-color)', textDecoration: 'none', fontSize: '0.9rem', opacity: 0.8 }}>{viewingMessage.email}</a>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>Date</span>
-                                    <span className={styles.detailValue}>
-                                        {viewingMessage.createdAt?.seconds ? new Date(viewingMessage.createdAt.seconds * 1000).toLocaleString() : 'Just now'}
-                                    </span>
+                                <div className={styles.detailItem}>
+                                    <span className={styles.detailLabel}>Received Date</span>
+                                    <span className={styles.detailValue} style={{ fontSize: '0.95rem' }}>{viewingMessage.createdAt?.seconds ? new Date(viewingMessage.createdAt.seconds * 1000).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' }) : 'Recently'}</span>
                                 </div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>Message</span>
-                                    <p className={styles.detailValue} style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6', margin: 0, padding: '1rem', background: 'var(--input-bg)', borderRadius: '8px' }}>
-                                        {viewingMessage.message}
-                                    </p>
+                                <div className={styles.detailItem}>
+                                    <span className={styles.detailLabel}>Status</span>
+                                    <span className={`${styles.roleBadge} ${viewingMessage.isRead ? styles.roleAdmin : styles.rolePending}`} style={{ marginTop: '0.4rem' }}>{viewingMessage.isRead ? '✓ Read' : '✉ Unread'}</span>
                                 </div>
                             </div>
+                            <div style={{ background: 'rgba(255,255,255,0.015)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
+                                <span className={styles.detailLabel} style={{ marginBottom: '1rem', display: 'block' }}>Message Content</span>
+                                <p style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                                    {viewingMessage.message}
+                                </p>
+                            </div>
                         </div>
-                        <div className={styles.modalFooter} style={{ justifyContent: 'space-between', marginTop: 'auto' }}>
-                            <button
-                                className={styles.deleteBtn}
-                                onClick={() => { handleDeleteMessage(viewingMessage.id); setViewingMessage(null); }}
-                                style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem' }}
-                            >
-                                <Trash2 size={16} /> Delete
+                        <div className={styles.modalFooter} style={{ padding: '1.5rem 2rem', borderTop: '1px solid rgba(255,255,255,0.05)', justifyContent: 'space-between' }}>
+                            <button className={styles.deleteBtn} onClick={() => { handleDeleteMessage(viewingMessage.id); setViewingMessage(null); }} style={{ padding: '0.6rem 1.25rem' }}>
+                                <Trash2 size={16} /> Delete Message
                             </button>
-                            <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                <a
-                                    href={`mailto:${viewingMessage.email}?subject=Re: Inquiry from ${encodeURIComponent(viewingMessage.name)}`}
-                                    className={styles.submitBtn}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none', background: 'transparent', border: '1px solid var(--glass-border, rgba(255,255,255,0.1))', color: 'var(--text-primary)', padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '8px' }}
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg> Reply
-                                </a>
-                                <button
-                                    className={styles.editBtn}
-                                    onClick={() => { handleToggleMessageRead(viewingMessage.id, viewingMessage.isRead); }}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem' }}
-                                >
-                                    {viewingMessage.isRead ? <><MailOpen size={16} /> Mark Unread</> : <><Mail size={16} /> Mark Read</>}
+                            <div style={{ display: 'flex', gap: '0.8rem' }}>
+                                <button className={styles.editBtn} onClick={() => { handleToggleMessageRead(viewingMessage.id, viewingMessage.isRead); }} style={{ padding: '0.6rem 1rem' }}>
+                                    {viewingMessage.isRead ? <><MailOpen size={18} /> Mark Unread</> : <><Mail size={18} /> Mark Read</>}
                                 </button>
+                                <a href={`mailto:${viewingMessage.email}?subject=Re: Inquiry from ${encodeURIComponent(viewingMessage.name)}`} className={styles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.5rem' }}>
+                                    <Reply size={18} style={{ marginRight: '6px' }} /> Reply
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
+            )}
+
+
+            {/* Confirm Dialog */}
+            {confirmDialog.isOpen && (
+                <ConfirmDialog
+                    confirmDialog={confirmDialog}
+                    setConfirmDialog={setConfirmDialog}
+                />
             )}
         </div>
     );

@@ -4,7 +4,7 @@ import { doc, writeBatch } from 'firebase/firestore';
 
 class MessageService extends BaseService {
     constructor() {
-        super('messages');
+        super('messages', false);
     }
 
     async toggleReadStatus(userRole, id, currentStatus, trackWrite) {

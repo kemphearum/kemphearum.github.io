@@ -136,9 +136,9 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 </div>
                 <div className={styles.dateInputs}>
                     <Calendar size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
-                    <input type="date" value={analyticsRange.start} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, start: e.target.value, preset: '' }))} className={styles.dateInput} />
+                    <input type="date" value={analyticsRange.start} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, start: e.target.value, preset: '' }))} className={styles.dateInput} onClick={(e) => e.target.showPicker?.()} />
                     <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>to</span>
-                    <input type="date" value={analyticsRange.end} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, end: e.target.value, preset: '' }))} className={styles.dateInput} />
+                    <input type="date" value={analyticsRange.end} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, end: e.target.value, preset: '' }))} className={styles.dateInput} onClick={(e) => e.target.showPicker?.()} />
                 </div>
             </div>
 
@@ -311,71 +311,104 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
             {/* Analytics Detail Modal */}
             {analyticsDetail && (
-                <div className={styles.modalBackdrop} onClick={() => setAnalyticsDetail(null)}>
-                    <div className={styles.detailModal} onClick={(e) => e.stopPropagation()}>
-                        <div className={styles.detailModalHeader}>
-                            <h3>
-                                {analyticsDetail === 'visits' && <><TrendingUp size={20} /> All Visits Log ({analyticsLogsTotal || analyticsLogs.length})</>}
-                                {analyticsDetail === 'countries' && <><Globe size={20} /> Visitors by Country</>}
-                                {analyticsDetail === 'devices' && <><Monitor size={20} /> Device Breakdown</>}
-                                {analyticsDetail === 'pages' && <><FileText size={20} /> All Visited Pages</>}
-                                {analyticsDetail === 'cities' && <><MapPin size={20} /> Visitors by City</>}
-                                {analyticsDetail === 'referrers' && <><Share2 size={20} /> Traffic Sources</>}
-                            </h3>
-                            <button onClick={() => setAnalyticsDetail(null)} className={styles.closeBtn} style={{ position: 'absolute', top: '50%', right: '1.5rem', transform: 'translateY(-50%)' }}><X size={20} /></button>
+                <div className={styles.modalOverlay} onClick={() => setAnalyticsDetail(null)} style={{ zIndex: 1400 }}>
+                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '1100px', maxHeight: '90vh', borderRadius: '24px', display: 'flex', flexDirection: 'column' }}>
+                        <div className={styles.modalHeader} style={{ flexShrink: 0, padding: '1.5rem 2.5rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '1.4rem', color: 'var(--primary-color)' }}>
+                                    {analyticsDetail === 'visits' && <><TrendingUp size={24} /> Comprehensive Visit Activity History</>}
+                                    {analyticsDetail === 'countries' && <><Globe size={24} /> Audience Geographic Distribution</>}
+                                    {analyticsDetail === 'devices' && <><Monitor size={24} /> Technical Device Infrastructure</>}
+                                    {analyticsDetail === 'pages' && <><FileText size={24} /> Content Performance Metrics</>}
+                                    {analyticsDetail === 'cities' && <><MapPin size={24} /> Regional Engagement Breakdown</>}
+                                    {analyticsDetail === 'referrers' && <><Share2 size={24} /> Acquisition & Traffic Sources</>}
+                                </h3>
+                                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                    Detailed insights based on {analyticsLogsTotal || analyticsLogs.length} tracked interactions
+                                </p>
+                            </div>
+                            <button onClick={() => setAnalyticsDetail(null)} className={styles.closeBtn} style={{ position: 'absolute', top: '50%', right: '2rem', transform: 'translateY(-50%)' }}><X size={20} /></button>
                         </div>
-                        <div className={styles.detailModalBody}>
+                        <div style={{ padding: '0', overflowY: 'auto', flex: 1, position: 'relative' }}>
                             {analyticsLogsLoading ? (
-                                <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                    <RefreshCw size={32} className={styles.spin} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                                    <p>Loading detailed analytics from Firestore...</p>
+                                <div style={{ padding: '6rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                    <div style={{ position: 'relative', width: '60px', height: '60px', margin: '0 auto 1.5rem' }}>
+                                        <RefreshCw size={60} className={styles.spin} style={{ opacity: 0.1 }} />
+                                        <RefreshCw size={30} className={styles.spin} style={{ position: 'absolute', top: '15px', left: '15px', color: 'var(--primary-color)' }} />
+                                    </div>
+                                    <p style={{ letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 'bold' }}>Aggregating Analytics Data...</p>
                                 </div>
                             ) : analyticsDetail === 'visits' && (
-                                <>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Showing top {analyticsLogs.length} results from Firestore fetch.</p>
-                                    <table className={styles.detailTable}>
-                                        <thead><tr><th>#</th><th>Page</th><th>Country</th><th>City</th><th>Device</th><th>Browser</th><th>IP</th><th>Referrer</th><th>Session</th><th>Date & Time</th></tr></thead>
-                                        <tbody>
-                                            {analyticsLogs.length > 0 ? analyticsLogs.map((v, i) => (
-                                                <tr key={`visitor-${v.id || i}`}>
-                                                    <td>{i + 1}</td>
-                                                    <td>{v.path || '/'}</td>
-                                                    <td>{v.countryCode ? <span title={v.country}>{v.countryCode}</span> : (v.country || 'Unknown')}</td>
-                                                    <td>{v.city || '-'}</td>
-                                                    <td style={{ textTransform: 'capitalize' }}>{v.device || '-'}</td>
-                                                    <td>{parseBrowser(v.userAgent)}</td>
-                                                    <td style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{v.ip || '-'}</td>
-                                                    <td style={{ maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={v.referrer}>{v.referrer || '-'}</td>
-                                                    <td style={{ fontSize: '0.7rem', fontFamily: 'monospace', maxWidth: '80px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={v.sessionId}>{v.sessionId ? v.sessionId.slice(0, 8) + '…' : '-'}</td>
-                                                    <td style={{ whiteSpace: 'nowrap', fontSize: '0.78rem' }}>{v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toLocaleString() : v.date || '-'}</td>
+                                <div style={{ padding: '1.5rem 2.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '0.4rem 1rem', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                            Retrieved {analyticsLogs.length} recent sessions
+                                        </span>
+                                    </div>
+                                    <div className={styles.tableWrapper} style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '0.85rem' }}>
+                                            <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
+                                                <tr>
+                                                    <th style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>#</th>
+                                                    <th style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>Page Path</th>
+                                                    <th style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>Region</th>
+                                                    <th style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>Platform</th>
+                                                    <th style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>IP Address</th>
+                                                    <th style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'right' }}>Date & Time</th>
                                                 </tr>
-                                            )) : <tr><td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>No visit data for this range.</td></tr>}
-                                        </tbody>
-                                    </table>
+                                            </thead>
+                                            <tbody>
+                                                {analyticsLogs.length > 0 ? analyticsLogs.map((v, i) => (
+                                                    <tr key={`visitor-${v.id || i}`} style={{ transition: 'background 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                        <td style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'center', color: 'var(--text-secondary)' }}>{i + 1}</td>
+                                                        <td style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', fontWeight: 600 }}>{v.path || '/'}</td>
+                                                        <td style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                                            {v.countryCode ? <span title={v.country} style={{ fontWeight: 500 }}>{v.countryCode} {v.city ? <span style={{ opacity: 0.6, fontSize: '0.8rem' }}>• {v.city}</span> : ''}</span> : (v.country || 'Unknown')}
+                                                        </td>
+                                                        <td style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                <span style={{ textTransform: 'capitalize', fontSize: '0.9rem' }}>{v.device || 'Desktop'}</span>
+                                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{parseBrowser(v.userAgent)}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.75rem', fontFamily: 'monospace', opacity: 0.7 }}>{v.ip || '-'}</td>
+                                                        <td style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'right', whiteSpace: 'nowrap', fontSize: '0.8rem' }}>
+                                                            {v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : v.date || '-'}
+                                                        </td>
+                                                    </tr>
+                                                )) : <tr><td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-secondary)' }}>No visit data for this range.</td></tr>}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                     {analyticsLogsTotal > analyticsLogs.length && (
-                                        <div style={{ padding: '2rem', textAlign: 'center', borderTop: '1px solid var(--divider)' }}>
-                                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>Showing {analyticsLogs.length} of {analyticsLogsTotal} total visits.</p>
-                                            <p style={{ fontSize: '0.8rem', opacity: 0.6, fontStyle: 'italic' }}>For full export, please use a dedicated analytics tool.</p>
+                                        <div style={{ padding: '2rem', textAlign: 'center' }}>
+                                            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                                                Showing the most recent {analyticsLogs.length} of {analyticsLogsTotal} sessions.
+                                            </p>
                                         </div>
                                     )}
-                                </>
+                                </div>
                             )}
                             {/* Breakdown detail tables */}
                             {['countries', 'devices', 'pages', 'cities', 'referrers'].includes(analyticsDetail) && !analyticsLogsLoading && (
-                                <div className={styles.detailCardGrid}>
-                                    <div className={styles.detailCardFull}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '1.25rem 1.75rem 0' }}>
-                                            <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '600' }}>
-                                                {analyticsDetail === 'countries' ? 'Country' : analyticsDetail === 'devices' ? 'Device' : analyticsDetail === 'pages' ? 'Page Popularity' : analyticsDetail === 'cities' ? 'Top Cities' : 'Traffic Sources'} Breakdown
+                                <div style={{ padding: '2.5rem' }}>
+                                    <div style={{ background: 'rgba(255,255,255,0.015)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.5rem 2rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>
+                                                Metrics Distribution Report
                                             </h4>
-                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Based on last {analyticsLogs.length} records</span>
+                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
+                                                Analysis of {analyticsLogs.length} snapshots
+                                            </span>
                                         </div>
-                                        <table className={styles.detailTable}>
+                                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                             <thead>
-                                                <tr>
-                                                    <th>{analyticsDetail === 'countries' ? 'Country' : analyticsDetail === 'devices' ? 'Device Type' : analyticsDetail === 'pages' ? 'Page Path' : analyticsDetail === 'cities' ? 'City & Country' : 'Source Referrer'}</th>
-                                                    <th>Visits</th>
-                                                    <th>Percentage</th>
+                                                <tr style={{ textAlign: 'left', background: 'rgba(0,0,0,0.2)' }}>
+                                                    <th style={{ padding: '1.25rem 2rem', fontSize: '0.75rem', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                        {analyticsDetail === 'countries' ? 'Country Grouping' : analyticsDetail === 'devices' ? 'Device Profile' : analyticsDetail === 'pages' ? 'Content Identifier (URL)' : analyticsDetail === 'cities' ? 'Geographic Location' : 'Visitor Origin Header'}
+                                                    </th>
+                                                    <th style={{ padding: '1.25rem 2rem', fontSize: '0.75rem', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>Events</th>
+                                                    <th style={{ padding: '1.25rem 2rem', fontSize: '0.75rem', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'right' }}>Volume Share</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -394,10 +427,21 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                                                     return Object.entries(groupMap)
                                                         .sort(([, a], [, b]) => b - a)
                                                         .map(([name, count]) => (
-                                                            <tr key={name}>
-                                                                <td style={{ fontWeight: '600' }}>{analyticsDetail === 'referrers' && name === 'Direct' ? 'Direct / Bookmark' : name}</td>
-                                                                <td>{count}</td>
-                                                                <td>{((count / total) * 100).toFixed(1)}%</td>
+                                                            <tr key={name} style={{ transition: 'all 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                                <td style={{ padding: '1.25rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontWeight: 700, fontSize: '1rem', color: '#fff' }}>
+                                                                    {analyticsDetail === 'referrers' && name === 'Direct' ? 'Direct Navigation / Bookmarked' : name}
+                                                                </td>
+                                                                <td style={{ padding: '1.25rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.03)', textAlign: 'center' }}>
+                                                                    <span style={{ display: 'inline-block', padding: '0.4rem 0.8rem', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', fontWeight: 800 }}>{count.toLocaleString()}</span>
+                                                                </td>
+                                                                <td style={{ padding: '1.25rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.03)', textAlign: 'right' }}>
+                                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                                                                        <span style={{ fontWeight: 700, color: 'var(--primary-color)' }}>{((count / total) * 100).toFixed(1)}%</span>
+                                                                        <div style={{ width: '100px', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
+                                                                            <div style={{ width: `${(count / total) * 100}%`, height: '100%', background: 'var(--primary-color)', boxShadow: '0 0 10px var(--primary-color)' }}></div>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
                                                             </tr>
                                                         ));
                                                 })()}
@@ -407,9 +451,13 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                                 </div>
                             )}
                         </div>
+                        <div className={styles.modalFooter} style={{ flexShrink: 0, padding: '1.5rem 2.5rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button onClick={() => setAnalyticsDetail(null)} className={styles.primaryBtn} style={{ padding: '0.75rem 2.5rem', margin: 0, fontSize: '0.95rem' }}>Close Analytics Report</button>
+                        </div>
                     </div>
                 </div>
             )}
+
         </>
     );
 };

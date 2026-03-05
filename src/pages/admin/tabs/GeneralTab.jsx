@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Upload, Home, User, Mail, Save, Edit3 } from 'lucide-react';
+import { Upload, Home, User, Mail, Save, Edit3, History } from 'lucide-react';
 import styles from '../../Admin.module.scss';
 import ImageProcessingService from '../../../services/ImageProcessingService';
+import HistoryModal from '../components/HistoryModal';
+import ContentService from '../../../services/ContentService';
 
 const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactData, setContactData, loading, saveSectionData }) => {
     const [homeImage, setHomeImage] = useState(null);
+    const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
 
     const handleSaveHome = async (e) => {
         e.preventDefault();
@@ -34,10 +37,13 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                     <div style={{ padding: '0.7rem', background: 'rgba(108, 99, 255, 0.08)', borderRadius: '10px', color: 'var(--primary-color)', display: 'flex' }}>
                         <Home size={22} />
                     </div>
-                    <div>
+                    <div style={{ flexGrow: 1 }}>
                         <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>Home Section</h3>
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>Configure the main hero content of your landing page.</p>
                     </div>
+                    <button onClick={() => setHistoryModal({ isOpen: true, recordId: 'home', title: 'Home Section' })} className={styles.editBtn} title="View Edit History">
+                        <History size={16} /> History
+                    </button>
                 </div>
                 <form onSubmit={handleSaveHome} className={styles.form}>
                     <div className={styles.formGrid}>
@@ -100,10 +106,13 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                     <div style={{ padding: '0.7rem', background: 'rgba(16, 185, 129, 0.08)', borderRadius: '10px', color: '#10b981', display: 'flex' }}>
                         <User size={22} />
                     </div>
-                    <div>
+                    <div style={{ flexGrow: 1 }}>
                         <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>About Section</h3>
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>Update your short biography and technical skills.</p>
                     </div>
+                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'about', title: 'About Section' })} className={styles.editBtn} title="View Edit History">
+                        <History size={16} /> History
+                    </button>
                 </div>
                 <form onSubmit={handleSaveAbout} className={styles.form}>
                     <div className={styles.inputGroup}>
@@ -143,10 +152,13 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                     <div style={{ padding: '0.7rem', background: 'rgba(239, 68, 68, 0.08)', borderRadius: '10px', color: '#ef4444', display: 'flex' }}>
                         <Mail size={22} />
                     </div>
-                    <div>
+                    <div style={{ flexGrow: 1 }}>
                         <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>Contact Section</h3>
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>Manage the intro text displayed above your contact form.</p>
                     </div>
+                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'contact', title: 'Contact Section' })} className={styles.editBtn} title="View Edit History">
+                        <History size={16} /> History
+                    </button>
                 </div>
                 <form onSubmit={handleSaveContact} className={styles.form}>
                     <div className={styles.inputGroup}>
@@ -169,6 +181,14 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                     </div>
                 </form>
             </div>
+
+            <HistoryModal
+                isOpen={historyModal.isOpen}
+                onClose={() => setHistoryModal({ isOpen: false, recordId: null, title: '' })}
+                recordId={historyModal.recordId}
+                service={ContentService}
+                title={historyModal.title}
+            />
         </div>
     );
 };

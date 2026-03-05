@@ -39,8 +39,15 @@ class ContentService extends BaseService {
         const docRef = doc(db, this.collectionName, sectionName);
         await setDoc(docRef, data, { merge: true });
 
+        // Store in audit history subcollection
+        try {
+            await this._saveHistory(sectionName, 'updated', data);
+        } catch (error) {
+            console.error(`Failed to save history for ${sectionName}:`, error);
+        }
+
         if (trackWrite) {
-            trackWrite(1, `Saved ${sectionName} content`);
+            trackWrite(1, `Saved ${sectionName} content`, data);
         }
 
         return data;

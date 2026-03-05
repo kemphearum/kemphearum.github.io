@@ -26,7 +26,9 @@ class BlogService extends BaseService {
         if (userRole !== 'superadmin') {
             throw new Error("Only Superadmins can delete posts.");
         }
-        return this.delete(id, trackDelete);
+        return this.delete(id, (count, label) => {
+            if (trackDelete) trackDelete(count, label, { id, action: 'deleted' });
+        });
     }
 
     /**
