@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import AuditLogService from '../../../services/AuditLogService';
 import { Activity, Filter, RefreshCw, Eye, Edit2, Trash2, ChevronRight, Search, X, Shield, Mail, Globe, Monitor, Smartphone, Tablet, MapPin, Key, Clock, BarChart2 } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
+import { useQuery } from '@tanstack/react-query';
 import { sortData } from '../../../utils/sortData';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
@@ -22,14 +23,12 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     const [activityLogsLoading, setActivityLogsLoading] = useState(false);
 
     // Audit State
-    const [auditLogsList, setAuditLogsList] = useState([]);
     const [selectedAuditLog, setSelectedAuditLog] = useState(null);
     const [searchUsers, setSearchUsers] = useState('');
     const [auditDateRange, setAuditDateRange] = useState('all');
     const [auditPage, setAuditPage] = useState(1);
     const [auditPerPage, setAuditPerPage] = useState(10);
     const [auditSort, setAuditSort] = useState({ field: 'timestamp', dir: 'desc' });
-    const [loading, setLoading] = useState(false);
 
     const handleAuditSort = useCallback((field) => {
         setAuditSort(prev => ({ field, dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc' }));
@@ -68,18 +67,15 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     }, [activityDateRange, currentDateKey, showToast]);
 
     // Fetch audit logs
-    const fetchAuditLogs = useCallback(async () => {
-        if (userRole !== 'superadmin') return;
-        try {
-            setLoading(true);
+    const { data: auditLogsList = [], isLoading: auditLogsLoading } = useQuery({
+        queryKey: ['auditLogs', userRole],
+        queryFn: async () => {
+            if (userRole !== 'superadmin') return [];
             const data = await AuditLogService.fetchSecurityAuditTrail(userRole, trackRead);
-            setAuditLogsList(data);
-        } catch (error) { console.error("Error fetching audit logs:", error); showToast("Failed to load audit logs.", "error"); }
-        finally { setLoading(false); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userRole, showToast]);
-
-    useEffect(() => { fetchAuditLogs(); }, [fetchAuditLogs]);
+            return data;
+        },
+        enabled: userRole === 'superadmin'
+    });
 
     const filteredAuditLogs = useMemo(() => {
         let result = auditLogsList;

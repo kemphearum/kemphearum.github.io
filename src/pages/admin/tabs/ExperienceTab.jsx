@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Search, Eye, EyeOff, Edit2, Trash2, X, Bold, Italic, Link as LinkIcon, Code, Save, Plus, ArrowLeft } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
-import { invalidateCache } from '../../../hooks/useFirebaseData';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sortData } from '../../../utils/sortData';
 import { icons } from '../components/constants';
 import MarkdownRenderer from '../../../components/MarkdownRenderer';
@@ -11,7 +11,6 @@ import styles from '../../Admin.module.scss';
 import ExperienceService from '../../../services/ExperienceService';
 
 const ExperienceTab = ({ userRole, showToast }) => {
-    const [experiences, setExperiences] = useState([]);
     const [experience, setExperience] = useState({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false });
     const [showExperienceForm, setShowExperienceForm] = useState(false);
     const [editingExperience, setEditingExperience] = useState(null);
@@ -23,24 +22,21 @@ const ExperienceTab = ({ userRole, showToast }) => {
     const [isExpPreviewMode, setIsExpPreviewMode] = useState(false);
     const [loading, setLoading] = useState(false);
     const { trackRead, trackWrite, trackDelete } = useActivity();
+    const queryClient = useQueryClient();
+
+    const { data: experiences = [], isLoading: expLoading } = useQuery({
+        queryKey: ['experience'],
+        queryFn: async () => {
+            const allExperience = await ExperienceService.getAll("createdAt", "desc");
+            trackRead(allExperience.length, 'Fetched experience');
+            return allExperience;
+        }
+    });
 
     const handleExpSort = useCallback((field) => {
         setExpSort(prev => ({ field, dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc' }));
         setExpPage(1);
     }, []);
-
-    const fetchExperiences = useCallback(async () => {
-        try {
-            const allExperience = await ExperienceService.getAll("createdAt", "desc");
-            trackRead(allExperience.length, 'Fetched experience');
-            setExperiences(allExperience);
-        } catch (error) {
-            console.error("Error fetching experience:", error);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    useEffect(() => { fetchExperiences(); }, [fetchExperiences]);
 
     const filteredExperiences = useMemo(() => {
         let result = experiences;
@@ -63,8 +59,7 @@ const ExperienceTab = ({ userRole, showToast }) => {
     const toggleVisibility = async (id, currentVisible) => {
         try {
             await ExperienceService.toggleVisibility(userRole, id, currentVisible, trackWrite);
-            invalidateCache('collection:experience');
-            setExperiences(prev => prev.map(e => e.id === id ? { ...e, visible: !currentVisible } : e));
+            queryClient.invalidateQueries({ queryKey: ['experience'] });
             showToast(`Item ${!currentVisible ? 'visible' : 'hidden'} on homepage.`);
         } catch (error) { showToast(error.message || 'Failed to toggle visibility.', 'error'); }
     };
@@ -73,8 +68,7 @@ const ExperienceTab = ({ userRole, showToast }) => {
         if (!window.confirm("Are you sure you want to delete this experience?")) return;
         try {
             await ExperienceService.deleteExperience(userRole, id, trackDelete);
-            invalidateCache('collection:experience');
-            setExperiences(experiences.filter(e => e.id !== id));
+            queryClient.invalidateQueries({ queryKey: ['experience'] });
             showToast('Experience deleted.');
         } catch (error) { showToast(error.message || 'Failed to delete experience.', 'error'); }
     };
@@ -93,11 +87,10 @@ const ExperienceTab = ({ userRole, showToast }) => {
                 id: editingExperience
             };
             const result = await ExperienceService.saveExperience(userRole, formData, trackWrite);
-            invalidateCache('collection:experience');
+            queryClient.invalidateQueries({ queryKey: ['experience'] });
             setEditingExperience(null);
             setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false });
             setShowExperienceForm(false);
-            fetchExperiences();
             showToast(`Experience ${result.isNew ? 'added' : 'updated'} successfully!`);
         } catch (error) { showToast(error.message || 'Error saving experience.', 'error'); }
         finally { setLoading(false); }

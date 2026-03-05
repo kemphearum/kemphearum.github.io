@@ -1,5 +1,6 @@
 import React from 'react';
-import { useFirebaseDoc } from '../hooks/useFirebaseData';
+import { useQuery } from '@tanstack/react-query';
+import ContentService from '../services/ContentService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Hero.module.scss';
 // eslint-disable-next-line no-unused-vars
@@ -7,7 +8,13 @@ import { motion } from 'framer-motion';
 
 const Hero = () => {
     const { trackEvent } = useAnalytics();
-    const { data: content, loading } = useFirebaseDoc('content', 'home', {
+
+    const { data, isLoading: loading } = useQuery({
+        queryKey: ['content', 'home'],
+        queryFn: () => ContentService.fetchSection('home')
+    });
+
+    const content = data || {
         greeting: '',
         name: '',
         subtitle: '',
@@ -15,7 +22,7 @@ const Hero = () => {
         ctaText: '',
         ctaLink: '',
         profileImageUrl: ''
-    });
+    };
 
     const containerVariants = {
         hidden: { opacity: 0 },

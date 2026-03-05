@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Eye as EyeIcon, Users, Globe, TrendingUp, Monitor, Smartphone, Tablet, MapPin, Share2, FileText, Calendar, RefreshCw, X } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { useActivity } from '../../../hooks/useActivity';
+import { useQuery } from '@tanstack/react-query';
 import styles from '../../Admin.module.scss';
 import AnalyticsService from '../../../services/AnalyticsService';
 
@@ -19,8 +20,6 @@ const parseBrowser = (ua) => {
 
 const AnalyticsTab = ({ userRole, showToast }) => {
     const { trackRead } = useActivity();
-    const [visits, setVisits] = useState([]);
-    const [analyticsLoading, setAnalyticsLoading] = useState(false);
     const [analyticsRange, setAnalyticsRange] = useState(() => {
         const end = new Date();
         const start = new Date();
@@ -32,15 +31,13 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     const [analyticsLogsLoading, setAnalyticsLogsLoading] = useState(false);
     const [analyticsLogsTotal, setAnalyticsLogsTotal] = useState(0);
 
-    const fetchAnalytics = useCallback(async () => {
-        setAnalyticsLoading(true);
-        try {
-            const data = await AnalyticsService.fetchAnalytics(userRole, analyticsRange, trackRead);
-            setVisits(data);
-        } catch (error) { console.error("Error fetching analytics:", error); showToast("Failed to load analytics data.", "error"); }
-        finally { setAnalyticsLoading(false); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userRole, showToast, analyticsRange]);
+    const { data: visits = [], isLoading: analyticsLoading, refetch: refetchAnalytics } = useQuery({
+        queryKey: ['analytics', analyticsRange.start, analyticsRange.end],
+        queryFn: async () => {
+            return await AnalyticsService.fetchAnalytics(userRole, analyticsRange, trackRead);
+        },
+        enabled: (userRole === 'superadmin' || userRole === 'admin')
+    });
 
     const handleAnalyticsDetail = useCallback(async (type) => {
         setAnalyticsDetail(type);
@@ -68,8 +65,6 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         }
         setAnalyticsRange({ start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0], preset });
     }, []);
-
-    useEffect(() => { fetchAnalytics(); }, [fetchAnalytics]);
 
     // Derived data
     const dailyVisits = useMemo(() => {
@@ -177,7 +172,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                     <TrendingUp size={18} style={{ color: 'var(--primary-color, #64ffda)' }} />
                     Visits Over Time {analyticsRange.preset === '7d' ? '(Last 7 Days)' : analyticsRange.preset === '30d' ? '(Last 30 Days)' : analyticsRange.preset === '90d' ? '(Last 90 Days)' : analyticsRange.preset === 'all' ? '(All Time)' : `(${analyticsRange.start} — ${analyticsRange.end})`}
                     <button className={styles.detailBtn} onClick={() => handleAnalyticsDetail('visits')} style={{ marginLeft: 'auto' }}>View Details</button>
-                    <button className={styles.analyticsRefreshBtn} onClick={fetchAnalytics} disabled={analyticsLoading}><RefreshCw size={14} /> Refresh</button>
+                    <button className={styles.analyticsRefreshBtn} onClick={() => refetchAnalytics()} disabled={analyticsLoading}><RefreshCw size={14} /> Refresh</button>
                 </div>
                 {dailyVisits.length > 0 ? (
                     <ResponsiveContainer width="100%" height={320}>

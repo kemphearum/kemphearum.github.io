@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { db } from '../../../firebase';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
-import { invalidateCache } from '../../../hooks/useFirebaseData';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sortData } from '../../../utils/sortData';
 import { icons } from '../components/constants';
 import ImageProcessingService from '../../../services/ImageProcessingService';
@@ -13,7 +12,6 @@ import styles from '../../Admin.module.scss';
 import BlogService from '../../../services/BlogService';
 
 const BlogTab = ({ userRole, showToast }) => {
-    const [posts, setPosts] = useState([]);
     const [postForm, setPostForm] = useState({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
     const [postImage, setPostImage] = useState(null);
     const [showPostForm, setShowPostForm] = useState(false);
@@ -25,22 +23,21 @@ const BlogTab = ({ userRole, showToast }) => {
     const [isPreviewMode, setIsPreviewMode] = useState(false);
     const [loading, setLoading] = useState(false);
     const { trackRead, trackWrite, trackDelete } = useActivity();
+    const queryClient = useQueryClient();
+
+    const { data: posts = [], isLoading: postsLoading } = useQuery({
+        queryKey: ['posts'],
+        queryFn: async () => {
+            const allPosts = await BlogService.getAll("createdAt", "desc");
+            trackRead(allPosts.length, 'Fetched blog posts');
+            return allPosts;
+        }
+    });
 
     const handlePostSort = useCallback((field) => {
         setPostSort(prev => ({ field, dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc' }));
         setPostPage(1);
     }, []);
-
-    const fetchPosts = useCallback(async () => {
-        try {
-            const allPosts = await BlogService.getAll("createdAt", "desc");
-            trackRead(allPosts.length, 'Fetched blog posts');
-            setPosts(allPosts);
-        } catch (error) { console.error("Error fetching posts:", error); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
     const filteredPosts = useMemo(() => {
         let result = posts;
@@ -65,8 +62,7 @@ const BlogTab = ({ userRole, showToast }) => {
     const toggleVisibility = async (id, currentVisible) => {
         try {
             await BlogService.toggleVisibility(userRole, id, currentVisible, trackWrite);
-            invalidateCache('collection:posts');
-            setPosts(prev => prev.map(p => p.id === id ? { ...p, visible: !currentVisible } : p));
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
             showToast(`Post ${!currentVisible ? 'published' : 'set to draft'}.`);
         } catch (error) {
             showToast(error.message || 'Failed to toggle visibility.', 'error');
@@ -76,8 +72,7 @@ const BlogTab = ({ userRole, showToast }) => {
     const toggleFeaturedPost = async (id, currentFeatured) => {
         try {
             await BlogService.toggleFeatured(userRole, id, currentFeatured, trackWrite);
-            invalidateCache('collection:posts');
-            setPosts(prev => prev.map(p => p.id === id ? { ...p, featured: !currentFeatured } : p));
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
             showToast(!currentFeatured ? 'Featured on homepage!' : 'Removed from homepage.');
         } catch (error) {
             showToast(error.message || 'Failed to toggle featured status.', 'error');
@@ -88,8 +83,7 @@ const BlogTab = ({ userRole, showToast }) => {
         if (!window.confirm("Delete this post?")) return;
         try {
             await BlogService.deletePost(userRole, id, trackDelete);
-            invalidateCache('collection:posts');
-            setPosts(posts.filter(p => p.id !== id));
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
             showToast('Post deleted.');
         } catch (error) {
             showToast(error.message || 'Failed to delete post.', 'error');
@@ -115,12 +109,11 @@ const BlogTab = ({ userRole, showToast }) => {
                 await BlogService.create(postData, trackWrite);
                 showToast('Post published!');
             }
-            invalidateCache('collection:posts');
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
             setPostForm({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
             setPostImage(null);
             setIsPreviewMode(false);
             setShowPostForm(false);
-            fetchPosts();
         } catch (error) { showToast(error.message || 'Error saving post.', 'error'); }
         finally { setLoading(false); }
     };

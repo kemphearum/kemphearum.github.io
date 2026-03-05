@@ -152,7 +152,7 @@ class DatabaseService {
         return { deleted: deletionCount };
     }
 
-    static async restore(userRole, jsonContent, trackWrite) {
+    static async restore(userRole, jsonContent, trackWrite, onProgress) {
         if (userRole !== 'superadmin') {
             throw new Error("Only Superadmins can restore.");
         }
@@ -193,6 +193,7 @@ class DatabaseService {
                         const docRef = doc(db, colName, docId);
                         await setDoc(docRef, processedData);
                         completedCount++;
+                        if (onProgress) onProgress(completedCount, totalDocs);
                     } catch (err) {
                         console.error(`Restore failed for ${colName}/${docId}:`, err);
                         failedCollections.add(colName);

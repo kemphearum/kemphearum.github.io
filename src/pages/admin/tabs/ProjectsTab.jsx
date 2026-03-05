@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
-import { invalidateCache } from '../../../hooks/useFirebaseData';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sortData } from '../../../utils/sortData';
 import { icons } from '../components/constants';
 import ImageProcessingService from '../../../services/ImageProcessingService';
@@ -12,7 +12,6 @@ import styles from '../../Admin.module.scss';
 import ProjectService from '../../../services/ProjectService';
 
 const ProjectsTab = ({ userRole, showToast }) => {
-    const [projects, setProjects] = useState([]);
     const [project, setProject] = useState({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
     const [projectImage, setProjectImage] = useState(null);
     const [showProjectForm, setShowProjectForm] = useState(false);
@@ -25,22 +24,21 @@ const ProjectsTab = ({ userRole, showToast }) => {
     const [isProjectPreviewMode, setIsProjectPreviewMode] = useState(false);
     const [loading, setLoading] = useState(false);
     const { trackRead, trackWrite, trackDelete } = useActivity();
+    const queryClient = useQueryClient();
+
+    const { data: projects = [], isLoading: projectsLoading } = useQuery({
+        queryKey: ['projects'],
+        queryFn: async () => {
+            const allProjects = await ProjectService.getAll("createdAt", "desc");
+            trackRead(allProjects.length, 'Fetched projects');
+            return allProjects;
+        }
+    });
 
     const handleProjSort = useCallback((field) => {
         setProjSort(prev => ({ field, dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc' }));
         setProjPage(1);
     }, []);
-
-    const fetchProjects = useCallback(async () => {
-        try {
-            const allProjects = await ProjectService.getAll("createdAt", "desc");
-            trackRead(allProjects.length, 'Fetched projects');
-            setProjects(allProjects);
-        } catch (error) { console.error("Error fetching projects:", error); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    useEffect(() => { fetchProjects(); }, [fetchProjects]);
 
     const filteredProjects = useMemo(() => {
         let result = projects;
@@ -63,7 +61,7 @@ const ProjectsTab = ({ userRole, showToast }) => {
     const toggleVisibility = async (id, currentVisible) => {
         try {
             await ProjectService.toggleVisibility(userRole, id, currentVisible, trackWrite);
-            invalidateCache('collection:projects');
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
             setProjects(prev => prev.map(p => p.id === id ? { ...p, visible: !currentVisible } : p));
             showToast(`Project ${!currentVisible ? 'shown' : 'hidden'}.`);
         } catch (error) { showToast(error.message || 'Failed to toggle visibility.', 'error'); }
@@ -72,19 +70,18 @@ const ProjectsTab = ({ userRole, showToast }) => {
     const toggleFeatured = async (id, currentFeatured) => {
         try {
             await ProjectService.toggleFeatured(userRole, id, currentFeatured, trackWrite);
-            invalidateCache('collection:projects');
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
             setProjects(prev => prev.map(p => p.id === id ? { ...p, featured: !currentFeatured } : p));
             showToast(!currentFeatured ? 'Featured on homepage!' : 'Removed from homepage.');
         } catch (error) { showToast(error.message || 'Failed to toggle featured status.', 'error'); }
     };
 
     const handleDeleteProject = async (id) => {
-        if (!window.confirm("Delete this project?")) return;
+        if (!window.confirm('Are you sure you want to delete this project?')) return;
         try {
             await ProjectService.deleteProject(userRole, id, trackDelete);
-            invalidateCache('collection:projects');
-            setProjects(projects.filter(p => p.id !== id));
-            showToast('Project deleted.');
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
+            showToast('Project deleted successfully.');
         } catch (error) { showToast(error.message || 'Failed to delete project.', 'error'); }
     };
 
@@ -103,12 +100,11 @@ const ProjectsTab = ({ userRole, showToast }) => {
             };
 
             const result = await ProjectService.saveProject(userRole, formData, imageUrl, trackWrite);
-            invalidateCache('collection:projects');
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
             setEditingProject(null);
             setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
             setProjectImage(null);
             setShowProjectForm(false);
-            fetchProjects();
             showToast(`Project ${result.isNew ? 'added' : 'updated'} successfully!`);
         } catch (error) {
             showToast(error.message || 'Error saving project.', 'error');

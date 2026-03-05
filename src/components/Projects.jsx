@@ -1,13 +1,25 @@
 import React, { useState } from 'react';
-import { useFirebaseCollection, useFirebaseDoc } from '../hooks/useFirebaseData';
+import { useQuery } from '@tanstack/react-query';
+import ProjectService from '../services/ProjectService';
+import ContentService from '../services/ContentService';
 import ProjectCard from './ProjectCard';
 import styles from './Projects.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 
 const Projects = () => {
-    const { data: projects, loading } = useFirebaseCollection('projects', 'createdAt', 'asc');
-    const { data: settings } = useFirebaseDoc('content', 'settings');
+    const { data: projectsData, isLoading: loadingProjects } = useQuery({
+        queryKey: ['projects'],
+        queryFn: () => ProjectService.getAll()
+    });
+
+    const { data: settings } = useQuery({
+        queryKey: ['content', 'settings'],
+        queryFn: () => ContentService.fetchSection('settings')
+    });
+
+    const projects = projectsData || [];
+    const loading = loadingProjects;
     const [filter, setFilter] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
 

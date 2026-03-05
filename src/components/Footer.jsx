@@ -1,14 +1,20 @@
 import React from 'react';
-import { useFirebaseDoc } from '../hooks/useFirebaseData';
+import { useQuery } from '@tanstack/react-query';
+import ContentService from '../services/ContentService';
 import styles from './Footer.module.scss';
 
 const Footer = () => {
-    const { data: settings } = useFirebaseDoc('content', 'settings', {
+    const { data } = useQuery({
+        queryKey: ['content', 'settings'],
+        queryFn: () => ContentService.fetchSection('settings')
+    });
+
+    const settings = data || {
         footerText: '',
         logoHighlight: '',
         logoText: '',
         tagline: ''
-    });
+    };
 
     return (
         <footer className={styles.footer}>

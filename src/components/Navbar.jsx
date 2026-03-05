@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Navbar.module.scss';
 import { Link, useLocation } from 'react-router-dom';
-import { useFirebaseDoc } from '../hooks/useFirebaseData';
+import { useQuery } from '@tanstack/react-query';
+import ContentService from '../services/ContentService';
 import { useTheme } from '../context/ThemeContext';
 
 const Navbar = () => {
@@ -11,10 +12,15 @@ const Navbar = () => {
     const isHome = location.pathname === '/';
     const { theme, toggleTheme } = useTheme();
 
-    const { data: settings } = useFirebaseDoc('content', 'settings', {
+    const { data } = useQuery({
+        queryKey: ['content', 'settings'],
+        queryFn: () => ContentService.fetchSection('settings')
+    });
+
+    const settings = data || {
         logoText: '',
         logoHighlight: ''
-    });
+    };
 
     useEffect(() => {
         const handleScroll = () => {

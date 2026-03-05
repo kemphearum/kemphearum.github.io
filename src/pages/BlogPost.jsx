@@ -12,6 +12,7 @@ import {
     Share2, Copy, Check, ArrowLeft, ChevronRight,
     Twitter, Linkedin
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -20,13 +21,23 @@ import styles from './BlogPost.module.scss';
 
 const BlogPost = () => {
     const { slug } = useParams();
-    const [post, setPost] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [readProgress, setReadProgress] = useState(0);
     const [copied, setCopied] = useState(false);
     const { trackRead } = useActivity();
+
+    const { data: post, isLoading: loading, isError } = useQuery({
+        queryKey: ['post', slug],
+        queryFn: async () => {
+            const postData = await BlogService.fetchPostBySlug(slug, trackRead);
+            if (!postData) throw new Error('Post not found');
+            trackRead(0, `Viewed blog: ${postData.title}`);
+            return postData;
+        },
+        retry: false
+    });
+
+    const error = isError ? 'Failed to load post details' : null;
 
     // Scroll tracking
     const handleScroll = useCallback(() => {
@@ -42,28 +53,6 @@ const BlogPost = () => {
     }, [handleScroll]);
 
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    // Fetch post
-    useEffect(() => {
-        const fetchPost = async () => {
-            try {
-                const postData = await BlogService.fetchPostBySlug(slug, trackRead);
-                if (postData) {
-                    setPost(postData);
-                    trackRead(0, `Viewed blog: ${postData.title}`); // Service handles actual read count
-                } else {
-                    setError('Post not found');
-                }
-            } catch (err) {
-                console.error("Error fetching post:", err);
-                setError('Failed to load post');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (slug) fetchPost();
-    }, [slug, trackRead]);
 
     // Share helpers
     const currentUrl = window.location.href;

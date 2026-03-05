@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useFirebaseDoc } from './hooks/useFirebaseData';
 import { HashRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -123,9 +122,15 @@ const AppRoutes = () => {
   );
 };
 
+import { useQuery } from '@tanstack/react-query';
+import ContentService from './services/ContentService';
+
 function App() {
   // Fetch global settings for title/favicon
-  const { data: settings } = useFirebaseDoc('content', 'settings');
+  const { data: settings } = useQuery({
+    queryKey: ['content', 'settings'],
+    queryFn: () => ContentService.fetchSection('settings')
+  });
 
   useEffect(() => {
     if (settings) {

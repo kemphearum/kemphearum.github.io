@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import BlogService from '../services/BlogService';
 // eslint-disable-next-line no-unused-vars
@@ -6,27 +7,13 @@ import { motion } from 'framer-motion';
 import styles from './RelatedArticles.module.scss'; // Reuse blog card styles where possible or create new
 
 const RelatedArticles = ({ currentPostId, tags }) => {
-    const [relatedPosts, setRelatedPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { data: relatedPostsData, isLoading: loading } = useQuery({
+        queryKey: ['relatedPosts', currentPostId, tags],
+        queryFn: () => BlogService.fetchRelatedPosts(currentPostId, tags, null),
+        enabled: !!currentPostId
+    });
 
-    useEffect(() => {
-        const fetchRelatedPosts = async () => {
-            setLoading(true);
-            try {
-                // Using new OOP Service Endpoint
-                const postsData = await BlogService.fetchRelatedPosts(currentPostId, tags, null);
-                setRelatedPosts(postsData);
-            } catch (error) {
-                console.error("Error fetching related articles:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (currentPostId) {
-            fetchRelatedPosts();
-        }
-    }, [currentPostId, tags]);
+    const relatedPosts = relatedPostsData || [];
 
     if (loading || relatedPosts.length === 0) return null;
 

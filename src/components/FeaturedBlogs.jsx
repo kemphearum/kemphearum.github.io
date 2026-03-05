@@ -1,12 +1,18 @@
 import React from 'react';
-import { useFirebaseCollection } from '../hooks/useFirebaseData';
+import { useQuery } from '@tanstack/react-query';
+import BlogService from '../services/BlogService';
 import styles from '../pages/Blog.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 const FeaturedBlogs = () => {
-    const { data: posts, loading } = useFirebaseCollection('posts', 'createdAt', 'desc');
+    const { data: postsData, isLoading: loading } = useQuery({
+        queryKey: ['posts'],
+        queryFn: () => BlogService.getAll()
+    });
+
+    const posts = postsData || [];
 
     // Priority: Items marked as 'featured'
     let featuredList = posts.filter(p => p.visible !== false && p.featured === true);

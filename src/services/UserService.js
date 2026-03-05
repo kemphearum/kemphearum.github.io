@@ -117,6 +117,19 @@ class UserService extends BaseService {
         return perms;
     }
 
+    async saveRolePermissions(role, allowedTabs, trackWrite) {
+        const q = query(collection(db, "rolePermissions"), where("role", "==", role));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+            await addDoc(collection(db, "rolePermissions"), { role, allowedTabs });
+            if (trackWrite) trackWrite(1, `Created ${role} permissions`);
+        } else {
+            await updateDoc(snap.docs[0].ref, { allowedTabs });
+            if (trackWrite) trackWrite(1, `Updated ${role} permissions`);
+        }
+    }
+
     /**
      * Fetch a user document by email address.
      * Returns { id, ...data } or null.

@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
-import { useFirebaseCollection, useFirebaseDoc } from '../hooks/useFirebaseData';
+import { useQuery } from '@tanstack/react-query';
+import BlogService from '../services/BlogService';
+import ContentService from '../services/ContentService';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -9,8 +11,18 @@ import Footer from '../components/Footer';
 import styles from './Blog.module.scss'; // We need to create this
 
 const Blog = () => {
-    const { data: posts, loading } = useFirebaseCollection('posts', 'createdAt', 'desc');
-    const { data: settings } = useFirebaseDoc('content', 'settings');
+    const { data: postsData, isLoading: loadingPosts } = useQuery({
+        queryKey: ['posts'],
+        queryFn: () => BlogService.getAll()
+    });
+
+    const { data: settings } = useQuery({
+        queryKey: ['content', 'settings'],
+        queryFn: () => ContentService.fetchSection('settings')
+    });
+
+    const posts = postsData || [];
+    const loading = loadingPosts;
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTag, setSelectedTag] = useState(null);
 

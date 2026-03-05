@@ -1,10 +1,30 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
-import { collection, getDocs, query, orderBy, limit as firestoreLimit, collectionGroup } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit as firestoreLimit, collectionGroup, addDoc, serverTimestamp } from 'firebase/firestore';
 
 class AuditLogService extends BaseService {
     constructor() {
         super('auditLogs');
+    }
+
+    /**
+     * Records a new audit log (usually for logins or registrations)
+     * @param {Object} logData 
+     * @param {Function} trackWrite 
+     * @returns {Promise<string>} document ID
+     */
+    async addAuditLog(logData, trackWrite) {
+        try {
+            const docRef = await addDoc(collection(db, this.collectionName), {
+                ...logData,
+                timestamp: serverTimestamp()
+            });
+            if (trackWrite) trackWrite(1, 'Recorded auth audit trail');
+            return docRef.id;
+        } catch (error) {
+            console.error("Failed to write audit log:", error);
+            throw error;
+        }
     }
 
     /**

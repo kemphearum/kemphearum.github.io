@@ -9,9 +9,10 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { useActivity } from '../hooks/useActivity';
 import { getSessionId, getDeviceType } from '../hooks/useAnalytics';
-import { invalidateCache } from '../hooks/useFirebaseData';
+import { useQueryClient } from '@tanstack/react-query';
 import ContentService from '../services/ContentService';
 import AuthService from '../services/AuthService';
+import AuditLogService from '../services/AuditLogService';
 
 // Tab components
 import GeneralTab from './admin/tabs/GeneralTab';
@@ -120,6 +121,7 @@ const Admin = () => {
     const [password, setPassword] = useState('');
     const [isRegistering, setIsRegistering] = useState(false);
     const [loading, setLoading] = useState(false);
+    const queryClient = useQueryClient();
 
     // Tab & Sidebar State
     const [activeTab, setActiveTab] = useState(() => localStorage.getItem('adminActiveTab') || 'home');
@@ -257,6 +259,8 @@ const Admin = () => {
         try {
             await ContentService.saveSection(section, data, trackWrite);
             showToast(`${section.charAt(0).toUpperCase() + section.slice(1)} saved!`);
+            // Invalidate the TanStack Query cache for this specific content section
+            queryClient.invalidateQueries({ queryKey: ['content', section] });
         } catch (error) {
             console.error(`Error saving ${section}:`, error);
             showToast(`Failed to save ${section}.`, 'error');
@@ -289,22 +293,19 @@ const Admin = () => {
         try {
             if (isRegistering) {
                 await AuthService.register(email, password);
-                const q = query(collection(db, "users"), where("email", "==", email));
-                const snap = await getDocs(q);
-                trackRead(snap.size, 'Checked user existence on registration');
-                if (snap.empty) {
-                    await addDoc(collection(db, "users"), { email, role: 'pending', isActive: true, createdAt: serverTimestamp() });
+                const userDoc = await UserService.fetchUserByEmail(email);
+                trackRead(1, 'Checked user existence on registration');
+                if (!userDoc) {
+                    await UserService.createUserDoc({ email, role: 'pending', isActive: true });
                     trackWrite(1, 'Created user record');
                 }
                 showToast('Account created! You are now logged in.');
             } else {
                 await AuthService.login(email, password);
-                const q = query(collection(db, "users"), where("email", "==", email));
-                const snap = await getDocs(q);
-                trackRead(snap.size, 'Verified user status on login');
-                if (!snap.empty) {
-                    const userData = snap.docs[0].data();
-                    if (userData.isActive === false) {
+                const userDoc = await UserService.fetchUserByEmail(email);
+                trackRead(1, 'Verified user status on login');
+                if (userDoc) {
+                    if (userDoc.isActive === false) {
                         await AuthService.logout();
                         throw new Error("Your account has been disabled by an administrator.");
                     }
@@ -329,12 +330,15 @@ const Admin = () => {
                     } catch { /* intentionally ignored */ }
                 }
 
-                await addDoc(collection(db, "auditLogs"), {
-                    email, ipAddress: currentIp, country: locData.country, city: locData.city,
-                    userAgent: navigator.userAgent, deviceType: getDeviceType(), sessionId: getSessionId(),
-                    timestamp: serverTimestamp()
-                });
-                trackWrite(1, 'Recorded auth audit trail');
+                await AuditLogService.addAuditLog({
+                    email,
+                    ipAddress: currentIp,
+                    country: locData.country,
+                    city: locData.city,
+                    userAgent: navigator.userAgent,
+                    deviceType: getDeviceType(),
+                    sessionId: getSessionId()
+                }, trackWrite);
             } catch (auditError) { console.error("Failed to write audit log:", auditError); }
         } catch (error) {
             showToast((isRegistering ? "Registration Failed: " : "Login Failed: ") + error.message, 'error');
@@ -463,7 +467,7 @@ const Admin = () => {
                             {icons['profile']}
                         </button>
 
-                        <button onClick={() => signOut(auth)} className={`${styles.topActionBtn} ${styles.logoutActionBtn}`} title="Logout">
+                        <button onClick={() => AuthService.logout()} className={`${styles.topActionBtn} ${styles.logoutActionBtn}`} title="Logout">
                             <LogOut size={18} />
                         </button>
                     </div>

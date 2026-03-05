@@ -1,14 +1,20 @@
 import React from 'react';
-import { useFirebaseDoc } from '../hooks/useFirebaseData';
+import { useQuery } from '@tanstack/react-query';
+import ContentService from '../services/ContentService';
 import styles from './About.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 
 const About = () => {
-    const { data: content, loading } = useFirebaseDoc('content', 'about', {
+    const { data, isLoading: loading } = useQuery({
+        queryKey: ['content', 'about'],
+        queryFn: () => ContentService.fetchSection('about')
+    });
+
+    const content = data || {
         bio: "",
         skills: []
-    });
+    };
 
     const renderBio = (text) => {
         if (!text) return null;

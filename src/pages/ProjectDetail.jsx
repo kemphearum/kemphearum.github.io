@@ -10,6 +10,7 @@ import {
     ArrowUp, ExternalLink, Code, X, Calendar,
     Share2, Copy, Check, ArrowLeft, Maximize2, ChevronRight
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import RelatedProjects from '../components/RelatedProjects';
@@ -17,14 +18,24 @@ import styles from './ProjectDetail.module.scss';
 
 const ProjectDetail = () => {
     const { slug } = useParams();
-    const [project, setProject] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [readProgress, setReadProgress] = useState(0);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const { trackRead } = useActivity();
+
+    const { data: project, isLoading: loading, isError } = useQuery({
+        queryKey: ['project', slug],
+        queryFn: async () => {
+            const projectData = await ProjectService.fetchProjectBySlug(slug);
+            if (!projectData) throw new Error('Project not found');
+            trackRead(0, `Viewed project: ${projectData.title}`);
+            return projectData;
+        },
+        retry: false
+    });
+
+    const error = isError ? 'Failed to load project details' : null;
 
     // Scroll tracking
     const handleScroll = useCallback(() => {
@@ -54,26 +65,6 @@ const ProjectDetail = () => {
         };
     }, [lightboxOpen]);
 
-    // Fetch project
-    useEffect(() => {
-        const fetchProject = async () => {
-            try {
-                const projectData = await ProjectService.fetchProjectBySlug(slug, trackRead);
-                if (projectData) {
-                    setProject(projectData);
-                    trackRead(0, `Viewed project: ${projectData.title}`); // Event tracking already handled by Service length
-                } else {
-                    setError('Project not found');
-                }
-            } catch (err) {
-                console.error("Error fetching project:", err);
-                setError('Failed to load project details');
-            } finally {
-                setLoading(false);
-            }
-        };
-        if (slug) fetchProject();
-    }, [slug, trackRead]);
 
     // Share helpers
     const currentUrl = window.location.href;

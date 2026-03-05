@@ -1,40 +1,40 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Database, RefreshCw, Download, Upload, Trash2, ShieldAlert, Shield, Server, X, FileText, Code, Mail, BarChart2, AlertTriangle, FileJson, Check } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
-import { invalidateCache } from '../../../hooks/useFirebaseData';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import styles from '../../Admin.module.scss';
 import DatabaseService from '../../../services/DatabaseService';
 
 const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
-    const [dbHealth, setDbHealth] = useState({ posts: 0, projects: 0, messages: 0, auditLogs: 0, users: 0, loading: true, lastUpdated: null });
     const [loading, setLoading] = useState(false);
     const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
     const [archiveDays, setArchiveDays] = useState(30);
     const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
     const [restoreFile, setRestoreFile] = useState(null);
-    const [auditSettings, setAuditSettings] = useState({ logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false });
+    const [restoreProgress, setRestoreProgress] = useState(null); // { completed, total, percentage }
     const { trackRead, trackWrite, trackDelete } = useActivity();
+    const queryClient = useQueryClient();
 
-    const fetchDatabaseHealth = useCallback(async () => {
-        setDbHealth(prev => ({ ...prev, loading: true }));
-        try {
+    const { data: dbHealth = { posts: 0, projects: 0, messages: 0, auditLogs: 0, users: 0 }, isFetching: dbHealthLoading, refetch: refetchDbHealth } = useQuery({
+        queryKey: ['dbHealth'],
+        queryFn: async () => {
             const counts = await DatabaseService.getHealth(trackRead);
-            setDbHealth({ ...counts, loading: false, lastUpdated: new Date() });
-        } catch (error) { console.error("Error fetching db health:", error); setDbHealth(prev => ({ ...prev, loading: false })); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+            return { ...counts, lastUpdated: new Date() };
+        }
+    });
 
-    const fetchAuditSettings = useCallback(async () => {
-        const settings = await DatabaseService.getAuditSettings();
-        if (settings) setAuditSettings(settings);
-    }, []);
-
-    useEffect(() => { fetchDatabaseHealth(); fetchAuditSettings(); }, [fetchDatabaseHealth, fetchAuditSettings]);
+    const { data: auditSettings = { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false } } = useQuery({
+        queryKey: ['auditSettings'],
+        queryFn: async () => {
+            const settings = await DatabaseService.getAuditSettings();
+            return settings || { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false };
+        }
+    });
 
     const handleUpdateAuditSetting = async (key, value) => {
         try {
-            const newSettings = await DatabaseService.updateAuditSettings(userRole, key, value, auditSettings, trackWrite);
-            setAuditSettings(prev => ({ ...prev, ...newSettings }));
+            await DatabaseService.updateAuditSettings(userRole, key, value, auditSettings, trackWrite);
+            queryClient.invalidateQueries({ queryKey: ['auditSettings'] });
             showToast(key === 'logAll' ? `All audit settings ${value ? 'enabled' : 'disabled'}.` : `Audit setting updated: ${key} = ${value}`);
         } catch (error) {
             console.error("Error updating audit setting:", error);
@@ -67,7 +67,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                 showToast(`No records found older than ${daysOld} days.`, "success");
             } else {
                 showToast(`Successfully archived and deleted ${result.deleted} old records.`, "success");
-                fetchDatabaseHealth();
+                refetchDbHealth();
             }
         } catch (error) {
             console.error("Error archiving:", error);
@@ -84,20 +84,34 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
-                const result = await DatabaseService.restore(userRole, event.target.result, trackWrite);
-                invalidateCache();
+                const result = await DatabaseService.restore(
+                    userRole,
+                    event.target.result,
+                    trackWrite,
+                    (completed, total) => {
+                        setRestoreProgress({
+                            completed,
+                            total,
+                            percentage: Math.round((completed / total) * 100)
+                        });
+                    }
+                );
+
+                queryClient.invalidateQueries();
                 if (result.failedCollections.length > 0) {
                     showToast(`Partially completed (${result.completedCount}/${result.totalDocs}). Issues on: ${result.failedCollections.join(', ')}`, 'warning');
                 } else {
                     showToast(`Successfully restored ${result.completedCount} records!`);
                 }
-                fetchDatabaseHealth();
+                refetchDbHealth();
             } catch (error) {
                 console.error("Import error:", error);
                 showToast(error.message || 'Failed to restore. Invalid format?', 'error');
             } finally {
                 setLoading(false);
                 setRestoreFile(null);
+                // Clear progress after a delay
+                setTimeout(() => setRestoreProgress(null), 3000);
             }
         };
         reader.onerror = () => { showToast('Failed to read file.', 'error'); setLoading(false); };
@@ -110,13 +124,44 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
 
     return (
         <div className={styles.section} style={{ paddingBottom: '4rem' }}>
+            {/* Progress Alert */}
+            {restoreProgress && (
+                <div style={{
+                    position: 'fixed',
+                    top: '20px',
+                    right: '20px',
+                    zIndex: 2000,
+                    minWidth: '300px',
+                    background: 'var(--card-bg)',
+                    border: '1px solid var(--primary-color)',
+                    borderRadius: '12px',
+                    padding: '1.25rem',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                    animation: 'slideInRight 0.3s ease'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--primary-color)', fontWeight: '600' }}>
+                            <RefreshCw size={18} className={styles.spin} />
+                            <span>Restoring Database...</span>
+                        </div>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{restoreProgress.percentage}%</span>
+                    </div>
+                    <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+                        <div style={{ width: `${restoreProgress.percentage}%`, height: '100%', background: 'var(--primary-color)', transition: 'width 0.2s ease' }}></div>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'right' }}>
+                        {restoreProgress.completed.toLocaleString()} / {restoreProgress.total.toLocaleString()} records processed
+                    </div>
+                </div>
+            )}
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
                 <div className={styles.cardHeader} style={{ marginBottom: 0, display: 'block' }}>
                     <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}><Database size={24} /> Database Management</h3>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem', marginBottom: 0 }}>Monitor Firebase health and manage your data backups.</p>
                 </div>
-                <button onClick={fetchDatabaseHealth} className={styles.iconBtn} title="Refresh Database Health" style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)', color: 'var(--text-primary)', width: '36px', height: '36px', padding: 0 }}>
-                    <RefreshCw size={18} className={dbHealth.loading ? styles.spin : ''} style={{ color: 'var(--primary-color)' }} />
+                <button onClick={() => refetchDbHealth()} className={styles.iconBtn} title="Refresh Database Health" style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)', color: 'var(--text-primary)', width: '36px', height: '36px', padding: 0 }}>
+                    <RefreshCw size={18} className={dbHealthLoading ? styles.spin : ''} style={{ color: 'var(--primary-color)' }} />
                 </button>
             </div>
 

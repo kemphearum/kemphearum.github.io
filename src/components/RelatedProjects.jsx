@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import ProjectService from '../services/ProjectService';
 // eslint-disable-next-line no-unused-vars
@@ -7,27 +8,13 @@ import ProjectCard from './ProjectCard';
 import styles from './RelatedProjects.module.scss';
 
 const RelatedProjects = ({ currentProjectId, techStack }) => {
-    const [relatedProjects, setRelatedProjects] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { data: relatedProjectsData, isLoading: loading } = useQuery({
+        queryKey: ['relatedProjects', currentProjectId, techStack],
+        queryFn: () => ProjectService.fetchRelatedProjects(currentProjectId, techStack, null),
+        enabled: !!currentProjectId
+    });
 
-    useEffect(() => {
-        const fetchRelatedProjects = async () => {
-            setLoading(true);
-            try {
-                // Fetch using new ProjectService endpoint
-                const projectsData = await ProjectService.fetchRelatedProjects(currentProjectId, techStack, null);
-                setRelatedProjects(projectsData);
-            } catch (error) {
-                console.error("Error fetching related projects:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (currentProjectId) {
-            fetchRelatedProjects();
-        }
-    }, [currentProjectId, techStack]);
+    const relatedProjects = relatedProjectsData || [];
 
     if (loading || relatedProjects.length === 0) return null;
 

@@ -1,5 +1,6 @@
 import React from 'react';
-import { useFirebaseCollection } from '../hooks/useFirebaseData';
+import { useQuery } from '@tanstack/react-query';
+import ProjectService from '../services/ProjectService';
 import ProjectCard from './ProjectCard';
 import styles from './Projects.module.scss';
 // eslint-disable-next-line no-unused-vars
@@ -7,7 +8,12 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
 const FeaturedProjects = () => {
-    const { data: projects, loading } = useFirebaseCollection('projects', 'createdAt', 'asc');
+    const { data: projectsData, isLoading: loading } = useQuery({
+        queryKey: ['projects'],
+        queryFn: () => ProjectService.getAll()
+    });
+
+    const projects = projectsData || [];
 
     // Priority: Items marked as 'featured'
     let featuredList = projects.filter(p => p.visible !== false && p.featured === true);

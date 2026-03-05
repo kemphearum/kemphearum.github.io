@@ -1,7 +1,6 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { invalidateCache } from '../hooks/useFirebaseData';
 
 class ContentService extends BaseService {
     constructor() {
@@ -44,7 +43,6 @@ class ContentService extends BaseService {
             trackWrite(1, `Saved ${sectionName} content`);
         }
 
-        invalidateCache(`doc:content/${sectionName}`);
         return data;
     }
 }

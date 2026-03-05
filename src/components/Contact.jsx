@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import MessageService from '../services/MessageService';
 import { serverTimestamp } from 'firebase/firestore';
-import { useFirebaseDoc } from '../hooks/useFirebaseData';
+import { useQuery } from '@tanstack/react-query';
+import ContentService from '../services/ContentService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Contact.module.scss';
 // eslint-disable-next-line no-unused-vars
@@ -11,7 +12,13 @@ const Contact = () => {
     const { trackEvent } = useAnalytics();
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
     const [status, setStatus] = useState(null);
-    const { data: contactContent, loading } = useFirebaseDoc('content', 'contact', { introText: '' });
+
+    const { data, isLoading: loading } = useQuery({
+        queryKey: ['content', 'contact'],
+        queryFn: () => ContentService.fetchSection('contact')
+    });
+
+    const contactContent = data || { introText: '' };
 
     const handleChange = (e) => {
         const { name, value } = e.target;

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import UserService from '../../../services/UserService';
 import { Search, Edit, Trash2, Key, X, UserPlus, Users } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
@@ -10,7 +11,6 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import styles from '../../Admin.module.scss';
 
 const UsersTab = ({ user, userRole, showToast }) => {
-    const [usersList, setUsersList] = useState([]);
     const [searchUsers, setSearchUsers] = useState('');
     const [usersPage, setUsersPage] = useState(1);
     const [usersPerPage, setUsersPerPage] = useState(10);
@@ -21,41 +21,28 @@ const UsersTab = ({ user, userRole, showToast }) => {
     const [newUserRole, setNewUserRole] = useState('pending');
     const [viewingUser, setViewingUser] = useState(null);
     const [showRolePerms, setShowRolePerms] = useState(false);
-    const [rolePermissions, setRolePermissions] = useState({});
     const [editingRolePerms, setEditingRolePerms] = useState({});
     const [loading, setLoading] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
     const { trackRead, trackWrite, trackDelete } = useActivity();
+    const queryClient = useQueryClient();
+
+    const { data: usersList = [], isLoading: usersLoading } = useQuery({
+        queryKey: ['users'],
+        queryFn: () => UserService.fetchUsers(userRole, trackRead, trackDelete),
+        enabled: userRole === 'superadmin'
+    });
+
+    const { data: rolePermissions = {} } = useQuery({
+        queryKey: ['rolePermissions'],
+        queryFn: () => UserService.fetchRolePermissions(trackRead),
+        enabled: userRole === 'superadmin'
+    });
 
     const handleUsersSort = useCallback((field) => {
         setUsersSort(prev => ({ field, dir: prev.field === field && prev.dir === 'asc' ? 'desc' : 'asc' }));
         setUsersPage(1);
     }, []);
-
-    const fetchUsers = useCallback(async () => {
-        if (userRole !== 'superadmin') return;
-        try {
-            const users = await UserService.fetchUsers(userRole, trackRead, trackDelete);
-            setUsersList(users);
-        } catch (error) {
-            console.error("Error fetching users:", error);
-            showToast("Failed to load users.", "error");
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userRole, showToast]);
-
-    const fetchRolePermissions = useCallback(async () => {
-        try {
-            const perms = await UserService.fetchRolePermissions(trackRead);
-            setRolePermissions(perms);
-        } catch (error) { console.error("Error fetching role permissions:", error); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    useEffect(() => {
-        fetchUsers();
-        fetchRolePermissions();
-    }, [fetchUsers, fetchRolePermissions]);
 
     const filteredUsers = useMemo(() => {
         let result = usersList;
@@ -76,7 +63,7 @@ const UsersTab = ({ user, userRole, showToast }) => {
         try {
             await UserService.updateRole(userRole, userId, newRole, trackWrite);
             showToast(`Role updated to ${newRole}`);
-            fetchUsers();
+            queryClient.invalidateQueries({ queryKey: ['users'] });
         } catch (error) { console.error("Error updating role:", error); showToast(error.message || 'Failed to update role.', 'error'); }
     };
 
@@ -85,7 +72,7 @@ const UsersTab = ({ user, userRole, showToast }) => {
         try {
             await UserService.removeUser(userRole, userId, trackDelete);
             showToast(`User ${userEmail} successfully disabled.`);
-            fetchUsers();
+            queryClient.invalidateQueries({ queryKey: ['users'] });
         } catch (error) { console.error("Error disabling user:", error); showToast(error.message || "Failed to disable user.", "error"); }
         finally { setLoading(false); setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' }); }
     };
@@ -125,7 +112,7 @@ const UsersTab = ({ user, userRole, showToast }) => {
         try {
             await UserService.createUser(userRole, newUserEmail, newUserPassword, newUserRole, trackRead);
             showToast('User created successfully.');
-            fetchUsers();
+            queryClient.invalidateQueries({ queryKey: ['users'] });
             setShowAddUserForm(false); setNewUserEmail(''); setNewUserPassword(''); setNewUserRole('pending');
         } catch (error) {
             console.error("Error creating user:", error);
@@ -136,11 +123,8 @@ const UsersTab = ({ user, userRole, showToast }) => {
     const saveRolePermissions = async (role, allowedTabs) => {
         if (userRole !== 'superadmin') { showToast("Unauthorized.", "error"); return; }
         try {
-            const q = query(collection(db, "rolePermissions"), where("role", "==", role));
-            const snap = await getDocs(q);
-            if (snap.empty) { await addDoc(collection(db, "rolePermissions"), { role, allowedTabs }); trackWrite(1, `Created ${role} permissions`); }
-            else { await updateDoc(snap.docs[0].ref, { allowedTabs }); trackWrite(1, `Updated ${role} permissions`); }
-            setRolePermissions(prev => ({ ...prev, [role]: allowedTabs }));
+            await UserService.saveRolePermissions(role, allowedTabs, trackWrite);
+            queryClient.invalidateQueries({ queryKey: ['rolePermissions'] });
             showToast(`Permissions for '${role}' saved!`);
         } catch (error) { console.error("Error saving permissions:", error); showToast('Failed to save permissions.', 'error'); }
     };

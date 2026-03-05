@@ -1,12 +1,18 @@
 import React from 'react';
-import { useFirebaseCollection } from '../hooks/useFirebaseData';
+import { useQuery } from '@tanstack/react-query';
+import ExperienceService from '../services/ExperienceService';
 import styles from './Experience.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
 
 const Experience = () => {
-    const { data: experiences, loading } = useFirebaseCollection('experience', 'createdAt', 'desc');
+    const { data: experiencesData, isLoading: loading } = useQuery({
+        queryKey: ['experience'],
+        queryFn: () => ExperienceService.getAll()
+    });
+
+    const experiences = experiencesData || [];
 
     // Filter and sort visible experiences by year (descending)
     const visibleExperiences = experiences
