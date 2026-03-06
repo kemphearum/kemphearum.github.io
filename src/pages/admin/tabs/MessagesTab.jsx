@@ -201,7 +201,7 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
                 </div>
             ) : (
                 <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '40px 1.2fr 1.5fr 3fr 1.2fr 100px', gap: '0.75rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                    <div className={styles.messageHeader}>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                             <input
                                 type="checkbox"
@@ -224,23 +224,7 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
                             <div
                                 key={msg.id || `msg-${index}`}
                                 onClick={(e) => { if (e.target.type !== 'checkbox' && !e.target.closest('button')) handleViewMessage(msg); }}
-                                style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '40px 1.2fr 1.5fr 3fr 1.2fr 100px',
-                                    gap: '0.75rem',
-                                    padding: '1.25rem 1.5rem',
-                                    background: isUnread ? 'rgba(108, 99, 255, 0.03)' : (isSelected ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)'),
-                                    border: '1px solid',
-                                    borderColor: isUnread ? 'rgba(108, 99, 255, 0.15)' : 'rgba(255,255,255,0.04)',
-                                    borderRadius: '12px',
-                                    fontSize: '0.88rem',
-                                    alignItems: 'center',
-                                    transition: 'all 0.2s ease',
-                                    cursor: 'pointer',
-                                    marginBottom: '0.5rem',
-                                    boxShadow: isUnread ? '0 4px 12px rgba(108, 99, 255, 0.05)' : 'none'
-                                }}
-                                className={styles.userGridRowHover}
+                                className={`${styles.messageGrid} ${isUnread ? styles.unread : ''} ${isSelected ? styles.selected : ''}`}
                             >
                                 <div onClick={(e) => e.stopPropagation()}>
                                     <input

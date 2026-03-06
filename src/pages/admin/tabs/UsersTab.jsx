@@ -158,7 +158,7 @@ const UsersTab = ({ user, userRole, showToast }) => {
                             <div className={styles.emptyState}>{searchUsers ? 'No matching users found.' : 'No users registered yet.'}</div>
                         ) : (
                             <>
-                                <div className={styles.userGridHeader}>
+                                <div className={styles.userHeader}>
                                     <SortableHeader label="User" field="email" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
                                     <SortableHeader label="Role" field="role" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
                                     <SortableHeader label="Registered" field="createdAt" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
@@ -171,7 +171,7 @@ const UsersTab = ({ user, userRole, showToast }) => {
                                     const roleLabels = { superadmin: '⭐ Super Admin', admin: '🛡️ Admin', editor: '✍️ Editor', pending: '⏳ Pending' };
                                     const isUserDisabled = u.disabled === true;
                                     return (
-                                        <div key={u.id || `user-${index}`} className={`${styles.userCard} ${styles.userGridRowHover}`} style={{ opacity: isUserDisabled ? 0.6 : 1, filter: isUserDisabled ? 'grayscale(100%)' : 'none', cursor: 'pointer' }}
+                                        <div key={u.id || `user-${index}`} className={`${styles.userGrid} ${styles.userGridRowHover}`} style={{ opacity: isUserDisabled ? 0.6 : 1, filter: isUserDisabled ? 'grayscale(100%)' : 'none' }}
                                             onClick={(e) => { if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && !e.target.closest('button') && !e.target.closest('select')) setViewingUser(u); }}>
                                             <div className={styles.userIdentity}>
                                                 <div className={styles.userAvatar} style={{ background: avatarColors[u.role] || avatarColors.pending }}>{initials}</div>
@@ -358,7 +358,7 @@ const UsersTab = ({ user, userRole, showToast }) => {
                         </>
                     }
                 >
-                    <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '70vh' }}>
+                    <div style={{ padding: '2rem' }}>
                         <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
                             <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
                                 <span className={styles.detailLabel}>Authentication Email</span>

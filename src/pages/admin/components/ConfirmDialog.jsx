@@ -18,10 +18,9 @@ const ConfirmDialog = ({ confirmDialog, setConfirmDialog }) => {
             onClose={handleClose}
             zIndex={1300}
             maxWidth="440px"
+            smallHeader={true}
             headerStyle={{
-                background: isDanger ? 'rgba(239, 68, 68, 0.05)' : 'rgba(251, 146, 60, 0.05)',
-                padding: '0.75rem 1.5rem',
-                borderBottom: '1px solid rgba(255,255,255,0.05)'
+                background: isDanger ? 'rgba(239, 68, 68, 0.05)' : 'rgba(251, 146, 60, 0.05)'
             }}
             bodyStyle={{
                 padding: '1.5rem',
@@ -33,7 +32,7 @@ const ConfirmDialog = ({ confirmDialog, setConfirmDialog }) => {
                 padding: '0.75rem 1.5rem'
             }}
             headerContent={
-                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, color: isDanger ? '#ef4444' : '#f97316' }}>
+                <h3 style={{ color: isDanger ? '#ef4444' : '#f97316' }}>
                     {isDanger ? <Trash2 size={20} /> : <Key size={20} />} {confirmDialog.title}
                 </h3>
             }

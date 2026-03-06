@@ -139,7 +139,7 @@ const ExperienceTab = ({ userRole, showToast }) => {
                 else if (typeof dateVal.toDate === 'function') d = dateVal.toDate();
             }
             if (d && !isNaN(d.getTime())) {
-                return `${d.getFullYear()} -${String(d.getMonth() + 1).padStart(2, '0')} `;
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             }
 
             if (typeof dateVal !== 'string') return '';
@@ -193,12 +193,11 @@ const ExperienceTab = ({ userRole, showToast }) => {
                 }
             }
 
-            if (foundYear && foundMonth) return `${foundYear} -${foundMonth} `;
+            if (foundYear && foundMonth) return `${foundYear}-${foundMonth}`;
 
             // 6. Last resort: Native parsing
-            const nativeDate = new Date(dateVal);
             if (!isNaN(nativeDate.getTime())) {
-                return `${nativeDate.getFullYear()} -${String(nativeDate.getMonth() + 1).padStart(2, '0')} `;
+                return `${nativeDate.getFullYear()}-${String(nativeDate.getMonth() + 1).padStart(2, '0')}`;
             }
 
             return '';
@@ -384,7 +383,7 @@ const ExperienceTab = ({ userRole, showToast }) => {
                     <button onClick={() => setViewingExperience(null)} className={styles.primaryBtn} style={{ margin: 0 }}>Close</button>
                 }
             >
-                <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
+                <div style={{ padding: '2rem' }}>
                     <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                         <div className={styles.detailItem}><span className={styles.detailLabel}>Company</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary-color)' }}>{viewingExperience?.company}</span></div>
                         <div className={styles.detailItem}><span className={styles.detailLabel}>Role</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700' }}>{viewingExperience?.role}</span></div>

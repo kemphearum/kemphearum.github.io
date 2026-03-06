@@ -52,7 +52,7 @@ const AnalyticsDetailModal = ({
                 </div>
             }
             footerContent={
-                <button onClick={onClose} className={styles.primaryBtn} style={{ padding: '0.6rem 1.5rem', margin: 0, fontSize: '0.85rem' }}>Close Analytics Report</button>
+                <button onClick={onClose} className={styles.primaryBtn} style={{ padding: '0.6rem 1.5rem', margin: 0, fontSize: '0.85rem' }}>Close</button>
             }
         >
             <div style={{ position: 'relative' }}>

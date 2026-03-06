@@ -25,7 +25,12 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     const [analyticsLogsLoading, setAnalyticsLogsLoading] = useState(false);
     const [analyticsLogsTotal, setAnalyticsLogsTotal] = useState(0);
 
-    const { data: visits = [], isLoading: analyticsLoading, refetch: refetchAnalytics } = useQuery({
+    const {
+        data: visits = [],
+        isLoading: analyticsLoading,
+        isFetching: analyticsFetching,
+        refetch: refetchAnalytics
+    } = useQuery({
         queryKey: ['analytics', analyticsRange.start, analyticsRange.end],
         queryFn: async () => {
             return await AnalyticsService.fetchAnalytics(userRole, analyticsRange, trackRead);
@@ -46,6 +51,13 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         finally { setAnalyticsLogsLoading(false); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userRole, analyticsRange, showToast]);
+
+    const handleRefreshAll = useCallback(() => {
+        refetchAnalytics();
+        if (analyticsDetail) {
+            handleAnalyticsDetail(analyticsDetail);
+        }
+    }, [refetchAnalytics, analyticsDetail, handleAnalyticsDetail]);
 
     const handleAnalyticsPreset = useCallback((preset) => {
         const end = new Date();
@@ -131,6 +143,15 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 <input type="date" value={analyticsRange.start} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, start: e.target.value, preset: '' }))} className={styles.dateInput} onClick={(e) => e.target.showPicker?.()} />
                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>to</span>
                 <input type="date" value={analyticsRange.end} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, end: e.target.value, preset: '' }))} className={styles.dateInput} onClick={(e) => e.target.showPicker?.()} />
+                <button
+                    className={styles.refreshBtn}
+                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', gap: '0.4rem' }}
+                    onClick={handleRefreshAll}
+                    disabled={analyticsFetching}
+                >
+                    <RefreshCw size={14} className={analyticsFetching ? styles.spin : ''} />
+                    Apply & Sync
+                </button>
             </div>
         </div>
     );
@@ -141,7 +162,11 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 title="Analytics Dashboard"
                 description="Monitor visitor traffic, behavior, and geographical distribution."
                 icon={TrendingUp}
-                rightElement={dateFilter}
+                rightElement={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        {dateFilter}
+                    </div>
+                }
             />
 
             {/* Stat Summary Grid */}
@@ -176,9 +201,9 @@ const AnalyticsTab = ({ userRole, showToast }) => {
             <ChartCard
                 title={`Visits Over Time ${analyticsRange.preset === '7d' ? '(Last 7 Days)' : analyticsRange.preset === '30d' ? '(Last 30 Days)' : analyticsRange.preset === '90d' ? '(Last 90 Days)' : analyticsRange.preset === 'all' ? '(All Time)' : `(${analyticsRange.start} — ${analyticsRange.end})`}`}
                 icon={TrendingUp}
-                onRefresh={() => refetchAnalytics()}
+                onRefresh={handleRefreshAll}
                 onViewDetails={() => handleAnalyticsDetail('visits')}
-                isLoading={analyticsLoading}
+                isLoading={analyticsLoading || analyticsFetching}
             >
                 {dailyVisits.length > 0 ? (
                     <ResponsiveContainer width="100%" height={320}>

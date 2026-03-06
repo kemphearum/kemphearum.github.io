@@ -14,7 +14,8 @@ const BaseModal = ({
     headerStyle = {},
     contentStyle = {},
     bodyStyle = {},
-    footerStyle = {}
+    footerStyle = {},
+    smallHeader = false
 }) => {
     if (!isOpen) return null;
 
@@ -26,44 +27,22 @@ const BaseModal = ({
                 style={{
                     maxWidth,
                     maxHeight,
-                    width: '90%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    borderRadius: '16px',
-                    background: 'var(--bg-surface)',
-                    padding: 0,
                     ...contentStyle
                 }}
             >
                 {headerContent && (
                     <div
-                        className={styles.modalHeader}
-                        style={{
-                            flexShrink: 0,
-                            padding: '1.25rem 1.5rem',
-                            background: 'rgba(10, 10, 18, 0.2)',
-                            borderBottom: '1px solid var(--divider)',
-                            position: 'relative',
-                            ...headerStyle
-                        }}
+                        className={`${styles.modalHeader} ${smallHeader ? styles.smallHeader : ''}`}
+                        style={headerStyle}
                     >
                         {headerContent}
                         {onClose && (
                             <button
                                 onClick={onClose}
                                 className={styles.closeBtn}
-                                style={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    right: '1.5rem',
-                                    transform: 'translateY(-50%)',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: 'var(--text-secondary)',
-                                    cursor: 'pointer'
-                                }}
+                                aria-label="Close modal"
                             >
-                                <X size={20} />
+                                <X size={18} />
                             </button>
                         )}
                     </div>
@@ -71,12 +50,7 @@ const BaseModal = ({
 
                 <div
                     className={styles.modalBody}
-                    style={{
-                        padding: '1.5rem',
-                        overflowY: 'auto',
-                        flexGrow: 1,
-                        ...bodyStyle
-                    }}
+                    style={bodyStyle}
                 >
                     {children}
                 </div>

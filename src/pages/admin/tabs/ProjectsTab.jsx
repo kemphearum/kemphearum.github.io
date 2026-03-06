@@ -314,7 +314,7 @@ const ProjectsTab = ({ userRole, showToast }) => {
                     <button onClick={() => setViewingProject(null)} className={styles.primaryBtn} style={{ margin: 0 }}>Close</button>
                 }
             >
-                <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
+                <div style={{ padding: '2rem' }}>
                     <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
                         <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
                             <span className={styles.detailLabel}>Title</span>
