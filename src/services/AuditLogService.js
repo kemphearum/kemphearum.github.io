@@ -63,7 +63,7 @@ class AuditLogService extends BaseService {
         let logs = [];
 
         if (activityDateRange === 'today') {
-            const q = query(collection(db, 'dailyUsage', currentDateKey, 'logs'), orderBy('time', 'desc'), firestoreLimit(250));
+            const q = query(collection(db, 'dailyUsage', currentDateKey, 'logs'), orderBy('time', 'desc'), firestoreLimit(1500));
             const snap = await getDocs(q);
             logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } else {
@@ -82,7 +82,7 @@ class AuditLogService extends BaseService {
 
                 // Fetch logs for each day in parallel
                 const logPromises = sortedDays.map(async (dayDoc) => {
-                    const qLogs = query(collection(db, 'dailyUsage', dayDoc.id, 'logs'), firestoreLimit(100));
+                    const qLogs = query(collection(db, 'dailyUsage', dayDoc.id, 'logs'), orderBy('time', 'desc'), firestoreLimit(500));
                     const lSnap = await getDocs(qLogs);
                     return lSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                 });
@@ -94,7 +94,7 @@ class AuditLogService extends BaseService {
             } else {
                 // For "All Time", we catch the index error specifically
                 try {
-                    const q = query(collectionGroup(db, 'logs'), orderBy('time', 'desc'), firestoreLimit(500));
+                    const q = query(collectionGroup(db, 'logs'), orderBy('time', 'desc'), firestoreLimit(1500));
                     const snap = await getDocs(q);
                     logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 } catch (cgErr) {

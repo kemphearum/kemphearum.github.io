@@ -11,6 +11,10 @@ import styles from '../../Admin.module.scss';
 import ExperienceService from '../../../services/ExperienceService';
 import ConfirmDialog from '../components/ConfirmDialog';
 import HistoryModal from '../components/HistoryModal';
+import BaseModal from '../components/BaseModal';
+import FormRow from '../components/FormRow';
+import FormInput from '../components/FormInput';
+import FormMarkdownEditor from '../components/FormMarkdownEditor';
 
 const ExperienceTab = ({ userRole, showToast }) => {
     const [experience, setExperience] = useState({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false });
@@ -135,7 +139,7 @@ const ExperienceTab = ({ userRole, showToast }) => {
                 else if (typeof dateVal.toDate === 'function') d = dateVal.toDate();
             }
             if (d && !isNaN(d.getTime())) {
-                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                return `${d.getFullYear()} -${String(d.getMonth() + 1).padStart(2, '0')} `;
             }
 
             if (typeof dateVal !== 'string') return '';
@@ -189,12 +193,12 @@ const ExperienceTab = ({ userRole, showToast }) => {
                 }
             }
 
-            if (foundYear && foundMonth) return `${foundYear}-${foundMonth}`;
+            if (foundYear && foundMonth) return `${foundYear} -${foundMonth} `;
 
             // 6. Last resort: Native parsing
             const nativeDate = new Date(dateVal);
             if (!isNaN(nativeDate.getTime())) {
-                return `${nativeDate.getFullYear()}-${String(nativeDate.getMonth() + 1).padStart(2, '0')}`;
+                return `${nativeDate.getFullYear()} -${String(nativeDate.getMonth() + 1).padStart(2, '0')} `;
             }
 
             return '';
@@ -228,8 +232,8 @@ const ExperienceTab = ({ userRole, showToast }) => {
         const selectedText = text.substring(start, end);
         let newText;
         switch (syntax) {
-            case 'bold': newText = text.substring(0, start) + `**${selectedText || 'bold text'}**` + text.substring(end); break;
-            case 'italic': newText = text.substring(0, start) + `*${selectedText || 'italic text'}*` + text.substring(end); break;
+            case 'bold': newText = text.substring(0, start) + `** ${selectedText || 'bold text'}** ` + text.substring(end); break;
+            case 'italic': newText = text.substring(0, start) + `* ${selectedText || 'italic text'}* ` + text.substring(end); break;
             case 'link': newText = text.substring(0, start) + `[${selectedText || 'Link text'}](url)` + text.substring(end); break;
             case 'code': newText = text.substring(0, start) + `\n\`\`\`\n${selectedText || 'code here'}\n\`\`\`\n` + text.substring(end); break;
             default: return;
@@ -302,21 +306,32 @@ const ExperienceTab = ({ userRole, showToast }) => {
                         </button>
                     </div>
                     <form onSubmit={handleSaveExperience} className={styles.form}>
-                        <div className={styles.formGrid}>
-                            <div className={styles.inputGroup}>
-                                <label>Company Name</label>
-                                <input type="text" placeholder="e.g. Google Inc." value={experience.company} onChange={(e) => setExperience({ ...experience, company: e.target.value })} required />
-                            </div>
-                            <div className={styles.inputGroup}>
-                                <label>Role / Job Title</label>
-                                <input type="text" placeholder="e.g. Senior Developer" value={experience.role} onChange={(e) => setExperience({ ...experience, role: e.target.value })} required />
-                            </div>
-                        </div>
-                        <div className={styles.formGrid}>
-                            <div className={styles.inputGroup}>
-                                <label>Start Date</label>
-                                <input type="month" value={experience.startDate || ''} onChange={(e) => setExperience({ ...experience, startDate: e.target.value })} onClick={(e) => e.target.showPicker?.()} required />
-                            </div>
+                        <FormRow>
+                            <FormInput
+                                label="Company Name"
+                                placeholder="e.g. Google Inc."
+                                value={experience.company}
+                                onChange={(e) => setExperience({ ...experience, company: e.target.value })}
+                                required
+                            />
+                            <FormInput
+                                label="Role / Job Title"
+                                placeholder="e.g. Senior Developer"
+                                value={experience.role}
+                                onChange={(e) => setExperience({ ...experience, role: e.target.value })}
+                                required
+                            />
+                        </FormRow>
+
+                        <FormRow>
+                            <FormInput
+                                label="Start Date"
+                                type="month"
+                                value={experience.startDate || ''}
+                                onChange={(e) => setExperience({ ...experience, startDate: e.target.value })}
+                                onClick={(e) => e.target.showPicker?.()}
+                                required
+                            />
                             <div className={styles.inputGroup}>
                                 <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     End Date
@@ -327,40 +342,20 @@ const ExperienceTab = ({ userRole, showToast }) => {
                                 </label>
                                 <input type="month" value={experience.endDate || ''} onChange={(e) => setExperience({ ...experience, endDate: e.target.value })} disabled={experience.isPresent} required={!experience.isPresent} onClick={(e) => e.target.showPicker?.()} />
                             </div>
-                        </div>
-                        <div className={styles.inputGroup} style={{ gridColumn: 'span 2' }}>
-                            <div className={styles.editorHeader}>
-                                <label>Description (Markdown)</label>
-                                <div className={styles.toolbar}>
-                                    {!isExpPreviewMode && (
-                                        <div className={styles.formatGroup}>
-                                            <button type="button" onClick={() => insertMarkdownExp('bold')} title="Bold"><Bold size={16} /></button>
-                                            <button type="button" onClick={() => insertMarkdownExp('italic')} title="Italic"><Italic size={16} /></button>
-                                            <button type="button" onClick={() => insertMarkdownExp('link')} title="Link"><LinkIcon size={16} /></button>
-                                            <button type="button" onClick={() => insertMarkdownExp('code')} title="Code Block"><Code size={16} /></button>
-                                        </div>
-                                    )}
-                                    <button type="button" className={styles.previewToggle} onClick={() => setIsExpPreviewMode(!isExpPreviewMode)}>
-                                        {isExpPreviewMode ? <><Edit2 size={14} /> Edit</> : <><Eye size={14} /> Preview</>}
-                                    </button>
-                                </div>
-                            </div>
-                            {isExpPreviewMode ? (
-                                <div className={styles.previewBox}>
-                                    <MarkdownRenderer content={experience.description || '*Nothing to preview...*'} />
-                                </div>
-                            ) : (
-                                <textarea
-                                    id="exp-markdown-editor"
-                                    placeholder="Use markdown to format your description..."
-                                    value={experience.description}
-                                    onChange={(e) => setExperience({ ...experience, description: e.target.value })}
-                                    rows="8"
-                                    required
-                                    style={{ fontFamily: 'monospace' }}
-                                />
-                            )}
-                        </div>
+                        </FormRow>
+
+                        <FormMarkdownEditor
+                            label="Description (Markdown)"
+                            id="exp-markdown-editor"
+                            value={experience.description}
+                            onChange={(e) => setExperience({ ...experience, description: e.target.value })}
+                            rows="8"
+                            isPreviewMode={isExpPreviewMode}
+                            onTogglePreview={() => setIsExpPreviewMode(!isExpPreviewMode)}
+                            onInsertMarkdown={insertMarkdownExp} // Pass the existing markdown insertion function
+                            required
+                        />
+
                         <div className={styles.formFooter}>
                             <button type="submit" disabled={loading} className={styles.submitBtn}>
                                 {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
@@ -371,29 +366,35 @@ const ExperienceTab = ({ userRole, showToast }) => {
             )}
 
             {/* Experience Details Modal */}
-            {viewingExperience && (
-                <div className={styles.modalOverlay} onClick={() => setViewingExperience(null)} style={{ zIndex: 1200 }}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '650px', borderRadius: '20px' }}>
-                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}>
-                            <h3 style={{ fontSize: '1.4rem' }}>{icons.experience || '👔'} Experience Details</h3>
-                            <button onClick={() => setViewingExperience(null)} className={styles.closeBtn}><X size={20} /></button>
-                        </div>
-                        <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
-                            <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-                                <div className={styles.detailItem}><span className={styles.detailLabel}>Company</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary-color)' }}>{viewingExperience.company}</span></div>
-                                <div className={styles.detailItem}><span className={styles.detailLabel}>Role</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700' }}>{viewingExperience.role}</span></div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}><span className={styles.detailLabel}>Period</span><span className={styles.detailValue} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem 1rem', borderRadius: '8px', display: 'inline-block', marginTop: '0.4rem' }}>{viewingExperience.period}</span></div>
-                            </div>
-                            <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
-                                <MarkdownRenderer content={viewingExperience.description} />
-                            </div>
-                        </div>
-                        <div className={styles.modalFooter} style={{ padding: '1.25rem 2rem' }}>
-                            <button onClick={() => setViewingExperience(null)} className={styles.primaryBtn}>Close</button>
-                        </div>
+            <BaseModal
+                isOpen={!!viewingExperience}
+                onClose={() => setViewingExperience(null)}
+                zIndex={1200}
+                maxWidth="650px"
+                contentStyle={{ borderRadius: '20px' }}
+                headerStyle={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}
+                headerContent={
+                    <h3 style={{ margin: 0, fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {icons.experience || '👔'} Experience Details
+                    </h3>
+                }
+                bodyStyle={{ padding: 0 }}
+                footerStyle={{ padding: '1.25rem 2rem' }}
+                footerContent={
+                    <button onClick={() => setViewingExperience(null)} className={styles.primaryBtn} style={{ margin: 0 }}>Close</button>
+                }
+            >
+                <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
+                    <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                        <div className={styles.detailItem}><span className={styles.detailLabel}>Company</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary-color)' }}>{viewingExperience?.company}</span></div>
+                        <div className={styles.detailItem}><span className={styles.detailLabel}>Role</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700' }}>{viewingExperience?.role}</span></div>
+                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}><span className={styles.detailLabel}>Period</span><span className={styles.detailValue} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem 1rem', borderRadius: '8px', display: 'inline-block', marginTop: '0.4rem' }}>{viewingExperience?.period}</span></div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
+                        <MarkdownRenderer content={viewingExperience?.description || ''} />
                     </div>
                 </div>
-            )}
+            </BaseModal>
 
             {/* Confirm Dialog */}
             {confirmDialog.isOpen && (

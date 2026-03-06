@@ -8,6 +8,9 @@ import { tabLabels } from '../components/constants';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
 import ConfirmDialog from '../components/ConfirmDialog';
+import BaseModal from '../components/BaseModal';
+import FormInput from '../components/FormInput';
+import FormSelect from '../components/FormSelect';
 import styles from '../../Admin.module.scss';
 
 const UsersTab = ({ user, userRole, showToast }) => {
@@ -269,111 +272,137 @@ const UsersTab = ({ user, userRole, showToast }) => {
             )}
 
             {/* Add User Modal */}
-            {showAddUserForm && (
-                <div className={styles.modalOverlay} onClick={() => setShowAddUserForm(false)} style={{ zIndex: 1300 }}>
-                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px', borderRadius: '20px' }}>
-                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}>
-                            <h3 style={{ fontSize: '1.3rem' }}><UserPlus size={22} style={{ color: 'var(--primary-color)' }} /> Create New User</h3>
-                            <button onClick={() => setShowAddUserForm(false)} className={styles.closeBtn}><X size={20} /></button>
-                        </div>
-                        <form onSubmit={handleAddUser}>
-                            <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                <div className={styles.inputGroup}>
-                                    <label>Email Address</label>
-                                    <input type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} required placeholder="user@example.com" />
-                                </div>
-                                <div className={styles.inputGroup}>
-                                    <label>Temporary Password</label>
-                                    <input type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} required minLength={6} placeholder="Min 6 characters" />
-                                </div>
-                                <div className={styles.inputGroup}>
-                                    <label>Initial Role</label>
-                                    <select value={newUserRole} onChange={(e) => setNewUserRole(e.target.value)} className={styles.standardSelect} style={{ width: '100%', marginTop: '0.4rem' }}>
-                                        <option value="pending">⏳ Pending Verification</option>
-                                        <option value="editor">✍️ Content Editor</option>
-                                        <option value="admin">🛡️ System Admin</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className={styles.modalFooter} style={{ padding: '1.25rem 2rem' }}>
-                                <button type="button" onClick={() => setShowAddUserForm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
-                                <button type="submit" className={styles.primaryBtn} disabled={loading} style={{ margin: 0, padding: '0.6rem 1.75rem' }}>{loading ? 'Creating...' : 'Create User'}</button>
-                            </div>
-                        </form>
+            <BaseModal
+                isOpen={showAddUserForm}
+                onClose={() => setShowAddUserForm(false)}
+                zIndex={1300}
+                maxWidth="480px"
+                contentStyle={{ borderRadius: '20px' }}
+                headerStyle={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}
+                headerContent={
+                    <h3 style={{ margin: 0, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <UserPlus size={22} style={{ color: 'var(--primary-color)' }} /> Create New User
+                    </h3>
+                }
+                bodyStyle={{ padding: 0 }}
+            >
+                <form onSubmit={handleAddUser}>
+                    <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        <FormInput
+                            label="Email Address"
+                            type="email"
+                            value={newUserEmail}
+                            onChange={(e) => setNewUserEmail(e.target.value)}
+                            required
+                            placeholder="user@example.com"
+                        />
+                        <FormInput
+                            label="Temporary Password"
+                            type="password"
+                            value={newUserPassword}
+                            onChange={(e) => setNewUserPassword(e.target.value)}
+                            required
+                            placeholder="Min 6 characters"
+                            minLength={6}
+                        />
+                        <FormSelect
+                            label="Initial Role"
+                            value={newUserRole}
+                            onChange={(e) => setNewUserRole(e.target.value)}
+                            options={[
+                                { value: 'pending', label: '⏳ Pending Verification' },
+                                { value: 'editor', label: '✍️ Content Editor' },
+                                { value: 'admin', label: '🛡️ System Admin' }
+                            ]}
+                        />
                     </div>
-                </div>
-            )}
+                    <div className={styles.modalFooter} style={{ padding: '1.25rem 2rem', background: 'transparent', borderTop: '1px solid var(--divider)', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                        <button type="button" onClick={() => setShowAddUserForm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
+                        <button type="submit" className={styles.primaryBtn} disabled={loading} style={{ margin: 0, padding: '0.6rem 1.75rem' }}>{loading ? 'Creating...' : 'Create User'}</button>
+                    </div>
+                </form>
+            </BaseModal>
 
             {/* User View Modal */}
             {viewingUser && (
-                <div className={styles.modalOverlay} onClick={() => setViewingUser(null)} style={{ zIndex: 1200 }}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '650px', borderRadius: '20px' }}>
-                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}>
-                            <h3 style={{ fontSize: '1.3rem' }}><Users size={22} style={{ color: 'var(--primary-color)' }} /> User Account Profile</h3>
-                            <button onClick={() => setViewingUser(null)} className={styles.closeBtn}><X size={20} /></button>
-                        </div>
-                        <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
-                            <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>Authentication Email</span>
-                                    <span className={styles.detailValue} style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{viewingUser.email}</span>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Display Name</span>
-                                    <span className={styles.detailValue} style={{ fontSize: '1rem' }}>{viewingUser.displayName || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', opacity: 0.6 }}>Not set by user</span>}</span>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Status & Security</span>
-                                    <span className={styles.detailValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        {viewingUser.isActive === false ? <span style={{ color: '#ef4444', fontWeight: 'bold' }}>● Disabled</span> : <span style={{ color: '#10b981', fontWeight: 'bold' }}>● Active Account</span>}
-                                    </span>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Administrative Role</span>
-                                    {viewingUser.email === user.email ? (
-                                        <div style={{ marginTop: '0.6rem' }}>
-                                            <span className={`${styles.roleBadge} ${viewingUser.role === 'superadmin' ? styles.roleSuperadmin : (viewingUser.role === 'admin' ? styles.roleAdmin : styles.roleEditor)}`}>
-                                                {viewingUser.role.toUpperCase()} (YOU)
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <select className={styles.standardSelect} style={{ width: '100%', marginTop: '0.4rem', fontSize: '0.85rem' }} value={viewingUser.role}
-                                            onChange={(e) => { const newRole = e.target.value; handleRoleChange(viewingUser.id, newRole); setViewingUser({ ...viewingUser, role: newRole }); }}>
-                                            <option value="pending">Pending</option>
-                                            <option value="editor">Editor</option>
-                                            <option value="admin">Admin</option>
-                                            <option value="superadmin">Super Admin</option>
-                                        </select>
-                                    )}
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Registration Date</span>
-                                    <span className={styles.detailValue} style={{ fontSize: '0.9rem' }}>{viewingUser.createdAt?.seconds ? new Date(viewingUser.createdAt.seconds * 1000).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' }) : 'Unknown'}</span>
-                                </div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>System Universal ID (UID)</span>
-                                    <span className={styles.detailValue} style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '0.4rem 0.8rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>{viewingUser.id}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className={styles.modalFooter} style={{ padding: '1.5rem 2rem', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <BaseModal
+                    isOpen={!!viewingUser}
+                    onClose={() => setViewingUser(null)}
+                    zIndex={1200}
+                    maxWidth="650px"
+                    contentStyle={{ borderRadius: '20px' }}
+                    headerStyle={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}
+                    headerContent={
+                        <h3 style={{ margin: 0, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Users size={22} style={{ color: 'var(--primary-color)' }} /> User Account Profile
+                        </h3>
+                    }
+                    bodyStyle={{ padding: 0 }}
+                    footerStyle={{ padding: '1.5rem 2rem', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.05)' }}
+                    footerContent={
+                        <>
                             <div>
                                 {viewingUser.email !== user.email && (
-                                    <button className={styles.deleteBtn} onClick={() => { handleRemoveUser(viewingUser.email, viewingUser.id); setViewingUser(null); }} style={{ padding: '0.6rem 1.25rem' }}>
+                                    <button className={styles.deleteBtn} onClick={() => { handleRemoveUser(viewingUser.email, viewingUser.id); setViewingUser(null); }} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>
                                         <Trash2 size={16} /> Disable User Account
                                     </button>
                                 )}
                             </div>
                             <div style={{ display: 'flex', gap: '0.8rem' }}>
                                 <button className={styles.editBtn} onClick={() => { handleResetPassword(viewingUser.email); setViewingUser(null); }}
-                                    style={{ background: 'transparent', border: '1px solid var(--glass-border)', padding: '0.6rem 1.25rem' }}>
+                                    style={{ background: 'transparent', border: '1px solid var(--glass-border)', padding: '0.6rem 1.25rem', margin: 0 }}>
                                     🔑 Send Reset Email
                                 </button>
-                                <button onClick={() => setViewingUser(null)} className={styles.primaryBtn} style={{ padding: '0.6rem 1.5rem' }}>Done</button>
+                                <button onClick={() => setViewingUser(null)} className={styles.primaryBtn} style={{ padding: '0.6rem 1.5rem', margin: 0 }}>Done</button>
+                            </div>
+                        </>
+                    }
+                >
+                    <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '70vh' }}>
+                        <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
+                            <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                <span className={styles.detailLabel}>Authentication Email</span>
+                                <span className={styles.detailValue} style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{viewingUser.email}</span>
+                            </div>
+                            <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Display Name</span>
+                                <span className={styles.detailValue} style={{ fontSize: '1rem' }}>{viewingUser.displayName || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', opacity: 0.6 }}>Not set by user</span>}</span>
+                            </div>
+                            <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Status & Security</span>
+                                <span className={styles.detailValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    {viewingUser.isActive === false ? <span style={{ color: '#ef4444', fontWeight: 'bold' }}>● Disabled</span> : <span style={{ color: '#10b981', fontWeight: 'bold' }}>● Active Account</span>}
+                                </span>
+                            </div>
+                            <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Administrative Role</span>
+                                {viewingUser.email === user.email ? (
+                                    <div style={{ marginTop: '0.6rem' }}>
+                                        <span className={`${styles.roleBadge} ${viewingUser.role === 'superadmin' ? styles.roleSuperadmin : (viewingUser.role === 'admin' ? styles.roleAdmin : styles.roleEditor)}`}>
+                                            {viewingUser.role.toUpperCase()} (YOU)
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <select className={styles.standardSelect} style={{ width: '100%', marginTop: '0.4rem', fontSize: '0.85rem' }} value={viewingUser.role}
+                                        onChange={(e) => { const newRole = e.target.value; handleRoleChange(viewingUser.id, newRole); setViewingUser({ ...viewingUser, role: newRole }); }}>
+                                        <option value="pending">Pending</option>
+                                        <option value="editor">Editor</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="superadmin">Super Admin</option>
+                                    </select>
+                                )}
+                            </div>
+                            <div className={styles.detailItem}>
+                                <span className={styles.detailLabel}>Registration Date</span>
+                                <span className={styles.detailValue} style={{ fontSize: '0.9rem' }}>{viewingUser.createdAt?.seconds ? new Date(viewingUser.createdAt.seconds * 1000).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' }) : 'Unknown'}</span>
+                            </div>
+                            <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                <span className={styles.detailLabel}>System Universal ID (UID)</span>
+                                <span className={styles.detailValue} style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '0.4rem 0.8rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>{viewingUser.id}</span>
                             </div>
                         </div>
                     </div>
-                </div>
+                </BaseModal>
             )}
 
 

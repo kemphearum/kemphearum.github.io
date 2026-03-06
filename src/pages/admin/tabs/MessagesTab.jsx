@@ -7,6 +7,8 @@ import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
 import MessageService from '../../../services/MessageService';
 import ConfirmDialog from '../components/ConfirmDialog';
+import BaseModal from '../components/BaseModal';
+import SectionHeader from '../components/SectionHeader';
 
 const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
     const [searchMessages, setSearchMessages] = useState('');
@@ -16,7 +18,7 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
     const [viewingMessage, setViewingMessage] = useState(null);
     const [msgSort, setMsgSort] = useState({ field: 'createdAt', dir: 'desc' });
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
-    const { trackRead, trackWrite, trackDelete } = useActivity();
+    const { trackWrite, trackDelete } = useActivity();
 
     const toggleSort = useCallback((field) => {
         setMsgSort(prev => ({
@@ -151,167 +153,191 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
     };
 
     return (
-        <div className={styles.section} style={{ paddingBottom: '4rem' }}>
-            <div className={styles.listSection} style={{ marginTop: '0' }}>
-                <div className={styles.listSectionHeader}>
-                    <h3 className={styles.listTitle}>
-                        Inbox
+        <div style={{ paddingBottom: '3rem' }}>
+            <SectionHeader
+                title="Inquiry Messages"
+                description={`Manage and respond to contact form submissions. Currently tracking ${messages.length} inquiries.`}
+                icon={Mail}
+                rightElement={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         {unreadMessagesCount > 0 && (
-                            <span className={styles.count} style={{ background: 'linear-gradient(135deg, #6C63FF, #8B83FF)', color: '#fff', fontWeight: 'bold', marginLeft: '0.5rem', boxShadow: '0 2px 8px rgba(108, 99, 255, 0.4)' }}>
+                            <div style={{ background: 'rgba(108, 99, 255, 0.15)', color: '#6C63FF', padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600 }}>
                                 {unreadMessagesCount} Unread
-                            </span>
+                            </div>
                         )}
-                    </h3>
+                    </div>
+                }
+            />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                <div className={styles.searchBox} style={{ margin: 0, flex: 1, minWidth: '250px' }}>
+                    <Search size={16} className={styles.searchIcon} />
+                    <input type="text" placeholder="Search by name, email, or message..." value={searchMessages} onChange={(e) => { setSearchMessages(e.target.value); setMessagesPage(1); }} />
+                    {searchMessages && <span className={styles.searchResultCount}>{filteredMessages.length} of {messages.length}</span>}
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div className={styles.searchBox} style={{ margin: 0, flex: 1, minWidth: '250px' }}>
-                        <Search size={16} className={styles.searchIcon} />
-                        <input type="text" placeholder="Search by name, email, or message..." value={searchMessages} onChange={(e) => { setSearchMessages(e.target.value); setMessagesPage(1); }} />
-                        {searchMessages && <span className={styles.searchResultCount}>{filteredMessages.length} of {messages.length}</span>}
+                {selectedMessages.length > 0 && (
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'rgba(255, 255, 255, 0.03)', padding: '0.5rem 1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginRight: '0.5rem' }}>
+                            {selectedMessages.length} selected
+                        </span>
+                        <button onClick={() => handleBatchMarkMessages(true)} className={styles.iconBtn} title="Mark as Read" style={{ width: 'auto', padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <MailOpen size={14} /> Read
+                        </button>
+                        <button onClick={() => handleBatchMarkMessages(false)} className={styles.iconBtn} title="Mark as Unread" style={{ width: 'auto', padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Mail size={14} /> Unread
+                        </button>
+                        <button onClick={handleBatchDeleteMessages} className={styles.deleteBtn} title="Delete Selected" style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
+                            <Trash2 size={14} /> Delete
+                        </button>
                     </div>
+                )}
+            </div>
 
-                    {selectedMessages.length > 0 && (
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'rgba(255, 255, 255, 0.05)', padding: '0.5rem 1rem', borderRadius: '8px' }}>
-                            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginRight: '0.5rem' }}>
-                                {selectedMessages.length} selected
-                            </span>
-                            <button onClick={() => handleBatchMarkMessages(true)} className={styles.editBtn} title="Mark as Read" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.8rem' }}>
-                                <MailOpen size={14} /> Read
-                            </button>
-                            <button onClick={() => handleBatchMarkMessages(false)} className={styles.editBtn} title="Mark as Unread" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.8rem' }}>
-                                <Mail size={14} /> Unread
-                            </button>
-                            <button onClick={handleBatchDeleteMessages} className={styles.deleteBtn} title="Delete Selected" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.8rem' }}>
-                                <Trash2 size={14} /> Delete
-                            </button>
-                        </div>
-                    )}
+            {filteredMessages.length === 0 ? (
+                <div className={styles.emptyState}>
+                    <Mail size={40} style={{ opacity: 0.3, marginBottom: '1rem' }} />
+                    <p>{searchMessages ? 'No matching messages found.' : 'Your inbox is empty.'}</p>
                 </div>
-
-                {filteredMessages.length === 0 ? (
-                    <div className={styles.emptyState}>
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                        <p>{searchMessages ? 'No matching messages found.' : 'No messages yet.'}</p>
-                    </div>
-                ) : (
-                    <>
-                        <div className={styles.messageHeader}>
+            ) : (
+                <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '40px 1.2fr 1.5fr 3fr 1.2fr 100px', gap: '0.75rem', padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
                             <input
                                 type="checkbox"
                                 checked={paginatedMessages.length > 0 && paginatedMessages.every(msg => selectedMessages.includes(msg.id))}
                                 onChange={handleSelectAllMessages}
                                 style={{ cursor: 'pointer', accentColor: 'var(--primary-color)' }}
-                                title="Select All on this page"
                             />
-                            <SortableHeader label="Sender" field="name" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={toggleSort} />
-                            <SortableHeader label="Email" field="email" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={toggleSort} />
-                            <SortableHeader label="Message" field="message" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={toggleSort} />
-                            <SortableHeader label="Date" field="createdAt" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={toggleSort} />
-                            <div style={{ textAlign: 'right', paddingRight: '0.5rem' }}>Actions</div>
                         </div>
+                        <SortableHeader label="Sender" field="name" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={toggleSort} />
+                        <SortableHeader label="Email" field="email" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={toggleSort} />
+                        <SortableHeader label="Message Preview" field="message" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={toggleSort} />
+                        <SortableHeader label="Received" field="createdAt" sortField={msgSort.field} sortDirection={msgSort.dir} onSort={toggleSort} />
+                        <div style={{ textAlign: 'right' }}>Actions</div>
+                    </div>
 
-                        {paginatedMessages.map((msg, index) => {
-                            const isUnread = !msg.isRead;
-                            const isSelected = selectedMessages.includes(msg.id);
-                            return (
-                                <div
-                                    key={msg.id || `msg-${index}`}
-                                    className={`${styles.messageGrid} ${isUnread ? styles.unread : ''} ${isSelected ? styles.selected : ''}`}
-                                    onClick={(e) => {
-                                        if (e.target.type !== 'checkbox' && !e.target.closest('button')) {
-                                            handleViewMessage(msg);
-                                        }
-                                    }}
-                                >
+                    {paginatedMessages.map((msg, index) => {
+                        const isUnread = !msg.isRead;
+                        const isSelected = selectedMessages.includes(msg.id);
+                        return (
+                            <div
+                                key={msg.id || `msg-${index}`}
+                                onClick={(e) => { if (e.target.type !== 'checkbox' && !e.target.closest('button')) handleViewMessage(msg); }}
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '40px 1.2fr 1.5fr 3fr 1.2fr 100px',
+                                    gap: '0.75rem',
+                                    padding: '1.25rem 1.5rem',
+                                    background: isUnread ? 'rgba(108, 99, 255, 0.03)' : (isSelected ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.01)'),
+                                    border: '1px solid',
+                                    borderColor: isUnread ? 'rgba(108, 99, 255, 0.15)' : 'rgba(255,255,255,0.04)',
+                                    borderRadius: '12px',
+                                    fontSize: '0.88rem',
+                                    alignItems: 'center',
+                                    transition: 'all 0.2s ease',
+                                    cursor: 'pointer',
+                                    marginBottom: '0.5rem',
+                                    boxShadow: isUnread ? '0 4px 12px rgba(108, 99, 255, 0.05)' : 'none'
+                                }}
+                                className={styles.userGridRowHover}
+                            >
+                                <div onClick={(e) => e.stopPropagation()}>
                                     <input
                                         type="checkbox"
                                         checked={isSelected}
                                         onChange={() => handleToggleSelectMessage(msg.id)}
                                         style={{ cursor: 'pointer', accentColor: 'var(--primary-color)' }}
                                     />
-                                    <div className={`${styles.messageCell} ${styles.primary} ${isUnread ? styles.unread : ''}`}>
-                                        {msg.name}
-                                    </div>
-                                    <div className={styles.messageCell}>{msg.email}</div>
-                                    <div className={`${styles.messageCell} ${isUnread ? styles.unread : ''}`} title={msg.message}>
-                                        {msg.message}
-                                    </div>
-                                    <div className={styles.messageCell} style={{ fontSize: '0.8rem', color: isUnread ? 'var(--primary-color)' : 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                                        {msg.createdAt?.seconds ? new Date(msg.createdAt.seconds * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now'}
-                                    </div>
-                                    <div className={styles.messageActions}>
-                                        <button onClick={(e) => { e.stopPropagation(); handleToggleMessageRead(msg.id, msg.isRead); }} className={styles.editBtn} title={msg.isRead ? "Mark as Unread" : "Mark as Read"} style={{ padding: '0.3rem' }}>
-                                            {msg.isRead ? <MailOpen size={15} /> : <Mail size={15} />}
-                                        </button>
-                                        <button onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }} className={styles.deleteBtn} title="Delete" style={{ padding: '0.3rem' }}>
-                                            <Trash2 size={15} />
-                                        </button>
-                                    </div>
                                 </div>
-                            );
-                        })}
-                        <Pagination currentPage={messagesPage} totalPages={messagesTotalPages} onPageChange={setMessagesPage} perPage={messagesPerPage} onPerPageChange={(v) => { setMessagesPerPage(v); setMessagesPage(1); }} totalItems={filteredMessages.length} />
-                    </>
-                )}
-            </div>
+                                <div style={{ color: isUnread ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: isUnread ? '700' : '500', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {msg.name}
+                                </div>
+                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{msg.email}</div>
+                                <div style={{ color: isUnread ? 'var(--text-primary)' : 'var(--text-secondary)', opacity: isUnread ? 1 : 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {msg.message}
+                                </div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                    {msg.createdAt?.seconds ? new Date(msg.createdAt.seconds * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently'}
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                    <button onClick={(e) => { e.stopPropagation(); handleToggleMessageRead(msg.id, msg.isRead); }} className={styles.iconBtn} title={msg.isRead ? "Mark Unread" : "Mark Read"} style={{ background: isUnread ? 'rgba(108, 99, 255, 0.1)' : 'transparent' }}>
+                                        {msg.isRead ? <MailOpen size={15} /> : <Mail size={15} style={{ color: 'var(--primary-color)' }} />}
+                                    </button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }} className={styles.iconBtn} title="Delete" style={{ color: '#ef4444' }}>
+                                        <Trash2 size={15} />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    <Pagination currentPage={messagesPage} totalPages={messagesTotalPages} onPageChange={setMessagesPage} perPage={messagesPerPage} onPerPageChange={(v) => { setMessagesPerPage(v); setMessagesPage(1); }} totalItems={filteredMessages.length} />
+                </>
+            )}
 
-            {/* Message View Modal */}
-            {viewingMessage && (
-                <div className={styles.modalOverlay} onClick={() => setViewingMessage(null)} style={{ zIndex: 1200 }}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '650px', borderRadius: '20px' }}>
-                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}>
-                            <h3 style={{ fontSize: '1.3rem' }}><Mail size={22} style={{ color: 'var(--primary-color)' }} /> Message Details</h3>
-                            <button onClick={() => setViewingMessage(null)} className={styles.closeBtn}><X size={20} /></button>
+            {/* Message Detail Modal */}
+            <BaseModal
+                isOpen={!!viewingMessage}
+                onClose={() => setViewingMessage(null)}
+                zIndex={1200}
+                maxWidth="680px"
+                contentStyle={{ borderRadius: '24px', padding: 0 }}
+                headerStyle={{ background: 'rgba(99, 102, 241, 0.05)', padding: '1.5rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                headerContent={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1' }}>
+                            <Mail size={24} />
                         </div>
-                        <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
-                            <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', marginBottom: '1.5rem' }}>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>Sender Information</span>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginTop: '0.6rem' }}>
-                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '1.1rem', fontWeight: 'bold' }}>
-                                            {viewingMessage.name?.charAt(0).toUpperCase() || '?'}
-                                        </div>
-                                        <div>
-                                            <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--text-primary)', display: 'block' }}>{viewingMessage.name}</span>
-                                            <a href={`mailto:${viewingMessage.email}`} style={{ color: 'var(--primary-color)', textDecoration: 'none', fontSize: '0.9rem', opacity: 0.8 }}>{viewingMessage.email}</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Received Date</span>
-                                    <span className={styles.detailValue} style={{ fontSize: '0.95rem' }}>{viewingMessage.createdAt?.seconds ? new Date(viewingMessage.createdAt.seconds * 1000).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' }) : 'Recently'}</span>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Status</span>
-                                    <span className={`${styles.roleBadge} ${viewingMessage.isRead ? styles.roleAdmin : styles.rolePending}`} style={{ marginTop: '0.4rem' }}>{viewingMessage.isRead ? '✓ Read' : '✉ Unread'}</span>
-                                </div>
-                            </div>
-                            <div style={{ background: 'rgba(255,255,255,0.015)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
-                                <span className={styles.detailLabel} style={{ marginBottom: '1rem', display: 'block' }}>Message Content</span>
-                                <p style={{ whiteSpace: 'pre-wrap', lineHeight: '1.8', margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                                    {viewingMessage.message}
-                                </p>
-                            </div>
+                        <div>
+                            <h3 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>Message Details</h3>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>From inquiries on your portfolio</p>
                         </div>
-                        <div className={styles.modalFooter} style={{ padding: '1.5rem 2rem', borderTop: '1px solid rgba(255,255,255,0.05)', justifyContent: 'space-between' }}>
-                            <button className={styles.deleteBtn} onClick={() => { handleDeleteMessage(viewingMessage.id); setViewingMessage(null); }} style={{ padding: '0.6rem 1.25rem' }}>
-                                <Trash2 size={16} /> Delete Message
+                    </div>
+                }
+                bodyStyle={{ padding: '2rem' }}
+                footerStyle={{ padding: '1.25rem 2rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.05)', justifyContent: 'space-between' }}
+                footerContent={
+                    <>
+                        <button onClick={() => { handleDeleteMessage(viewingMessage?.id); setViewingMessage(null); }} className={styles.deleteBtn} style={{ padding: '0.6rem 1.25rem', margin: 0, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                            <Trash2 size={16} /> Delete
+                        </button>
+                        <div style={{ display: 'flex', gap: '0.8rem' }}>
+                            <button onClick={() => handleToggleMessageRead(viewingMessage?.id, viewingMessage?.isRead)} className={styles.iconBtn} style={{ width: 'auto', padding: '0.6rem 1rem' }}>
+                                {viewingMessage?.isRead ? <><MailOpen size={18} /> Mark Unread</> : <><Mail size={18} /> Mark Read</>}
                             </button>
-                            <div style={{ display: 'flex', gap: '0.8rem' }}>
-                                <button className={styles.editBtn} onClick={() => { handleToggleMessageRead(viewingMessage.id, viewingMessage.isRead); }} style={{ padding: '0.6rem 1rem' }}>
-                                    {viewingMessage.isRead ? <><MailOpen size={18} /> Mark Unread</> : <><Mail size={18} /> Mark Read</>}
-                                </button>
-                                <a href={`mailto:${viewingMessage.email}?subject=Re: Inquiry from ${encodeURIComponent(viewingMessage.name)}`} className={styles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.5rem' }}>
-                                    <Reply size={18} style={{ marginRight: '6px' }} /> Reply
-                                </a>
+                            <a href={`mailto:${viewingMessage?.email}?subject=Re: Inquiry from ${encodeURIComponent(viewingMessage?.name || '')}`} className={styles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.75rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                <Reply size={18} /> Reply Now
+                            </a>
+                        </div>
+                    </>
+                }
+            >
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.25rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Sender</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--primary-color)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>{viewingMessage?.name?.charAt(0)}</div>
+                            <div>
+                                <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{viewingMessage?.name}</div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--primary-color)' }}>{viewingMessage?.email}</div>
                             </div>
                         </div>
                     </div>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.25rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>Timestamp</span>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '0.25rem' }}>
+                            {viewingMessage?.createdAt?.seconds ? new Date(viewingMessage.createdAt.seconds * 1000).toLocaleString() : 'Recently'}
+                        </div>
+                    </div>
                 </div>
-            )}
+
+                <div style={{ background: 'rgba(255,255,255,0.01)', padding: '1.5rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.03)', minHeight: '150px' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600, display: 'block', marginBottom: '1rem' }}>Message Body</span>
+                    <p style={{ margin: 0, lineHeight: 1.8, color: 'var(--text-primary)', fontSize: '1rem', whiteSpace: 'pre-wrap' }}>
+                        {viewingMessage?.message}
+                    </p>
+                </div>
+            </BaseModal>
 
 
             {/* Confirm Dialog */}

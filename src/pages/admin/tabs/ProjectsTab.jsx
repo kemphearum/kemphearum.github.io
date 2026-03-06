@@ -12,6 +12,11 @@ import styles from '../../Admin.module.scss';
 import ProjectService from '../../../services/ProjectService';
 import ConfirmDialog from '../components/ConfirmDialog';
 import HistoryModal from '../components/HistoryModal';
+import BaseModal from '../components/BaseModal';
+import FormRow from '../components/FormRow';
+import FormInput from '../components/FormInput';
+import FormMarkdownEditor from '../components/FormMarkdownEditor';
+import FormDropzone from '../components/FormDropzone';
 
 const ProjectsTab = ({ userRole, showToast }) => {
     const [project, setProject] = useState({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
@@ -23,7 +28,6 @@ const ProjectsTab = ({ userRole, showToast }) => {
     const [projPage, setProjPage] = useState(1);
     const [projPerPage, setProjPerPage] = useState(10);
     const [projSort, setProjSort] = useState({ field: 'createdAt', dir: 'desc' });
-    const [isProjectPreviewMode, setIsProjectPreviewMode] = useState(false);
     const [loading, setLoading] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
     const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
@@ -140,28 +144,8 @@ const ProjectsTab = ({ userRole, showToast }) => {
         setEditingProject(p.id);
         setProject({ ...p, techStack: Array.isArray(p.techStack) ? p.techStack.join(', ') : p.techStack || '' });
         setProjectImage(null);
-        setIsProjectPreviewMode(false);
         setShowProjectForm(true);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    const insertMarkdownProject = (syntax) => {
-        const textarea = document.getElementById('project-markdown-editor');
-        if (!textarea) return;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const text = project.content || '';
-        const selectedText = text.substring(start, end);
-        let newText;
-        switch (syntax) {
-            case 'bold': newText = text.substring(0, start) + `**${selectedText || 'bold text'}**` + text.substring(end); break;
-            case 'italic': newText = text.substring(0, start) + `*${selectedText || 'italic text'}*` + text.substring(end); break;
-            case 'link': newText = text.substring(0, start) + `[${selectedText || 'Link text'}](url)` + text.substring(end); break;
-            case 'code': newText = text.substring(0, start) + `\n\`\`\`\n${selectedText || 'code here'}\n\`\`\`\n` + text.substring(end); break;
-            default: return;
-        }
-        setProject({ ...project, content: newText });
-        setTimeout(() => { textarea.focus(); }, 0);
     };
 
     return (
@@ -170,7 +154,7 @@ const ProjectsTab = ({ userRole, showToast }) => {
                 <div className={styles.listSection}>
                     <div className={styles.listSectionHeader}>
                         <h3 className={styles.listTitle}>Existing Projects</h3>
-                        <button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setIsProjectPreviewMode(false); setShowProjectForm(true); }} className={styles.addBtn}>
+                        <button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setShowProjectForm(true); }} className={styles.addBtn}>
                             <Plus size={18} /> Add New
                         </button>
                     </div>
@@ -224,52 +208,83 @@ const ProjectsTab = ({ userRole, showToast }) => {
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
                         <h3>{editingProject ? <Edit2 size={24} /> : <Plus size={24} />} {editingProject ? 'Edit Project' : 'Add New Project'}</h3>
-                        <button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setIsProjectPreviewMode(false); setShowProjectForm(false); }} className={styles.cancelBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setShowProjectForm(false); }} className={styles.cancelBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <ArrowLeft size={18} /> Cancel & Return
                         </button>
                     </div>
                     <form onSubmit={handleSaveProject} className={styles.form}>
-                        <div className={styles.inputGroup}><label>Project Title</label><input type="text" placeholder="e.g. Portfolio Website" value={project.title} onChange={(e) => setProject({ ...project, title: e.target.value })} required /></div>
-                        <div className={styles.inputGroup}><label>Slug (URL) <span className={styles.hint}>(leave empty to auto-generate)</span></label><input type="text" placeholder="my-project-url" value={project.slug || ''} onChange={(e) => setProject({ ...project, slug: e.target.value })} /></div>
-                        <div className={styles.inputGroup} style={{ gridColumn: 'span 2' }}><label>Short Description (Excerpt)</label><textarea placeholder="Describe what this project does..." value={project.description} onChange={(e) => setProject({ ...project, description: e.target.value })} rows="2" required /></div>
-                        <div className={styles.inputGroup} style={{ gridColumn: 'span 2' }}>
-                            <div className={styles.editorHeader}>
-                                <label>Full Content (Markdown)</label>
-                                <div className={styles.toolbar}>
-                                    {!isProjectPreviewMode && (
-                                        <div className={styles.formatGroup}>
-                                            <button type="button" onClick={() => insertMarkdownProject('bold')} title="Bold"><Bold size={16} /></button>
-                                            <button type="button" onClick={() => insertMarkdownProject('italic')} title="Italic"><Italic size={16} /></button>
-                                            <button type="button" onClick={() => insertMarkdownProject('link')} title="Link"><LinkIcon size={16} /></button>
-                                            <button type="button" onClick={() => insertMarkdownProject('code')} title="Code Block"><Code size={16} /></button>
-                                        </div>
-                                    )}
-                                    <button type="button" className={styles.previewToggle} onClick={() => setIsProjectPreviewMode(!isProjectPreviewMode)}>
-                                        {isProjectPreviewMode ? <><Edit2 size={14} /> Edit</> : <><Eye size={14} /> Preview</>}
-                                    </button>
-                                </div>
-                            </div>
-                            {isProjectPreviewMode ? (
-                                <div className={styles.previewBox}><MarkdownRenderer content={project.content || '*Nothing to preview...*'} /></div>
-                            ) : (
-                                <textarea id="project-markdown-editor" placeholder="# Project Overview&#10;Write full technical details in Markdown..." value={project.content || ''} onChange={(e) => setProject({ ...project, content: e.target.value })} rows="12" style={{ fontFamily: 'monospace' }} />
-                            )}
-                        </div>
-                        <div className={styles.inputGroup}><label>Tech Stack <span className={styles.hint}>(comma separated)</span></label><input type="text" placeholder="React, Firebase, SCSS" value={project.techStack} onChange={(e) => setProject({ ...project, techStack: e.target.value })} required /></div>
-                        <div className={styles.formGrid}>
-                            <div className={styles.inputGroup}><label>GitHub URL <span className={styles.hint}>(optional)</span></label><input type="url" placeholder="https://github.com/..." value={project.githubUrl} onChange={(e) => setProject({ ...project, githubUrl: e.target.value })} /></div>
-                            <div className={styles.inputGroup}><label>Live Demo URL <span className={styles.hint}>(optional)</span></label><input type="url" placeholder="https://..." value={project.liveUrl} onChange={(e) => setProject({ ...project, liveUrl: e.target.value })} /></div>
-                        </div>
-                        <div className={styles.fileInputGroup}>
-                            <label>Project Image {editingProject && <span className={styles.hint}>(leave empty to keep current)</span>}</label>
-                            <div className={styles.fileDropzone}>
-                                <input type="file" accept="image/*" onChange={(e) => setProjectImage(e.target.files[0])} />
-                                <div className={styles.fileDropzoneContent}>
-                                    <Upload size={24} />
-                                    <span>{projectImage ? projectImage.name : 'Click or drag to upload'}</span>
-                                </div>
-                            </div>
-                        </div>
+                        <FormRow>
+                            <FormInput
+                                label="Project Title"
+                                placeholder="e.g. Portfolio Website"
+                                value={project.title}
+                                onChange={(e) => setProject({ ...project, title: e.target.value })}
+                                required
+                            />
+                            <FormInput
+                                label="Slug"
+                                hint="leave empty to auto-generate"
+                                placeholder="my-project-url"
+                                value={project.slug || ''}
+                                onChange={(e) => setProject({ ...project, slug: e.target.value })}
+                            />
+                        </FormRow>
+
+                        <FormInput
+                            label="Short Description (Excerpt)"
+                            placeholder="Describe what this project does..."
+                            value={project.description}
+                            onChange={(e) => setProject({ ...project, description: e.target.value })}
+                            required
+                            fullWidth
+                            isTextArea
+                            rows="2"
+                        />
+
+                        <FormMarkdownEditor
+                            label="Full Content (Markdown)"
+                            id="project-markdown-editor"
+                            value={project.content || ''}
+                            onChange={(e) => setProject({ ...project, content: e.target.value })}
+                            rows="12"
+                        />
+
+                        <FormInput
+                            label="Tech Stack"
+                            hint="comma separated"
+                            placeholder="React, Firebase, SCSS"
+                            value={project.techStack}
+                            onChange={(e) => setProject({ ...project, techStack: e.target.value })}
+                            required
+                            fullWidth
+                        />
+
+                        <FormRow>
+                            <FormInput
+                                label="GitHub URL"
+                                hint="optional"
+                                type="url"
+                                placeholder="https://github.com/..."
+                                value={project.githubUrl}
+                                onChange={(e) => setProject({ ...project, githubUrl: e.target.value })}
+                            />
+                            <FormInput
+                                label="Live Demo URL"
+                                hint="optional"
+                                type="url"
+                                placeholder="https://..."
+                                value={project.liveUrl}
+                                onChange={(e) => setProject({ ...project, liveUrl: e.target.value })}
+                            />
+                        </FormRow>
+
+                        <FormDropzone
+                            label="Project Image"
+                            hint={editingProject ? "leave empty to keep current" : ""}
+                            file={projectImage}
+                            onFileChange={setProjectImage}
+                        />
+
                         <div className={styles.formFooter}>
                             <button type="submit" disabled={loading} className={styles.submitBtn}>
                                 {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
@@ -281,46 +296,52 @@ const ProjectsTab = ({ userRole, showToast }) => {
 
             {/* Project Details Modal */}
             {/* Project Details Modal */}
-            {viewingProject && (
-                <div className={styles.modalOverlay} onClick={() => setViewingProject(null)} style={{ zIndex: 1200 }}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '720px', borderRadius: '20px' }}>
-                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}>
-                            <h3 style={{ fontSize: '1.4rem' }}>{icons.projects || '🗂️'} Project Details</h3>
-                            <button onClick={() => setViewingProject(null)} className={styles.closeBtn}><X size={20} /></button>
+            <BaseModal
+                isOpen={!!viewingProject}
+                onClose={() => setViewingProject(null)}
+                zIndex={1200}
+                maxWidth="720px"
+                contentStyle={{ borderRadius: '20px' }}
+                headerStyle={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}
+                headerContent={
+                    <h3 style={{ margin: 0, fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {icons.projects || '🗂️'} Project Details
+                    </h3>
+                }
+                bodyStyle={{ padding: 0 }}
+                footerStyle={{ padding: '1.25rem 2rem' }}
+                footerContent={
+                    <button onClick={() => setViewingProject(null)} className={styles.primaryBtn} style={{ margin: 0 }}>Close</button>
+                }
+            >
+                <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
+                    <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={styles.detailLabel}>Title</span>
+                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingProject?.title}</span>
                         </div>
-                        <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
-                            <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>Title</span>
-                                    <span className={styles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingProject.title}</span>
-                                </div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>Description</span>
-                                    <span className={styles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingProject.description}</span>
-                                </div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>Tech Stack</span>
-                                    <div className={styles.techTags} style={{ marginTop: '0.6rem' }}>
-                                        {(Array.isArray(viewingProject.techStack) ? viewingProject.techStack : []).map((t, i) => (
-                                            <span key={`preview-tag-${t}-${i}`} className={styles.techTag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>{t}</span>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'row', gap: '1.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
-                                    {viewingProject.liveUrl && <a href={viewingProject.liveUrl} target="_blank" rel="noopener noreferrer" className={styles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem' }}><ExternalLink size={16} /> Live Demo</a>}
-                                    {viewingProject.githubUrl && <a href={viewingProject.githubUrl} target="_blank" rel="noopener noreferrer" className={styles.editBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><LinkIcon size={16} /> GitHub Repository</a>}
-                                </div>
-                            </div>
-                            <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
-                                <MarkdownRenderer content={viewingProject.content || '*No extended content...*'} />
+                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={styles.detailLabel}>Description</span>
+                            <span className={styles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingProject?.description}</span>
+                        </div>
+                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={styles.detailLabel}>Tech Stack</span>
+                            <div className={styles.techTags} style={{ marginTop: '0.6rem' }}>
+                                {(Array.isArray(viewingProject?.techStack) ? viewingProject.techStack : []).map((t, i) => (
+                                    <span key={`preview-tag-${t}-${i}`} className={styles.techTag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>{t}</span>
+                                ))}
                             </div>
                         </div>
-                        <div className={styles.modalFooter} style={{ padding: '1.25rem 2rem' }}>
-                            <button onClick={() => setViewingProject(null)} className={styles.primaryBtn}>Close</button>
+                        <div className={styles.detailItem} style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'row', gap: '1.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                            {viewingProject?.liveUrl && <a href={viewingProject.liveUrl} target="_blank" rel="noopener noreferrer" className={styles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem' }}><ExternalLink size={16} /> Live Demo</a>}
+                            {viewingProject?.githubUrl && <a href={viewingProject.githubUrl} target="_blank" rel="noopener noreferrer" className={styles.editBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><LinkIcon size={16} /> GitHub Repository</a>}
                         </div>
                     </div>
+                    <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
+                        <MarkdownRenderer content={viewingProject?.content || '*No extended content...*'} />
+                    </div>
                 </div>
-            )}
+            </BaseModal>
 
 
             {/* Confirm Dialog */}

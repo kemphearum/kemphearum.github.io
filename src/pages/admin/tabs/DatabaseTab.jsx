@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { Database, RefreshCw, Download, Upload, Trash2, ShieldAlert, Shield, Server, X, FileText, Code, Mail, BarChart2, AlertTriangle, FileJson, Check } from 'lucide-react';
+import { Database, RefreshCw, Download, Upload, Trash2, ShieldAlert, Shield, Server, X, FileText, Code, Mail, BarChart2, AlertTriangle, FileJson, Check, Users } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import styles from '../../Admin.module.scss';
 import DatabaseService from '../../../services/DatabaseService';
+import BaseModal from '../components/BaseModal';
+import SectionHeader from '../components/SectionHeader';
+import UsageBar from '../components/UsageBar';
+import StatCard from '../components/StatCard';
 
 const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
     const [loading, setLoading] = useState(false);
@@ -119,8 +123,6 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
     };
 
     const totalDocs = (dbHealth.posts || 0) + (dbHealth.projects || 0) + (dbHealth.messages || 0) + (dbHealth.auditLogs || 0) + (dbHealth.users || 0);
-    let capacityPercentage = Math.min((totalDocs / DatabaseService.SOFT_DOC_LIMIT) * 100, 100);
-    let barColor = capacityPercentage > 90 ? '#ef4444' : capacityPercentage > 75 ? '#f59e0b' : '#10b981';
 
     return (
         <div className={styles.section} style={{ paddingBottom: '4rem' }}>
@@ -143,15 +145,16 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                 </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
-                <div className={styles.cardHeader} style={{ marginBottom: 0, display: 'block' }}>
-                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}><Database size={24} /> Database Management</h3>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '0.5rem', marginBottom: 0 }}>Monitor Firebase health and manage your data backups.</p>
-                </div>
-                <button onClick={() => refetchDbHealth()} className={styles.iconBtn} title="Refresh Database Health" style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)', color: 'var(--text-primary)', width: '36px', height: '36px', padding: 0 }}>
-                    <RefreshCw size={18} className={dbHealthLoading ? styles.spin : ''} style={{ color: 'var(--primary-color)' }} />
-                </button>
-            </div>
+            <SectionHeader
+                title="Database Management"
+                description="Monitor Firebase health and manage your data backups."
+                icon={Database}
+                rightElement={
+                    <button onClick={() => refetchDbHealth()} className={styles.iconBtn} title="Refresh Database Health" style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)', color: 'var(--text-primary)', width: '36px', height: '36px', padding: 0 }}>
+                        <RefreshCw size={18} className={dbHealthLoading ? styles.spin : ''} style={{ color: 'var(--primary-color)' }} />
+                    </button>
+                }
+            />
 
             {/* Database Health Section */}
             <div style={{ marginBottom: '2.5rem' }}>
@@ -162,47 +165,52 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                     </span>
                 </h4>
 
-                {/* Capacity Bar */}
-                <div style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
-                        <span style={{ color: 'var(--text-secondary)' }}>Free Tier Document Usage (50k Limit Estimate)</span>
-                        <span style={{ fontWeight: 'bold', color: barColor }}>{capacityPercentage.toFixed(2)}% ({totalDocs.toLocaleString()} Docs)</span>
-                    </div>
-                    <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{ width: `${capacityPercentage}%`, height: '100%', background: barColor, transition: 'width 1s ease-out' }}></div>
-                    </div>
-                </div>
+                <UsageBar
+                    label="Free Tier Document Usage (50k Limit Estimate)"
+                    current={totalDocs}
+                    total={DatabaseService.SOFT_DOC_LIMIT}
+                    style={{
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        borderRadius: '12px',
+                        padding: '1.25rem'
+                    }}
+                />
 
-                {/* Collection Counts */}
-                <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-                    <div className={styles.detailItem} style={{ background: 'rgba(56, 189, 248, 0.05)', border: '1px solid rgba(56, 189, 248, 0.1)', cursor: 'pointer' }} onClick={() => setActiveTab('blog')}>
-                        <span className={styles.detailLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><FileText size={14} /> Posts</span>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#38bdf8' }}>{dbHealth.loading ? '...' : dbHealth.posts}</span>
-                            <span style={{ fontSize: '0.65rem', color: '#38bdf8', opacity: 0.7, fontWeight: 'bold' }}>Manage →</span>
-                        </div>
-                    </div>
-                    <div className={styles.detailItem} style={{ background: 'rgba(167, 139, 250, 0.05)', border: '1px solid rgba(167, 139, 250, 0.1)', cursor: 'pointer' }} onClick={() => setActiveTab('projects')}>
-                        <span className={styles.detailLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Code size={14} /> Projects</span>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#a78bfa' }}>{dbHealth.loading ? '...' : dbHealth.projects}</span>
-                            <span style={{ fontSize: '0.65rem', color: '#a78bfa', opacity: 0.7, fontWeight: 'bold' }}>Manage →</span>
-                        </div>
-                    </div>
-                    <div className={styles.detailItem} style={{ background: 'rgba(52, 211, 153, 0.05)', border: '1px solid rgba(52, 211, 153, 0.1)', cursor: 'pointer' }} onClick={() => setActiveTab('messages')}>
-                        <span className={styles.detailLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Mail size={14} /> Messages</span>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#34d399' }}>{dbHealth.loading ? '...' : dbHealth.messages}</span>
-                            <span style={{ fontSize: '0.65rem', color: '#34d399', opacity: 0.7, fontWeight: 'bold' }}>View →</span>
-                        </div>
-                    </div>
-                    <div className={styles.detailItem} style={{ background: 'rgba(251, 146, 60, 0.05)', border: '1px solid rgba(251, 146, 60, 0.1)', cursor: 'pointer' }} onClick={() => setActiveTab('audit')}>
-                        <span className={styles.detailLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Shield size={14} /> Audit Logs</span>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', color: '#fb923c' }}>{dbHealth.loading ? '...' : dbHealth.auditLogs}</span>
-                            <span style={{ fontSize: '0.65rem', color: '#fb923c', opacity: 0.7, fontWeight: 'bold' }}>Review →</span>
-                        </div>
-                    </div>
+                {/* Collection Counts Grid */}
+                <div className={styles.analyticsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+                    <StatCard
+                        icon={FileText}
+                        value={dbHealthLoading ? '...' : (dbHealth.posts || 0)}
+                        label="Posts"
+                        color="#38bdf8"
+                        onClick={() => setActiveTab('blog')}
+                        description="View & Edit Content"
+                    />
+                    <StatCard
+                        icon={Code}
+                        value={dbHealthLoading ? '...' : (dbHealth.projects || 0)}
+                        label="Projects"
+                        color="#a78bfa"
+                        onClick={() => setActiveTab('projects')}
+                        description="Project Portfolio"
+                    />
+                    <StatCard
+                        icon={Mail}
+                        value={dbHealthLoading ? '...' : (dbHealth.messages || 0)}
+                        label="Messages"
+                        color="#34d399"
+                        onClick={() => setActiveTab('messages')}
+                        description="User Inquiries"
+                    />
+                    <StatCard
+                        icon={Users}
+                        value={dbHealthLoading ? '...' : (dbHealth.users || 0)}
+                        label="Users"
+                        color="#fb923c"
+                        onClick={() => setActiveTab('users')}
+                        description="Admin Access"
+                    />
                 </div>
             </div>
 
@@ -302,84 +310,96 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
             </div>
 
             {/* Archive Confirmation Modal */}
-            {showArchiveConfirm && (
-                <div className={styles.modalOverlay} onClick={() => setShowArchiveConfirm(false)} style={{ zIndex: 1300 }}>
-                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px', padding: 0, borderRadius: '16px' }}>
-                        <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.5rem 1.75rem', background: 'rgba(239, 68, 68, 0.05)' }}>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#ef4444', margin: 0 }}><Trash2 size={22} strokeWidth={2.5} /> Confirm Archive</h3>
-                            <button onClick={() => setShowArchiveConfirm(false)} className={styles.closeBtn} style={{ position: 'absolute', top: '50%', right: '1.5rem', transform: 'translateY(-50%)' }}><X size={20} /></button>
-                        </div>
-                        <div style={{ padding: '1.75rem', lineHeight: '1.6' }}>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.5rem', textAlign: 'center' }}>
-                                You are about to permanently delete all <strong>Messages</strong>, <strong>Audit Logs</strong>, and <strong>Analytics</strong> older than <span style={{ color: '#ef4444', fontWeight: 'bold' }}>{archiveDays} days</span>.
-                            </p>
+            <BaseModal
+                isOpen={showArchiveConfirm}
+                onClose={() => setShowArchiveConfirm(false)}
+                zIndex={1300}
+                maxWidth="460px"
+                contentStyle={{ borderRadius: '16px', padding: 0 }}
+                headerStyle={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.5rem 1.75rem', background: 'rgba(239, 68, 68, 0.05)' }}
+                headerContent={
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#ef4444', margin: 0 }}>
+                        <Trash2 size={22} strokeWidth={2.5} /> Confirm Archive
+                    </h3>
+                }
+                bodyStyle={{ padding: '1.75rem', lineHeight: '1.6' }}
+                footerStyle={{ padding: '1.25rem 1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.8rem' }}
+                footerContent={
+                    <>
+                        <button onClick={() => setShowArchiveConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>Cancel</button>
+                        <button onClick={() => handleArchiveData(archiveDays)} className={styles.deleteBtn} style={{ padding: '0.6rem 1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Trash2 size={16} /> Delete Forever
+                        </button>
+                    </>
+                }
+            >
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginBottom: '1.5rem', textAlign: 'center' }}>
+                    You are about to permanently delete all <strong>Messages</strong>, <strong>Audit Logs</strong>, and <strong>Analytics</strong> older than <span style={{ color: '#ef4444', fontWeight: 'bold' }}>{archiveDays} days</span>.
+                </p>
 
-                            <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.25rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', marginBottom: '1.5rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.8rem', marginBottom: '1rem', color: 'var(--text-primary)', fontSize: '0.88rem' }}>
-                                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'rgba(56, 189, 248, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8', flexShrink: 0, fontWeight: 'bold', fontSize: '0.75rem' }}>1</div>
-                                    <div><strong>Recommended:</strong> Download full JSON Backup before proceeding.</div>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.8rem', color: 'var(--text-primary)', fontSize: '0.88rem' }}>
-                                    <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0, fontWeight: 'bold', fontSize: '0.75rem' }}>2</div>
-                                    <div><strong>Permanent:</strong> Records will be permanently removed from Firebase.</div>
-                                </div>
-                            </div>
-
-                            <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: '600', textAlign: 'center', margin: 0 }}>Are you absolutely sure?</p>
-                        </div>
-                        <div className={styles.modalFooter} style={{ padding: '1.25rem 1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.8rem' }}>
-                            <button onClick={() => setShowArchiveConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>Cancel</button>
-                            <button onClick={() => handleArchiveData(archiveDays)} className={styles.deleteBtn} style={{ padding: '0.6rem 1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Trash2 size={16} /> Delete Forever
-                            </button>
-                        </div>
+                <div style={{ background: 'rgba(255,255,255,0.02)', padding: '1.25rem', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.8rem', marginBottom: '1rem', color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+                        <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'rgba(56, 189, 248, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8', flexShrink: 0, fontWeight: 'bold', fontSize: '0.75rem' }}>1</div>
+                        <div><strong>Recommended:</strong> Download full JSON Backup before proceeding.</div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.8rem', color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+                        <div style={{ width: '22px', height: '22px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0, fontWeight: 'bold', fontSize: '0.75rem' }}>2</div>
+                        <div><strong>Permanent:</strong> Records will be permanently removed from Firebase.</div>
                     </div>
                 </div>
-            )}
+
+                <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: '600', textAlign: 'center', margin: 0 }}>Are you absolutely sure?</p>
+            </BaseModal>
 
             {/* Restore Confirmation Modal */}
-            {showRestoreConfirm && (
-                <div className={styles.modalOverlay} onClick={() => setShowRestoreConfirm(false)} style={{ zIndex: 1300 }}>
-                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px', padding: 0, borderRadius: '16px' }}>
-                        <div className={styles.modalHeader} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.5rem 1.75rem', background: 'rgba(99, 102, 241, 0.05)' }}>
-                            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--primary-color)', margin: 0 }}><Upload size={22} strokeWidth={2.5} /> Restore Data</h3>
-                            <button onClick={() => setShowRestoreConfirm(false)} className={styles.closeBtn} style={{ position: 'absolute', top: '50%', right: '1.5rem', transform: 'translateY(-50%)' }}><X size={20} /></button>
-                        </div>
-                        <div style={{ padding: '1.75rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem', padding: '1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', flexShrink: 0 }}>
-                                    <FileJson size={28} />
-                                </div>
-                                <div style={{ flex: 1, overflow: 'hidden' }}>
-                                    <div style={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{restoreFile?.name}</div>
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366f1' }}></div>
-                                        {(restoreFile?.size / 1024).toFixed(2)} KB • JSON Backup File
-                                    </div>
-                                </div>
-                            </div>
-
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '1.25rem', textAlign: 'center' }}>
-                                Existing database documents with the same IDs will be <strong>completely overwritten</strong> with the backup data.
-                            </p>
-
-                            <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.1)', marginBottom: '1.5rem' }}>
-                                <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, justifyContent: 'center' }}>
-                                    <AlertTriangle size={18} /> Warning: This action cannot be undone.
-                                </p>
-                            </div>
-
-                            <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center', margin: 0 }}>Are you ready to restore?</p>
-                        </div>
-                        <div className={styles.modalFooter} style={{ padding: '1.25rem 1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.8rem' }}>
-                            <button onClick={() => setShowRestoreConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>Cancel</button>
-                            <button onClick={() => { setShowRestoreConfirm(false); processDatabaseRestore(restoreFile); }} className={styles.primaryBtn} style={{ padding: '0.6rem 1.75rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <Upload size={18} /> Start Full Restore
-                            </button>
+            <BaseModal
+                isOpen={showRestoreConfirm}
+                onClose={() => setShowRestoreConfirm(false)}
+                zIndex={1300}
+                maxWidth="460px"
+                contentStyle={{ borderRadius: '16px', padding: 0 }}
+                headerStyle={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '1.5rem 1.75rem', background: 'rgba(99, 102, 241, 0.05)' }}
+                headerContent={
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--primary-color)', margin: 0 }}>
+                        <Upload size={22} strokeWidth={2.5} /> Restore Data
+                    </h3>
+                }
+                bodyStyle={{ padding: '1.75rem' }}
+                footerStyle={{ padding: '1.25rem 1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.8rem' }}
+                footerContent={
+                    <>
+                        <button onClick={() => setShowRestoreConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>Cancel</button>
+                        <button onClick={() => { setShowRestoreConfirm(false); processDatabaseRestore(restoreFile); }} className={styles.primaryBtn} style={{ padding: '0.6rem 1.75rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Upload size={18} /> Start Full Restore
+                        </button>
+                    </>
+                }
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem', padding: '1.25rem', background: 'rgba(255,255,255,0.02)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1', flexShrink: 0 }}>
+                        <FileJson size={28} />
+                    </div>
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                        <div style={{ color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{restoreFile?.name}</div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366f1' }}></div>
+                            {(restoreFile?.size / 1024).toFixed(2)} KB • JSON Backup File
                         </div>
                     </div>
                 </div>
-            )}
+
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: '1.6', marginBottom: '1.25rem', textAlign: 'center' }}>
+                    Existing database documents with the same IDs will be <strong>completely overwritten</strong> with the backup data.
+                </p>
+
+                <div style={{ background: 'rgba(239, 68, 68, 0.05)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(239, 68, 68, 0.1)', marginBottom: '1.5rem' }}>
+                    <p style={{ color: '#ef4444', fontSize: '0.85rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, justifyContent: 'center' }}>
+                        <AlertTriangle size={18} /> Warning: This action cannot be undone.
+                    </p>
+                </div>
+
+                <p style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center', margin: 0 }}>Are you ready to restore?</p>
+            </BaseModal>
         </div>
     );
 };

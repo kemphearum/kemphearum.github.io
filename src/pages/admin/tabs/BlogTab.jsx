@@ -12,10 +12,15 @@ import styles from '../../Admin.module.scss';
 import BlogService from '../../../services/BlogService';
 import ConfirmDialog from '../components/ConfirmDialog';
 import HistoryModal from '../components/HistoryModal';
+import BaseModal from '../components/BaseModal';
 import { History } from 'lucide-react';
+import FormRow from '../components/FormRow';
+import FormInput from '../components/FormInput';
+import FormMarkdownEditor from '../components/FormMarkdownEditor';
+import FormDropzone from '../components/FormDropzone';
 
 const BlogTab = ({ userRole, showToast }) => {
-    const [postForm, setPostForm] = useState({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
+    const [post, setPost] = useState({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
     const [postImage, setPostImage] = useState(null);
     const [showPostForm, setShowPostForm] = useState(false);
     const [viewingPost, setViewingPost] = useState(null);
@@ -23,7 +28,7 @@ const BlogTab = ({ userRole, showToast }) => {
     const [postPage, setPostPage] = useState(1);
     const [postPerPage, setPostPerPage] = useState(10);
     const [postSort, setPostSort] = useState({ field: 'createdAt', dir: 'desc' });
-    const [isPreviewMode, setIsPreviewMode] = useState(false);
+    const [isBlogPreviewMode, setIsBlogPreviewMode] = useState(false);
     const [loading, setLoading] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
     const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
@@ -118,36 +123,36 @@ const BlogTab = ({ userRole, showToast }) => {
         if (userRole === 'pending') { showToast("Not authorized.", "error"); return; }
         setLoading(true);
         try {
-            let coverImage = postForm.coverImage || '';
+            let coverImage = post.coverImage || '';
             if (postImage) coverImage = await ImageProcessingService.compress(postImage);
-            const tagsArray = typeof postForm.tags === 'string' ? postForm.tags.split(',').map(t => t.trim()).filter(t => t) : (Array.isArray(postForm.tags) ? postForm.tags : []);
-            const slug = postForm.slug || generateSlug(postForm.title);
+            const tagsArray = typeof post.tags === 'string' ? post.tags.split(',').map(t => t.trim()).filter(t => t) : (Array.isArray(post.tags) ? post.tags : []);
+            const slug = post.slug || generateSlug(post.title);
 
-            const postData = { title: postForm.title, slug, excerpt: postForm.excerpt, content: postForm.content, coverImage, tags: tagsArray, visible: postForm.visible !== false, featured: !!postForm.featured };
-            if (postForm.id) {
-                await BlogService.update(postForm.id, postData, trackWrite);
+            const postData = { title: post.title, slug, excerpt: post.excerpt, content: post.content, coverImage, tags: tagsArray, visible: post.visible !== false, featured: !!post.featured };
+            if (post.id) {
+                await BlogService.update(post.id, postData, trackWrite);
                 showToast('Post updated!');
             } else {
-                postData.createdAt = serverTimestamp();
+                // postData.createdAt = serverTimestamp(); // Assuming server handles this
                 await BlogService.create(postData, trackWrite);
                 showToast('Post published!');
             }
             queryClient.invalidateQueries({ queryKey: ['posts'] });
             queryClient.invalidateQueries({ queryKey: ['history'] });
-            setPostForm({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
+            setPost({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
             setPostImage(null);
-            setIsPreviewMode(false);
+            setIsBlogPreviewMode(false);
             setShowPostForm(false);
         } catch (error) { showToast(error.message || 'Error saving post.', 'error'); }
         finally { setLoading(false); }
     };
 
     const insertMarkdown = (syntax) => {
-        const textarea = document.getElementById('markdown-editor');
+        const textarea = document.getElementById('blog-markdown-editor');
         if (!textarea) return;
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const text = postForm.content;
+        const text = post.content;
         const selectedText = text.substring(start, end);
         let newText;
         switch (syntax) {
@@ -157,9 +162,11 @@ const BlogTab = ({ userRole, showToast }) => {
             case 'code': newText = text.substring(0, start) + `\n\`\`\`\n${selectedText || 'code here'}\n\`\`\`\n` + text.substring(end); break;
             default: return;
         }
-        setPostForm({ ...postForm, content: newText });
+        setPost({ ...post, content: newText });
         setTimeout(() => { textarea.focus(); }, 0);
     };
+
+    const editingPost = !!post.id;
 
     return (
         <div className={styles.section} style={{ paddingBottom: '4rem' }}>
@@ -167,7 +174,7 @@ const BlogTab = ({ userRole, showToast }) => {
                 <div className={styles.listSection} style={{ marginTop: '0' }}>
                     <div className={styles.listSectionHeader}>
                         <h3 className={styles.listTitle}>Published Posts</h3>
-                        <button onClick={() => { setPostForm({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false }); setPostImage(null); setIsPreviewMode(false); setShowPostForm(true); }} className={styles.addBtn}>
+                        <button onClick={() => { setPost({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false }); setPostImage(null); setIsBlogPreviewMode(false); setShowPostForm(true); }} className={styles.addBtn}>
                             <Plus size={18} /> Add New
                         </button>
                     </div>
@@ -186,31 +193,31 @@ const BlogTab = ({ userRole, showToast }) => {
                                 <SortableHeader label="Status" field="visible" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
                                 <SortableHeader label="Featured" field="featured" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
                             </div>
-                            {paginatedPosts.map((post, index) => (
-                                <div key={post.id || `post-${index}`} className={`${styles.listItem} ${styles.clickableRow}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', marginBottom: '0.75rem', borderRadius: '12px', cursor: 'pointer' }} onClick={() => setViewingPost(post)}>
+                            {paginatedPosts.map((p, index) => (
+                                <div key={p.id || `post-${index}`} className={`${styles.listItem} ${styles.clickableRow}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', marginBottom: '0.75rem', borderRadius: '12px', cursor: 'pointer' }} onClick={() => setViewingPost(p)}>
                                     <div className={styles.itemInfo}>
-                                        <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: '600', color: 'var(--text-primary)' }}>{post.title}</h4>
-                                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{post.excerpt}</p>
+                                        <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: '600', color: 'var(--text-primary)' }}>{p.title}</h4>
+                                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{p.excerpt}</p>
                                         <div className={styles.meta} style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                            <span className={styles.date}>{post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
-                                            <span style={{ marginLeft: '1rem', color: post.visible ? 'var(--primary-color)' : '#ff9800' }}>{post.visible ? 'Published' : 'Draft'}</span>
+                                            <span className={styles.date}>{p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
+                                            <span style={{ marginLeft: '1rem', color: p.visible ? 'var(--primary-color)' : '#ff9800' }}>{p.visible ? 'Published' : 'Draft'}</span>
                                         </div>
                                     </div>
                                     <div className={styles.itemActions} style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button onClick={(e) => { e.stopPropagation(); window.open(`#/blog/${post.slug}`, '_blank'); }} title="View" className={styles.editBtn}><ExternalLink size={16} /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); window.open(`#/blog/${p.slug}`, '_blank'); }} title="View" className={styles.editBtn}><ExternalLink size={16} /></button>
                                         {userRole !== 'editor' && (
                                             <>
-                                                <button onClick={(e) => { e.stopPropagation(); toggleFeaturedPost(post.id, post.featured); }} title={post.featured ? "Unfeature" : "Feature"} className={styles.editBtn}>
-                                                    <Star size={16} fill={post.featured ? "currentColor" : "none"} style={{ color: post.featured ? '#FFD700' : 'inherit' }} />
+                                                <button onClick={(e) => { e.stopPropagation(); toggleFeaturedPost(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={styles.editBtn}>
+                                                    <Star size={16} fill={p.featured ? "currentColor" : "none"} style={{ color: p.featured ? '#FFD700' : 'inherit' }} />
                                                 </button>
-                                                <button onClick={(e) => { e.stopPropagation(); toggleVisibility(post.id, post.visible); }} title={post.visible ? "Hide" : "Show"} className={styles.editBtn}>
-                                                    {post.visible ? <Eye size={16} /> : <EyeOff size={16} />}
+                                                <button onClick={(e) => { e.stopPropagation(); toggleVisibility(p.id, p.visible); }} title={p.visible ? "Hide" : "Show"} className={styles.editBtn}>
+                                                    {p.visible ? <Eye size={16} /> : <EyeOff size={16} />}
                                                 </button>
                                             </>
                                         )}
-                                        <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: post.id, title: post.title }); }} className={styles.editBtn} title="View Edit History"><History size={16} /></button>
-                                        <button onClick={(e) => { e.stopPropagation(); setPostForm(post); setShowPostForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} title="Edit" className={styles.editBtn}><Edit2 size={16} /></button>
-                                        {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
+                                        <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={styles.editBtn} title="View Edit History"><History size={16} /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); setPost(p); setShowPostForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} title="Edit" className={styles.editBtn}><Edit2 size={16} /></button>
+                                        {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeletePost(p.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
                                     </div>
                                 </div>
                             ))}
@@ -221,48 +228,69 @@ const BlogTab = ({ userRole, showToast }) => {
             ) : (
                 <div className={styles.card}>
                     <div className={styles.cardHeader} style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3 style={{ margin: 0 }}>{postForm.id ? <Edit2 size={24} /> : <Plus size={24} />} {postForm.id ? 'Edit Post' : 'New Blog Post'}</h3>
-                        <button onClick={() => { setPostForm({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false }); setPostImage(null); setIsPreviewMode(false); setShowPostForm(false); }} className={styles.cancelBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <h3 style={{ margin: 0 }}>{editingPost ? <Edit2 size={24} /> : <Plus size={24} />} {editingPost ? 'Edit Post' : 'New Blog Post'}</h3>
+                        <button onClick={() => { setPost({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false }); setPostImage(null); setIsBlogPreviewMode(false); setShowPostForm(false); }} className={styles.cancelBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <ArrowLeft size={18} /> Cancel & Return
                         </button>
                     </div>
                     <form onSubmit={handleSavePost} className={styles.form}>
-                        <div className={styles.formGrid}>
-                            <div className={styles.inputGroup}><label>Title</label><input type="text" placeholder="Post Title" value={postForm.title} onChange={(e) => setPostForm({ ...postForm, title: e.target.value })} required /></div>
-                            <div className={styles.inputGroup}><label>Slug (URL) <span className={styles.hint}>(leave empty to auto-generate)</span></label><input type="text" placeholder="my-post-url" value={postForm.slug} onChange={(e) => setPostForm({ ...postForm, slug: e.target.value })} /></div>
-                            <div className={styles.inputGroup} style={{ gridColumn: 'span 2' }}><label>Excerpt</label><textarea placeholder="Short summary..." value={postForm.excerpt} onChange={(e) => setPostForm({ ...postForm, excerpt: e.target.value })} rows="2" /></div>
-                            <div className={styles.inputGroup} style={{ gridColumn: 'span 2' }}>
-                                <div className={styles.editorHeader}>
-                                    <label>Content (Markdown)</label>
-                                    <div className={styles.toolbar}>
-                                        {!isPreviewMode && (
-                                            <div className={styles.formatGroup}>
-                                                <button type="button" onClick={() => insertMarkdown('bold')} title="Bold"><Bold size={16} /></button>
-                                                <button type="button" onClick={() => insertMarkdown('italic')} title="Italic"><Italic size={16} /></button>
-                                                <button type="button" onClick={() => insertMarkdown('link')} title="Link"><LinkIcon size={16} /></button>
-                                                <button type="button" onClick={() => insertMarkdown('code')} title="Code Block"><Code size={16} /></button>
-                                            </div>
-                                        )}
-                                        <button type="button" className={styles.previewToggle} onClick={() => setIsPreviewMode(!isPreviewMode)}>
-                                            {isPreviewMode ? <><Edit2 size={14} /> Edit</> : <><Eye size={14} /> Preview</>}
-                                        </button>
-                                    </div>
-                                </div>
-                                {isPreviewMode ? (
-                                    <div className={styles.previewBox}><MarkdownRenderer content={postForm.content || '*Nothing to preview...*'} /></div>
-                                ) : (
-                                    <textarea id="markdown-editor" placeholder="# Hello World&#10;Write in Markdown..." value={postForm.content} onChange={(e) => setPostForm({ ...postForm, content: e.target.value })} rows="15" required style={{ fontFamily: 'monospace' }} />
-                                )}
-                            </div>
-                            <div className={styles.inputGroup}><label>Tags (comma separated)</label><input type="text" placeholder="React, Tutorial..." value={Array.isArray(postForm.tags) ? postForm.tags.join(', ') : postForm.tags} onChange={(e) => setPostForm({ ...postForm, tags: e.target.value })} /></div>
-                            <div className={styles.fileInputGroup}>
-                                <label>Cover Image</label>
-                                <div className={styles.fileDropzone}>
-                                    <input type="file" accept="image/*" onChange={(e) => setPostImage(e.target.files[0])} />
-                                    <div className={styles.fileDropzoneContent}><Upload size={24} /><span>{postImage ? postImage.name : 'Upload Image'}</span></div>
-                                </div>
-                            </div>
-                        </div>
+                        <FormRow>
+                            <FormInput
+                                label="Post Title"
+                                placeholder="e.g. My First Blog Post"
+                                value={post.title}
+                                onChange={(e) => setPost({ ...post, title: e.target.value })}
+                                required
+                            />
+                            <FormInput
+                                label="Slug (URL)"
+                                hint="leave empty to auto-generate"
+                                placeholder="my-first-post"
+                                value={post.slug || ''}
+                                onChange={(e) => setPost({ ...post, slug: e.target.value })}
+                            />
+                        </FormRow>
+
+                        <FormInput
+                            label="Short Excerpt"
+                            placeholder="A brief summary of the post..."
+                            value={post.excerpt}
+                            onChange={(e) => setPost({ ...post, excerpt: e.target.value })}
+                            required
+                            fullWidth
+                            isTextArea
+                            rows="2"
+                        />
+
+                        <FormMarkdownEditor
+                            label="Post Content (Markdown)"
+                            id="blog-markdown-editor"
+                            value={post.content || ''}
+                            onChange={(e) => setPost({ ...post, content: e.target.value })}
+                            rows="15"
+                            isPreviewMode={isBlogPreviewMode}
+                            onTogglePreview={() => setIsBlogPreviewMode(!isBlogPreviewMode)}
+                            onInsertMarkdown={insertMarkdown}
+                            required
+                        />
+
+                        <FormInput
+                            label="Tags"
+                            hint="comma separated"
+                            placeholder="React, Tutorial, WebDev"
+                            value={Array.isArray(post.tags) ? post.tags.join(', ') : post.tags}
+                            onChange={(e) => setPost({ ...post, tags: e.target.value })}
+                            fullWidth
+                        />
+
+                        <FormDropzone
+                            label="Cover Image"
+                            hint={editingPost ? "leave empty to keep current" : ""}
+                            file={postImage}
+                            onFileChange={setPostImage}
+                            currentImageUrl={post.coverImage}
+                        />
+
                         <div className={styles.formFooter}>
                             <button type="submit" disabled={loading} className={styles.submitBtn}>
                                 {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
@@ -273,57 +301,63 @@ const BlogTab = ({ userRole, showToast }) => {
             )}
 
             {/* Blog Details Modal */}
-            {viewingPost && (
-                <div className={styles.modalOverlay} onClick={() => setViewingPost(null)} style={{ zIndex: 1200 }}>
-                    <div className={styles.modalContent} onClick={e => e.stopPropagation()} style={{ maxWidth: '800px', borderRadius: '20px' }}>
-                        <div className={styles.modalHeader} style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}>
-                            <h3 style={{ fontSize: '1.4rem' }}>{icons.blog || '📝'} Post Details</h3>
-                            <button onClick={() => setViewingPost(null)} className={styles.closeBtn}><X size={20} /></button>
+            <BaseModal
+                isOpen={!!viewingPost}
+                onClose={() => setViewingPost(null)}
+                zIndex={1200}
+                maxWidth="800px"
+                contentStyle={{ borderRadius: '20px' }}
+                headerStyle={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}
+                headerContent={
+                    <h3 style={{ margin: 0, fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        {icons.blog || '📝'} Post Details
+                    </h3>
+                }
+                bodyStyle={{ padding: 0 }}
+                footerStyle={{ padding: '1.25rem 2rem' }}
+                footerContent={
+                    <button onClick={() => setViewingPost(null)} className={styles.primaryBtn} style={{ margin: 0 }}>Close Preview</button>
+                }
+            >
+                <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
+                    <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={styles.detailLabel}>Title</span>
+                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingPost?.title}</span>
                         </div>
-                        <div style={{ padding: '2rem', overflowY: 'auto', maxHeight: '75vh' }}>
-                            <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>Title</span>
-                                    <span className={styles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingPost.title}</span>
-                                </div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>Excerpt</span>
-                                    <span className={styles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingPost.excerpt}</span>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Status</span>
-                                    <span className={styles.detailValue} style={{ color: viewingPost.visible ? '#10b981' : '#f59e0b', fontWeight: '600' }}>{viewingPost.visible ? 'Published' : 'Draft Mode'}</span>
-                                </div>
-                                <div className={styles.detailItem}>
-                                    <span className={styles.detailLabel}>Published Date</span>
-                                    <span className={styles.detailValue}>{viewingPost.createdAt?.seconds ? new Date(viewingPost.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Pending publication'}</span>
-                                </div>
-                                <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                                    <span className={styles.detailLabel}>Tags</span>
-                                    <div className={styles.techTags} style={{ marginTop: '0.6rem' }}>
-                                        {(Array.isArray(viewingPost.tags) ? viewingPost.tags : (viewingPost.tags ? viewingPost.tags.split(',') : [])).map((t, i) => t.trim() && (
-                                            <span key={`${t.trim()}-${i}`} className={styles.techTag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>{t.trim()}</span>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {viewingPost.coverImage && (
-                                <div style={{ marginBottom: '2rem', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
-                                    <img src={viewingPost.coverImage} alt="Cover" style={{ width: '100%', maxHeight: '350px', objectFit: 'cover' }} />
-                                </div>
-                            )}
-
-                            <div style={{ background: 'rgba(255,255,255,0.015)', padding: '2rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
-                                <MarkdownRenderer content={viewingPost.content || '*No extended content provided...*'} />
-                            </div>
+                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={styles.detailLabel}>Excerpt</span>
+                            <span className={styles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingPost?.excerpt}</span>
                         </div>
-                        <div className={styles.modalFooter} style={{ padding: '1.25rem 2rem' }}>
-                            <button onClick={() => setViewingPost(null)} className={styles.primaryBtn}>Close Preview</button>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Status</span>
+                            <span className={styles.detailValue} style={{ color: viewingPost?.visible ? '#10b981' : '#f59e0b', fontWeight: '600' }}>{viewingPost?.visible ? 'Published' : 'Draft Mode'}</span>
+                        </div>
+                        <div className={styles.detailItem}>
+                            <span className={styles.detailLabel}>Published Date</span>
+                            <span className={styles.detailValue}>{viewingPost?.createdAt?.seconds ? new Date(viewingPost.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Pending publication'}</span>
+                        </div>
+                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={styles.detailLabel}>Tags</span>
+                            <div className={styles.techTags} style={{ marginTop: '0.6rem' }}>
+                                {(Array.isArray(viewingPost?.tags) ? viewingPost.tags : (viewingPost?.tags ? viewingPost.tags.split(',') : [])).map((t, i) => t.trim() && (
+                                    <span key={`${t.trim()}-${i}`} className={styles.techTag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>{t.trim()}</span>
+                                ))}
+                            </div>
                         </div>
                     </div>
+
+                    {viewingPost?.coverImage && (
+                        <div style={{ marginBottom: '2rem', borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+                            <img src={viewingPost.coverImage} alt="Cover" style={{ width: '100%', maxHeight: '350px', objectFit: 'cover' }} />
+                        </div>
+                    )}
+
+                    <div style={{ background: 'rgba(255,255,255,0.015)', padding: '2rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
+                        <MarkdownRenderer content={viewingPost?.content || '*No extended content provided...*'} />
+                    </div>
                 </div>
-            )}
+            </BaseModal>
 
 
             {/* History Modal */}

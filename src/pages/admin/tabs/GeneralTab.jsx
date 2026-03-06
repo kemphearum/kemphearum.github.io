@@ -4,6 +4,10 @@ import styles from '../../Admin.module.scss';
 import ImageProcessingService from '../../../services/ImageProcessingService';
 import HistoryModal from '../components/HistoryModal';
 import ContentService from '../../../services/ContentService';
+import FormRow from '../components/FormRow';
+import FormInput from '../components/FormInput';
+import FormTextArea from '../components/FormTextArea';
+import FormDropzone from '../components/FormDropzone';
 
 const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactData, setContactData, loading, saveSectionData }) => {
     const [homeImage, setHomeImage] = useState(null);
@@ -46,53 +50,59 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                     </button>
                 </div>
                 <form onSubmit={handleSaveHome} className={styles.form}>
-                    <div className={styles.formGrid}>
-                        <div className={styles.inputGroup}>
-                            <label>Greeting</label>
-                            <input type="text" placeholder="Hello, I am" value={homeData.greeting} onChange={(e) => setHomeData({ ...homeData, greeting: e.target.value })} />
-                        </div>
-                        <div className={styles.inputGroup}>
-                            <label>Name</label>
-                            <input type="text" placeholder="Your Name" value={homeData.name} onChange={(e) => setHomeData({ ...homeData, name: e.target.value })} />
-                        </div>
-                    </div>
-                    <div className={styles.inputGroup}>
-                        <label>Subtitle</label>
-                        <input type="text" placeholder="Your Profession" value={homeData.subtitle} onChange={(e) => setHomeData({ ...homeData, subtitle: e.target.value })} />
-                    </div>
-                    <div className={styles.inputGroup}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                            <Edit3 size={16} />
-                            <label style={{ margin: 0 }}>Description</label>
-                        </div>
-                        <textarea
-                            placeholder="Tell people about yourself..."
-                            value={homeData.description}
-                            onChange={(e) => setHomeData({ ...homeData, description: e.target.value })}
-                            rows="5"
-                            style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', fontSize: '0.9rem', lineHeight: '1.7', padding: '1.25rem', backgroundColor: 'rgba(0,0,0,0.15)', border: '1px solid var(--glass-border, rgba(255,255,255,0.1))', borderRadius: '12px', color: 'var(--text-primary)', width: '100%', resize: 'vertical' }}
+                    <FormRow>
+                        <FormInput
+                            label="Greeting"
+                            placeholder="Hello, I am"
+                            value={homeData.greeting}
+                            onChange={(e) => setHomeData({ ...homeData, greeting: e.target.value })}
                         />
-                    </div>
-                    <div className={styles.formGrid}>
-                        <div className={styles.inputGroup}>
-                            <label>CTA Text</label>
-                            <input type="text" placeholder="View My Work" value={homeData.ctaText} onChange={(e) => setHomeData({ ...homeData, ctaText: e.target.value })} />
-                        </div>
-                        <div className={styles.inputGroup}>
-                            <label>CTA Link</label>
-                            <input type="text" placeholder="#experience" value={homeData.ctaLink} onChange={(e) => setHomeData({ ...homeData, ctaLink: e.target.value })} />
-                        </div>
-                    </div>
-                    <div className={styles.fileInputGroup}>
-                        <label>Profile Image <span className={styles.hint}>(leave empty to keep current)</span></label>
-                        <div className={styles.fileDropzone}>
-                            <input type="file" accept="image/*" onChange={(e) => setHomeImage(e.target.files[0])} />
-                            <div className={styles.fileDropzoneContent}>
-                                <Upload size={24} />
-                                <span>{homeImage ? homeImage.name : 'Upload Image'}</span>
-                            </div>
-                        </div>
-                    </div>
+                        <FormInput
+                            label="Name"
+                            placeholder="Your Name"
+                            value={homeData.name}
+                            onChange={(e) => setHomeData({ ...homeData, name: e.target.value })}
+                        />
+                    </FormRow>
+
+                    <FormInput
+                        label="Subtitle"
+                        placeholder="Your Profession"
+                        value={homeData.subtitle}
+                        onChange={(e) => setHomeData({ ...homeData, subtitle: e.target.value })}
+                    />
+
+                    <FormTextArea
+                        label="Description"
+                        icon={Edit3}
+                        placeholder="Tell people about yourself..."
+                        value={homeData.description}
+                        onChange={(e) => setHomeData({ ...homeData, description: e.target.value })}
+                        rows="5"
+                    />
+
+                    <FormRow>
+                        <FormInput
+                            label="CTA Text"
+                            placeholder="View My Work"
+                            value={homeData.ctaText}
+                            onChange={(e) => setHomeData({ ...homeData, ctaText: e.target.value })}
+                        />
+                        <FormInput
+                            label="CTA Link"
+                            placeholder="#experience"
+                            value={homeData.ctaLink}
+                            onChange={(e) => setHomeData({ ...homeData, ctaLink: e.target.value })}
+                        />
+                    </FormRow>
+
+                    <FormDropzone
+                        label="Profile Image"
+                        hint="leave empty to keep current"
+                        file={homeImage}
+                        onFileChange={setHomeImage}
+                    />
+
                     <div className={styles.formFooter}>
                         <button type="submit" disabled={loading} className={styles.submitBtn}>
                             {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
@@ -115,30 +125,31 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                     </button>
                 </div>
                 <form onSubmit={handleSaveAbout} className={styles.form}>
-                    <div className={styles.inputGroup}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                            <Edit3 size={16} />
-                            <label style={{ margin: 0 }}>Bio</label>
+                    <FormTextArea
+                        label="Bio"
+                        icon={Edit3}
+                        placeholder="Write your bio..."
+                        value={aboutData.bio}
+                        onChange={(e) => setAboutData({ ...aboutData, bio: e.target.value })}
+                        rows="8"
+                    />
+
+                    <FormInput
+                        label="Skills"
+                        hint="comma separated"
+                        placeholder="React, Python, Firebase, ..."
+                        value={aboutData.skills}
+                        onChange={(e) => setAboutData({ ...aboutData, skills: e.target.value })}
+                    />
+
+                    {aboutData.skills && (
+                        <div className={styles.skillPreview}>
+                            {aboutData.skills.split(',').map((s, i) => s.trim() && (
+                                <span key={`skill-${s.trim()}-${i}`} className={styles.techTag}>{s.trim()}</span>
+                            ))}
                         </div>
-                        <textarea
-                            placeholder="Write your bio..."
-                            value={aboutData.bio}
-                            onChange={(e) => setAboutData({ ...aboutData, bio: e.target.value })}
-                            rows="8"
-                            style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', fontSize: '0.9rem', lineHeight: '1.7', padding: '1.25rem', backgroundColor: 'rgba(0,0,0,0.15)', border: '1px solid var(--glass-border, rgba(255,255,255,0.1))', borderRadius: '12px', color: 'var(--text-primary)', width: '100%', resize: 'vertical' }}
-                        />
-                    </div>
-                    <div className={styles.inputGroup}>
-                        <label>Skills <span className={styles.hint}>(comma separated)</span></label>
-                        <input type="text" placeholder="React, Python, Firebase, ..." value={aboutData.skills} onChange={(e) => setAboutData({ ...aboutData, skills: e.target.value })} />
-                        {aboutData.skills && (
-                            <div className={styles.skillPreview}>
-                                {aboutData.skills.split(',').map((s, i) => s.trim() && (
-                                    <span key={`skill-${s.trim()}-${i}`} className={styles.techTag}>{s.trim()}</span>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    )}
+
                     <div className={styles.formFooter}>
                         <button type="submit" disabled={loading} className={styles.submitBtn}>
                             {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
@@ -161,19 +172,14 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                     </button>
                 </div>
                 <form onSubmit={handleSaveContact} className={styles.form}>
-                    <div className={styles.inputGroup}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
-                            <Edit3 size={16} />
-                            <label style={{ margin: 0 }}>Intro Text</label>
-                        </div>
-                        <textarea
-                            placeholder="The text shown above the contact form..."
-                            value={contactData.introText}
-                            onChange={(e) => setContactData({ ...contactData, introText: e.target.value })}
-                            rows="4"
-                            style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', fontSize: '0.9rem', lineHeight: '1.7', padding: '1.25rem', backgroundColor: 'rgba(0,0,0,0.15)', border: '1px solid var(--glass-border, rgba(255,255,255,0.1))', borderRadius: '12px', color: 'var(--text-primary)', width: '100%', resize: 'vertical' }}
-                        />
-                    </div>
+                    <FormTextArea
+                        label="Intro Text"
+                        icon={Edit3}
+                        placeholder="The text shown above the contact form..."
+                        value={contactData.introText}
+                        onChange={(e) => setContactData({ ...contactData, introText: e.target.value })}
+                        rows="4"
+                    />
                     <div className={styles.formFooter}>
                         <button type="submit" disabled={loading} className={styles.submitBtn}>
                             {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
