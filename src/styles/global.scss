@@ -1,6 +1,8 @@
 @import './variables';
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap');
 
 * {
     box-sizing: border-box;
@@ -9,7 +11,7 @@
 }
 
 html {
-    font-size: 16px;
+    font-size: var(--font-size-base, 16px);
     scroll-behavior: smooth;
 }
 
@@ -88,12 +90,10 @@ html {
 }
 
 body {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-body, 'Inter', system-ui, -apple-system, sans-serif);
+    font-weight: var(--font-weight-body, 400);
     color: var(--text-primary);
-    background-color: var(--bg-color);
-    background-image:
-        radial-gradient(circle at 10% 20%, var(--bg-gradient-1) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, var(--bg-gradient-2) 0%, transparent 40%);
+    background-color: transparent; // Allow AnimatedBackground to show through
     line-height: 1.6;
     overflow-x: clip;
     min-height: 100vh;
@@ -101,24 +101,37 @@ body {
 }
 
 button {
-    font-family: inherit;
+    font-family: var(--font-ui, inherit);
+    font-weight: var(--font-weight-ui, 600);
     cursor: pointer;
     border: none;
     background: none;
-    font-weight: 600;
     transition: $transition;
 }
 
 a {
     text-decoration: none;
     color: inherit;
+    font-family: var(--font-nav, inherit);
+}
+
+nav,
+nav a,
+nav button {
+    font-family: var(--font-nav, inherit);
+    font-weight: var(--font-weight-nav, 500);
 }
 
 input,
 textarea,
 select {
-    font-family: inherit;
+    font-family: var(--font-ui, inherit);
     color: inherit;
+}
+
+label {
+    font-family: var(--font-ui, inherit);
+    font-weight: var(--font-weight-ui, 600);
 }
 
 option {
@@ -126,12 +139,28 @@ option {
     color: var(--text-primary);
 }
 
-h1,
-h2,
+h1 {
+    font-family: var(--font-heading, inherit);
+    font-weight: var(--font-weight-heading, 700);
+    color: $accent-color;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+
+h2 {
+    font-family: var(--font-heading, inherit);
+    font-weight: var(--font-weight-heading, 700);
+    color: $accent-color;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+
 h3,
 h4,
 h5,
 h6 {
+    font-family: var(--font-subheading, inherit);
+    font-weight: var(--font-weight-subheading, 600);
     color: $accent-color;
     line-height: 1.2;
     margin-bottom: 1rem;
@@ -203,5 +232,32 @@ h6 {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+// Admin font override — keeps admin panel in Inter when enabled
+:root[data-admin-font="inter"] {
+
+    [class*="Admin_"],
+    [class*="admin_"] {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        label,
+        input,
+        textarea,
+        select,
+        button,
+        a,
+        p,
+        span,
+        div {
+            font-family: inherit !important;
+        }
     }
 }

@@ -384,10 +384,10 @@ const ExperienceTab = ({ userRole, showToast }) => {
                 }
             >
                 <div style={{ padding: '2rem' }}>
-                    <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-                        <div className={styles.detailItem}><span className={styles.detailLabel}>Company</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary-color)' }}>{viewingExperience?.company}</span></div>
-                        <div className={styles.detailItem}><span className={styles.detailLabel}>Role</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700' }}>{viewingExperience?.role}</span></div>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}><span className={styles.detailLabel}>Period</span><span className={styles.detailValue} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem 1rem', borderRadius: '8px', display: 'inline-block', marginTop: '0.4rem' }}>{viewingExperience?.period}</span></div>
+                    <div className={styles.detailGrid} style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
+                        <div className={styles.detailItem} style={{ flex: '1 1 200px' }}><span className={styles.detailLabel}>Company</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary-color)', wordBreak: 'break-word' }}>{viewingExperience?.company}</span></div>
+                        <div className={styles.detailItem} style={{ flex: '1 1 200px' }}><span className={styles.detailLabel}>Role</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', wordBreak: 'break-word' }}>{viewingExperience?.role}</span></div>
+                        <div className={styles.detailItem} style={{ flex: '1 1 100%' }}><span className={styles.detailLabel}>Period</span><span className={styles.detailValue} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem 1rem', borderRadius: '8px', display: 'inline-block', marginTop: '0.4rem' }}>{viewingExperience?.period}</span></div>
                     </div>
                     <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
                         <MarkdownRenderer content={viewingExperience?.description || ''} />

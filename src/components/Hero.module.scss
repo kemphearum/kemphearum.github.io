@@ -7,8 +7,7 @@
     padding-top: $nav-height;
     position: relative;
     overflow: hidden;
-    background: radial-gradient(ellipse at 20% 50%, rgba($primary-color, 0.08), transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba($secondary-color, 0.06), transparent 50%);
+    background: transparent;
 
     .container {
         @include container;
@@ -133,8 +132,9 @@
 }
 
 .title {
+    font-family: var(--font-display, inherit);
+    font-weight: var(--font-weight-display, 800);
     font-size: clamp(2.5rem, 5vw, 4.5rem);
-    font-weight: 800;
     color: var(--text-primary);
     margin-bottom: 0.5rem;
     line-height: 1.1;

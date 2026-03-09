@@ -188,7 +188,7 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
                     <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>This record was likely created before history tracking was enabled.</p>
                 </div>
             ) : (
-                <div style={{ padding: '2rem' }}>
+                <div className={styles.historyTimeline}>
                     <div style={{ position: 'relative' }}>
                         {/* Timeline line */}
                         <div style={{ position: 'absolute', left: '23px', top: '15px', bottom: '0', width: '2px', background: 'var(--primary-color)', opacity: 0.25 }}></div>

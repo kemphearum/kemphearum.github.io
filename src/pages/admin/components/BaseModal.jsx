@@ -35,7 +35,9 @@ const BaseModal = ({
                         className={`${styles.modalHeader} ${smallHeader ? styles.smallHeader : ''}`}
                         style={headerStyle}
                     >
-                        {headerContent}
+                        <div className={styles.modalTitle}>
+                            {headerContent}
+                        </div>
                         {onClose && (
                             <button
                                 onClick={onClose}
@@ -59,13 +61,6 @@ const BaseModal = ({
                     <div
                         className={styles.modalFooter}
                         style={{
-                            flexShrink: 0,
-                            padding: '1rem 1.5rem',
-                            background: 'var(--bg-surface)',
-                            borderTop: '1px solid var(--divider)',
-                            display: 'flex',
-                            justifyContent: 'flex-end',
-                            gap: '0.75rem',
                             ...footerStyle
                         }}
                     >

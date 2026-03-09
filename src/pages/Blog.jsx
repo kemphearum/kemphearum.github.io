@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import BlogService from '../services/BlogService';
-import ContentService from '../services/ContentService';
+import SettingsService from '../services/SettingsService';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -16,10 +16,12 @@ const Blog = () => {
         queryFn: () => BlogService.getAll()
     });
 
-    const { data: settings } = useQuery({
-        queryKey: ['content', 'settings'],
-        queryFn: () => ContentService.fetchSection('settings')
+    const { data: globalConfig } = useQuery({
+        queryKey: ['settings', 'global'],
+        queryFn: () => SettingsService.fetchGlobalSettings()
     });
+
+    const settings = globalConfig?.site || globalConfig;
 
     const posts = postsData || [];
     const loading = loadingPosts;

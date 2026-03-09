@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styles from './Navbar.module.scss';
 import { Link, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import ContentService from '../services/ContentService';
+import SettingsService from '../services/SettingsService';
 import { useTheme } from '../context/ThemeContext';
 
 const Navbar = () => {
@@ -12,12 +12,12 @@ const Navbar = () => {
     const isHome = location.pathname === '/';
     const { theme, toggleTheme } = useTheme();
 
-    const { data } = useQuery({
-        queryKey: ['content', 'settings'],
-        queryFn: () => ContentService.fetchSection('settings')
+    const { data: globalConfig } = useQuery({
+        queryKey: ['settings', 'global'],
+        queryFn: () => SettingsService.fetchGlobalSettings()
     });
 
-    const settings = data || {
+    const settings = globalConfig?.site || globalConfig || {
         logoText: '',
         logoHighlight: ''
     };

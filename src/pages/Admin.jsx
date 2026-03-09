@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import UserService from '../services/UserService';
 import MessageService from '../services/MessageService';
+import ContentService from '../services/ContentService';
 import styles from './Admin.module.scss';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -10,9 +11,11 @@ import { useTheme } from '../context/ThemeContext';
 import { useActivity } from '../hooks/useActivity';
 import { getSessionId, getDeviceType } from '../hooks/useAnalytics';
 import { useQueryClient } from '@tanstack/react-query';
-import ContentService from '../services/ContentService';
+import SettingsService from '../services/SettingsService';
 import AuthService from '../services/AuthService';
 import AuditLogService from '../services/AuditLogService';
+import { doc, getDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 // Tab components
 import GeneralTab from './admin/tabs/GeneralTab';
@@ -232,9 +235,107 @@ const Admin = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // ====== Migration Bridge ======
+    useEffect(() => {
+        if (userRole === 'superadmin') {
+            const runMigration = async () => {
+                try {
+                    // 1. Check if unified global settings exists and is complete
+                    const globalSnap = await getDoc(doc(db, 'settings', 'global'));
+                    if (globalSnap.exists()) {
+                        const data = globalSnap.data();
+                        if (data.site && data.typography && data.audit) return;
+                    }
+
+                    console.log("Starting Firestore settings migration...");
+
+                    // 2. Fetch old data
+                    const [contentSettings, oldAdmin, oldAudit] = await Promise.all([
+                        getDoc(doc(db, 'content', 'settings')),
+                        getDoc(doc(db, 'settings', 'admin')),
+                        getDoc(doc(db, 'settings', 'auditConfig'))
+                    ]);
+
+                    const hasData = contentSettings.exists() || oldAdmin.exists() || oldAudit.exists();
+                    if (!hasData) return;
+
+                    const legacy = contentSettings.data() || {};
+                    const adminLegacy = oldAdmin.data() || {};
+                    const auditLegacy = oldAudit.data() || {};
+
+                    // 3. Build normalized schema
+                    const payload = {
+                        site: {
+                            title: legacy.title || legacy.pageTitle || 'Portfolio',
+                            favicon: legacy.favicon || legacy.pageFaviconUrl || '',
+                            logoHighlight: legacy.logoHighlight || 'KEM',
+                            logoText: legacy.logoText || 'PHEARUM',
+                            tagline: legacy.tagline || '',
+                            footerText: legacy.footerText || '',
+                            projectFilters: legacy.projectFilters || '',
+                            blogFilters: legacy.blogFilters || ''
+                        },
+                        typography: {
+                            fontDisplay: legacy.fontDisplay || 'inter',
+                            fontHeading: legacy.fontHeading || 'inter',
+                            fontSubheading: legacy.fontSubheading || 'inter',
+                            fontNav: legacy.fontNav || 'inter',
+                            fontBody: legacy.fontBody || 'inter',
+                            fontUI: legacy.fontUI || 'inter',
+                            fontSize: legacy.fontSize || 'default',
+                            adminFontOverride: legacy.adminFontOverride ?? true
+                        },
+                        audit: {
+                            logAll: auditLegacy.logAll ?? true,
+                            logReads: auditLegacy.logReads ?? true,
+                            logWrites: auditLegacy.logWrites ?? true,
+                            logDeletes: auditLegacy.logDeletes ?? true,
+                            logAnonymous: auditLegacy.logAnonymous ?? false
+                        },
+                        system: {
+                            sidebarPersistent: adminLegacy.sidebarPersistent ?? true
+                        }
+                    };
+
+                    // 4. Save to new location
+                    await SettingsService.setFullSettings(payload);
+                    console.log("Migration successful: settings/global created.");
+
+                    // 5. Cleanup
+                    await Promise.all([
+                        deleteDoc(doc(db, 'content', 'settings')),
+                        deleteDoc(doc(db, 'settings', 'admin')),
+                        deleteDoc(doc(db, 'settings', 'auditConfig'))
+                    ]);
+                    console.log("Legacy settings documents removed.");
+
+                    // Refresh caches
+                    queryClient.invalidateQueries({ queryKey: ['settings', 'global'] });
+                    fetchSectionData('settings');
+                } catch (err) {
+                    console.error("Migration failed:", err);
+                }
+            };
+            runMigration();
+        }
+    }, [userRole, queryClient]);
+
     // ====== Content Data Management ======
     const fetchSectionData = useCallback(async (section) => {
         try {
+            if (section === 'settings') {
+                const global = await SettingsService.fetchGlobalSettings();
+                if (global) {
+                    setSettingsData({
+                        ...global.site,
+                        ...global.typography,
+                        ...global.system
+                    });
+                }
+                if (trackRead) trackRead(1, 'Fetched global settings');
+                return;
+            }
+
             const data = await ContentService.fetchSection(section, trackRead);
             if (data) {
                 switch (section) {
@@ -246,7 +347,6 @@ const Admin = () => {
                         });
                         break;
                     case 'contact': setContactData(prev => ({ ...prev, ...data })); break;
-                    case 'settings': setSettingsData(prev => ({ ...prev, ...data })); break;
                     default: break;
                 }
             }
@@ -257,15 +357,32 @@ const Admin = () => {
     const saveSectionData = useCallback(async (section, data) => {
         setLoading(true);
         try {
-            await ContentService.saveSection(section, data, trackWrite);
-            showToast(`${section.charAt(0).toUpperCase() + section.slice(1)} saved!`);
-            // Invalidate the TanStack Query cache for this specific content section
-            queryClient.invalidateQueries({ queryKey: ['content', section] });
-            // Also invalidate the history cache so the HistoryModal shows the new entry
-            queryClient.invalidateQueries({ queryKey: ['history', 'content', section] });
+            if (section === 'settings') {
+                const typographyKeys = ['fontDisplay', 'fontHeading', 'fontSubheading', 'fontNav', 'fontBody', 'fontUI', 'fontSize', 'adminFontOverride'];
+                const systemKeys = ['sidebarPersistent'];
+
+                const typography = {};
+                const system = {};
+                const site = {};
+
+                Object.keys(data).forEach(k => {
+                    if (typographyKeys.includes(k)) typography[k] = data[k];
+                    else if (systemKeys.includes(k)) system[k] = data[k];
+                    else site[k] = data[k];
+                });
+
+                await SettingsService.updateGlobalSettings({ site, typography, system }, trackWrite);
+                showToast(`Settings saved!`);
+                queryClient.invalidateQueries({ queryKey: ['settings', 'global'] });
+            } else {
+                await ContentService.saveSection(section, data, trackWrite);
+                showToast(`${section.charAt(0).toUpperCase() + section.slice(1)} saved!`);
+                queryClient.invalidateQueries({ queryKey: ['content', section] });
+            }
         } catch (error) {
             console.error(`Error saving ${section}:`, error);
-            showToast(`Failed to save ${section}.`, 'error');
+            const errMsg = error.message?.includes('quota') ? 'Storage quota exceeded.' : (error.message || 'Unknown error');
+            showToast(`Failed to save ${section}: ${errMsg}`, 'error');
         } finally { setLoading(false); }
     }, [showToast, trackWrite, queryClient]);
 

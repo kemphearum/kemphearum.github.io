@@ -23,13 +23,9 @@ const ConfirmDialog = ({ confirmDialog, setConfirmDialog }) => {
                 background: isDanger ? 'rgba(239, 68, 68, 0.05)' : 'rgba(251, 146, 60, 0.05)'
             }}
             bodyStyle={{
-                padding: '1.5rem',
                 lineHeight: '1.6',
                 color: 'var(--text-secondary)',
                 whiteSpace: 'pre-wrap'
-            }}
-            footerStyle={{
-                padding: '0.75rem 1.5rem'
             }}
             headerContent={
                 <h3 style={{ color: isDanger ? '#ef4444' : '#f97316' }}>

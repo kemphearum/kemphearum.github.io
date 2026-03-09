@@ -34,16 +34,19 @@ class ContentService extends BaseService {
      * @param {string} sectionName 
      * @param {Object} data 
      * @param {Function} trackWrite - Optional activity tracker
+     * @param {Object} options - Optional settings (e.g. { skipHistory: true })
      */
-    async saveSection(sectionName, data, trackWrite) {
+    async saveSection(sectionName, data, trackWrite, options = {}) {
         const docRef = doc(db, this.collectionName, sectionName);
         await setDoc(docRef, data, { merge: true });
 
         // Store in audit history subcollection
-        try {
-            await this._saveHistory(sectionName, 'updated', data);
-        } catch (error) {
-            console.error(`Failed to save history for ${sectionName}:`, error);
+        if (this.useHistory && !options.skipHistory) {
+            try {
+                await this._saveHistory(sectionName, 'updated', data);
+            } catch (error) {
+                console.error(`Failed to save history for ${sectionName}:`, error);
+            }
         }
 
         if (trackWrite) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ProjectService from '../services/ProjectService';
-import ContentService from '../services/ContentService';
+import SettingsService from '../services/SettingsService';
 import ProjectCard from './ProjectCard';
 import styles from './Projects.module.scss';
 // eslint-disable-next-line no-unused-vars
@@ -13,10 +13,12 @@ const Projects = () => {
         queryFn: () => ProjectService.getAll()
     });
 
-    const { data: settings } = useQuery({
-        queryKey: ['content', 'settings'],
-        queryFn: () => ContentService.fetchSection('settings')
+    const { data: globalConfig } = useQuery({
+        queryKey: ['settings', 'global'],
+        queryFn: () => SettingsService.fetchGlobalSettings()
     });
+
+    const settings = globalConfig?.site || globalConfig;
 
     const projects = projectsData || [];
     const loading = loadingProjects;

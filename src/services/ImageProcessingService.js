@@ -40,9 +40,9 @@ class ImageProcessingService {
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    const isPng = file.type === 'image/png' && (maxWidthOrHeight <= 256);
-                    const mimeType = isPng ? 'image/png' : 'image/jpeg';
-                    const dataUrl = canvas.toDataURL(mimeType, isPng ? undefined : quality);
+                    const isPngOrSvg = file.type === 'image/png' || file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.png') || file.name.toLowerCase().endsWith('.svg');
+                    const mimeType = isPngOrSvg ? 'image/png' : 'image/jpeg';
+                    const dataUrl = canvas.toDataURL(mimeType, isPngOrSvg ? undefined : quality);
 
                     resolve(dataUrl);
                 };

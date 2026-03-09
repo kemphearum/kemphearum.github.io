@@ -1,15 +1,15 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import ContentService from '../services/ContentService';
+import SettingsService from '../services/SettingsService';
 import styles from './Footer.module.scss';
 
 const Footer = () => {
-    const { data } = useQuery({
-        queryKey: ['content', 'settings'],
-        queryFn: () => ContentService.fetchSection('settings')
+    const { data: globalConfig } = useQuery({
+        queryKey: ['settings', 'global'],
+        queryFn: () => SettingsService.fetchGlobalSettings()
     });
 
-    const settings = data || {
+    const settings = globalConfig?.site || globalConfig || {
         footerText: '',
         logoHighlight: '',
         logoText: '',

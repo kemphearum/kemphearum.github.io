@@ -38,6 +38,14 @@ class AuthService {
     onAuthChange(callback) {
         return onAuthStateChanged(auth, callback);
     }
+
+    /**
+     * Get the currently logged in user
+     * @returns {import('firebase/auth').User|null}
+     */
+    getCurrentUser() {
+        return auth.currentUser;
+    }
 }
 
 export default new AuthService();

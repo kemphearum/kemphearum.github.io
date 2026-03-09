@@ -181,10 +181,10 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginRight: '0.5rem' }}>
                             {selectedMessages.length} selected
                         </span>
-                        <button onClick={() => handleBatchMarkMessages(true)} className={styles.iconBtn} title="Mark as Read" style={{ width: 'auto', padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <button onClick={() => handleBatchMarkMessages(true)} className={styles.secondaryBtn} title="Mark as Read" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
                             <MailOpen size={14} /> Read
                         </button>
-                        <button onClick={() => handleBatchMarkMessages(false)} className={styles.iconBtn} title="Mark as Unread" style={{ width: 'auto', padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <button onClick={() => handleBatchMarkMessages(false)} className={styles.secondaryBtn} title="Mark as Unread" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
                             <Mail size={14} /> Unread
                         </button>
                         <button onClick={handleBatchDeleteMessages} className={styles.deleteBtn} title="Delete Selected" style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
@@ -281,19 +281,19 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
                 bodyStyle={{ padding: '2rem' }}
                 footerStyle={{ padding: '1.25rem 2rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.05)', justifyContent: 'space-between' }}
                 footerContent={
-                    <>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', justifyContent: 'space-between', width: '100%' }}>
                         <button onClick={() => { handleDeleteMessage(viewingMessage?.id); setViewingMessage(null); }} className={styles.deleteBtn} style={{ padding: '0.6rem 1.25rem', margin: 0, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                             <Trash2 size={16} /> Delete
                         </button>
-                        <div style={{ display: 'flex', gap: '0.8rem' }}>
-                            <button onClick={() => handleToggleMessageRead(viewingMessage?.id, viewingMessage?.isRead)} className={styles.iconBtn} style={{ width: 'auto', padding: '0.6rem 1rem' }}>
+                        <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
+                            <button onClick={() => handleToggleMessageRead(viewingMessage?.id, viewingMessage?.isRead)} className={styles.secondaryBtn} style={{ margin: 0 }}>
                                 {viewingMessage?.isRead ? <><MailOpen size={18} /> Mark Unread</> : <><Mail size={18} /> Mark Read</>}
                             </button>
                             <a href={`mailto:${viewingMessage?.email}?subject=Re: Inquiry from ${encodeURIComponent(viewingMessage?.name || '')}`} className={styles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.75rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                                 <Reply size={18} /> Reply Now
                             </a>
                         </div>
-                    </>
+                    </div>
                 }
             >
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>

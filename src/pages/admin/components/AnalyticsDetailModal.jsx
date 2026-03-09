@@ -33,12 +33,11 @@ const AnalyticsDetailModal = ({
             bodyStyle={{ padding: 0 }}
             headerStyle={{
                 background: 'rgba(255,255,255,0.02)',
-                padding: '1.25rem 1.5rem',
                 borderBottom: '1px solid rgba(255,255,255,0.05)'
             }}
             headerContent={
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.2rem', color: 'var(--primary-color)' }}>
+                <>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary-color)' }}>
                         {analyticsDetail === 'visits' && <><TrendingUp size={24} /> Comprehensive Visit Activity History</>}
                         {analyticsDetail === 'countries' && <><Globe size={24} /> Audience Geographic Distribution</>}
                         {analyticsDetail === 'devices' && <><Monitor size={24} /> Technical Device Infrastructure</>}
@@ -46,10 +45,10 @@ const AnalyticsDetailModal = ({
                         {analyticsDetail === 'cities' && <><MapPin size={24} /> Regional Engagement Breakdown</>}
                         {analyticsDetail === 'referrers' && <><Share2 size={24} /> Acquisition & Traffic Sources</>}
                     </h3>
-                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    <p>
                         Detailed insights based on {analyticsLogsTotal || analyticsLogs.length} tracked interactions
                     </p>
-                </div>
+                </>
             }
             footerContent={
                 <button onClick={onClose} className={styles.primaryBtn} style={{ padding: '0.6rem 1.5rem', margin: 0, fontSize: '0.85rem' }}>Close</button>
@@ -62,17 +61,17 @@ const AnalyticsDetailModal = ({
                             <RefreshCw size={60} className={styles.spin} style={{ opacity: 0.1 }} />
                             <RefreshCw size={30} className={styles.spin} style={{ position: 'absolute', top: '15px', left: '15px', color: 'var(--primary-color)' }} />
                         </div>
-                        <p style={{ letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 'bold' }}>Aggregating Analytics Data...</p>
+                        <p className={styles.hint} style={{ letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>Aggregating Analytics Data...</p>
                     </div>
                 ) : analyticsDetail === 'visits' ? (
-                    <div style={{ padding: '1.5rem' }}>
+                    <div style={{ padding: '1.5rem 1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '0.4rem 1rem', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.08)' }}>
                                 Retrieved {analyticsLogs.length} recent sessions
                             </span>
                         </div>
-                        <div className={styles.tableWrapper} style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '0.85rem' }}>
+                        <div className={styles.tableWrapper} style={{ borderRadius: '16px', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: '700px' }}>
                                 <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
                                     <tr>
                                         <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>#</th>
@@ -115,8 +114,8 @@ const AnalyticsDetailModal = ({
                         )}
                     </div>
                 ) : ['countries', 'devices', 'pages', 'cities', 'referrers'].includes(analyticsDetail) ? (
-                    <div style={{ padding: '1.5rem' }}>
-                        <div style={{ background: 'rgba(255,255,255,0.015)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+                    <div style={{ padding: '1.5rem 1rem' }}>
+                        <div style={{ background: 'rgba(255,255,255,0.015)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', overflowX: 'auto' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                 <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700' }}>
                                     Metrics Distribution Report
@@ -125,14 +124,14 @@ const AnalyticsDetailModal = ({
                                     Analysis of {analyticsLogs.length} snapshots
                                 </span>
                             </div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '400px' }}>
                                 <thead>
                                     <tr style={{ textAlign: 'left', background: 'rgba(0,0,0,0.2)' }}>
-                                        <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.7rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.7rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', width: '50%' }}>
                                             {analyticsDetail === 'countries' ? 'Country Grouping' : analyticsDetail === 'devices' ? 'Device Profile' : analyticsDetail === 'pages' ? 'Content Identifier (URL)' : analyticsDetail === 'cities' ? 'Geographic Location' : 'Visitor Origin Header'}
                                         </th>
-                                        <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.7rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>Events</th>
-                                        <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.7rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'right' }}>Volume Share</th>
+                                        <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.7rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', opacity: 0.8, width: '20%' }}>Events</th>
+                                        <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.7rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'right', opacity: 0.8, width: '30%' }}>Volume Share</th>
                                     </tr>
                                 </thead>
                                 <tbody>

@@ -280,7 +280,7 @@ const UsersTab = ({ user, userRole, showToast }) => {
                 contentStyle={{ borderRadius: '20px' }}
                 headerStyle={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}
                 headerContent={
-                    <h3 style={{ margin: 0, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <UserPlus size={22} style={{ color: 'var(--primary-color)' }} /> Create New User
                     </h3>
                 }
@@ -333,14 +333,14 @@ const UsersTab = ({ user, userRole, showToast }) => {
                     contentStyle={{ borderRadius: '20px' }}
                     headerStyle={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}
                     headerContent={
-                        <h3 style={{ margin: 0, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Users size={22} style={{ color: 'var(--primary-color)' }} /> User Account Profile
                         </h3>
                     }
                     bodyStyle={{ padding: 0 }}
                     footerStyle={{ padding: '1.5rem 2rem', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.05)' }}
                     footerContent={
-                        <>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', width: '100%', justifyContent: 'space-between' }}>
                             <div>
                                 {viewingUser.email !== user.email && (
                                     <button className={styles.deleteBtn} onClick={() => { handleRemoveUser(viewingUser.email, viewingUser.id); setViewingUser(null); }} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>
@@ -348,33 +348,33 @@ const UsersTab = ({ user, userRole, showToast }) => {
                                     </button>
                                 )}
                             </div>
-                            <div style={{ display: 'flex', gap: '0.8rem' }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
                                 <button className={styles.editBtn} onClick={() => { handleResetPassword(viewingUser.email); setViewingUser(null); }}
                                     style={{ background: 'transparent', border: '1px solid var(--glass-border)', padding: '0.6rem 1.25rem', margin: 0 }}>
                                     🔑 Send Reset Email
                                 </button>
                                 <button onClick={() => setViewingUser(null)} className={styles.primaryBtn} style={{ padding: '0.6rem 1.5rem', margin: 0 }}>Done</button>
                             </div>
-                        </>
+                        </div>
                     }
                 >
                     <div style={{ padding: '2rem' }}>
-                        <div className={styles.detailGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
-                            <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                        <div className={styles.detailGrid} style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                            <div className={styles.detailItem} style={{ flex: '1 1 100%' }}>
                                 <span className={styles.detailLabel}>Authentication Email</span>
-                                <span className={styles.detailValue} style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{viewingUser.email}</span>
+                                <span className={styles.detailValue} style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--text-primary)', wordBreak: 'break-all' }}>{viewingUser.email}</span>
                             </div>
-                            <div className={styles.detailItem}>
+                            <div className={styles.detailItem} style={{ flex: '1 1 200px' }}>
                                 <span className={styles.detailLabel}>Display Name</span>
                                 <span className={styles.detailValue} style={{ fontSize: '1rem' }}>{viewingUser.displayName || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', opacity: 0.6 }}>Not set by user</span>}</span>
                             </div>
-                            <div className={styles.detailItem}>
+                            <div className={styles.detailItem} style={{ flex: '1 1 180px' }}>
                                 <span className={styles.detailLabel}>Status & Security</span>
                                 <span className={styles.detailValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     {viewingUser.isActive === false ? <span style={{ color: '#ef4444', fontWeight: 'bold' }}>● Disabled</span> : <span style={{ color: '#10b981', fontWeight: 'bold' }}>● Active Account</span>}
                                 </span>
                             </div>
-                            <div className={styles.detailItem}>
+                            <div className={styles.detailItem} style={{ flex: '1 1 200px' }}>
                                 <span className={styles.detailLabel}>Administrative Role</span>
                                 {viewingUser.email === user.email ? (
                                     <div style={{ marginTop: '0.6rem' }}>
@@ -392,13 +392,13 @@ const UsersTab = ({ user, userRole, showToast }) => {
                                     </select>
                                 )}
                             </div>
-                            <div className={styles.detailItem}>
+                            <div className={styles.detailItem} style={{ flex: '1 1 180px' }}>
                                 <span className={styles.detailLabel}>Registration Date</span>
                                 <span className={styles.detailValue} style={{ fontSize: '0.9rem' }}>{viewingUser.createdAt?.seconds ? new Date(viewingUser.createdAt.seconds * 1000).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' }) : 'Unknown'}</span>
                             </div>
-                            <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <div className={styles.detailItem} style={{ flex: '1 1 100%' }}>
                                 <span className={styles.detailLabel}>System Universal ID (UID)</span>
-                                <span className={styles.detailValue} style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '0.4rem 0.8rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>{viewingUser.id}</span>
+                                <span className={styles.detailValue} style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '0.4rem 0.8rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', display: 'block', wordBreak: 'break-all' }}>{viewingUser.id}</span>
                             </div>
                         </div>
                     </div>

@@ -1,5 +1,6 @@
 import { db } from '../firebase';
-import { collection, getDocs, query, where, doc, updateDoc, writeBatch, setDoc, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc, writeBatch, setDoc, Timestamp, getDoc } from 'firebase/firestore';
+import SettingsService from './SettingsService';
 
 class DatabaseService {
     static SOFT_DOC_LIMIT = 50000;
@@ -21,9 +22,13 @@ class DatabaseService {
 
     static async getAuditSettings() {
         try {
-            const snap = await getDocs(collection(db, 'settings'));
-            const settingsDoc = snap.docs.find(d => d.id === 'auditConfig');
-            return settingsDoc ? settingsDoc.data() : { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false };
+            const docRef = doc(db, 'settings', 'global');
+            const snap = await getDoc(docRef);
+            if (snap.exists() && snap.data().audit) {
+                return snap.data().audit;
+            }
+            // Fallback to legacy or default
+            return { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false };
         } catch (error) {
             console.error("Error fetching audit settings:", error);
             return { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false };
@@ -50,13 +55,9 @@ class DatabaseService {
             newSettings.logAll = allOthersEnabled;
         }
 
-        const ref = doc(db, 'settings', 'auditConfig');
-        await updateDoc(ref, newSettings).catch(async () => {
-            await setDoc(ref, { ...currentSettings, ...newSettings });
-        });
-
-        if (trackWrite) trackWrite(1, `Updated audit setting: ${key}`);
-
+        const ref = doc(db, 'settings', 'global');
+        const finalAudit = { ...currentSettings, ...newSettings };
+        await SettingsService.saveSettings('audit', finalAudit, trackWrite);
         return newSettings;
     }
 

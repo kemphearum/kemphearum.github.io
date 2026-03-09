@@ -334,79 +334,81 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                         No {activityDetailType} records found for today's session.
                     </div>
                 ) : (
-                    <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '0.88rem', tableLayout: 'fixed' }}>
-                        <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary, rgba(30, 41, 59, 0.95))', backdropFilter: 'blur(8px)', zIndex: 10 }}>
-                            <tr>
-                                <th style={{ width: '40%', textAlign: 'left', padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Operation & Target</th>
-                                <th style={{ width: '12%', textAlign: 'center', padding: '1.25rem 0.5rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Count</th>
-                                <th style={{ width: '28%', textAlign: 'left', padding: '1.25rem 0.5rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Originator</th>
-                                <th style={{ width: '20%', textAlign: 'right', padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Timestamp</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {activityLogs.map((log, i) => {
-                                const isAnon = !log.user || log.user === 'Anonymous';
-                                const logId = log.id || i;
-                                const isExpanded = expandedLogId === logId;
-                                const hasDetails = log.details && Object.keys(log.details).length > 0;
+                    <div style={{ overflowX: 'auto', width: '100%' }}>
+                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, fontSize: '0.88rem', tableLayout: 'auto', minWidth: '600px' }}>
+                            <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary, rgba(30, 41, 59, 0.95))', backdropFilter: 'blur(8px)', zIndex: 10 }}>
+                                <tr>
+                                    <th style={{ textAlign: 'left', padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Operation & Target</th>
+                                    <th style={{ textAlign: 'center', padding: '1.25rem 0.5rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Count</th>
+                                    <th style={{ textAlign: 'left', padding: '1.25rem 0.5rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Originator</th>
+                                    <th style={{ textAlign: 'right', padding: '1.25rem 1.5rem', color: 'var(--text-secondary)', fontSize: '0.7rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 800, borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.08))' }}>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {activityLogs.map((log, i) => {
+                                    const isAnon = !log.user || log.user === 'Anonymous';
+                                    const logId = log.id || i;
+                                    const isExpanded = expandedLogId === logId;
+                                    const hasDetails = log.details && Object.keys(log.details).length > 0;
 
-                                return (
-                                    <React.Fragment key={`log-${logId}`}>
-                                        <tr
-                                            style={{
-                                                transition: 'all 0.2s ease',
-                                                cursor: hasDetails ? 'pointer' : 'default',
-                                                background: isExpanded ? 'var(--bg-tertiary, rgba(255,255,255,0.05))' : 'transparent'
-                                            }}
-                                            onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = 'var(--bg-hover, rgba(255,255,255,0.03))'; }}
-                                            onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = 'transparent'; }}
-                                            onClick={() => hasDetails && setExpandedLogId(isExpanded ? null : logId)}
-                                        >
-                                            <td style={{ padding: '1rem 1.5rem', color: 'var(--text-primary)', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', color: 'var(--text-secondary)', flexShrink: 0 }}>
-                                                        {hasDetails && (
-                                                            <ChevronRight size={14} style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
-                                                        )}
-                                                    </div>
-                                                    <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: activityDetailType === 'reads' ? 'rgba(56, 189, 248, 0.1)' : activityDetailType === 'writes' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: activityDetailType === 'reads' ? '#38bdf8' : activityDetailType === 'writes' ? '#6366f1' : '#ef4444', flexShrink: 0 }}>
-                                                        {activityDetailType === 'reads' ? <Eye size={14} /> : activityDetailType === 'writes' ? <Edit2 size={14} /> : <Trash2 size={14} />}
-                                                    </div>
-                                                    <span style={{ fontWeight: 600, fontSize: '0.85rem', wordBreak: 'break-word' }}>{log.label || log.type || '-'}</span>
-                                                </div>
-                                            </td>
-                                            <td style={{ padding: '1rem 0.5rem', textAlign: 'center', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))' }}>
-                                                <span style={{ display: 'inline-block', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'var(--bg-tertiary, rgba(255,255,255,0.04))', border: '1px solid var(--border-color, rgba(255,255,255,0.06))', fontWeight: 700, fontSize: '0.75rem', color: 'var(--text-primary)' }}>
-                                                    {log.count || 1}
-                                                </span>
-                                            </td>
-                                            <td style={{ padding: '1rem 0.5rem', color: 'var(--text-secondary)', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))', wordBreak: 'break-all' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isAnon ? '#64748b' : '#10b981', flexShrink: 0 }}></div>
-                                                    <span style={{ fontWeight: isAnon ? 500 : 700, color: isAnon ? 'var(--text-secondary)' : 'var(--text-primary)', fontSize: '0.8rem' }}>{log.user || 'Anonymous'}</span>
-                                                </div>
-                                            </td>
-                                            <td style={{ padding: '1rem 1.5rem', textAlign: 'right', color: 'var(--text-secondary)', fontFamily: 'monospace', fontSize: '0.75rem', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))' }}>
-                                                {log.time?.seconds ? new Date(log.time.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) : '-'}
-                                            </td>
-                                        </tr>
-                                        {isExpanded && (
-                                            <tr>
-                                                <td colSpan="4" style={{ padding: '0 1.5rem 1.25rem 3.5rem', borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.02))', background: 'var(--bg-tertiary, rgba(255,255,255,0.05))' }}>
-                                                    <div style={{ background: 'var(--bg-primary, rgba(0,0,0,0.2))', padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--border-color, rgba(255,255,255,0.05))' }}>
-                                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>Event Payload</div>
-                                                        <pre style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.8rem', fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowX: 'auto' }}>
-                                                            {JSON.stringify(log.details, null, 2)}
-                                                        </pre>
+                                    return (
+                                        <React.Fragment key={`log-${logId}`}>
+                                            <tr
+                                                style={{
+                                                    transition: 'all 0.2s ease',
+                                                    cursor: hasDetails ? 'pointer' : 'default',
+                                                    background: isExpanded ? 'var(--bg-tertiary, rgba(255,255,255,0.05))' : 'transparent'
+                                                }}
+                                                onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = 'var(--bg-hover, rgba(255,255,255,0.03))'; }}
+                                                onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = 'transparent'; }}
+                                                onClick={() => hasDetails && setExpandedLogId(isExpanded ? null : logId)}
+                                            >
+                                                <td style={{ width: '40%', padding: '1rem 1.5rem', color: 'var(--text-primary)', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '16px', color: 'var(--text-secondary)', flexShrink: 0 }}>
+                                                            {hasDetails && (
+                                                                <ChevronRight size={14} style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+                                                            )}
+                                                        </div>
+                                                        <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: activityDetailType === 'reads' ? 'rgba(56, 189, 248, 0.1)' : activityDetailType === 'writes' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: activityDetailType === 'reads' ? '#38bdf8' : activityDetailType === 'writes' ? '#6366f1' : '#ef4444', flexShrink: 0 }}>
+                                                            {activityDetailType === 'reads' ? <Eye size={14} /> : activityDetailType === 'writes' ? <Edit2 size={14} /> : <Trash2 size={14} />}
+                                                        </div>
+                                                        <span style={{ fontWeight: 600, fontSize: '0.85rem', wordBreak: 'break-word', minWidth: '120px' }}>{log.label || log.type || '-'}</span>
                                                     </div>
                                                 </td>
+                                                <td style={{ width: '12%', padding: '1rem 0.5rem', textAlign: 'center', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))' }}>
+                                                    <span style={{ display: 'inline-block', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'var(--bg-tertiary, rgba(255,255,255,0.04))', border: '1px solid var(--border-color, rgba(255,255,255,0.06))', fontWeight: 700, fontSize: '0.75rem', color: 'var(--text-primary)' }}>
+                                                        {log.count || 1}
+                                                    </span>
+                                                </td>
+                                                <td style={{ width: '28%', padding: '1rem 0.5rem', color: 'var(--text-secondary)', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))', wordBreak: 'break-all' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isAnon ? '#64748b' : '#10b981', flexShrink: 0 }}></div>
+                                                        <span style={{ fontWeight: isAnon ? 500 : 700, color: isAnon ? 'var(--text-secondary)' : 'var(--text-primary)', fontSize: '0.8rem', minWidth: '100px', display: 'inline-block' }}>{log.user || 'Anonymous'}</span>
+                                                    </div>
+                                                </td>
+                                                <td style={{ width: '20%', padding: '1rem 1.5rem', textAlign: 'right', color: 'var(--text-secondary)', fontFamily: 'monospace', fontSize: '0.75rem', borderBottom: isExpanded ? 'none' : '1px solid var(--border-color, rgba(255,255,255,0.02))', whiteSpace: 'nowrap' }}>
+                                                    {log.time?.seconds ? new Date(log.time.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }) : '-'}
+                                                </td>
                                             </tr>
-                                        )}
-                                    </React.Fragment>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                                            {isExpanded && (
+                                                <tr>
+                                                    <td colSpan="4" style={{ padding: '0 1.5rem 1.25rem 3.5rem', borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.02))', background: 'var(--bg-tertiary, rgba(255,255,255,0.05))' }}>
+                                                        <div style={{ background: 'var(--bg-primary, rgba(0,0,0,0.2))', padding: '0.85rem', borderRadius: '8px', border: '1px solid var(--border-color, rgba(255,255,255,0.05))' }}>
+                                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>Event Payload</div>
+                                                            <pre style={{ margin: 0, color: 'var(--text-primary)', fontSize: '0.8rem', fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowX: 'auto' }}>
+                                                                {JSON.stringify(log.details, null, 2)}
+                                                            </pre>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </BaseModal>
 
