@@ -90,6 +90,10 @@ function injectMetaTags(html, item, type, isRoot = false) {
 
     const description = item.description || 'Portfolio of Kem Phearum, an ICT Security professional and developer.';
 
+    // Social media crawlers (LinkedIn/FB) do NOT support Base64 for og:image.
+    // We only add it if it's a real HTTP/HTTPS URL.
+    const isValidImageUrl = item.image && item.image.startsWith('http');
+
     let metaTags = `
     <!-- Open Graph for Facebook & LinkedIn -->
     <meta property="og:title" content="${title}" />
@@ -104,7 +108,7 @@ function injectMetaTags(html, item, type, isRoot = false) {
     <meta name="twitter:description" content="${description}" />
 `;
 
-    if (item.image) {
+    if (isValidImageUrl) {
         metaTags += `
     <meta property="og:image" content="${item.image}" />
     <meta name="twitter:image" content="${item.image}" />
