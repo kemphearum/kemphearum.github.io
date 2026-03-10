@@ -36,17 +36,52 @@ async function fetchCollection(collectionName) {
     }
 }
 
+// Helper to fetch global settings (Title/Description)
+async function fetchGlobalSettings() {
+    try {
+        const response = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/settings/global`);
+        const data = await response.json();
+        if (!data.fields) return null;
+
+        const site = data.fields.site?.mapValue?.fields || data.fields;
+        const getField = (key) => site[key]?.stringValue || '';
+
+        return {
+            title: getField('pageTitle') || getField('title') || 'Kem Phearum Portfolio',
+            description: getField('description') || 'Portfolio of Kem Phearum, an ICT Security professional and developer.',
+            image: getField('pageFaviconUrl') || getField('favicon') || ''
+        };
+    } catch (error) {
+        console.error('Error fetching global settings:', error);
+        return null;
+    }
+}
+
 // Helper to inject meta tags into the generic HTML
-function injectMetaTags(html, item, type) {
-    const title = item.title ? `${item.title} | Kem Phearum` : 'Kem Phearum Portfolio';
+function injectMetaTags(html, item, type, isRoot = false) {
+    let title = 'Kem Phearum Portfolio';
+    let url = 'https://phearum-info.web.app';
+
+    if (isRoot) {
+        title = item.title;
+    } else if (type === 'blog-list') {
+        title = 'Blog | Kem Phearum';
+        url += '/blog';
+    } else if (type === 'project-list') {
+        title = 'Projects | Kem Phearum';
+        url += '/projects';
+    } else {
+        title = item.title ? `${item.title} | Kem Phearum` : 'Kem Phearum Portfolio';
+        url += `/${type}/${item.slug}`;
+    }
+
     const description = item.description || 'Portfolio of Kem Phearum, an ICT Security professional and developer.';
-    const url = `https://phearum-info.web.app/${type}/${item.slug}`;
 
     let metaTags = `
     <!-- Open Graph for Facebook & LinkedIn -->
     <meta property="og:title" content="${title}" />
     <meta property="og:description" content="${description}" />
-    <meta property="og:type" content="article" />
+    <meta property="og:type" content="website" />
     <meta property="og:url" content="${url}" />
     <meta property="og:site_name" content="Kem Phearum Portfolio" />
     
@@ -78,7 +113,7 @@ function injectMetaTags(html, item, type) {
 
 // Main generation function
 async function generateStaticPages() {
-    console.log('Generating static HTML files for Open Graph tags...');
+    console.log('Generating static HTML files for Open Graph tags (Whole Website)...');
 
     if (!fs.existsSync(INDEX_HTML_PATH)) {
         console.error(`Missing base index.html at ${INDEX_HTML_PATH}. Run 'vite build' first.`);
@@ -87,18 +122,39 @@ async function generateStaticPages() {
 
     const baseHtml = fs.readFileSync(INDEX_HTML_PATH, 'utf-8');
 
-    // Fetch data
+    // 1. Fetch data
     const blogPosts = await fetchCollection('posts');
     const projects = await fetchCollection('projects');
+    const globalSettings = await fetchGlobalSettings();
 
-    console.log(`Found ${blogPosts.length} blog posts and ${projects.length} projects.`);
+    // 2. Update Root Index
+    console.log('- Updating: / (Root)');
+    if (globalSettings) {
+        const rootHtml = injectMetaTags(baseHtml, globalSettings, 'root', true);
+        fs.writeFileSync(INDEX_HTML_PATH, rootHtml);
+    }
 
+    // 3. Static Pages (Blog/Projects Listing)
+    const staticPages = [
+        { type: 'blog-list', path: 'blog', title: 'Blog', description: 'Read the latest articles and thoughts from Kem Phearum.' },
+        { type: 'project-list', path: 'projects', title: 'Projects', description: 'Explore a collection of security and web development projects.' }
+    ];
+
+    for (const page of staticPages) {
+        console.log(`- Generating: /${page.path}`);
+        const dirPath = path.join(DIST_DIR, page.path);
+        fs.mkdirSync(dirPath, { recursive: true });
+        const html = injectMetaTags(baseHtml, page, page.type);
+        fs.writeFileSync(path.join(dirPath, 'index.html'), html);
+    }
+
+    // 4. Dynamic Pages
     const pages = [
         ...blogPosts.map(post => ({ type: 'blog', ...post })),
         ...projects.map(project => ({ type: 'project', ...project }))
     ];
 
-    let generatedCount = 0;
+    let generatedCount = staticPages.length;
 
     for (const page of pages) {
         if (!page.slug) continue;
@@ -108,18 +164,13 @@ async function generateStaticPages() {
 
         console.log(`- Generating: /${page.type}/${page.slug}`);
 
-        // Ensure directory exists (e.g., dist/blog/my-post/)
         fs.mkdirSync(dirPath, { recursive: true });
-
-        // Generate customized HTML
         const newHtml = injectMetaTags(baseHtml, page, page.type);
-
-        // Write to dist folder
         fs.writeFileSync(filePath, newHtml);
         generatedCount++;
     }
 
-    console.log(`✅ Successfully generated ${generatedCount} static HTML pages for social media previews.`);
+    console.log(`✅ Successfully generated ${generatedCount} static HTML pages for the whole website.`);
 }
 
 generateStaticPages();
