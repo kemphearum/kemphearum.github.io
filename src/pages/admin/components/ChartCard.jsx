@@ -37,7 +37,7 @@ const ChartCard = ({
                     )}
                 </div>
             </div>
-            <div className={styles.chartBody}>
+            <div className={`${styles.chartBody} ${isLoading ? styles.chartLoading : ''}`}>
                 {children}
             </div>
         </div>

@@ -19,6 +19,7 @@ import FormInput from '../components/FormInput';
 import FormMarkdownEditor from '../components/FormMarkdownEditor';
 import FormDropzone from '../components/FormDropzone';
 import BulkActionModal from '../components/BulkActionModal';
+import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
 
 const BlogTab = ({ userRole, showToast }) => {
     const [post, setPost] = useState({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
@@ -154,6 +155,21 @@ const BlogTab = ({ userRole, showToast }) => {
         setBulkModal({ isOpen: true, mode: 'export', data: posts });
     };
 
+    const handleExportCSV = () => {
+        const headers = ["title", "slug", "excerpt", "content", "tags", "featured", "visible"];
+        const csvData = jsonToCsv(posts, headers);
+        const blob = new Blob([csvData], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `blog_export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast("Blog posts exported to CSV.");
+    };
+
     const executeBulkImport = async (itemsToProcess) => {
         setLoading(true);
         setImportProgress(0);
@@ -251,8 +267,17 @@ const BlogTab = ({ userRole, showToast }) => {
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
-                const importedPosts = JSON.parse(event.target.result);
-                if (!Array.isArray(importedPosts)) throw new Error('Invalid JSON format: Expected an array of posts.');
+                const content = event.target.result;
+                let importedPosts = [];
+                if (file.name.endsWith('.csv')) {
+                    importedPosts = csvToJson(content);
+                } else {
+                    importedPosts = JSON.parse(content);
+                }
+
+                if (!Array.isArray(importedPosts)) {
+                    importedPosts = [importedPosts];
+                }
                 const previewData = [];
                 const seenSlugs = new Set();
 
@@ -304,6 +329,18 @@ const BlogTab = ({ userRole, showToast }) => {
         URL.revokeObjectURL(url);
     };
 
+    const downloadCSVTemplate = () => {
+        const template = [{ title: 'Sample Blog Post', slug: 'sample-blog-post', excerpt: 'A short summary for the list view.', content: '# Your Content Here\nThis is a sample markdown content.', tags: 'React, Tutorial', featured: 'false', visible: 'true' }];
+        const csvData = jsonToCsv(template, ["title", "slug", "excerpt", "content", "tags", "featured", "visible"]);
+        const blob = new Blob([csvData], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'blog_template.csv';
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     const insertMarkdown = (syntax) => {
         const textarea = document.getElementById('blog-markdown-editor');
         if (!textarea) return;
@@ -347,14 +384,22 @@ const BlogTab = ({ userRole, showToast }) => {
                                     <>
                                         <div className={styles.modalOverlay} style={{ background: 'rgba(0, 0, 0, 0.3)', backdropFilter: 'none', WebkitBackdropFilter: 'none', zIndex: 999 }} onClick={() => setDropdownOpen(false)} />
                                         <div className={styles.dropdownMenu}>
+                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadCSVTemplate(); }}>
+                                                <FileText size={16} /> Download CSV Template
+                                            </button>
                                             <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadTemplate(); }}>
                                                 <FileText size={16} /> Download JSON Template
+                                            </button>
+                                            <hr className={styles.dropdownDivider} />
+                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportCSV(); }}>
+                                                <ExternalLink size={16} /> Export CSV
                                             </button>
                                             <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportJSON(); }}>
                                                 <ExternalLink size={16} /> Export JSON
                                             </button>
+                                            <hr className={styles.dropdownDivider} />
                                             <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); fileInputRef.current?.click(); }}>
-                                                <Upload size={16} /> Import JSON
+                                                <Upload size={16} /> Import (JSON/CSV)
                                             </button>
                                         </div>
                                     </>
@@ -362,7 +407,7 @@ const BlogTab = ({ userRole, showToast }) => {
                                 <input
                                     type="file"
                                     ref={fileInputRef}
-                                    accept=".json"
+                                    accept=".json,.csv"
                                     onChange={handleImportJSON}
                                     style={{ display: 'none' }}
                                 />

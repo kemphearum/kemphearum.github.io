@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Save, Type } from 'lucide-react';
+import { Upload, Save, Type, Minus, Plus } from 'lucide-react';
 import styles from '../../Admin.module.scss';
 import ImageProcessingService from '../../../services/ImageProcessingService';
+
+import FormSelect from '../components/FormSelect';
 
 const FONT_OPTIONS = [
     { value: 'inter', label: 'Inter' },
@@ -25,12 +27,12 @@ const FONT_CSS = {
 };
 
 const FONT_CATEGORIES = [
-    { field: 'fontDisplay', label: 'Display / Hero', hint: 'Hero name, banner titles', icon: '🎯' },
-    { field: 'fontHeading', label: 'Headings', hint: 'Section titles (H1, H2)', icon: '📌' },
-    { field: 'fontSubheading', label: 'Sub Headings', hint: 'Card & modal titles (H3–H6)', icon: '📎' },
-    { field: 'fontNav', label: 'Navigation', hint: 'Navbar, sidebar, footer links', icon: '🧭' },
-    { field: 'fontBody', label: 'Body / Content', hint: 'Paragraphs, descriptions', icon: '📝' },
-    { field: 'fontUI', label: 'UI / Labels', hint: 'Buttons, form labels, badges', icon: '🏷️' },
+    { field: 'fontDisplay', sizeField: 'fontDisplaySize', label: 'Display / Hero', hint: 'Hero name, banner titles', icon: '🎯', defaultSize: '2rem' },
+    { field: 'fontHeading', sizeField: 'fontHeadingSize', label: 'Headings', hint: 'Section titles (H1, H2)', icon: '📌', defaultSize: '1.25rem' },
+    { field: 'fontSubheading', sizeField: 'fontSubheadingSize', label: 'Sub Headings', hint: 'Card & modal titles (H3–H6)', icon: '📎', defaultSize: '1rem' },
+    { field: 'fontNav', sizeField: 'fontNavSize', label: 'Navigation', hint: 'Navbar, sidebar, footer links', icon: '🧭', defaultSize: '0.85rem' },
+    { field: 'fontBody', sizeField: 'fontBodySize', label: 'Body / Content', hint: 'Paragraphs, descriptions', icon: '📝', defaultSize: '0.9rem' },
+    { field: 'fontUI', sizeField: 'fontUISize', label: 'UI / Labels', hint: 'Buttons, form labels, badges', icon: '🏷️', defaultSize: '0.8rem' },
 ];
 
 const getFontWeight = (key, defaultWeight) => key === 'kantumruy-pro-medium' ? 500 : defaultWeight;
@@ -65,17 +67,34 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
             };
             FONT_CATEGORIES.forEach(c => {
                 payload[c.field] = settingsData[c.field] || 'inter';
+                payload[c.sizeField] = settingsData[c.sizeField] || c.defaultSize;
             });
             await saveSectionData('settings', payload);
             setSettingsFavicon(null);
         } catch (error) {
             console.error("Settings handleSave error:", error);
-            // Re-throw so Admin.jsx can catch and show its descriptive toast
             throw error;
         }
     };
 
+    const handleSizeAdjust = (field, currentSize, increment = true) => {
+        // Parse current value (e.g. "1.2rem" -> 1.2)
+        const match = String(currentSize || '1rem').match(/^(\d+\.?\d*)(.*)$/);
+        if (!match) return;
+
+        const val = parseFloat(match[1]);
+        const unit = match[2] || 'rem';
+        const step = unit === 'rem' ? 0.05 : 1;
+        const newVal = increment ? val + step : Math.max(0, val - step);
+
+        // Format to fixed decimals if rem to avoid floating point issues (e.g. 1.250000001)
+        const formattedVal = unit === 'rem' ? newVal.toFixed(2).replace(/\.?0+$/, '') : Math.round(newVal);
+
+        setSettingsData({ ...settingsData, [field]: `${formattedVal}${unit}` });
+    };
+
     const getFont = (field) => settingsData[field] || 'inter';
+    const getFontSize = (field, fallback) => settingsData[field] || fallback;
     const size = settingsData.fontSize || 'default';
     const adminOverride = settingsData.adminFontOverride ?? true;
 
@@ -174,39 +193,73 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             <Type size={18} style={{ color: 'var(--primary-color)' }} />
                             <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Site Typography</span>
                         </div>
-                        <div className={styles.inputGroup} style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                            <label style={{ margin: 0, whiteSpace: 'nowrap', fontSize: '0.8rem' }}>Base Size</label>
-                            <select
-                                className={styles.standardSelect}
-                                value={size}
-                                onChange={(e) => setSettingsData({ ...settingsData, fontSize: e.target.value })}
-                                style={{ width: 'auto', padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
-                            >
-                                {SIZE_OPTIONS.map(opt => (
-                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                            </select>
-                        </div>
+                        <FormSelect
+                            label="Base Size"
+                            value={size}
+                            onChange={(e) => setSettingsData({ ...settingsData, fontSize: e.target.value })}
+                            options={SIZE_OPTIONS}
+                            containerStyle={{
+                                background: 'rgba(255,255,255,0.02)',
+                                padding: '0.75rem 1.25rem',
+                                borderRadius: '12px',
+                                border: '1px solid var(--divider)',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: '1rem'
+                            }}
+                            style={{ marginTop: 0, width: '180px', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                        />
                     </div>
 
-                    {/* Font category grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                         {FONT_CATEGORIES.map(cat => (
-                            <div key={cat.field} className={styles.inputGroup} style={{ margin: 0 }}>
-                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                    <span>{cat.icon}</span> {cat.label}
-                                </label>
-                                <select
-                                    className={styles.standardSelect}
+                            <div key={cat.field} style={{
+                                background: 'rgba(255,255,255,0.02)',
+                                border: '1px solid var(--input-border)',
+                                borderRadius: '12px',
+                                padding: '1.25rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.75rem',
+                                transition: 'border-color 0.2s ease',
+                            }}>
+                                {/* Category Header */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span style={{ fontSize: '1.15rem' }}>{cat.icon}</span>
+                                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{cat.label}</span>
+                                    </div>
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', opacity: 0.7 }}>{cat.hint}</span>
+                                </div>
+
+                                {/* Font Family Select — full width */}
+                                <FormSelect
                                     value={getFont(cat.field)}
                                     onChange={(e) => setSettingsData({ ...settingsData, [cat.field]: e.target.value })}
-                                    style={{ fontSize: '0.85rem' }}
-                                >
-                                    {FONT_OPTIONS.map(opt => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                    ))}
-                                </select>
-                                <span className={styles.hint}>{cat.hint}</span>
+                                    options={FONT_OPTIONS}
+                                    noWrapper
+                                    style={{ width: '100%' }}
+                                />
+
+                                {/* Size Stepper */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', minWidth: '28px' }}>Size</span>
+                                    <div className={styles.sizeStepper} style={{ flex: 1 }}>
+                                        <button type="button" onClick={() => handleSizeAdjust(cat.sizeField, settingsData[cat.sizeField] || cat.defaultSize, false)}>
+                                            <Minus size={14} />
+                                        </button>
+                                        <input
+                                            type="text"
+                                            placeholder={cat.defaultSize}
+                                            value={settingsData[cat.sizeField] || ''}
+                                            onChange={(e) => setSettingsData({ ...settingsData, [cat.sizeField]: e.target.value })}
+                                            title="Font Size (e.g. 1.2rem, 18px)"
+                                        />
+                                        <button type="button" onClick={() => handleSizeAdjust(cat.sizeField, settingsData[cat.sizeField] || cat.defaultSize, true)}>
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -235,21 +288,21 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         <div style={{
                             fontFamily: FONT_CSS[getFont('fontDisplay')],
                             fontWeight: getFontWeight(getFont('fontDisplay'), 700),
-                            fontSize: '2rem', marginBottom: '0.25rem', color: 'var(--text-primary)',
+                            fontSize: getFontSize('fontDisplaySize', '2rem'), marginBottom: '0.25rem', color: 'var(--text-primary)',
                         }}>
                             កឹម ភារម្យ
                         </div>
                         <div style={{
                             fontFamily: FONT_CSS[getFont('fontHeading')],
                             fontWeight: getFontWeight(getFont('fontHeading'), 700),
-                            fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--text-primary)',
+                            fontSize: getFontSize('fontHeadingSize', '1.25rem'), marginBottom: '0.5rem', color: 'var(--text-primary)',
                         }}>
                             Heading — ចំណងជើង
                         </div>
                         <div style={{
                             fontFamily: FONT_CSS[getFont('fontSubheading')],
                             fontWeight: getFontWeight(getFont('fontSubheading'), 600),
-                            fontSize: '1rem', marginBottom: '0.5rem', color: 'var(--text-primary)',
+                            fontSize: getFontSize('fontSubheadingSize', '1rem'), marginBottom: '0.5rem', color: 'var(--text-primary)',
                         }}>
                             Sub Heading — ចំណងជើងរង
                         </div>
@@ -257,7 +310,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             <span style={{
                                 fontFamily: FONT_CSS[getFont('fontNav')],
                                 fontWeight: getFontWeight(getFont('fontNav'), 500),
-                                fontSize: '0.85rem', color: 'var(--primary-color)',
+                                fontSize: getFontSize('fontNavSize', '0.85rem'), color: 'var(--primary-color)',
                             }}>
                                 Home &nbsp;·&nbsp; About &nbsp;·&nbsp; Projects
                             </span>
@@ -265,7 +318,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         <div style={{
                             fontFamily: FONT_CSS[getFont('fontBody')],
                             fontWeight: getFontWeight(getFont('fontBody'), 400),
-                            fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.7,
+                            fontSize: getFontSize('fontBodySize', '0.9rem'), color: 'var(--text-secondary)', lineHeight: 1.7,
                         }}>
                             This is a sample paragraph to preview the body text font. The quick brown fox jumps over the lazy dog.
                         </div>
@@ -273,14 +326,14 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             <span style={{
                                 fontFamily: FONT_CSS[getFont('fontUI')],
                                 fontWeight: getFontWeight(getFont('fontUI'), 600),
-                                fontSize: '0.8rem', padding: '0.3rem 0.8rem',
+                                fontSize: getFontSize('fontUISize', '0.8rem'), padding: '0.3rem 0.8rem',
                                 background: 'rgba(108,99,255,0.15)', borderRadius: '6px',
                                 color: 'var(--primary-color)',
                             }}>Button</span>
                             <span style={{
                                 fontFamily: FONT_CSS[getFont('fontUI')],
                                 fontWeight: getFontWeight(getFont('fontUI'), 500),
-                                fontSize: '0.75rem', padding: '0.25rem 0.6rem',
+                                fontSize: getFontSize('fontUISize', '0.75rem'), padding: '0.25rem 0.6rem',
                                 background: 'rgba(255,255,255,0.05)', borderRadius: '4px',
                                 color: 'var(--text-secondary)',
                             }}>Label</span>
@@ -293,20 +346,19 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Visual Experience</h4>
                 </div>
                 <div className={styles.formGrid}>
-                    <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
-                        <label>Background Style Variant</label>
-                        <select
-                            value={settingsData.bgStyle || 'plexus'}
-                            onChange={(e) => setSettingsData({ ...settingsData, bgStyle: e.target.value })}
-                            className={styles.inputField}
-                        >
-                            <option value="plexus">Plexus (Connected Network)</option>
-                            <option value="particles">Floating Particles (No Connections)</option>
-                            <option value="geometry">Floating Geometry (Squares/Triangles)</option>
-                            <option value="aurora">Aurora Only (Pure Gradient, Best Performance)</option>
-                        </select>
-                        <span className={styles.hint}>Choose the overall visual aesthetic for the animated background.</span>
-                    </div>
+                    <FormSelect
+                        label="Background Style Variant"
+                        value={settingsData.bgStyle || 'plexus'}
+                        onChange={(e) => setSettingsData({ ...settingsData, bgStyle: e.target.value })}
+                        options={[
+                            { value: 'plexus', label: '🕸️ Plexus (Connected Lines)' },
+                            { value: 'particles', label: '✨ Dust Particles' },
+                            { value: 'geometry', label: '📐 Floating Geometry' },
+                            { value: 'aurora', label: '🌈 Aurora Borealis' }
+                        ]}
+                        fullWidth
+                        hint="Choose the overall visual aesthetic for the animated background."
+                    />
                     <div className={styles.inputGroup}>
                         <label>Particle Density ({settingsData.bgDensity ?? 50}%)</label>
                         <input

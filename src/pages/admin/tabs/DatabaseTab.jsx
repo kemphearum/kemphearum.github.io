@@ -8,6 +8,7 @@ import BaseModal from '../components/BaseModal';
 import SectionHeader from '../components/SectionHeader';
 import UsageBar from '../components/UsageBar';
 import StatCard from '../components/StatCard';
+import FormSelect from '../components/FormSelect';
 
 const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
     const [loading, setLoading] = useState(false);
@@ -252,12 +253,18 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Clear messages, audit logs, and analytics older than a specified period.</p>
                         </div>
                         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                            <select value={archiveDays} onChange={(e) => setArchiveDays(Number(e.target.value))} style={{ padding: '0.5rem', borderRadius: '6px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem' }}>
-                                <option value={30}>Older than 30 Days</option>
-                                <option value={90}>Older than 90 Days</option>
-                                <option value={180}>Older than 6 Months</option>
-                                <option value={365}>Older than 1 Year</option>
-                            </select>
+                            <FormSelect
+                                noWrapper
+                                value={archiveDays}
+                                onChange={(e) => setArchiveDays(Number(e.target.value))}
+                                options={[
+                                    { value: 30, label: 'Older than 30 Days' },
+                                    { value: 90, label: 'Older than 90 Days' },
+                                    { value: 180, label: 'Older than 6 Months' },
+                                    { value: 365, label: 'Older than 1 Year' }
+                                ]}
+                                style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem', width: 'auto' }}
+                            />
                             <button onClick={() => setShowArchiveConfirm(true)} disabled={loading} className={styles.primaryBtn} style={{ margin: 0, background: '#ef4444', color: '#fff', border: 'none' }}>
                                 <ShieldAlert size={16} /> Archive Now
                             </button>

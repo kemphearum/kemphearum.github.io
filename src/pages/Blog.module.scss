@@ -132,17 +132,19 @@
     flex-direction: column;
 
     &:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        transform: translateY(-6px);
+        box-shadow:
+            0 12px 35px rgba(0, 0, 0, 0.15),
+            0 0 0 1px rgba($primary-color, 0.15);
         border-color: rgba($primary-color, 0.3);
 
         .imageWrapper img {
-            transform: scale(1.05);
+            transform: scale(1.08);
         }
 
         .readMore {
             color: $primary-color;
-            padding-left: 5px;
+            gap: 0.6rem;
         }
     }
 }
@@ -176,13 +178,45 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(45deg, var(--bg-color), rgba(0, 0, 0, 0.1));
+    background: linear-gradient(135deg,
+            rgba($primary-color, 0.15) 0%,
+            rgba(30, 30, 50, 0.9) 50%,
+            rgba($secondary-color, 0.1) 100%);
+    position: relative;
+    overflow: hidden;
+
+    // Decorative circle pattern
+    &::before {
+        content: '';
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba($primary-color, 0.1), transparent 70%);
+        top: -40px;
+        right: -40px;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba($secondary-color, 0.08), transparent 70%);
+        bottom: -30px;
+        left: -30px;
+    }
 
     span {
         font-size: 4rem;
-        font-weight: 700;
-        opacity: 0.1;
-        color: var(--text-primary);
+        font-weight: 800;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba($primary-color, 0.3));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        z-index: 1;
+        letter-spacing: -2px;
     }
 }
 
@@ -238,6 +272,9 @@
     color: var(--text-primary);
     transition: all 0.3s ease;
     margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
 }
 
 .emptyState {

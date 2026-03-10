@@ -18,6 +18,7 @@ import FormInput from '../components/FormInput';
 import FormMarkdownEditor from '../components/FormMarkdownEditor';
 import FormDropzone from '../components/FormDropzone';
 import BulkActionModal from '../components/BulkActionModal';
+import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
 
 const ProjectsTab = ({ userRole, showToast }) => {
     const [project, setProject] = useState({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
@@ -161,13 +162,18 @@ const ProjectsTab = ({ userRole, showToast }) => {
 
         reader.onload = async (event) => {
             try {
-                const jsonStr = event.target.result;
-                const importedProjects = JSON.parse(jsonStr);
-
-                if (!Array.isArray(importedProjects)) {
-                    throw new Error("Invalid JSON format: Expected an array of projects.");
+                const content = event.target.result;
+                // Detect if CSV or JSON
+                let importedProjects = [];
+                if (file.name.endsWith('.csv')) {
+                    importedProjects = csvToJson(content);
+                } else {
+                    importedProjects = JSON.parse(content);
                 }
 
+                if (!Array.isArray(importedProjects)) {
+                    importedProjects = [importedProjects];
+                }
                 // Prepare for preview
                 const previewData = [];
                 const seenSlugs = new Set();
@@ -227,6 +233,21 @@ const ProjectsTab = ({ userRole, showToast }) => {
             mode: 'export',
             data: projects
         });
+    };
+
+    const handleExportCSV = () => {
+        const headers = ["title", "description", "techStack", "githubUrl", "liveUrl", "slug", "content", "featured", "visible"];
+        const csvData = jsonToCsv(projects, headers);
+        const blob = new Blob([csvData], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `projects_export_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast("Projects exported to CSV.");
     };
 
 
@@ -346,6 +367,30 @@ const ProjectsTab = ({ userRole, showToast }) => {
         URL.revokeObjectURL(url);
     };
 
+    const downloadCSVTemplate = () => {
+        const template = [
+            {
+                title: "Example Project",
+                description: "Short description here",
+                techStack: "React, Firebase",
+                githubUrl: "https://github.com/...",
+                liveUrl: "https://...",
+                slug: "example-project",
+                content: "# Markdown Content\nDetails here...",
+                featured: "false",
+                visible: "true"
+            }
+        ];
+        const csvData = jsonToCsv(template, ["title", "description", "techStack", "githubUrl", "liveUrl", "slug", "content", "featured", "visible"]);
+        const blob = new Blob([csvData], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = "projects_template.csv";
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     const handleEditClick = (p) => {
         setEditingProject(p.id);
         setProject({ ...p, techStack: Array.isArray(p.techStack) ? p.techStack.join(', ') : p.techStack || '' });
@@ -377,14 +422,22 @@ const ProjectsTab = ({ userRole, showToast }) => {
                                     <>
                                         <div className={styles.modalOverlay} style={{ background: 'rgba(0, 0, 0, 0.3)', backdropFilter: 'none', WebkitBackdropFilter: 'none', zIndex: 999 }} onClick={() => setDropdownOpen(false)} />
                                         <div className={styles.dropdownMenu}>
+                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadCSVTemplate(); }}>
+                                                <FileText size={16} /> Download CSV Template
+                                            </button>
                                             <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadTemplate(); }}>
                                                 <FileText size={16} /> Download JSON Template
+                                            </button>
+                                            <hr className={styles.dropdownDivider} />
+                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportCSV(); }}>
+                                                <ExternalLink size={16} /> Export CSV
                                             </button>
                                             <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportJSON(); }}>
                                                 <ExternalLink size={16} /> Export JSON
                                             </button>
+                                            <hr className={styles.dropdownDivider} />
                                             <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); fileInputRef.current?.click(); }}>
-                                                <Upload size={16} /> Import JSON
+                                                <Upload size={16} /> Import (JSON/CSV)
                                             </button>
                                         </div>
                                     </>
@@ -392,7 +445,7 @@ const ProjectsTab = ({ userRole, showToast }) => {
                                 <input
                                     type="file"
                                     ref={fileInputRef}
-                                    accept=".json"
+                                    accept=".json,.csv"
                                     onChange={handleImportJSON}
                                     style={{ display: 'none' }}
                                 />

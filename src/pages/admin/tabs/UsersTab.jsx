@@ -383,13 +383,18 @@ const UsersTab = ({ user, userRole, showToast }) => {
                                         </span>
                                     </div>
                                 ) : (
-                                    <select className={styles.standardSelect} style={{ width: '100%', marginTop: '0.4rem', fontSize: '0.85rem' }} value={viewingUser.role}
-                                        onChange={(e) => { const newRole = e.target.value; handleRoleChange(viewingUser.id, newRole); setViewingUser({ ...viewingUser, role: newRole }); }}>
-                                        <option value="pending">Pending</option>
-                                        <option value="editor">Editor</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="superadmin">Super Admin</option>
-                                    </select>
+                                    <FormSelect
+                                        label="Administrative Role"
+                                        value={viewingUser.role}
+                                        onChange={(e) => { const newRole = e.target.value; handleRoleChange(viewingUser.id, newRole); setViewingUser({ ...viewingUser, role: newRole }); }}
+                                        options={[
+                                            { value: 'pending', label: 'Pending' },
+                                            { value: 'editor', label: 'Editor' },
+                                            { value: 'admin', label: 'Admin' },
+                                            { value: 'superadmin', label: 'Super Admin' }
+                                        ]}
+                                        style={{ marginTop: '0.4rem', fontSize: '0.85rem' }}
+                                    />
                                 )}
                             </div>
                             <div className={styles.detailItem} style={{ flex: '1 1 180px' }}>

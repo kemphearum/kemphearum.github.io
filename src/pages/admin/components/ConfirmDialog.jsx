@@ -37,7 +37,7 @@ const ConfirmDialog = ({ confirmDialog, setConfirmDialog }) => {
                     <button onClick={handleClose} className={styles.cancelBtn}>
                         Cancel
                     </button>
-                    <button onClick={confirmDialog.onConfirm} className={isDanger ? styles.deleteBtn : styles.primaryBtn}>
+                    <button onClick={() => { confirmDialog.onConfirm?.(); handleClose(); }} className={isDanger ? styles.deleteBtn : styles.primaryBtn}>
                         {confirmDialog.confirmText}
                     </button>
                 </>

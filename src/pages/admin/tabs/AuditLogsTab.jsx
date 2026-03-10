@@ -10,6 +10,7 @@ import styles from '../../Admin.module.scss';
 import BaseModal from '../components/BaseModal';
 import SectionHeader from '../components/SectionHeader';
 import UsageBar from '../components/UsageBar';
+import FormSelect from '../components/FormSelect';
 
 const SOFT_DOC_LIMIT = 50000;
 
@@ -119,12 +120,18 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                     <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.35rem 0.75rem' }}>
                             <Filter size={14} style={{ opacity: 0.6 }} />
-                            <select value={activityDateRange} onChange={(e) => setActivityDateRange(e.target.value)} style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}>
-                                <option value="today">Today</option>
-                                <option value="7d">Last 7 Days</option>
-                                <option value="30d">Last 30 Days</option>
-                                <option value="all">All Time</option>
-                            </select>
+                            <FormSelect
+                                noWrapper
+                                value={activityDateRange}
+                                onChange={(e) => setActivityDateRange(e.target.value)}
+                                options={[
+                                    { value: 'today', label: 'Today' },
+                                    { value: '7d', label: 'Last 7 Days' },
+                                    { value: '30d', label: 'Last 30 Days' },
+                                    { value: 'all', label: 'All Time' }
+                                ]}
+                                style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.85rem', width: 'auto' }}
+                            />
                         </div>
                         <button onClick={async () => { setIsRefreshingActivity(true); try { await refreshActivity(); showToast('Activity data refreshed!', 'success'); } catch { showToast('Failed to refresh activity', 'error'); } finally { setIsRefreshingActivity(false); } }} className={styles.iconBtn} title="Refresh Stats" disabled={isRefreshingActivity} style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)', width: '36px', height: '36px', color: 'var(--text-primary)', padding: 0 }}>
                             <RefreshCw size={16} className={isRefreshingActivity ? styles.spin : ''} style={{ color: 'var(--primary-color)' }} />
@@ -190,12 +197,18 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.35rem 0.75rem' }}>
                                     <Filter size={14} style={{ opacity: 0.6 }} />
-                                    <select value={auditDateRange} onChange={(e) => { setAuditDateRange(e.target.value); setAuditPage(1); }} style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none', cursor: 'pointer' }}>
-                                        <option value="all">All Time</option>
-                                        <option value="today">Today</option>
-                                        <option value="7d">Last 7 Days</option>
-                                        <option value="30d">Last 30 Days</option>
-                                    </select>
+                                    <FormSelect
+                                        noWrapper
+                                        value={auditDateRange}
+                                        onChange={(e) => { setAuditDateRange(e.target.value); setAuditPage(1); }}
+                                        options={[
+                                            { value: 'all', label: 'All Time' },
+                                            { value: 'today', label: 'Today' },
+                                            { value: '7d', label: 'Last 7 Days' },
+                                            { value: '30d', label: 'Last 30 Days' }
+                                        ]}
+                                        style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.85rem', width: 'auto' }}
+                                    />
                                 </div>
                                 <button onClick={() => {
                                     const csvContent = "data:text/csv;charset=utf-8,"

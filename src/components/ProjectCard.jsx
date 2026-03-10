@@ -32,12 +32,18 @@ const ProjectCard = ({ project }) => {
             }}
         >
             <div className={styles.imageWrapper}>
-                <img
-                    src={project.imageUrl || 'https://placehold.co/600x350/1a1a2e/6C63FF?text=Project'}
-                    alt={project.title}
-                    className={styles.image}
-                    loading="lazy"
-                />
+                {project.imageUrl ? (
+                    <img
+                        src={project.imageUrl}
+                        alt={project.title}
+                        className={styles.image}
+                        loading="lazy"
+                    />
+                ) : (
+                    <div className={styles.placeholderImage}>
+                        <span>{project.title}</span>
+                    </div>
+                )}
                 <div className={styles.imageOverlay}>
                     <div className={styles.overlayActions}>
                         {project.githubUrl && (
@@ -65,12 +71,12 @@ const ProjectCard = ({ project }) => {
                         <span key={index} className={styles.tag}>{tech}</span>
                     ))}
                 </div>
-                {project.slug && (
-                    <div style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>
-                        <span style={{ color: 'var(--primary-color)', fontWeight: '600', fontSize: '0.95rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>View Details <span style={{ transition: 'transform 0.2s' }} onMouseOver={(e) => e.currentTarget.style.transform = 'translateX(4px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'translateX(0)'}>→</span></span>
-                    </div>
-                )}
                 <div className={styles.links}>
+                    {project.slug && (
+                        <span className={styles.linkBtn} style={{ color: 'var(--primary-color)', fontWeight: 600 }}>
+                            View Details →
+                        </span>
+                    )}
                     {project.githubUrl && (
                         <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className={styles.linkBtn} onClick={(e) => {
                             stopPropagation(e);

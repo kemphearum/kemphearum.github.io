@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, X, Calendar, Clock, Tag,
     Share2, Copy, Check, ArrowLeft, ChevronRight,
-    Twitter, Linkedin
+    Facebook, Instagram, Linkedin
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
@@ -24,6 +24,7 @@ const BlogPost = () => {
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [readProgress, setReadProgress] = useState(0);
     const [copied, setCopied] = useState(false);
+    const [instaCopied, setInstaCopied] = useState(false);
     const { trackRead } = useActivity();
 
     const { data: post, isLoading: loading, isError } = useQuery({
@@ -62,8 +63,24 @@ const BlogPost = () => {
             setTimeout(() => setCopied(false), 2000);
         });
     };
-    const shareToTwitter = () => {
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out "${post.title}"`)}&url=${encodeURIComponent(currentUrl)}`, '_blank');
+    const shareToFacebook = () => {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`, '_blank');
+    };
+    const shareToInstagram = async () => {
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: post.title,
+                    url: currentUrl
+                });
+            } else {
+                await navigator.clipboard.writeText(currentUrl);
+                setInstaCopied(true);
+                setTimeout(() => setInstaCopied(false), 2500);
+            }
+        } catch (err) {
+            console.error('Error sharing:', err);
+        }
     };
     const shareToLinkedIn = () => {
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`, '_blank');
@@ -112,7 +129,7 @@ const BlogPost = () => {
         );
     }
 
-    const coverImg = post.coverImage || 'https://placehold.co/1200x600/1a1a2e/6C63FF?text=Blog+Post';
+    const coverImg = post.coverImage;
 
     return (
         <>
@@ -156,7 +173,13 @@ const BlogPost = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1, duration: 0.5 }}
                     >
-                        <img src={coverImg} alt={post.title} />
+                        {coverImg ? (
+                            <img src={coverImg} alt={post.title} />
+                        ) : (
+                            <div className={styles.heroPlaceholder}>
+                                <span>{post.title}</span>
+                            </div>
+                        )}
                         <div className={styles.imageOverlay} />
                     </motion.div>
 
@@ -234,21 +257,28 @@ const BlogPost = () => {
                                         onClick={handleCopyLink}
                                         aria-label="Copy link"
                                     >
-                                        {copied ? <><Check size={18} /> Copied URL</> : <><Copy size={18} /> Copy Link</>}
+                                        {copied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Link</>}
                                     </button>
                                     <button
-                                        className={styles.shareBtn}
-                                        onClick={shareToTwitter}
-                                        aria-label="Share on Twitter"
+                                        className={`${styles.shareBtn} ${styles.shareFacebook}`}
+                                        onClick={shareToFacebook}
+                                        aria-label="Share on Facebook"
                                     >
-                                        <Twitter size={18} /> share on Twitter
+                                        <Facebook size={14} /> Share on Facebook
                                     </button>
                                     <button
-                                        className={styles.shareBtn}
+                                        className={`${styles.shareBtn} ${styles.shareInstagram} ${instaCopied ? styles.copied : ''}`}
+                                        onClick={shareToInstagram}
+                                        aria-label="Share on Instagram"
+                                    >
+                                        {instaCopied ? <><Check size={14} /> Link Copied!</> : <><Instagram size={14} /> Share on Instagram</>}
+                                    </button>
+                                    <button
+                                        className={`${styles.shareBtn} ${styles.shareLinkedIn}`}
                                         onClick={shareToLinkedIn}
                                         aria-label="Share on LinkedIn"
                                     >
-                                        <Linkedin size={18} /> share on LinkedIn
+                                        <Linkedin size={14} /> Share on LinkedIn
                                     </button>
                                 </div>
                             </div>

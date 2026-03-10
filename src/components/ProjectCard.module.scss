@@ -16,7 +16,9 @@
 
     &:hover {
         transform: translateY(-8px);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, var(--shadow-alpha));
+        box-shadow:
+            0 20px 40px rgba(0, 0, 0, var(--shadow-alpha)),
+            0 0 0 1px rgba($primary-color, 0.15);
         border-color: rgba($primary-color, 0.3);
 
         .imageOverlay {
@@ -53,6 +55,55 @@
     justify-content: center;
     opacity: 0;
     transition: opacity 0.4s ease;
+}
+
+.placeholderImage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg,
+            rgba($primary-color, 0.12) 0%,
+            rgba(20, 20, 40, 0.95) 50%,
+            rgba($primary-light, 0.08) 100%);
+    position: relative;
+    overflow: hidden;
+    padding: 1.5rem;
+
+    &::before {
+        content: '';
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba($primary-color, 0.08), transparent 70%);
+        top: -50px;
+        right: -50px;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba($primary-light, 0.06), transparent 70%);
+        bottom: -40px;
+        left: -40px;
+    }
+
+    span {
+        font-size: 1.4rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba($primary-color, 0.5));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        z-index: 1;
+        text-align: center;
+        letter-spacing: -0.5px;
+    }
 }
 
 .overlayActions {

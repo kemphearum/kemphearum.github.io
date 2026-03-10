@@ -8,7 +8,8 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, ExternalLink, Code, X, Calendar,
-    Share2, Copy, Check, ArrowLeft, Maximize2, ChevronRight
+    Share2, Copy, Check, ArrowLeft, Maximize2, ChevronRight,
+    Facebook, Instagram, Linkedin
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
@@ -22,6 +23,7 @@ const ProjectDetail = () => {
     const [readProgress, setReadProgress] = useState(0);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [instaCopied, setInstaCopied] = useState(false);
     const { trackRead } = useActivity();
 
     const { data: project, isLoading: loading, isError } = useQuery({
@@ -74,8 +76,24 @@ const ProjectDetail = () => {
             setTimeout(() => setCopied(false), 2000);
         });
     };
-    const shareToTwitter = () => {
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out "${project.title}"`)} &url=${encodeURIComponent(currentUrl)}`, '_blank');
+    const shareToFacebook = () => {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`, '_blank');
+    };
+    const shareToInstagram = async () => {
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: project.title,
+                    url: currentUrl
+                });
+            } else {
+                await navigator.clipboard.writeText(currentUrl);
+                setInstaCopied(true);
+                setTimeout(() => setInstaCopied(false), 2500);
+            }
+        } catch (err) {
+            console.error('Error sharing:', err);
+        }
     };
     const shareToLinkedIn = () => {
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`, '_blank');
@@ -124,7 +142,7 @@ const ProjectDetail = () => {
         );
     }
 
-    const heroImg = project.imageUrl || 'https://placehold.co/1200x600/1a1a2e/6C63FF?text=Project';
+    const heroImg = project.imageUrl;
 
     return (
         <>
@@ -164,14 +182,20 @@ const ProjectDetail = () => {
                     {/* Contained Featured Image */}
                     <motion.div
                         className={styles.featuredImage}
-                        onClick={() => project.imageUrl && setLightboxOpen(true)}
+                        onClick={() => heroImg && setLightboxOpen(true)}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1, duration: 0.5 }}
                     >
-                        <img src={heroImg} alt={project.title} />
+                        {heroImg ? (
+                            <img src={heroImg} alt={project.title} />
+                        ) : (
+                            <div className={styles.heroPlaceholder}>
+                                <span>{project.title}</span>
+                            </div>
+                        )}
                         <div className={styles.imageOverlay} />
-                        {project.imageUrl && (
+                        {heroImg && (
                             <span className={styles.viewHint}>
                                 <Maximize2 size={12} /> View
                             </span>
@@ -197,24 +221,7 @@ const ProjectDetail = () => {
                                 <MarkdownRenderer content={project.content || 'No detailed overview provided for this project yet.'} />
                             </div>
 
-                            {/* Share */}
-                            <div className={styles.shareSection}>
-                                <h3><Share2 size={16} /> Share this project</h3>
-                                <p>Know someone who'd find this interesting?</p>
-                                <div className={styles.shareButtons}>
-                                    <button className={`${styles.shareBtn} ${copied ? styles.copied : ''}`} onClick={handleCopyLink}>
-                                        {copied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Link</>}
-                                    </button>
-                                    <button className={`${styles.shareBtn} ${styles.shareTwitter}`} onClick={shareToTwitter}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                                        Twitter
-                                    </button>
-                                    <button className={`${styles.shareBtn} ${styles.shareLinkedIn}`} onClick={shareToLinkedIn}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
-                                        LinkedIn
-                                    </button>
-                                </div>
-                            </div>
+
 
                             {/* Related Projects */}
                             <RelatedProjects currentProjectId={project.id} techStack={project.techStack} />
@@ -283,6 +290,25 @@ const ProjectDetail = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Share */}
+                            <div className={styles.sidebarCard}>
+                                <h4>Share Project</h4>
+                                <div className={styles.shareButtons}>
+                                    <button className={`${styles.shareBtn} ${copied ? styles.copied : ''}`} onClick={handleCopyLink}>
+                                        {copied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Link</>}
+                                    </button>
+                                    <button className={`${styles.shareBtn} ${styles.shareFacebook}`} onClick={shareToFacebook}>
+                                        <Facebook size={14} /> Share on Facebook
+                                    </button>
+                                    <button className={`${styles.shareBtn} ${styles.shareInstagram} ${instaCopied ? styles.copied : ''}`} onClick={shareToInstagram}>
+                                        {instaCopied ? <><Check size={14} /> Link Copied!</> : <><Instagram size={14} /> Share on Instagram</>}
+                                    </button>
+                                    <button className={`${styles.shareBtn} ${styles.shareLinkedIn}`} onClick={shareToLinkedIn}>
+                                        <Linkedin size={14} /> Share on LinkedIn
+                                    </button>
+                                </div>
+                            </div>
                         </motion.aside>
                     </div>
                 </div>

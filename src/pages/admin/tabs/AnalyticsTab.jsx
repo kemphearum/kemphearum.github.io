@@ -29,7 +29,8 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         data: visits = [],
         isLoading: analyticsLoading,
         isFetching: analyticsFetching,
-        refetch: refetchAnalytics
+        refetch: refetchAnalytics,
+        dataUpdatedAt
     } = useQuery({
         queryKey: ['analytics', analyticsRange.start, analyticsRange.end],
         queryFn: async () => {
@@ -52,12 +53,18 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userRole, analyticsRange, showToast]);
 
-    const handleRefreshAll = useCallback(() => {
-        refetchAnalytics();
-        if (analyticsDetail) {
-            handleAnalyticsDetail(analyticsDetail);
+    const handleRefreshAll = useCallback(async () => {
+        try {
+            await refetchAnalytics();
+            if (analyticsDetail) {
+                await handleAnalyticsDetail(analyticsDetail);
+            }
+            showToast('Analytics data refreshed!', 'success');
+        } catch (error) {
+            console.error("Refresh Error:", error);
+            showToast('Failed to refresh analytics.', 'error');
         }
-    }, [refetchAnalytics, analyticsDetail, handleAnalyticsDetail]);
+    }, [refetchAnalytics, analyticsDetail, handleAnalyticsDetail, showToast]);
 
     const handleAnalyticsPreset = useCallback((preset) => {
         const end = new Date();
@@ -143,15 +150,22 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 <input type="date" value={analyticsRange.start} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, start: e.target.value, preset: '' }))} className={styles.dateInput} onClick={(e) => e.target.showPicker?.()} />
                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>to</span>
                 <input type="date" value={analyticsRange.end} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, end: e.target.value, preset: '' }))} className={styles.dateInput} onClick={(e) => e.target.showPicker?.()} />
-                <button
-                    className={styles.refreshBtn}
-                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', gap: '0.4rem' }}
-                    onClick={handleRefreshAll}
-                    disabled={analyticsFetching}
-                >
-                    <RefreshCw size={14} className={analyticsFetching ? styles.spin : ''} />
-                    Apply & Sync
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '0.5rem' }}>
+                    {dataUpdatedAt && (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', opacity: 0.6, whiteSpace: 'nowrap' }}>
+                            Updated: {new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    )}
+                    <button
+                        className={styles.refreshBtn}
+                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', gap: '0.4rem' }}
+                        onClick={handleRefreshAll}
+                        disabled={analyticsFetching}
+                    >
+                        <RefreshCw size={14} className={analyticsFetching ? styles.spin : ''} />
+                        Refresh
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -201,7 +215,6 @@ const AnalyticsTab = ({ userRole, showToast }) => {
             <ChartCard
                 title={`Visits Over Time ${analyticsRange.preset === '7d' ? '(Last 7 Days)' : analyticsRange.preset === '30d' ? '(Last 30 Days)' : analyticsRange.preset === '90d' ? '(Last 90 Days)' : analyticsRange.preset === 'all' ? '(All Time)' : `(${analyticsRange.start} — ${analyticsRange.end})`}`}
                 icon={TrendingUp}
-                onRefresh={handleRefreshAll}
                 onViewDetails={() => handleAnalyticsDetail('visits')}
                 isLoading={analyticsLoading || analyticsFetching}
             >

@@ -8,6 +8,18 @@
     ],
     "rewrites": [
       {
+        "source": "/blog/**",
+        "function": "serveDynamicOG"
+      },
+      {
+        "source": "/project/**",
+        "function": "serveDynamicOG"
+      },
+      {
+        "source": "/projects/**",
+        "function": "serveDynamicOG"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
