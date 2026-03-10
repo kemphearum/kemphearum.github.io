@@ -5,22 +5,26 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PROJECT_ID = 'phearum-info';
+const PROJECT_ID = process.env.VITE_FIREBASE_PROJECT_ID || 'phearum-info';
 const DIST_DIR = path.resolve(__dirname, '../dist');
 const INDEX_HTML_PATH = path.join(DIST_DIR, 'index.html');
 
 // Helper to fetch data from Firestore REST API
 async function fetchCollection(collectionName) {
     try {
-        const response = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${collectionName}?pageSize=100`);
-        const data = await response.json();
+        const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${collectionName}?pageSize=100`;
+        const response = await fetch(url);
 
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status} fetching ${collectionName}: ${errorText}`);
+        }
+
+        const data = await response.json();
         if (!data.documents) return [];
 
         return data.documents.map(doc => {
             const fields = doc.fields || {};
-
-            // Extract fields (simplified for standard strings)
             const getField = (key) => fields[key]?.stringValue || '';
 
             return {
@@ -29,9 +33,9 @@ async function fetchCollection(collectionName) {
                 description: getField('description') || getField('excerpt') || '',
                 image: getField('coverImage') || getField('imageUrl') || ''
             };
-        }).filter(item => item.slug); // Only keep items with a slug
+        }).filter(item => item.slug);
     } catch (error) {
-        console.error(`Error fetching ${collectionName}:`, error);
+        console.error(`❌ Error fetching ${collectionName}:`, error.message);
         return [];
     }
 }
@@ -39,7 +43,14 @@ async function fetchCollection(collectionName) {
 // Helper to fetch global settings (Title/Description)
 async function fetchGlobalSettings() {
     try {
-        const response = await fetch(`https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/settings/global`);
+        const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/settings/global`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            console.warn(`⚠️ Global settings not found (HTTP ${response.status}). Using defaults.`);
+            return null;
+        }
+
         const data = await response.json();
         if (!data.fields) return null;
 
@@ -52,7 +63,7 @@ async function fetchGlobalSettings() {
             image: getField('pageFaviconUrl') || getField('favicon') || ''
         };
     } catch (error) {
-        console.error('Error fetching global settings:', error);
+        console.error('❌ Error fetching global settings:', error.message);
         return null;
     }
 }
@@ -72,7 +83,9 @@ function injectMetaTags(html, item, type, isRoot = false) {
         url += '/projects';
     } else {
         title = item.title ? `${item.title} | Kem Phearum` : 'Kem Phearum Portfolio';
-        url += `/${type}/${item.slug}`;
+        // Ensure path matches App.jsx routes (/blog/:slug, /projects/:slug)
+        const pathPrefix = type === 'project' ? 'projects' : type;
+        url += `/${pathPrefix}/${item.slug}`;
     }
 
     const description = item.description || 'Portfolio of Kem Phearum, an ICT Security professional and developer.';
@@ -98,43 +111,35 @@ function injectMetaTags(html, item, type, isRoot = false) {
 `;
     }
 
-    // Replace <title>
     let newHtml = html.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
-
-    // Replace <meta name="description">
     if (newHtml.match(/<meta\s+name=["']description["']/i)) {
         newHtml = newHtml.replace(/<meta\s+name=["']description["']\s+content=["'].*?["']\s*\/?>/i, `<meta name="description" content="${description}" />`);
     }
 
-    // Append OG tags
     newHtml = newHtml.replace(/<\/head>/i, `${metaTags}\n  </head>`);
     return newHtml;
 }
 
 // Main generation function
 async function generateStaticPages() {
-    console.log('Generating static HTML files for Open Graph tags (Whole Website)...');
+    console.log(`🚀 Starting pre-render for Project: ${PROJECT_ID}...`);
 
     if (!fs.existsSync(INDEX_HTML_PATH)) {
-        console.error(`Missing base index.html at ${INDEX_HTML_PATH}. Run 'vite build' first.`);
-        process.exit(1);
+        throw new Error(`Missing base index.html at ${INDEX_HTML_PATH}. Did 'vite build' succeed?`);
     }
 
     const baseHtml = fs.readFileSync(INDEX_HTML_PATH, 'utf-8');
 
-    // 1. Fetch data
     const blogPosts = await fetchCollection('posts');
     const projects = await fetchCollection('projects');
     const globalSettings = await fetchGlobalSettings();
 
-    // 2. Update Root Index
-    console.log('- Updating: / (Root)');
+    console.log(`- Updating: / (Root)`);
     if (globalSettings) {
         const rootHtml = injectMetaTags(baseHtml, globalSettings, 'root', true);
         fs.writeFileSync(INDEX_HTML_PATH, rootHtml);
     }
 
-    // 3. Static Pages (Blog/Projects Listing)
     const staticPages = [
         { type: 'blog-list', path: 'blog', title: 'Blog', description: 'Read the latest articles and thoughts from Kem Phearum.' },
         { type: 'project-list', path: 'projects', title: 'Projects', description: 'Explore a collection of security and web development projects.' }
@@ -148,7 +153,6 @@ async function generateStaticPages() {
         fs.writeFileSync(path.join(dirPath, 'index.html'), html);
     }
 
-    // 4. Dynamic Pages
     const pages = [
         ...blogPosts.map(post => ({ type: 'blog', ...post })),
         ...projects.map(project => ({ type: 'project', ...project }))
@@ -159,10 +163,12 @@ async function generateStaticPages() {
     for (const page of pages) {
         if (!page.slug) continue;
 
-        const dirPath = path.join(DIST_DIR, page.type, page.slug);
+        // Use plural 'projects' for the dynamic path to match routes
+        const typePath = page.type === 'project' ? 'projects' : page.type;
+        const dirPath = path.join(DIST_DIR, typePath, page.slug);
         const filePath = path.join(dirPath, 'index.html');
 
-        console.log(`- Generating: /${page.type}/${page.slug}`);
+        console.log(`- Generating: /${typePath}/${page.slug}`);
 
         fs.mkdirSync(dirPath, { recursive: true });
         const newHtml = injectMetaTags(baseHtml, page, page.type);
@@ -170,7 +176,10 @@ async function generateStaticPages() {
         generatedCount++;
     }
 
-    console.log(`✅ Successfully generated ${generatedCount} static HTML pages for the whole website.`);
+    console.log(`✅ Successfully generated ${generatedCount} static HTML pages.`);
 }
 
-generateStaticPages();
+generateStaticPages().catch(err => {
+    console.error('❌ FATAL ERROR in pre-render script:', err.message);
+    process.exit(1);
+});
