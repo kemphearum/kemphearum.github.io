@@ -43,32 +43,45 @@ class ProjectService extends BaseService {
         }
 
         const techArray = formData.techStack
-            ? formData.techStack.split(',').map(t => t.trim()).filter(t => t)
+            ? (typeof formData.techStack === 'string'
+                ? formData.techStack.split(',').map(t => t.trim()).filter(t => t)
+                : formData.techStack)
             : [];
 
         const slug = formData.slug || this.generateSlug(formData.title);
 
+        // Check for existing project by slug if no ID is provided
+        let targetId = formData.id;
+        if (!targetId) {
+            const existing = await this.fetchProjectBySlug(slug, null, true);
+            if (existing) {
+                targetId = existing.id;
+            }
+        }
+
         const dataToSave = {
-            title: formData.title,
-            description: formData.description,
+            title: formData.title || 'Untitled Project',
+            description: formData.description || '',
             techStack: techArray,
-            githubUrl: formData.githubUrl,
-            liveUrl: formData.liveUrl,
+            githubUrl: formData.githubUrl || '',
+            liveUrl: formData.liveUrl || '',
             slug,
-            content: formData.content,
-            visible: formData.visible !== false, // default true
-            featured: !!formData.featured // default false
+            content: formData.content || '',
+            visible: formData.visible !== false,
+            featured: !!formData.featured
         };
 
         if (imageUrl !== undefined) {
             dataToSave.imageUrl = imageUrl;
         }
 
-        if (formData.id) {
-            await this.update(formData.id, dataToSave, (count, label) => {
+        const { serverTimestamp } = await import('firebase/firestore');
+
+        if (targetId) {
+            await this.update(targetId, dataToSave, (count, label) => {
                 if (trackWrite) trackWrite(count, label, dataToSave);
             });
-            return { isNew: false, id: formData.id };
+            return { isNew: false, id: targetId };
         } else {
             dataToSave.createdAt = serverTimestamp();
             const newId = await this.create(dataToSave, (count, label) => {
@@ -84,7 +97,7 @@ class ProjectService extends BaseService {
      * @param {Function} trackRead 
      * @returns {Promise<Object|null>}
      */
-    async fetchProjectBySlug(slug, trackRead) {
+    async fetchProjectBySlug(slug, trackRead, includeHidden = false) {
         const q = query(collection(db, this.collectionName), where("slug", "==", slug));
         const querySnapshot = await getDocs(q);
 
@@ -94,7 +107,7 @@ class ProjectService extends BaseService {
 
         if (!querySnapshot.empty) {
             const docData = querySnapshot.docs[0].data();
-            if (docData.visible === false) return null;
+            if (!includeHidden && docData.visible === false) return null;
             return { id: querySnapshot.docs[0].id, ...docData };
         }
         return null;

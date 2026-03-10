@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft, History } from 'lucide-react';
+import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft, History, Settings2, FileText, Download, ChevronDown } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sortData } from '../../../utils/sortData';
@@ -17,6 +17,7 @@ import FormRow from '../components/FormRow';
 import FormInput from '../components/FormInput';
 import FormMarkdownEditor from '../components/FormMarkdownEditor';
 import FormDropzone from '../components/FormDropzone';
+import BulkActionModal from '../components/BulkActionModal';
 
 const ProjectsTab = ({ userRole, showToast }) => {
     const [project, setProject] = useState({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
@@ -25,12 +26,18 @@ const ProjectsTab = ({ userRole, showToast }) => {
     const [editingProject, setEditingProject] = useState(null);
     const [viewingProject, setViewingProject] = useState(null);
     const [searchProjects, setSearchProjects] = useState('');
+    const [isProjectPreviewMode, setIsProjectPreviewMode] = useState(false);
     const [projPage, setProjPage] = useState(1);
     const [projPerPage, setProjPerPage] = useState(10);
     const [projSort, setProjSort] = useState({ field: 'createdAt', dir: 'desc' });
     const [loading, setLoading] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
     const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
+    const [overwriteExisting, setOverwriteExisting] = useState(true);
+    const [bulkModal, setBulkModal] = useState({ isOpen: false, mode: 'import', data: [] });
+    const [importProgress, setImportProgress] = useState(0);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const fileInputRef = React.useRef(null);
     const { trackRead, trackWrite, trackDelete } = useActivity();
     const queryClient = useQueryClient();
 
@@ -140,6 +147,205 @@ const ProjectsTab = ({ userRole, showToast }) => {
         }
     };
 
+    const handleImportJSON = (e) => {
+        if (userRole === 'pending' || userRole === 'editor') {
+            showToast("Not authorized to import projects.", "error");
+            return;
+        }
+
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setLoading(true);
+        const reader = new FileReader();
+
+        reader.onload = async (event) => {
+            try {
+                const jsonStr = event.target.result;
+                const importedProjects = JSON.parse(jsonStr);
+
+                if (!Array.isArray(importedProjects)) {
+                    throw new Error("Invalid JSON format: Expected an array of projects.");
+                }
+
+                // Prepare for preview
+                const previewData = [];
+                const seenSlugs = new Set();
+
+                for (const proj of importedProjects) {
+                    if (!proj.title) continue;
+
+                    const slug = proj.slug || ProjectService.generateSlug(proj.title);
+
+                    // Internal duplicate check (within the file)
+                    const isFileDuplicate = seenSlugs.has(slug);
+                    seenSlugs.add(slug);
+
+                    const existing = await ProjectService.fetchProjectBySlug(slug, null, true);
+
+                    // Normalize techStack to array for preview if it's a string
+                    const techStack = typeof proj.techStack === 'string'
+                        ? proj.techStack.split(',').map(t => t.trim()).filter(t => t)
+                        : (proj.techStack || []);
+
+                    previewData.push({
+                        ...proj,
+                        techStack, // Standardize for preview
+                        slug,
+                        exists: !!existing,
+                        existingId: existing?.id || null,
+                        fileDuplicate: isFileDuplicate
+                    });
+                }
+
+                setBulkModal({
+                    isOpen: true,
+                    mode: 'import',
+                    data: previewData
+                });
+
+            } catch (error) {
+                console.error("Import Error:", error);
+                showToast("Failed to parse JSON file.", "error");
+            } finally {
+                setLoading(false);
+                e.target.value = null;
+            }
+        };
+
+        reader.onerror = () => {
+            setLoading(false);
+            showToast("Failed to read the file.", "error");
+        };
+
+        reader.readAsText(file);
+    };
+
+    const handleExportJSON = () => {
+        setBulkModal({
+            isOpen: true,
+            mode: 'export',
+            data: projects
+        });
+    };
+
+
+    const handleConfirmBulkAction = async (selectedItems) => {
+        if (bulkModal.mode === 'import') {
+            // Filter out items already marked as duplicate in the file to prevent extra writes
+            const itemsToProcess = selectedItems.filter(item => !item.fileDuplicate);
+            const total = itemsToProcess.length;
+
+            if (total === 0) {
+                showToast("No unique items to import.", "info");
+                return;
+            }
+
+            const duplicates = itemsToProcess.filter(item => item.exists);
+
+            if (duplicates.length > 0 && overwriteExisting) {
+                setConfirmDialog({
+                    isOpen: true,
+                    title: 'Confirm Overwrite',
+                    message: `You are about to overwrite ${duplicates.length} existing projects. This action cannot be undone. Proceed with overwriting all?`,
+                    confirmText: 'Overwrite All',
+                    type: 'warning',
+                    onConfirm: () => executeBulkImport(itemsToProcess)
+                });
+                return;
+            }
+
+            executeBulkImport(itemsToProcess);
+        } else {
+            // Export mode
+            const dataStr = JSON.stringify(selectedItems, (key, value) => {
+                if (key === 'createdAt' && value?.seconds) {
+                    return new Date(value.seconds * 1000).toISOString();
+                }
+                return value;
+            }, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `projects_export_selected_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast(`Exported ${selectedItems.size || selectedItems.length} selected projects.`);
+            setBulkModal(prev => ({ ...prev, isOpen: false }));
+        }
+    };
+
+    const executeBulkImport = async (itemsToProcess) => {
+        setLoading(true);
+        setImportProgress(0);
+        try {
+            let successCount = 0;
+            let updatedCount = 0;
+            let failCount = 0;
+            const total = itemsToProcess.length;
+
+            for (let i = 0; i < total; i++) {
+                const item = itemsToProcess[i];
+                try {
+                    const formData = {
+                        ...item,
+                        id: (overwriteExisting && item.existingId) ? item.existingId : null,
+                        techStack: Array.isArray(item.techStack) ? item.techStack.join(', ') : (item.techStack || '')
+                    };
+
+                    const result = await ProjectService.saveProject(userRole, formData, undefined, trackWrite);
+                    if (!result.isNew) updatedCount++;
+                    else successCount++;
+                } catch (err) {
+                    console.error(`Failed to import item: ${item.title}`, err);
+                    failCount++;
+                }
+                setImportProgress(((i + 1) / total) * 100);
+            }
+
+            queryClient.invalidateQueries({ queryKey: ['projects'] });
+            queryClient.invalidateQueries({ queryKey: ['history'] });
+
+            if (failCount > 0) {
+                showToast(`Import completed with issues: ${successCount} added, ${updatedCount} updated, ${failCount} failed.`, 'warning');
+            } else {
+                showToast(`Import successful: ${successCount} added, ${updatedCount} updated.`);
+            }
+        } catch (error) {
+            console.error("Bulk Import Error:", error);
+            showToast("Bulk import process encountered an error.", "error");
+        } finally {
+            setLoading(false);
+            setImportProgress(0);
+            setBulkModal(prev => ({ ...prev, isOpen: false }));
+        }
+    };
+    const downloadTemplate = () => {
+        const template = [
+            {
+                title: "Example Project",
+                description: "Short description here",
+                techStack: "React, Firebase",
+                githubUrl: "https://github.com/...",
+                liveUrl: "https://...",
+                slug: "example-project",
+                content: "# Markdown Content\nDetails here...",
+                featured: false,
+                visible: true
+            }
+        ];
+        const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = "projects_template.json";
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     const handleEditClick = (p) => {
         setEditingProject(p.id);
         setProject({ ...p, techStack: Array.isArray(p.techStack) ? p.techStack.join(', ') : p.techStack || '' });
@@ -154,9 +360,44 @@ const ProjectsTab = ({ userRole, showToast }) => {
                 <div className={styles.listSection}>
                     <div className={styles.listSectionHeader}>
                         <h3 className={styles.listTitle}>Existing Projects</h3>
-                        <button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setShowProjectForm(true); }} className={styles.addBtn}>
-                            <Plus size={18} /> Add New
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setShowProjectForm(true); }} className={styles.addBtn}>
+                                <Plus size={18} /> Add New
+                            </button>
+                            <div className={styles.dropdownWrapper}>
+                                <button
+                                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                                    className={styles.secondaryBtn}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                                >
+                                    <Settings2 size={16} /> Bulk Actions <ChevronDown size={14} style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                                </button>
+
+                                {dropdownOpen && (
+                                    <>
+                                        <div className={styles.modalOverlay} style={{ background: 'rgba(0, 0, 0, 0.3)', backdropFilter: 'none', WebkitBackdropFilter: 'none', zIndex: 999 }} onClick={() => setDropdownOpen(false)} />
+                                        <div className={styles.dropdownMenu}>
+                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadTemplate(); }}>
+                                                <FileText size={16} /> Download JSON Template
+                                            </button>
+                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportJSON(); }}>
+                                                <ExternalLink size={16} /> Export JSON
+                                            </button>
+                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); fileInputRef.current?.click(); }}>
+                                                <Upload size={16} /> Import JSON
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    accept=".json"
+                                    onChange={handleImportJSON}
+                                    style={{ display: 'none' }}
+                                />
+                            </div>
+                        </div>
                     </div>
                     <div className={styles.searchBox}>
                         <Search size={16} className={styles.searchIcon} />
@@ -208,7 +449,16 @@ const ProjectsTab = ({ userRole, showToast }) => {
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
                         <h3>{editingProject ? <Edit2 size={24} /> : <Plus size={24} />} {editingProject ? 'Edit Project' : 'Add New Project'}</h3>
-                        <button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setShowProjectForm(false); }} className={styles.cancelBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button
+                            onClick={() => {
+                                setEditingProject(null);
+                                setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
+                                setProjectImage(null);
+                                setIsProjectPreviewMode(false);
+                                setShowProjectForm(false);
+                            }}
+                            className={styles.cancelBtn}
+                        >
                             <ArrowLeft size={18} /> Cancel & Return
                         </button>
                     </div>
@@ -247,6 +497,8 @@ const ProjectsTab = ({ userRole, showToast }) => {
                             value={project.content || ''}
                             onChange={(e) => setProject({ ...project, content: e.target.value })}
                             rows="12"
+                            isPreviewMode={isProjectPreviewMode}
+                            onTogglePreview={() => setIsProjectPreviewMode(!isProjectPreviewMode)}
                         />
 
                         <FormInput
@@ -358,6 +610,19 @@ const ProjectsTab = ({ userRole, showToast }) => {
                 recordId={historyModal.recordId}
                 service={ProjectService}
                 title={historyModal.title}
+            />
+
+            <BulkActionModal
+                isOpen={bulkModal.isOpen}
+                onClose={() => setBulkModal(prev => ({ ...prev, isOpen: false, data: [] }))}
+                mode={bulkModal.mode}
+                type="projects"
+                data={bulkModal.data}
+                onConfirm={handleConfirmBulkAction}
+                overwriteExisting={overwriteExisting}
+                setOverwriteExisting={setOverwriteExisting}
+                loading={loading}
+                progress={importProgress}
             />
         </>
     );

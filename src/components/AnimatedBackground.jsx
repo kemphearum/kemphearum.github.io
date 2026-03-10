@@ -48,9 +48,17 @@ const AnimatedBackground = ({
             }
 
             draw() {
-                ctx.fillStyle = variant === 'geometry' ? 'rgba(108, 99, 255, 0.15)' : 'rgba(108, 99, 255, 0.4)';
-                ctx.strokeStyle = 'rgba(108, 99, 255, 0.3)';
-                ctx.lineWidth = 1;
+                // Check light mode state
+                const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+                const opacityMultiplier = isLightMode ? 2 : 1; // Double opacity in light mode for better contrast
+
+                const geoOpacity = Math.min(0.15 * opacityMultiplier, 0.4);
+                const circleOpacity = Math.min(0.4 * opacityMultiplier, 0.8);
+                const strokeOpacity = Math.min(0.3 * opacityMultiplier, 0.7);
+
+                ctx.fillStyle = variant === 'geometry' ? `rgba(108, 99, 255, ${geoOpacity})` : `rgba(108, 99, 255, ${circleOpacity})`;
+                ctx.strokeStyle = `rgba(108, 99, 255, ${strokeOpacity})`;
+                ctx.lineWidth = isLightMode ? 1.5 : 1;
 
                 if (this.shape === 'circle') {
                     ctx.beginPath();
@@ -120,6 +128,14 @@ const AnimatedBackground = ({
 
         const connectPlexus = () => {
             let opacityValue = 1;
+
+            // Check light mode state directly from the document HTML attribute
+            const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+            const connectColor = '108, 99, 255'; // Keep primary brand color
+            // Use darker opacities for light mode since the background is white
+            const mouseLineOpacityMultiplier = isLightMode ? 0.7 : 0.4;
+            const particleLineOpacityMultiplier = isLightMode ? 0.3 : 0.15;
+
             for (let a = 0; a < particles.length; a++) {
                 // Connect particles to the mouse
                 if (interactive && mouseRef.current.x !== null) {
@@ -129,8 +145,8 @@ const AnimatedBackground = ({
 
                     if (distanceMouse < mouseRef.current.radius) {
                         opacityValue = 1 - (distanceMouse / mouseRef.current.radius);
-                        ctx.strokeStyle = `rgba(108, 99, 255, ${opacityValue * 0.4})`;
-                        ctx.lineWidth = 1.2;
+                        ctx.strokeStyle = `rgba(${connectColor}, ${opacityValue * mouseLineOpacityMultiplier})`;
+                        ctx.lineWidth = isLightMode ? 1.5 : 1.2;
                         ctx.beginPath();
                         ctx.moveTo(particles[a].x, particles[a].y);
                         ctx.lineTo(mouseRef.current.x, mouseRef.current.y);
@@ -146,8 +162,8 @@ const AnimatedBackground = ({
 
                     if (distance < 150) {
                         opacityValue = 1 - (distance / 150);
-                        ctx.strokeStyle = `rgba(108, 99, 255, ${opacityValue * 0.15})`;
-                        ctx.lineWidth = 1;
+                        ctx.strokeStyle = `rgba(${connectColor}, ${opacityValue * particleLineOpacityMultiplier})`;
+                        ctx.lineWidth = isLightMode ? 1.2 : 1;
                         ctx.beginPath();
                         ctx.moveTo(particles[a].x, particles[a].y);
                         ctx.lineTo(particles[b].x, particles[b].y);
@@ -191,6 +207,17 @@ const AnimatedBackground = ({
             window.addEventListener('mouseout', onMouseOut);
         }
 
+        // Watch for theme changes to trigger a redraw with new opacities
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'data-theme') {
+                    // Force a re-render of particles logic with new light/dark mode assumptions
+                    initParticles();
+                }
+            });
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
         resize();
         animate();
 
@@ -200,6 +227,7 @@ const AnimatedBackground = ({
                 window.removeEventListener('mousemove', onMouseMove);
                 window.removeEventListener('mouseout', onMouseOut);
             }
+            observer.disconnect();
             cancelAnimationFrame(animationFrameId);
         };
     }, [density, speed, interactive, variant]);

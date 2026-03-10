@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft } from 'lucide-react';
+import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft, Settings2, FileText, Download, ChevronDown } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sortData } from '../../../utils/sortData';
@@ -18,6 +18,7 @@ import FormRow from '../components/FormRow';
 import FormInput from '../components/FormInput';
 import FormMarkdownEditor from '../components/FormMarkdownEditor';
 import FormDropzone from '../components/FormDropzone';
+import BulkActionModal from '../components/BulkActionModal';
 
 const BlogTab = ({ userRole, showToast }) => {
     const [post, setPost] = useState({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
@@ -32,6 +33,11 @@ const BlogTab = ({ userRole, showToast }) => {
     const [loading, setLoading] = useState(false);
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
     const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
+    const [overwriteExisting, setOverwriteExisting] = useState(true);
+    const [bulkModal, setBulkModal] = useState({ isOpen: false, mode: 'import', data: [] });
+    const [importProgress, setImportProgress] = useState(0);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const fileInputRef = React.useRef(null);
     const { trackRead, trackWrite, trackDelete } = useActivity();
     const queryClient = useQueryClient();
 
@@ -125,18 +131,15 @@ const BlogTab = ({ userRole, showToast }) => {
         try {
             let coverImage = post.coverImage || '';
             if (postImage) coverImage = await ImageProcessingService.compress(postImage);
-            const tagsArray = typeof post.tags === 'string' ? post.tags.split(',').map(t => t.trim()).filter(t => t) : (Array.isArray(post.tags) ? post.tags : []);
-            const slug = post.slug || generateSlug(post.title);
 
-            const postData = { title: post.title, slug, excerpt: post.excerpt, content: post.content, coverImage, tags: tagsArray, visible: post.visible !== false, featured: !!post.featured };
-            if (post.id) {
-                await BlogService.update(post.id, postData, trackWrite);
-                showToast('Post updated!');
-            } else {
-                // postData.createdAt = serverTimestamp(); // Assuming server handles this
-                await BlogService.create(postData, trackWrite);
-                showToast('Post published!');
-            }
+            const formData = {
+                ...post,
+                coverImage
+            };
+
+            const result = await BlogService.savePost(userRole, formData, trackWrite);
+            showToast(result.isNew ? 'Post published!' : 'Post updated!');
+
             queryClient.invalidateQueries({ queryKey: ['posts'] });
             queryClient.invalidateQueries({ queryKey: ['history'] });
             setPost({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
@@ -145,6 +148,160 @@ const BlogTab = ({ userRole, showToast }) => {
             setShowPostForm(false);
         } catch (error) { showToast(error.message || 'Error saving post.', 'error'); }
         finally { setLoading(false); }
+    };
+
+    const handleExportJSON = () => {
+        setBulkModal({ isOpen: true, mode: 'export', data: posts });
+    };
+
+    const executeBulkImport = async (itemsToProcess) => {
+        setLoading(true);
+        setImportProgress(0);
+        try {
+            let successCount = 0;
+            let updatedCount = 0;
+            let failCount = 0;
+            const total = itemsToProcess.length;
+
+            for (let i = 0; i < total; i++) {
+                const item = itemsToProcess[i];
+                try {
+                    const formData = {
+                        ...item,
+                        id: (overwriteExisting && item.existingId) ? item.existingId : null
+                    };
+                    const result = await BlogService.savePost(userRole, formData, trackWrite);
+                    if (!result.isNew) updatedCount++;
+                    else successCount++;
+                } catch (err) {
+                    console.error(`Failed to import post: ${item.title}`, err);
+                    failCount++;
+                }
+                setImportProgress(((i + 1) / total) * 100);
+            }
+
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
+            queryClient.invalidateQueries({ queryKey: ['history'] });
+
+            if (failCount > 0) {
+                showToast(`Import completed with issues: ${successCount} added, ${updatedCount} updated, ${failCount} failed.`, 'warning');
+            } else {
+                showToast(`Import successful: ${successCount} added, ${updatedCount} updated.`);
+            }
+        } catch (error) {
+            console.error('Bulk Import Error:', error);
+            showToast('Bulk import process encountered an error.', 'error');
+        } finally {
+            setLoading(false);
+            setImportProgress(0);
+            setBulkModal(prev => ({ ...prev, isOpen: false }));
+        }
+    };
+
+    const handleConfirmBulkAction = async (selectedItems) => {
+        if (bulkModal.mode === 'import') {
+            // Filter out items already marked as duplicate in the file
+            const itemsToProcess = selectedItems.filter(item => !item.fileDuplicate);
+            const total = itemsToProcess.length;
+
+            if (total === 0) {
+                showToast("No unique items to import.", "info");
+                return;
+            }
+
+            const duplicates = itemsToProcess.filter(item => item.exists);
+
+            if (duplicates.length > 0 && overwriteExisting) {
+                setConfirmDialog({
+                    isOpen: true,
+                    title: 'Confirm Overwrite',
+                    message: `You are about to overwrite ${duplicates.length} existing blog posts. This action cannot be undone. Proceed with overwriting all?`,
+                    confirmText: 'Overwrite All',
+                    type: 'warning',
+                    onConfirm: () => executeBulkImport(itemsToProcess)
+                });
+                return;
+            }
+
+            executeBulkImport(itemsToProcess);
+        } else {
+            const dataStr = JSON.stringify(selectedItems, (key, value) => {
+                if (key === 'createdAt' && value?.seconds) return new Date(value.seconds * 1000).toISOString();
+                return value;
+            }, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `blog_export_selected_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast(`Exported ${selectedItems.length} selected posts.`);
+            setBulkModal(prev => ({ ...prev, isOpen: false }));
+        }
+    };
+
+    const handleImportJSON = (e) => {
+        if (userRole === 'pending' || userRole === 'editor') { showToast('Not authorized to import posts.', 'error'); return; }
+        const file = e.target.files[0];
+        if (!file) return;
+        setLoading(true);
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const importedPosts = JSON.parse(event.target.result);
+                if (!Array.isArray(importedPosts)) throw new Error('Invalid JSON format: Expected an array of posts.');
+                const previewData = [];
+                const seenSlugs = new Set();
+
+                for (const postItem of importedPosts) {
+                    if (!postItem.title) continue;
+                    const slug = postItem.slug || generateSlug(postItem.title);
+
+                    // Internal duplicate check
+                    const isFileDuplicate = seenSlugs.has(slug);
+                    seenSlugs.add(slug);
+
+                    const existing = await BlogService.fetchPostBySlug(slug, null, true);
+
+                    // Normalize tags to array for preview
+                    const tags = Array.isArray(postItem.tags)
+                        ? postItem.tags
+                        : (postItem.tags ? postItem.tags.split(',').map(t => t.trim()) : []);
+
+                    previewData.push({
+                        ...postItem,
+                        tags,
+                        slug,
+                        exists: !!existing,
+                        existingId: existing?.id || null,
+                        fileDuplicate: isFileDuplicate
+                    });
+                }
+                setBulkModal({ isOpen: true, mode: 'import', data: previewData });
+            } catch (error) {
+                console.error('Import Error:', error);
+                showToast('Failed to parse JSON file.', 'error');
+            } finally {
+                setLoading(false);
+                e.target.value = null;
+            }
+        };
+        reader.onerror = () => { setLoading(false); showToast('Failed to read the file.', 'error'); };
+        reader.readAsText(file);
+    };
+
+    const downloadTemplate = () => {
+        const template = [{ title: 'Sample Blog Post', slug: 'sample-blog-post', excerpt: 'A short summary for the list view.', content: '# Your Content Here\nThis is a sample markdown content.', tags: ['React', 'Tutorial'], featured: false, visible: true }];
+        const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'blog_template.json';
+        link.click();
+        URL.revokeObjectURL(url);
     };
 
     const insertMarkdown = (syntax) => {
@@ -174,9 +331,43 @@ const BlogTab = ({ userRole, showToast }) => {
                 <div className={styles.listSection} style={{ marginTop: '0' }}>
                     <div className={styles.listSectionHeader}>
                         <h3 className={styles.listTitle}>Published Posts</h3>
-                        <button onClick={() => { setPost({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false }); setPostImage(null); setIsBlogPreviewMode(false); setShowPostForm(true); }} className={styles.addBtn}>
-                            <Plus size={18} /> Add New
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <button onClick={() => { setPost({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false }); setPostImage(null); setIsBlogPreviewMode(false); setShowPostForm(true); }} className={styles.addBtn}>
+                                <Plus size={18} /> Add New
+                            </button>
+                            <div className={styles.dropdownWrapper}>
+                                <button
+                                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                                    className={styles.secondaryBtn}
+                                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                                >
+                                    <Settings2 size={16} /> Bulk Actions <ChevronDown size={14} style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                                </button>
+                                {dropdownOpen && (
+                                    <>
+                                        <div className={styles.modalOverlay} style={{ background: 'rgba(0, 0, 0, 0.3)', backdropFilter: 'none', WebkitBackdropFilter: 'none', zIndex: 999 }} onClick={() => setDropdownOpen(false)} />
+                                        <div className={styles.dropdownMenu}>
+                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadTemplate(); }}>
+                                                <FileText size={16} /> Download JSON Template
+                                            </button>
+                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportJSON(); }}>
+                                                <ExternalLink size={16} /> Export JSON
+                                            </button>
+                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); fileInputRef.current?.click(); }}>
+                                                <Upload size={16} /> Import JSON
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    accept=".json"
+                                    onChange={handleImportJSON}
+                                    style={{ display: 'none' }}
+                                />
+                            </div>
+                        </div>
                     </div>
                     <div className={styles.searchBox}>
                         <Search size={16} className={styles.searchIcon} />
@@ -227,9 +418,17 @@ const BlogTab = ({ userRole, showToast }) => {
                 </div>
             ) : (
                 <div className={styles.card}>
-                    <div className={styles.cardHeader} style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <h3 style={{ margin: 0 }}>{editingPost ? <Edit2 size={24} /> : <Plus size={24} />} {editingPost ? 'Edit Post' : 'New Blog Post'}</h3>
-                        <button onClick={() => { setPost({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false }); setPostImage(null); setIsBlogPreviewMode(false); setShowPostForm(false); }} className={styles.cancelBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className={styles.cardHeader}>
+                        <h3>{editingPost ? <Edit2 size={24} /> : <Plus size={24} />} {editingPost ? 'Edit Post' : 'New Blog Post'}</h3>
+                        <button
+                            onClick={() => {
+                                setPost({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
+                                setPostImage(null);
+                                setIsBlogPreviewMode(false);
+                                setShowPostForm(false);
+                            }}
+                            className={styles.cancelBtn}
+                        >
                             <ArrowLeft size={18} /> Cancel & Return
                         </button>
                     </div>
@@ -376,6 +575,19 @@ const BlogTab = ({ userRole, showToast }) => {
                     setConfirmDialog={setConfirmDialog}
                 />
             )}
+
+            <BulkActionModal
+                isOpen={bulkModal.isOpen}
+                onClose={() => setBulkModal(prev => ({ ...prev, isOpen: false, data: [] }))}
+                mode={bulkModal.mode}
+                type="blog"
+                data={bulkModal.data}
+                onConfirm={handleConfirmBulkAction}
+                overwriteExisting={overwriteExisting}
+                setOverwriteExisting={setOverwriteExisting}
+                loading={loading}
+                progress={importProgress}
+            />
         </div>
     );
 };

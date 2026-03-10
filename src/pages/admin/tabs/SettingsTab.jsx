@@ -369,7 +369,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
 
                 <div className={styles.formFooter}>
                     <button type="submit" disabled={loading} className={styles.submitBtn}>
-                        {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save Changes</>}
+                        {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save </>}
                     </button>
                 </div>
             </form>

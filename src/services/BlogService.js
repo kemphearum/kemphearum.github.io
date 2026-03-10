@@ -37,7 +37,7 @@ class BlogService extends BaseService {
      * @param {Function} trackRead 
      * @returns {Promise<Object|null>}
      */
-    async fetchPostBySlug(slug, trackRead) {
+    async fetchPostBySlug(slug, trackRead, includeHidden = false) {
         const q = query(collection(db, this.collectionName), where("slug", "==", slug));
         const querySnapshot = await getDocs(q);
 
@@ -47,7 +47,7 @@ class BlogService extends BaseService {
 
         if (!querySnapshot.empty) {
             const docData = querySnapshot.docs[0].data();
-            if (docData.visible === false) return null;
+            if (!includeHidden && docData.visible === false) return null;
             return { id: querySnapshot.docs[0].id, ...docData };
         }
         return null;
@@ -99,6 +99,59 @@ class BlogService extends BaseService {
         }
 
         return postsData;
+    }
+
+    /**
+     * Prepares blog post form data for saving to Firestore by formatting tags and slug.
+     */
+    async savePost(userRole, formData, trackWrite) {
+        if (userRole === 'pending') {
+            throw new Error("Not authorized to save posts.");
+        }
+
+        const tagsArray = typeof formData.tags === 'string'
+            ? formData.tags.split(',').map(t => t.trim()).filter(t => t)
+            : (Array.isArray(formData.tags) ? formData.tags : []);
+
+        const slug = formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+        // Check for existing post by slug if no ID is provided
+        let targetId = formData.id;
+        if (!targetId) {
+            const existing = await this.fetchPostBySlug(slug, null, true);
+            if (existing) {
+                targetId = existing.id;
+            }
+        }
+
+        const dataToSave = {
+            title: formData.title || 'Untitled Post',
+            slug,
+            excerpt: formData.excerpt || '',
+            content: formData.content || '',
+            tags: tagsArray,
+            visible: formData.visible !== false, // default true
+            featured: !!formData.featured // default false
+        };
+
+        if (formData.coverImage !== undefined) {
+            dataToSave.coverImage = formData.coverImage || '';
+        }
+
+        const { serverTimestamp } = await import('firebase/firestore');
+
+        if (targetId) {
+            await this.update(targetId, dataToSave, (count, label) => {
+                if (trackWrite) trackWrite(count, label, dataToSave);
+            });
+            return { isNew: false, id: targetId };
+        } else {
+            dataToSave.createdAt = serverTimestamp();
+            const newId = await this.create(dataToSave, (count, label) => {
+                if (trackWrite) trackWrite(count, label, dataToSave);
+            });
+            return { isNew: true, id: newId };
+        }
     }
 }
 
