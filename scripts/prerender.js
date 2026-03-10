@@ -68,6 +68,8 @@ async function fetchGlobalSettings() {
     }
 }
 
+const FALLBACK_IMAGE = 'https://phearum-info.web.app/og-image.png';
+
 // Helper to inject meta tags into the generic HTML
 function injectMetaTags(html, item, type, isRoot = false) {
     let title = 'Kem Phearum Portfolio';
@@ -91,8 +93,8 @@ function injectMetaTags(html, item, type, isRoot = false) {
     const description = item.description || 'Portfolio of Kem Phearum, an ICT Security professional and developer.';
 
     // Social media crawlers (LinkedIn/FB) do NOT support Base64 for og:image.
-    // We only add it if it's a real HTTP/HTTPS URL.
-    const isValidImageUrl = item.image && item.image.startsWith('http');
+    // We use the item image if it's a real HTTP/HTTPS URL, otherwise the fallback.
+    const displayImage = (item.image && item.image.startsWith('http')) ? item.image : FALLBACK_IMAGE;
 
     let metaTags = `
     <!-- Open Graph for Facebook & LinkedIn -->
@@ -101,26 +103,19 @@ function injectMetaTags(html, item, type, isRoot = false) {
     <meta property="og:type" content="website" />
     <meta property="og:url" content="${url}" />
     <meta property="og:site_name" content="Kem Phearum Portfolio" />
+    <meta property="og:image" content="${displayImage}" />
     
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />
+    <meta name="twitter:image" content="${displayImage}" />
 `;
 
-    if (isValidImageUrl) {
-        metaTags += `
-    <meta property="og:image" content="${item.image}" />
-    <meta name="twitter:image" content="${item.image}" />
-`;
-    }
+    const newHtml = html.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`)
+        .replace(/<meta\s+name=["']description["']\s+content=["'].*?["']\s*\/?>/i, `<meta name="description" content="${description}" />`)
+        .replace(/<\/head>/i, `${metaTags}\n  </head>`);
 
-    let newHtml = html.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
-    if (newHtml.match(/<meta\s+name=["']description["']/i)) {
-        newHtml = newHtml.replace(/<meta\s+name=["']description["']\s+content=["'].*?["']\s*\/?>/i, `<meta name="description" content="${description}" />`);
-    }
-
-    newHtml = newHtml.replace(/<\/head>/i, `${metaTags}\n  </head>`);
     return newHtml;
 }
 
