@@ -20,7 +20,7 @@ jobs:
           node-version: '22'
 
       - name: Install Dependencies
-        run: npm install firebase-admin --no-save
+        run: npm install firebase-admin --no-save --legacy-peer-deps
 
       - name: Run Migration
         env:
