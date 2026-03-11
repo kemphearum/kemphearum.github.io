@@ -9,13 +9,26 @@ const admin = require('firebase-admin');
 
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 // ─── CONFIG ────────────────────────────────────────────────────────────────
-const SOURCE_SERVICE_ACCOUNT = process.env.SA_SOURCE 
-    ? JSON.parse(process.env.SA_SOURCE) 
-    : require('./sa-source.json');   // phearum-info (Primary)
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+function getServiceAccount(envVar, fallbackFile) {
+    if (process.env[envVar]) {
+        try {
+            return JSON.parse(process.env[envVar]);
+        } catch (e) {
+            console.error(`❌ Error parsing ${envVar} environment variable:`, e.message);
+            process.exit(1);
+        }
+    }
+    try {
+        return require(fallbackFile);
+    } catch (e) {
+        console.error(`❌ Error loading fallback file ${fallbackFile}:`, e.message);
+        process.exit(1);
+    }
+}
 
-const TARGET_SERVICE_ACCOUNT = process.env.SA_TARGET 
-    ? JSON.parse(process.env.SA_TARGET) 
-    : require('./sa-target.json');   // kem-phearum (Secondary)
+const SOURCE_SERVICE_ACCOUNT = getServiceAccount('SA_SOURCE', './sa-source.json');
+const TARGET_SERVICE_ACCOUNT = getServiceAccount('SA_TARGET', './sa-target.json');
 
 // Collections to migrate (in order)
 const COLLECTIONS = [
