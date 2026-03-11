@@ -69,7 +69,7 @@ const ProjectDetail = () => {
 
 
     // Share helpers
-    const currentUrl = window.location.href;
+    const currentUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
     const handleCopyLink = () => {
         navigator.clipboard.writeText(currentUrl).then(() => {
             setCopied(true);

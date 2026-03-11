@@ -104,12 +104,24 @@ function injectMetaTags(html, item, type, isRoot = false) {
     <meta property="og:url" content="${url}" />
     <meta property="og:site_name" content="Kem Phearum Portfolio" />
     <meta property="og:image" content="${displayImage}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     
     <!-- Twitter Cards -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${title}" />
     <meta name="twitter:description" content="${description}" />
     <meta name="twitter:image" content="${displayImage}" />
+
+    <!-- Redirect to Hash Route for SPA -->
+    <script>
+        (function() {
+            var path = window.location.pathname;
+            if (path !== '/' && !window.location.hash) {
+                window.location.href = '/#' + path;
+            }
+        })();
+    </script>
 `;
 
     const newHtml = html.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`)
