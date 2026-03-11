@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "phearum-info"
+    "default": "phearum-info",
+    "backup": "kem-phearum"
   }
 }
