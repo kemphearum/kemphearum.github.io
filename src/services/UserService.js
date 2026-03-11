@@ -1,6 +1,6 @@
 import BaseService from './BaseService';
 import { db, auth } from '../firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc, orderBy, query, updateDoc, where, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, orderBy, query, updateDoc, where, serverTimestamp } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
 
 class UserService extends BaseService {

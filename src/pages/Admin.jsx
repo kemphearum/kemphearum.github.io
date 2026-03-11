@@ -399,13 +399,19 @@ const Admin = () => {
     }, [showToast, trackWrite, queryClient]);
 
     useEffect(() => {
-        if (user) {
-            fetchRolePermissions();
-            fetchMessages();
-            // Fetch content data for simple tabs
+        if (user && userRole) {
+            // Only fetch management data for authorized roles
+            const isAuthorized = userRole === 'superadmin' || userRole === 'admin';
+            
+            if (isAuthorized) {
+                fetchRolePermissions();
+                fetchMessages();
+            }
+            
+            // Only fetch content if they have some role
             ['home', 'about', 'contact', 'settings'].forEach(fetchSectionData);
         }
-    }, [user, fetchRolePermissions, fetchMessages, fetchSectionData]);
+    }, [user, userRole, fetchRolePermissions, fetchMessages, fetchSectionData]);
 
     const unreadMessagesCount = useMemo(() => messages.filter(m => !m.isRead).length, [messages]);
 
