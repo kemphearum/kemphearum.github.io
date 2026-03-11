@@ -77,9 +77,11 @@ const tabLabels = {
     blog: 'Blog',
     messages: 'Messages',
     database: 'Database',
-    users: 'Users',
+    users: 'User Management',
     audit: 'Audit Logs',
-    analytics: 'Analytics'
+    analytics: 'Analytics',
+    profile: 'My Profile',
+    settings: 'Site Settings'
 };
 
 // ============================================================
@@ -127,7 +129,7 @@ const Admin = () => {
     const queryClient = useQueryClient();
 
     // Tab & Sidebar State
-    const [activeTab, setActiveTab] = useState(() => localStorage.getItem('adminActiveTab') || 'home');
+    const [activeTab, setActiveTab] = useState(() => localStorage.getItem('adminActiveTab') || 'profile');
     const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 992);
     const [sidebarPersistent, setSidebarPersistent] = useState(() => {
         const stored = localStorage.getItem('adminSidebarPersistent');
@@ -214,6 +216,7 @@ const Admin = () => {
                             UserService.updateUserField(userData.id, { role: 'superadmin' }).catch(console.error);
                         }
 
+                        // Set the role
                         setUserRole(fetchedRole);
                     }
                 } catch (error) {
@@ -228,6 +231,34 @@ const Admin = () => {
         return () => unsubscribe();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // ====== Redirection Logic for unauthorized tabs ======
+    const isTabAllowed = useCallback((tab, role, permissions) => {
+        if (!role) return false;
+        if (role === 'superadmin') return true;
+        if (tab === 'profile') return true; // Always allowed
+        
+        // Block restricted system tabs for everyone else
+        if (['users', 'database', 'audit'].includes(tab)) return false;
+
+        // Check explicit permissions
+        if (permissions?.[role]?.includes(tab)) return true;
+        
+        // Role defaults
+        if (role === 'admin') return true;
+        if (role === 'editor') {
+            return ['general', 'experience', 'projects', 'blog', 'messages'].includes(tab);
+        }
+        
+        return false;
+    }, []);
+
+    useEffect(() => {
+        if (!isAuthLoading && userRole && !isTabAllowed(activeTab, userRole, rolePermissions)) {
+            console.log(`Access denied to tab '${activeTab}' for role '${userRole}'. Redirecting to profile.`);
+            setActiveTab('profile');
+        }
+    }, [activeTab, userRole, rolePermissions, isAuthLoading, isTabAllowed]);
 
     // ====== Fetch Role Permissions & Messages (for sidebar) ======
     const fetchRolePermissions = useCallback(async () => {
@@ -640,15 +671,8 @@ const Admin = () => {
             <aside className={`${styles.sidebar} ${!sidebarOpen ? styles.sidebarClosed : ''} ${sidebarOpen ? styles.sidebarOpenMobile : ''}`}>
                 <nav className={styles.sidebarNav}>
                     {Object.keys(tabLabels).filter(tab => {
-                        if (userRole === 'superadmin') return true;
-                        if (tab === 'users' || tab === 'database' || tab === 'audit') return false;
-                        if (userRole && rolePermissions[userRole]) return rolePermissions[userRole].includes(tab);
-                        if (userRole === 'admin') return true;
-                        if (userRole === 'editor') {
-                            const editorAllowedTabs = ['general', 'experience', 'projects', 'blog', 'messages'];
-                            return editorAllowedTabs.includes(tab);
-                        }
-                        return false;
+                        if (tab === 'profile' || tab === 'settings') return false; // Handled in top bar
+                        return isTabAllowed(tab, userRole, rolePermissions);
                     }).map(tab => (
                         <button key={tab} className={activeTab === tab ? styles.active : ''} onClick={() => handleTabClick(tab)}>
                             {icons[tab] || <FileText size={18} />}
@@ -665,8 +689,13 @@ const Admin = () => {
             <main className={`${styles.mainContent} ${!sidebarOpen ? styles.contentExpanded : ''}`}>
                 <div className={styles.contentHeader}>
                     <div>
-                        <h1>{tabLabels[activeTab] || (activeTab === 'profile' ? 'My Profile' : 'Settings')}</h1>
-                        <p className={styles.headerSubtitle}>Manage your portfolio {activeTab}</p>
+                        <h1>{tabLabels[activeTab] || 'Dashboard'}</h1>
+                        <p className={styles.headerSubtitle}>
+                            {activeTab === 'general' ? 'Manage your portfolio primary content' : 
+                             activeTab === 'profile' ? 'Manage your personal profile and account settings' :
+                             activeTab === 'settings' ? 'Configure site-wide appearance and behavior' :
+                             `Manage your portfolio ${tabLabels[activeTab]?.toLowerCase() || activeTab}`}
+                        </p>
                     </div>
                 </div>
 
