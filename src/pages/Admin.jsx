@@ -515,9 +515,11 @@ const Admin = () => {
                 } catch {
                     try {
                         const fallbackRes = await fetch('https://api.ipify.org?format=json');
-                        const fallbackData = await fallbackRes.json();
-                        if (fallbackData.ip) currentIp = fallbackData.ip;
-                    } catch { /* intentionally ignored */ }
+                        if (fallbackRes.ok) {
+                            const fallbackData = await fallbackRes.json();
+                            if (fallbackData.ip) currentIp = fallbackData.ip;
+                        }
+                    } catch { /* silently ignore */ }
                 }
 
                 await AuditLogService.addAuditLog({

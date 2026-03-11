@@ -77,7 +77,7 @@ export const useAnalytics = () => {
                         }
                     }
                 } catch (e) {
-                    console.warn("Could not fetch IP data (adblocker or network error). Logging anyway.", e);
+                    // Silently fail if blocked by adblocker/network
                 }
 
                 // Save to Firestore via Service
