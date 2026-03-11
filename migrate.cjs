@@ -8,8 +8,14 @@
 const admin = require('firebase-admin');
 
 // ─── CONFIG ────────────────────────────────────────────────────────────────
-const SOURCE_SERVICE_ACCOUNT = require('./sa-source.json');   // phearum-info (Primary)
-const TARGET_SERVICE_ACCOUNT = require('./sa-target.json');   // kem-phearum (Secondary)
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const SOURCE_SERVICE_ACCOUNT = process.env.SA_SOURCE 
+    ? JSON.parse(process.env.SA_SOURCE) 
+    : require('./sa-source.json');   // phearum-info (Primary)
+
+const TARGET_SERVICE_ACCOUNT = process.env.SA_TARGET 
+    ? JSON.parse(process.env.SA_TARGET) 
+    : require('./sa-target.json');   // kem-phearum (Secondary)
 
 // Collections to migrate (in order)
 const COLLECTIONS = [

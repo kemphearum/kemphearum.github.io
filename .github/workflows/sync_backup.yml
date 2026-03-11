@@ -22,22 +22,8 @@ jobs:
       - name: Install Dependencies
         run: npm install firebase-admin --no-save
 
-      - name: Create Temporary Credentials
+      - name: Run Migration
         env:
           SA_SOURCE: ${{ secrets.SA_SOURCE_JSON }}
           SA_TARGET: ${{ secrets.SA_TARGET_JSON }}
-        run: |
-          echo "$SA_SOURCE" > sa-source.json
-          echo "$SA_TARGET" > sa-target.json
-
-      - name: Validate JSON Credentials
-        run: |
-          node -e "try { JSON.parse(require('fs').readFileSync('sa-source.json')); console.log('✅ sa-source.json is valid') } catch (e) { console.error('❌ sa-source.json is invalid JSON'); process.exit(1) }"
-          node -e "try { JSON.parse(require('fs').readFileSync('sa-target.json')); console.log('✅ sa-target.json is valid') } catch (e) { console.error('❌ sa-target.json is invalid JSON'); process.exit(1) }"
-
-      - name: Run Migration
         run: node migrate.cjs
-
-      - name: Cleanup
-        if: always()
-        run: rm -f sa-target.json sa-source.json
