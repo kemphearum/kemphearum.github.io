@@ -10,8 +10,8 @@
 const admin = require('firebase-admin');
 
 // ─── CONFIG ────────────────────────────────────────────────────────────────
-const SOURCE_SERVICE_ACCOUNT = require('./sa-target.json');   // phearum-info (Primary)
-const TARGET_SERVICE_ACCOUNT = require('./sa-source.json');   // portfolio-77db2 (Secondary)
+const SOURCE_SERVICE_ACCOUNT = require('./sa-source.json');   // phearum-info (Primary)
+const TARGET_SERVICE_ACCOUNT = require('./sa-target.json');   // kem-phearum (Secondary)
 
 // Collections to migrate (in order)
 const COLLECTIONS = [
@@ -99,7 +99,7 @@ async function migrateCollection(sourcePath, targetPath, depth = 0) {
 async function main() {
     console.log('\n🚀 Starting Firestore migration (Primary → Secondary)...');
     console.log('   Source: phearum-info');
-    console.log('   Target: portfolio-77db2\n');
+    console.log('   Target: kem-phearum\n');
 
     const start = Date.now();
 

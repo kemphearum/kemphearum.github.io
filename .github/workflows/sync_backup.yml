@@ -24,11 +24,10 @@ jobs:
 
       - name: Create Temporary Credentials
         run: |
-          echo '${{ secrets.SA_SOURCE_JSON }}' > sa-target.json
-          echo '${{ secrets.SA_TARGET_JSON }}' > sa-source.json
-        # NOTE: We map GITHUB secrets to the filenames required by migrate.js
-        # SA_SOURCE_JSON = phearum-info (Target file in script)
-        # SA_TARGET_JSON = portfolio-77db2 (Source file in script)
+          echo '${{ secrets.SA_SOURCE_JSON }}' > sa-source.json
+          echo '${{ secrets.SA_TARGET_JSON }}' > sa-target.json
+        # SA_SOURCE_JSON = phearum-info (Primary)
+        # SA_TARGET_JSON = kem-phearum (Secondary)
 
       - name: Run Migration
         run: node migrate.js
