@@ -153,10 +153,7 @@ const ProjectDetail = () => {
                 <meta property="og:description" content={project.description} />
                 <meta property="og:type" content="article" />
                 {project.imageUrl && <meta property="og:image" content={project.imageUrl} />}
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={project.title} />
-                <meta name="twitter:description" content={project.description} />
-                {project.imageUrl && <meta name="twitter:image" content={project.imageUrl} />}
+                {project.imageUrl && <meta property="og:image" content={project.imageUrl} />}
             </Helmet>
 
             {/* Reading Progress */}

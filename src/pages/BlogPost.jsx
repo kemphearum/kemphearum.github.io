@@ -140,10 +140,7 @@ const BlogPost = () => {
                 <meta property="og:description" content={post.excerpt} />
                 <meta property="og:type" content="article" />
                 {post.coverImage && <meta property="og:image" content={post.coverImage} />}
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={post.title} />
-                <meta name="twitter:description" content={post.excerpt} />
-                {post.coverImage && <meta name="twitter:image" content={post.coverImage} />}
+                {post.coverImage && <meta property="og:image" content={post.coverImage} />}
             </Helmet>
 
             {/* Reading Progress */}

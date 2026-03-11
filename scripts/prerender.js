@@ -106,12 +106,6 @@ function injectMetaTags(html, item, type, isRoot = false) {
     <meta property="og:image" content="${displayImage}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    
-    <!-- Twitter Cards -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${title}" />
-    <meta name="twitter:description" content="${description}" />
-    <meta name="twitter:image" content="${displayImage}" />
 
     <!-- Redirect to Hash Route for SPA -->
     <script>
@@ -124,7 +118,12 @@ function injectMetaTags(html, item, type, isRoot = false) {
     </script>
 `;
 
-    const newHtml = html.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`)
+    // Strip existing Open Graph tags and the redirect script to prevent duplication
+    const strippedHtml = html
+        .replace(/<!-- Open Graph for Facebook & LinkedIn -->[\s\S]*?<!-- Redirect to Hash Route for SPA -->[\s\S]*?<\/script>/i, '')
+        .replace(/<meta\s+property=["']og:.*?["']\s+content=["'].*?["']\s*\/?>/gi, '');
+
+    const newHtml = strippedHtml.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`)
         .replace(/<meta\s+name=["']description["']\s+content=["'].*?["']\s*\/?>/i, `<meta name="description" content="${description}" />`)
         .replace(/<\/head>/i, `${metaTags}\n  </head>`);
 
