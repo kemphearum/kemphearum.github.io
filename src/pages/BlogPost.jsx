@@ -56,7 +56,7 @@ const BlogPost = () => {
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Share helpers
-    const currentUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
+    const currentUrl = window.location.origin + '/blog/' + slug;
     const handleCopyLink = () => {
         navigator.clipboard.writeText(currentUrl).then(() => {
             setCopied(true);
