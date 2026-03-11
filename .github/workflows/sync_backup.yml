@@ -1,0 +1,38 @@
+name: Automated Database Sync (Backup)
+
+on:
+  schedule:
+    # Runs at 00:00 and 12:00 UTC
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+    # Allows manual triggering
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install firebase-admin --no-save
+
+      - name: Create Temporary Credentials
+        run: |
+          echo '${{ secrets.SA_SOURCE_JSON }}' > sa-target.json
+          echo '${{ secrets.SA_TARGET_JSON }}' > sa-source.json
+        # NOTE: We map GITHUB secrets to the filenames required by migrate.js
+        # SA_SOURCE_JSON = phearum-info (Target file in script)
+        # SA_TARGET_JSON = portfolio-77db2 (Source file in script)
+
+      - name: Run Migration
+        run: node migrate.js
+
+      - name: Cleanup
+        if: always()
+        run: rm -f sa-target.json sa-source.json

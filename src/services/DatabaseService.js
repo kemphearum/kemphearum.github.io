@@ -6,7 +6,7 @@ class DatabaseService {
     static SOFT_DOC_LIMIT = 50000;
 
     static async getHealth(trackRead) {
-        const collections = ['posts', 'projects', 'messages', 'auditLogs', 'users'];
+        const collections = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'visits', 'dailyUsage'];
         const counts = {};
         for (const col of collections) {
             try {
@@ -66,7 +66,7 @@ class DatabaseService {
             throw new Error("Only Superadmins can perform backups.");
         }
 
-        const collectionsToExport = ['posts', 'projects', 'experience', 'messages', 'auditLogs', 'users', 'content'];
+        const collectionsToExport = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'visits', 'dailyUsage'];
         let exportData = { exportDate: new Date().toISOString(), collections: {} };
 
         for (const collName of collectionsToExport) {

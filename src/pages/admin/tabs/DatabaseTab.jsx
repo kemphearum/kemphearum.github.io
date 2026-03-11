@@ -20,7 +20,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
     const { trackRead, trackWrite, trackDelete } = useActivity();
     const queryClient = useQueryClient();
 
-    const { data: dbHealth = { posts: 0, projects: 0, messages: 0, auditLogs: 0, users: 0 }, isFetching: dbHealthLoading, refetch: refetchDbHealth } = useQuery({
+    const { data: dbHealth = { posts: 0, projects: 0, experience: 0, content: 0, messages: 0, auditLogs: 0, users: 0, rolePermissions: 0, settings: 0, visits: 0, dailyUsage: 0 }, isFetching: dbHealthLoading, refetch: refetchDbHealth } = useQuery({
         queryKey: ['dbHealth'],
         queryFn: async () => {
             const counts = await DatabaseService.getHealth(trackRead);
@@ -123,7 +123,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
         reader.readAsText(file);
     };
 
-    const totalDocs = (dbHealth.posts || 0) + (dbHealth.projects || 0) + (dbHealth.messages || 0) + (dbHealth.auditLogs || 0) + (dbHealth.users || 0);
+    const totalDocs = (dbHealth.posts || 0) + (dbHealth.projects || 0) + (dbHealth.experience || 0) + (dbHealth.content || 0) + (dbHealth.messages || 0) + (dbHealth.auditLogs || 0) + (dbHealth.users || 0) + (dbHealth.rolePermissions || 0) + (dbHealth.settings || 0) + (dbHealth.visits || 0) + (dbHealth.dailyUsage || 0);
 
     return (
         <div className={styles.section} style={{ paddingBottom: '4rem' }}>
@@ -195,6 +195,22 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                         color="#a78bfa"
                         onClick={() => setActiveTab('projects')}
                         description="Project Portfolio"
+                    />
+                    <StatCard
+                        icon={FileText}
+                        value={dbHealthLoading ? '...' : (dbHealth.experience || 0)}
+                        label="Experience"
+                        color="#f472b6"
+                        onClick={() => setActiveTab('experience')}
+                        description="Professional History"
+                    />
+                    <StatCard
+                        icon={FileText}
+                        value={dbHealthLoading ? '...' : (dbHealth.content || 0)}
+                        label="Content"
+                        color="#2dd4bf"
+                        onClick={() => setActiveTab('general')}
+                        description="General Site Info"
                     />
                     <StatCard
                         icon={Mail}

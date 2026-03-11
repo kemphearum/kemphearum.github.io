@@ -10,8 +10,8 @@
 const admin = require('firebase-admin');
 
 // ─── CONFIG ────────────────────────────────────────────────────────────────
-const SOURCE_SERVICE_ACCOUNT = require('./sa-source.json');   // portfolio-77db2
-const TARGET_SERVICE_ACCOUNT = require('./sa-target.json');   // phearum-info
+const SOURCE_SERVICE_ACCOUNT = require('./sa-target.json');   // phearum-info (Primary)
+const TARGET_SERVICE_ACCOUNT = require('./sa-source.json');   // portfolio-77db2 (Secondary)
 
 // Collections to migrate (in order)
 const COLLECTIONS = [
@@ -23,6 +23,9 @@ const COLLECTIONS = [
     'users',
     'rolePermissions',
     'auditLogs',
+    'settings',
+    'visits',
+    'dailyUsage'
 ];
 
 // Batch size for Firestore writes (max 500)
@@ -94,9 +97,9 @@ async function migrateCollection(sourcePath, targetPath, depth = 0) {
 // ─── MAIN ──────────────────────────────────────────────────────────────────
 
 async function main() {
-    console.log('\n🚀 Starting Firestore migration...');
-    console.log('   Source: portfolio-77db2');
-    console.log('   Target: phearum-info\n');
+    console.log('\n🚀 Starting Firestore migration (Primary → Secondary)...');
+    console.log('   Source: phearum-info');
+    console.log('   Target: portfolio-77db2\n');
 
     const start = Date.now();
 
