@@ -126,6 +126,14 @@ function SettingsApplier({ children }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    // Redirect hash-based URLs from the old HashRouter to new clean URLs
+    if (typeof window !== 'undefined' && window.location.hash.startsWith('#/')) {
+      const cleanPath = window.location.hash.replace(/^#\//, '/');
+      window.location.replace(cleanPath);
+    }
+  }, []);
+
   return (
     <SettingsApplier>
       <Outlet />

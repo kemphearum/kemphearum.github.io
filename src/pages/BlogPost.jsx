@@ -81,7 +81,7 @@ const BlogPost = () => {
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Share helpers (SSR-safe URL construction)
-    const currentUrl = typeof window !== 'undefined' ? (window.location.origin + window.location.pathname) : '';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(currentUrl).then(() => {
