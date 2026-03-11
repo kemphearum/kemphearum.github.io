@@ -30,7 +30,7 @@ jobs:
         # SA_TARGET_JSON = kem-phearum (Secondary)
 
       - name: Run Migration
-        run: node migrate.js
+        run: node migrate.cjs
 
       - name: Cleanup
         if: always()
