@@ -11,7 +11,9 @@ service cloud.firestore {
     }
     
     function getRole() {
-      return isSignedIn() ? getUserData().role : 'anonymous';
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role 
+        : 'anonymous';
     }
     
     function isSuperAdmin() {
@@ -71,8 +73,8 @@ service cloud.firestore {
       // Allow creation by self if authenticated (for first-time login)
       allow create: if isSignedIn() && request.auth.uid == userId;
       
-      // Support for existing email-based queries (read only for own record)
-      allow read: if isSignedIn() && resource.data.email == request.auth.token.email;
+      // Support for existing email-based queries (read and delete for own record)
+      allow read, delete: if isSignedIn() && resource.data.email == request.auth.token.email;
     }
 
     // Role Permissions: Superadmin writes; all authenticated users can read

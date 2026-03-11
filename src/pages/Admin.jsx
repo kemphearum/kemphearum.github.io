@@ -177,7 +177,11 @@ const Admin = () => {
                             console.log(`Migrating legacy user ${currentUser.email} to UID-keyed document...`);
                             const { id, ref, ...data } = legacyData;
                             await UserService.createUserDoc(data, currentUser.uid);
-                            await UserService.deleteUserDoc(id);
+                            try {
+                                await UserService.deleteUserDoc(id);
+                            } catch (cleanupError) {
+                                console.warn(`Legacy user doc cleanup failed for ${currentUser.email}, but continuing session natively:`, cleanupError);
+                            }
                             userData = await UserService.fetchUserById(currentUser.uid);
                             console.log("Migration successful.");
                         }
