@@ -33,15 +33,16 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 - 📱 Responsive sidebar with mobile drawer
 
 ### Technical Highlights
+- **React Router v7 (SSG)** — Full Static Site Generation for lightning-fast loads and perfect SEO (replaces traditional CSR)
+- **Clean URLs** — Modern navigation with no hashes (`/#/`), including automatic redirection for legacy links
 - **Custom Firebase hooks** (`useFirebaseDoc`, `useFirebaseCollection`) with in-memory caching and request deduplication
 - **ThemeContext** with `ThemeProvider` for global dark/light mode state management
 - **Skeleton loaders** for every data-fetching section
 - **Framer Motion** animations with `AnimatePresence` for smooth transitions
 - **Theme-proof CSS architecture** — all colors use CSS custom properties (`var(--text-primary)`, etc.) ensuring light/dark mode consistency across every component
 - **SCSS Modules** with a shared design system (variables, glassmorphism mixin)
-- **React Router** (`react-router-dom`) for client-side routing
-- **Error Boundary** component for graceful error handling
-- **SEO optimized** with meta tags, semantic HTML, and proper heading hierarchy
+- **Full SEO Optimization** — dynamic meta tags, automated Sitemap/404 handling, and semantic HTML5
+- **Dual Deployment** — Fully automated CI/CD pipeline deploying to both **GitHub Pages** (primary) and **Firebase Hosting** (backup)
 
 ---
 
@@ -49,12 +50,40 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 
 | Category       | Technologies                                              |
 |----------------|----------------------------------------------------------|
-| **Frontend**   | React 19, Vite 7, SCSS Modules, Framer Motion           |
-| **Routing**    | React Router DOM 7                                       |
+| **Core**       | React 19, Vite 7                                         |
+| **Architecture**| React Router v7 (Full SSG / Hybrid)                      |
+| **Styling**    | SCSS Modules, Framer Motion                              |
 | **Backend**    | Firebase (Firestore, Auth)                               |
-| **Key Libs**   | `browser-image-compression`, `dompurify`, `react-markdown`|
-| **Deployment** | GitHub Pages via GitHub Actions                          |
-| **Fonts**      | Inter (Google Fonts)                                     |
+| **State**      | TanStack Query (React Query) v5                          |
+| **Key Libs**   | `lucide-react`, `dompurify`, `react-markdown`            |
+| **Deployment** | GitHub Actions (Auto-SSG + Multi-Cloud Deploy)           |
+
+---
+
+## 🚀 Getting Started
+
+### Installation
+```bash
+git clone https://github.com/kemphearum/portfolio.git
+cd portfolio
+npm install
+```
+
+### Development
+```bash
+npm run dev
+```
+
+### Build & Static Generation
+```bash
+# This generates a full static version in build/client
+npm run build
+```
+
+### Preview
+```bash
+npm run preview
+```
 
 ---
 
