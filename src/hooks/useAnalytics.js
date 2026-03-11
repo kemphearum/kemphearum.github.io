@@ -61,23 +61,28 @@ export const useAnalytics = () => {
 
                 try {
                     const storedGeo = sessionStorage.getItem('analytics_geo');
+                    const hasFailed = sessionStorage.getItem('analytics_geo_failed');
+
                     if (storedGeo) {
                         geoData = JSON.parse(storedGeo);
-                    } else {
-                        const res = await fetch('https://ipapi.co/json/');
+                    } else if (!hasFailed) {
+                        // Use ipwho.is (CORS friendly)
+                        const res = await fetch('https://ipwho.is/');
                         if (res.ok) {
                             const data = await res.json();
                             geoData = {
-                                country_name: data.country_name || 'Unknown',
+                                country_name: data.country || 'Unknown',
                                 city: data.city || 'Unknown',
                                 ip: data.ip || 'Unknown',
                                 country_code: data.country_code || 'UN'
                             };
                             sessionStorage.setItem('analytics_geo', JSON.stringify(geoData));
+                        } else {
+                            sessionStorage.setItem('analytics_geo_failed', 'true');
                         }
                     }
                 } catch (e) {
-                    // Silently fail if blocked by adblocker/network
+                    sessionStorage.setItem('analytics_geo_failed', 'true');
                 }
 
                 // Save to Firestore via Service

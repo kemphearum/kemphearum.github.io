@@ -507,11 +507,13 @@ const Admin = () => {
                 let currentIp = 'Unknown';
                 let locData = { country: 'Unknown', city: 'Unknown' };
                 try {
-                    const ipRes = await fetch('https://ipapi.co/json/');
-                    const ipData = await ipRes.json();
-                    if (ipData.ip) currentIp = ipData.ip;
-                    if (ipData.country_name) locData.country = ipData.country_name;
-                    if (ipData.city) locData.city = ipData.city;
+                    const ipRes = await fetch('https://ipwho.is/');
+                    if (ipRes.ok) {
+                        const ipData = await ipRes.json();
+                        if (ipData.ip) currentIp = ipData.ip;
+                        if (ipData.country) locData.country = ipData.country;
+                        if (ipData.city) locData.city = ipData.city;
+                    }
                 } catch {
                     try {
                         const fallbackRes = await fetch('https://api.ipify.org?format=json');
