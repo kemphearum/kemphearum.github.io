@@ -9,6 +9,11 @@ const PROJECT_ID = process.env.VITE_FIREBASE_PROJECT_ID || 'phearum-info';
 const DIST_DIR = path.resolve(__dirname, '../dist');
 const INDEX_HTML_PATH = path.join(DIST_DIR, 'index.html');
 
+// Social Preview Settings
+const OG_WIDTH = '1200';
+const OG_HEIGHT = '630';
+const FALLBACK_IMAGE = 'https://phearum-info.web.app/og-image.png';
+
 // Helper to fetch data from Firestore REST API
 async function fetchCollection(collectionName) {
     try {
@@ -68,7 +73,6 @@ async function fetchGlobalSettings() {
     }
 }
 
-const FALLBACK_IMAGE = 'https://phearum-info.web.app/og-image.png';
 
 // Helper to inject meta tags into the generic HTML
 function injectMetaTags(html, item, type, isRoot = false) {
@@ -104,8 +108,11 @@ function injectMetaTags(html, item, type, isRoot = false) {
     <meta property="og:url" content="${url}" />
     <meta property="og:site_name" content="Kem Phearum Portfolio" />
     <meta property="og:image" content="${displayImage}" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:width" content="${OG_WIDTH}" />
+    <meta property="og:image:height" content="${OG_HEIGHT}" />
+
+    <!-- Hint for Large Previews -->
+    <meta name="twitter:card" content="summary_large_image" />
 
     <!-- Redirect to Hash Route for SPA -->
     <script>
