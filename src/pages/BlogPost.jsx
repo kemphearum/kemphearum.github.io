@@ -80,13 +80,8 @@ const BlogPost = () => {
 
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Share helpers (Safe for SSR)
-    const [currentUrl, setCurrentUrl] = useState('');
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setCurrentUrl(window.location.origin + '/blog/' + slug);
-        }
-    }, [slug]);
+    // Share helpers (SSR-safe URL construction)
+    const currentUrl = typeof window !== 'undefined' ? (window.location.origin + window.location.pathname) : '';
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(currentUrl).then(() => {

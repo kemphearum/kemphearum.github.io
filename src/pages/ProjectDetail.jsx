@@ -93,13 +93,8 @@ const ProjectDetail = () => {
     }, [lightboxOpen]);
 
 
-    // Share helpers (Safe for SSR)
-    const [currentUrl, setCurrentUrl] = useState('');
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setCurrentUrl(window.location.origin + '/projects/' + slug);
-        }
-    }, [slug]);
+    // Share helpers (SSR-safe URL construction)
+    const currentUrl = typeof window !== 'undefined' ? (window.location.origin + window.location.pathname) : '';
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(currentUrl).then(() => {
