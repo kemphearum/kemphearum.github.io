@@ -20,6 +20,9 @@ async function fetchCollectionSlugs(collectionName: string) {
 
 export default {
     ssr: true, // Enable SSR to allow loaders to run during SSG build
+    future: {
+        v3_lazyRouteDiscovery: false,
+    },
     async prerender() {
         // Pre-render base routes
         const routes = ["/", "/blog", "/projects"];
