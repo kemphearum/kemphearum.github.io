@@ -129,9 +129,13 @@ const Admin = () => {
     const queryClient = useQueryClient();
 
     // Tab & Sidebar State
-    const [activeTab, setActiveTab] = useState(() => localStorage.getItem('adminActiveTab') || 'profile');
-    const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 992);
+    const [activeTab, setActiveTab] = useState(() => {
+        if (typeof window === 'undefined') return 'profile';
+        return localStorage.getItem('adminActiveTab') || 'profile';
+    });
+    const [sidebarOpen, setSidebarOpen] = useState(typeof window !== 'undefined' ? window.innerWidth > 992 : true);
     const [sidebarPersistent, setSidebarPersistent] = useState(() => {
+        if (typeof window === 'undefined') return true;
         const stored = localStorage.getItem('adminSidebarPersistent');
         return stored !== null ? JSON.parse(stored) : true;
     });

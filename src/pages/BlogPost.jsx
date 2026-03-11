@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import BlogService from '../services/BlogService';
 import { useActivity } from '../hooks/useActivity';
-import { Helmet } from 'react-helmet-async';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { calculateReadTime } from '../utils/helpers';
 // eslint-disable-next-line no-unused-vars
@@ -18,6 +17,32 @@ import Footer from '../components/Footer';
 
 import RelatedArticles from '../components/RelatedArticles';
 import styles from './BlogPost.module.scss';
+import { db } from '../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
+export async function loader({ params }) {
+    const q = query(collection(db, 'posts'), where("slug", "==", params.slug));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        return querySnapshot.docs[0].data();
+    }
+    return null;
+}
+
+export function meta({ data }) {
+    if (!data) return [{ title: "Post Not Found | Kem Phearum" }];
+    const tags = [
+        { title: `${data.title} | Blog - Kem Phearum` },
+        { name: "description", content: data.excerpt || 'Read this article by Kem Phearum' },
+        { property: "og:title", content: data.title },
+        { property: "og:description", content: data.excerpt },
+        { property: "og:type", content: "article" },
+    ];
+    if (data.coverImage) {
+        tags.push({ property: "og:image", content: data.coverImage });
+    }
+    return tags;
+}
 
 const BlogPost = () => {
     const { slug } = useParams();
@@ -55,8 +80,14 @@ const BlogPost = () => {
 
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Share helpers
-    const currentUrl = window.location.origin + '/blog/' + slug;
+    // Share helpers (Safe for SSR)
+    const [currentUrl, setCurrentUrl] = useState('');
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setCurrentUrl(window.location.origin + '/blog/' + slug);
+        }
+    }, [slug]);
+
     const handleCopyLink = () => {
         navigator.clipboard.writeText(currentUrl).then(() => {
             setCopied(true);
@@ -133,16 +164,6 @@ const BlogPost = () => {
 
     return (
         <>
-            <Helmet>
-                <title>{post.title} | Blog - Kem Phearum</title>
-                <meta name="description" content={post.excerpt || 'Read this article by Kem Phearum'} />
-                <meta property="og:title" content={post.title} />
-                <meta property="og:description" content={post.excerpt} />
-                <meta property="og:type" content="article" />
-                {post.coverImage && <meta property="og:image" content={post.coverImage} />}
-                {post.coverImage && <meta property="og:image" content={post.coverImage} />}
-            </Helmet>
-
             {/* Reading Progress */}
             <div className={styles.progressBar} style={{ width: `${readProgress}%` }} />
 

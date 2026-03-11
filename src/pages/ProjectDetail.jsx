@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ProjectService from '../services/ProjectService';
 import { useActivity } from '../hooks/useActivity';
-import { Helmet } from 'react-helmet-async';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,6 +15,32 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import RelatedProjects from '../components/RelatedProjects';
 import styles from './ProjectDetail.module.scss';
+import { db } from '../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+
+export async function loader({ params }) {
+    const q = query(collection(db, 'projects'), where("slug", "==", params.slug));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        return querySnapshot.docs[0].data();
+    }
+    return null;
+}
+
+export function meta({ data }) {
+    if (!data) return [{ title: "Project Not Found | Kem Phearum" }];
+    const tags = [
+        { title: `${data.title} | Projects - Kem Phearum` },
+        { name: "description", content: data.description || 'Project details' },
+        { property: "og:title", content: data.title },
+        { property: "og:description", content: data.description },
+        { property: "og:type", content: "article" },
+    ];
+    if (data.imageUrl) {
+        tags.push({ property: "og:image", content: data.imageUrl });
+    }
+    return tags;
+}
 
 const ProjectDetail = () => {
     const { slug } = useParams();
@@ -68,8 +93,14 @@ const ProjectDetail = () => {
     }, [lightboxOpen]);
 
 
-    // Share helpers
-    const currentUrl = window.location.origin + '/projects/' + slug;
+    // Share helpers (Safe for SSR)
+    const [currentUrl, setCurrentUrl] = useState('');
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setCurrentUrl(window.location.origin + '/projects/' + slug);
+        }
+    }, [slug]);
+
     const handleCopyLink = () => {
         navigator.clipboard.writeText(currentUrl).then(() => {
             setCopied(true);
@@ -146,16 +177,6 @@ const ProjectDetail = () => {
 
     return (
         <>
-            <Helmet>
-                <title>{project.title} | Projects - Kem Phearum</title>
-                <meta name="description" content={project.description || 'Project details'} />
-                <meta property="og:title" content={project.title} />
-                <meta property="og:description" content={project.description} />
-                <meta property="og:type" content="article" />
-                {project.imageUrl && <meta property="og:image" content={project.imageUrl} />}
-                {project.imageUrl && <meta property="og:image" content={project.imageUrl} />}
-            </Helmet>
-
             {/* Reading Progress */}
             <div className={styles.progressBar} style={{ width: `${readProgress}%` }} />
 

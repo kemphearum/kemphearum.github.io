@@ -7,6 +7,7 @@ export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }) => {
     const [theme, setTheme] = useState(() => {
+        if (typeof window === 'undefined') return 'dark';
         const saved = localStorage.getItem('portfolio-theme');
         if (saved) return saved;
         return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';

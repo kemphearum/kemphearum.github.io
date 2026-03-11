@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSlug from 'rehype-slug';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import DOMPurify from 'dompurify';
 import { Check, Copy } from 'lucide-react';
 import styles from './MarkdownRenderer.module.scss';
@@ -52,10 +52,13 @@ const CodeBlock = ({ inline, className, children, ...props }) => {
 const MarkdownRenderer = ({ content }) => {
     // Sanitize the content before rendering to prevent XSS. 
     // We allow iframe tags for youtube, tiktok embedded components
-    const cleanContent = DOMPurify.sanitize(content, {
-        ADD_TAGS: ['iframe'],
-        ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling']
-    });
+    const cleanContent = useMemo(() => {
+        if (typeof window === 'undefined') return content;
+        return DOMPurify.sanitize(content, {
+            ADD_TAGS: ['iframe'],
+            ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling']
+        });
+    }, [content]);
 
     return (
         <div className={styles.markdownContent}>
