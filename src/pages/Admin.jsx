@@ -165,7 +165,32 @@ const Admin = () => {
             setUser(currentUser);
             if (currentUser) {
                 try {
-                    const userData = await UserService.fetchUserByEmail(currentUser.email);
+                    // 1. Try fetching by UID first (new standard)
+                    let userData = await UserService.fetchUserById(currentUser.uid);
+
+                    // 2. Fallback to Email (legacy migration)
+                    if (!userData) {
+                        const legacyData = await UserService.fetchUserByEmail(currentUser.email);
+                        if (legacyData) {
+                            console.log(`Migrating legacy user ${currentUser.email} to UID-keyed document...`);
+                            const { id, ref, ...data } = legacyData;
+                            await UserService.createUserDoc(data, currentUser.uid);
+                            await UserService.deleteUserDoc(id);
+                            userData = await UserService.fetchUserById(currentUser.uid);
+                            console.log("Migration successful.");
+                        }
+                    }
+
+                    // 3. Auto-create if still not found
+                    if (!userData) {
+                        const initialRole = currentUser.email === 'kem.phearum@gmail.com' ? 'superadmin' : 'pending';
+                        await UserService.createUserDoc({
+                            email: currentUser.email,
+                            role: initialRole,
+                            isActive: true
+                        }, currentUser.uid);
+                        userData = await UserService.fetchUserById(currentUser.uid);
+                    }
 
                     if (userData) {
                         if (userData.isActive === false) {
@@ -180,29 +205,16 @@ const Admin = () => {
                         setUserId(userData.id);
                         setUserDisplayName(userData.displayName || '');
 
+                        // Enforce Superadmin for the specific email
                         if (currentUser.email === 'kem.phearum@gmail.com' && fetchedRole !== 'superadmin') {
                             fetchedRole = 'superadmin';
                             UserService.updateUserField(userData.id, { role: 'superadmin' }).catch(console.error);
-                        } else if (fetchedRole === 'owner') {
+                        } else if (fetchedRole === 'owner') { // Legacy role name
                             fetchedRole = 'superadmin';
                             UserService.updateUserField(userData.id, { role: 'superadmin' }).catch(console.error);
                         }
 
                         setUserRole(fetchedRole);
-                    } else if (currentUser.email === 'kem.phearum@gmail.com') {
-                        const newId = await UserService.createUserDoc({
-                            email: currentUser.email, role: 'superadmin', isActive: true
-                        });
-                        setUserId(newId);
-                        setUserRole('superadmin');
-                    } else {
-                        try {
-                            const newId = await UserService.createUserDoc({
-                                email: currentUser.email, role: 'pending', isActive: true
-                            });
-                            setUserId(newId);
-                        } catch (createError) { console.error("Failed to auto-create user document:", createError); }
-                        setUserRole('pending');
                     }
                 } catch (error) {
                     console.error("Error fetching user role:", error);
@@ -409,24 +421,39 @@ const Admin = () => {
         e.preventDefault();
         setLoading(true);
         try {
+            let authUser;
             if (isRegistering) {
-                await AuthService.register(email, password);
-                const userDoc = await UserService.fetchUserByEmail(email);
+                const credential = await AuthService.register(email, password);
+                authUser = credential.user;
+                
+                const userDoc = await UserService.fetchUserById(authUser.uid);
                 trackRead(1, 'Checked user existence on registration');
+                
                 if (!userDoc) {
-                    await UserService.createUserDoc({ email, role: 'pending', isActive: true });
+                    await UserService.createUserDoc({ email, role: 'pending', isActive: true }, authUser.uid);
                     trackWrite(1, 'Created user record');
                 }
                 showToast('Account created! You are now logged in.');
             } else {
-                await AuthService.login(email, password);
-                const userDoc = await UserService.fetchUserByEmail(email);
-                trackRead(1, 'Verified user status on login');
-                if (userDoc) {
-                    if (userDoc.isActive === false) {
-                        await AuthService.logout();
-                        throw new Error("Your account has been disabled by an administrator.");
+                const credential = await AuthService.login(email, password);
+                authUser = credential.user;
+                
+                let userDoc = await UserService.fetchUserById(authUser.uid);
+                
+                // Manual migration check (redundant but safe)
+                if (!userDoc) {
+                    userDoc = await UserService.fetchUserByEmail(email);
+                    if (userDoc) {
+                        const { id, ref, ...data } = userDoc;
+                        await UserService.createUserDoc(data, authUser.uid);
+                        await UserService.deleteUserDoc(id);
                     }
+                }
+                
+                trackRead(1, 'Verified user status on login');
+                if (userDoc && userDoc.isActive === false) {
+                    await AuthService.logout();
+                    throw new Error("Your account has been disabled by an administrator.");
                 }
             }
 

@@ -1,76 +1,112 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read for content, projects, experience, and posts
-    match /content/{document=**} { allow read; allow write: if request.auth != null; }
-    match /projects/{document=**} { allow read; allow write: if request.auth != null; }
-    match /experience/{document=**} { allow read; allow write: if request.auth != null; }
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
     
-    // Application Settings (Logo, Page Title, Audit Log Config, etc.)
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function getRole() {
+      return isSignedIn() ? getUserData().role : 'anonymous';
+    }
+    
+    function isSuperAdmin() {
+      return isSignedIn() && (request.auth.token.email == 'kem.phearum@gmail.com' || getRole() == 'superadmin');
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (getRole() == 'admin' || isSuperAdmin());
+    }
+    
+    function isEditor() {
+      return isSignedIn() && (getRole() == 'editor' || isAdmin());
+    }
+
+    // Allow public read for content, projects, experience, and posts
+    match /content/{document=**} { 
+      allow read; 
+      allow write: if isAdmin(); 
+    }
+    
+    match /projects/{document=**} { 
+      allow read; 
+      allow write: if isEditor(); 
+    }
+    
+    match /experience/{document=**} { 
+      allow read; 
+      allow write: if isAdmin(); 
+    }
+    
     // Application Settings (Logo, Page Title, Audit Log Config, etc.)
     match /settings/{document=**} {
       allow read;
-      allow write: if request.auth != null && request.auth.token.email == 'kem.phearum@gmail.com';
+      allow write: if isSuperAdmin();
     }
 
     // Blog Posts Rules
     match /posts/{document=**} { 
       allow read; 
-      allow write: if request.auth != null; 
+      allow write: if isEditor(); 
     }
 
-    // Messages: Public can write (send), only Admin can read
+    // Messages: Public can write (send), only Admin can read/manage
     match /messages/{document=**} {
       allow create: if request.resource.data.keys().hasAll(['name', 'email', 'message', 'createdAt']);
-      allow read, update, delete: if request.auth != null;
+      allow read, update, delete: if isAdmin();
     }
 
     // Users: Highly restricted access
-    match /users/{document=**} {
-      // 1. Superadmin (kem.phearum@gmail.com) has full read/write access to manage all users.
-      // 2. Regular users can only read and update their *own* user document (where the email matches).
-      // 3. New users can create their initial 'pending' record.
-      allow read, write: if request.auth != null && request.auth.token.email == 'kem.phearum@gmail.com';
-      allow read, update: if request.auth != null && resource.data.email == request.auth.token.email;
-      allow create: if request.auth != null && request.resource.data.email == request.auth.token.email;
+    match /users/{userId} {
+      // Superadmin has full access
+      allow read, write: if isSuperAdmin();
+      
+      // Users can manage their own profile (assuming UID-keyed)
+      allow read, update: if isSignedIn() && request.auth.uid == userId;
+      
+      // Allow creation by self if authenticated (for first-time login)
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      
+      // Support for existing email-based queries (read only for own record)
+      allow read: if isSignedIn() && resource.data.email == request.auth.token.email;
     }
 
     // Role Permissions: Superadmin writes; all authenticated users can read
     match /rolePermissions/{document=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.token.email == 'kem.phearum@gmail.com';
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
     }
 
-    // Login Audit Trail: Any authenticated user can append logs; only Superadmin can view/clear/restore them
+    // Login Audit Trail: Any authenticated user can append logs; only Admin can view
     match /auditLogs/{document=**} {
-      allow create: if request.auth != null;
-      allow read, write: if request.auth != null && request.auth.token.email == 'kem.phearum@gmail.com';
+      allow create: if isSignedIn();
+      allow read, write: if isSuperAdmin();
     }
 
-    // Analytics/Visits Tracking: Anyone can log a visit, only admin/superadmin can read
+    // Analytics/Visits Tracking: Anyone can log a visit, only admin can read
     match /visits/{document=**} {
       allow create;
-      allow read, delete, update: if request.auth != null;
+      allow read, delete, update: if isAdmin();
     }
 
-    // Global Activity Tracker: Only authenticated admins can read/write activity metrics
-    // Activity Tracking Rules (Global)
+    // Global Activity Tracker
     match /dailyUsage/{date} {
-      // Allow public to read counters (required for useActivity hook)
-      // Allow public to increment counters for site-wide tracking
       allow read, create, update: if true;
-      allow delete: if request.auth != null;
+      allow delete: if isAdmin();
       
-      // Explicit rule for the logs subcollection
       match /logs/{logId} {
-        allow read, delete: if request.auth != null;
+        allow read, delete: if isAdmin();
         allow create: if true;
       }
     }
       
-    // Logs Collection Group (for site-wide auditing fallback)
+    // Logs Collection Group
     match /{path=**}/logs/{logId} {
-      allow read, delete: if request.auth != null;
+      allow read, delete: if isAdmin();
       allow create: if true;
     }
   }

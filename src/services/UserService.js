@@ -58,9 +58,7 @@ class UserService extends BaseService {
     async removeUser(userRole, userId, trackDelete) {
         if (userRole !== 'superadmin') throw new Error("Only Superadmins can remove users.");
         // We use updateDoc to logically disable them
-        const docRef = doc(db, this.collectionName, userId);
-        await updateDoc(docRef, { isActive: false });
-        if (trackDelete) trackDelete(1, 'Disabled user');
+        await this.update(userId, { isActive: false }, trackDelete);
     }
 
     async sendPasswordReset(userRole, email) {
@@ -94,12 +92,13 @@ class UserService extends BaseService {
             throw new Error(signupData.error?.message || 'Failed to create user in Authentication');
         }
 
-        await addDoc(collection(db, "users"), {
+        const uid = signupData.localId; // Use the UID from Auth
+
+        await this.createUserDoc({
             email: emailLower,
             role: role,
-            isActive: true,
-            createdAt: serverTimestamp()
-        });
+            isActive: true
+        }, uid);
     }
 
     async updateProfile(userId, displayName, trackWrite) {
@@ -143,22 +142,47 @@ class UserService extends BaseService {
     }
 
     /**
-     * Create a new user document (auto-generated ID).
+     * Fetch a user document by its ID (usually Auth UID).
      */
-    async createUserDoc(data) {
-        const docRef = await addDoc(collection(db, this.collectionName), {
+    async fetchUserById(docId) {
+        const docRef = doc(db, this.collectionName, docId);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) return null;
+        return { id: docSnap.id, ref: docSnap.ref, ...docSnap.data() };
+    }
+
+    /**
+     * Create a new user document.
+     * If docId is provided, it uses that as the document ID (suitable for Auth UID).
+     */
+    async createUserDoc(data, docId = null) {
+        const payload = {
             ...data,
             createdAt: serverTimestamp()
-        });
-        return docRef.id;
+        };
+
+        if (docId) {
+            const docRef = doc(db, this.collectionName, docId);
+            await setDoc(docRef, payload);
+            return docId;
+        } else {
+            const docRef = await addDoc(collection(db, this.collectionName), payload);
+            return docRef.id;
+        }
+    }
+
+    /**
+     * Delete a user document.
+     */
+    async deleteUserDoc(docId) {
+        await deleteDoc(doc(db, this.collectionName, docId));
     }
 
     /**
      * Update a specific field on a user document by doc ID.
      */
     async updateUserField(docId, fieldData) {
-        const docRef = doc(db, this.collectionName, docId);
-        await updateDoc(docRef, fieldData);
+        await this.update(docId, fieldData);
     }
 }
 

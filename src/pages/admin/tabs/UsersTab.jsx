@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import UserService from '../../../services/UserService';
-import { Search, Edit, Trash2, Key, X, UserPlus, Users } from 'lucide-react';
+import { Search, Edit, Trash2, Key, X, UserPlus, Users, Clock, History } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { sortData } from '../../../utils/sortData';
 import { tabLabels } from '../components/constants';
@@ -40,6 +40,12 @@ const UsersTab = ({ user, userRole, showToast }) => {
         queryKey: ['rolePermissions'],
         queryFn: () => UserService.fetchRolePermissions(trackRead),
         enabled: userRole === 'superadmin'
+    });
+
+    const { data: userHistory = [], isLoading: historyLoading } = useQuery({
+        queryKey: ['userHistory', viewingUser?.id],
+        queryFn: () => UserService.getHistory(viewingUser.id),
+        enabled: !!viewingUser?.id
     });
 
     const handleUsersSort = useCallback((field) => {
@@ -405,6 +411,78 @@ const UsersTab = ({ user, userRole, showToast }) => {
                                 <span className={styles.detailLabel}>System Universal ID (UID)</span>
                                 <span className={styles.detailValue} style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '0.4rem 0.8rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', display: 'block', wordBreak: 'break-all' }}>{viewingUser.id}</span>
                             </div>
+                        </div>
+
+                        {/* Edit History Section */}
+                        <div style={{ marginTop: '2rem' }}>
+                            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                                <History size={18} style={{ color: 'var(--primary-color)' }} /> Audit & Edit History
+                            </h4>
+                            
+                            {historyLoading ? (
+                                <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                    Loading history...
+                                </div>
+                            ) : userHistory.length === 0 ? (
+                                <div style={{ padding: '1.5rem', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '12px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                    No edit history recorded yet.
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '250px', overflowY: 'auto', paddingRight: '0.5rem', scrollbarWidth: 'thin' }}>
+                                    {userHistory.map((h, i) => (
+                                        <div key={h.id || `history-${i}`} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '0.85rem 1rem' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+                                                <span style={{ 
+                                                    fontSize: '0.7rem', 
+                                                    textTransform: 'uppercase', 
+                                                    fontWeight: 'bold', 
+                                                    padding: '0.2rem 0.5rem', 
+                                                    borderRadius: '4px',
+                                                    background: h.action === 'created' ? 'rgba(16, 185, 129, 0.1)' : (h.action === 'deleted' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(99, 102, 241, 0.1)'),
+                                                    color: h.action === 'created' ? '#10b981' : (h.action === 'deleted' ? '#ef4444' : '#818cf8')
+                                                }}>
+                                                    {h.action}
+                                                </span>
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                                    <Clock size={12} /> {h.timestamp?.seconds ? new Date(h.timestamp.seconds * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Pending...'}
+                                                </span>
+                                            </div>
+                                            <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                                                {h.action === 'updated' && h.newData ? (
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                                        {Object.keys(h.newData).map(k => {
+                                                            const oldVal = h.previousData?.[k];
+                                                            const newVal = h.newData[k];
+                                                            
+                                                            // Format values for display (especially booleans and nulls)
+                                                            const formatVal = (v) => {
+                                                                if (v === null || v === undefined) return 'null';
+                                                                if (typeof v === 'boolean') return v ? 'true' : 'false';
+                                                                if (v?.seconds) return new Date(v.seconds * 1000).toLocaleDateString();
+                                                                return String(v);
+                                                            };
+
+                                                            return (
+                                                                <div key={k} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                                                    <code style={{ background: 'rgba(255,255,255,0.05)', padding: '0.1rem 0.3rem', borderRadius: '3px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{k}</code>
+                                                                    <span style={{ fontSize: '0.8rem', color: '#ff4d4d', textDecoration: 'line-through', opacity: 0.7 }}>{formatVal(oldVal)}</span>
+                                                                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>→</span>
+                                                                    <span style={{ fontSize: '0.8rem', color: '#00e676', fontWeight: 'bold' }}>{formatVal(newVal)}</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <span>Account {h.action}</span>
+                                                )}
+                                            </div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                                by: <span style={{ color: 'var(--text-primary)' }}>{h.user || 'System'}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </BaseModal>

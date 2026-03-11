@@ -36,12 +36,13 @@ export default class BaseService {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 
-    async _saveHistory(docId, action, data) {
+    async _saveHistory(docId, action, newData, previousData = null) {
         try {
             const historyRef = collection(db, this.collectionName, docId, 'history');
             await addDoc(historyRef, {
                 action,
-                dataPayload: data || null,
+                newData: newData || null,
+                previousData: previousData || null,
                 timestamp: serverTimestamp(),
                 user: auth?.currentUser?.email || 'Anonymous'
             });
@@ -60,12 +61,23 @@ export default class BaseService {
     }
 
     async update(id, data, trackWrite = null) {
+        let previousData = null;
+        if (this.useHistory) {
+            const currentDoc = await this.getById(id);
+            if (currentDoc) {
+                previousData = {};
+                Object.keys(data).forEach(key => {
+                    previousData[key] = currentDoc[key];
+                });
+            }
+        }
+
         const docRef = doc(db, this.collectionName, id);
         await updateDoc(docRef, data);
         const itemName = data.title || data.role || data.company || data.name || data.label || id;
         const label = `Updated ${this.collectionName}: ${itemName}`;
         if (trackWrite) trackWrite(1, label, data);
-        if (this.useHistory) await this._saveHistory(id, 'updated', data);
+        if (this.useHistory) await this._saveHistory(id, 'updated', data, previousData);
         return true;
     }
 
