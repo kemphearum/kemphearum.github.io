@@ -12,6 +12,22 @@ const INDEX_HTML_PATH = path.join(DIST_DIR, 'index.html');
 // Social Preview Settings
 const OG_WIDTH = '1200';
 const OG_HEIGHT = '630';
+// Helper to truncate text for meta descriptions
+function createSnippet(text, maxLength = 160) {
+    if (!text) return '';
+    // Basic cleaning: remove common Markdown and extra spaces
+    let plainText = text
+        .replace(/[#*`_~>]/g, '') // Remove simple MD symbols
+        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Keep link text, remove URL
+        .replace(/!\[[^\]]*\]\([^\)]*\)/g, '') // Remove images entirely
+        .replace(/\n+/g, ' ') // Flatten newlines
+        .replace(/\s\s+/g, ' ') // Flatten multiple spaces
+        .trim();
+
+    if (plainText.length <= maxLength) return plainText;
+    return plainText.substring(0, maxLength - 3).trim() + '...';
+}
+
 const FALLBACK_IMAGE = 'https://phearum-info.web.app/og-image.png';
 
 // Helper to fetch data from Firestore REST API
@@ -36,6 +52,7 @@ async function fetchCollection(collectionName) {
                 slug: getField('slug'),
                 title: getField('title'),
                 description: getField('description') || getField('excerpt') || '',
+                content: getField('content') || '',
                 image: getField('coverImage') || getField('imageUrl') || ''
             };
         }).filter(item => item.slug);
@@ -94,7 +111,17 @@ function injectMetaTags(html, item, type, isRoot = false) {
         url += `/${pathPrefix}/${item.slug}`;
     }
 
-    const description = item.description || 'Portfolio of Kem Phearum, an ICT Security professional and developer.';
+    let description = item.description;
+    
+    // If no explicit description/excerpt, try to create one from the content
+    if (!description && item.content) {
+        description = createSnippet(item.content);
+    }
+    
+    // Final fallback
+    if (!description) {
+        description = 'Portfolio of Kem Phearum, an ICT Security professional and developer.';
+    }
 
     // Social media crawlers (LinkedIn/FB) do NOT support Base64 for og:image.
     // We use the item image if it's a real HTTP/HTTPS URL, otherwise the fallback.
