@@ -1,4 +1,22 @@
 import React, { useEffect } from 'react';
+import { db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
+export async function loader() {
+    const docRef = doc(db, 'settings', 'global');
+    const snap = await getDoc(docRef);
+    return snap.exists() ? snap.data() : null;
+}
+
+export function meta({ data }) {
+    const site = data?.site || data || {};
+    const title = `Projects | ${site.title || "Kem Phearum"}`;
+    return [
+        { title },
+        { name: "description", content: "Explore my latest projects and technical work." },
+        { property: "og:title", content: title },
+    ];
+}
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Projects from '../components/Projects';

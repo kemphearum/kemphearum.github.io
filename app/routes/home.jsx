@@ -8,6 +8,25 @@ import FeaturedBlogs from '../../src/components/FeaturedBlogs';
 import Contact from '../../src/components/Contact';
 import Footer from '../../src/components/Footer';
 import Experience from '../../src/components/Experience';
+import SettingsService from '../../src/services/SettingsService';
+
+export async function loader() {
+  return await SettingsService.fetchGlobalSettings();
+}
+
+export function meta({ data }) {
+  const site = data?.site || data || {};
+  const title = site.pageTitle || site.title || "Kem Phearum | Portfolio";
+  const desc = site.pageDescription || site.description || "ICT Security & IT Audit Professional";
+  
+  return [
+    { title },
+    { name: "description", content: desc },
+    { property: "og:title", content: title },
+    { property: "og:description", content: desc },
+    { property: "og:image", content: site.pageFaviconUrl || "/vite.svg" },
+  ];
+}
 
 export default function Home() {
   // Track scroll position to save the active section

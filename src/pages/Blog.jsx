@@ -1,5 +1,23 @@
 
 import React, { useState } from 'react';
+import { db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
+export async function loader() {
+    const docRef = doc(db, 'settings', 'global');
+    const snap = await getDoc(docRef);
+    return snap.exists() ? snap.data() : null;
+}
+
+export function meta({ data }) {
+    const site = data?.site || data || {};
+    const title = `Blog | ${site.title || "Kem Phearum"}`;
+    return [
+        { title },
+        { name: "description", content: "Latest thoughts, tutorials, and project updates." },
+        { property: "og:title", content: title },
+    ];
+}
 import { useQuery } from '@tanstack/react-query';
 import BlogService from '../services/BlogService';
 import SettingsService from '../services/SettingsService';
