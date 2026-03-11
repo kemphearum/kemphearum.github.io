@@ -158,6 +158,7 @@
 }
 
 .videoWrapper {
+    display: block;
     position: relative;
     padding-bottom: 56.25%;
     /* 16:9 */
@@ -175,4 +176,11 @@
         width: 100%;
         height: 100%;
     }
+}
+
+.iframeWrapper {
+    display: block;
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    overflow: hidden;
 }

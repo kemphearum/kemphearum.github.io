@@ -4,6 +4,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "react-router";
 import ErrorBoundary from '../src/components/ErrorBoundary';
 import { ThemeProvider } from '../src/context/ThemeContext';
@@ -15,6 +16,11 @@ import SettingsService from '../src/services/SettingsService';
 import AnimatedBackground from '../src/components/AnimatedBackground';
 import '../src/styles/global.scss';
 import { useAnalytics } from '../src/hooks/useAnalytics';
+
+export async function loader() {
+  const globalSettings = await SettingsService.fetchGlobalSettings();
+  return globalSettings;
+}
 
 export function Layout({ children }) {
   return (
@@ -43,13 +49,14 @@ export function Layout({ children }) {
   );
 }
 
-function SettingsApplier({ children }) {
+function SettingsApplier({ children, initialSettings }) {
   useAnalytics();
 
   const { data: globalConfig } = useQuery({
     queryKey: ['settings', 'global'],
     queryFn: () => SettingsService.fetchGlobalSettings(),
-    staleTime: 1000 * 60 * 5
+    staleTime: 1000 * 60 * 5,
+    initialData: initialSettings
   });
 
   useEffect(() => {
@@ -126,6 +133,8 @@ function SettingsApplier({ children }) {
 }
 
 export default function App() {
+  const loaderData = useLoaderData();
+
   useEffect(() => {
     // Redirect hash-based URLs from the old HashRouter to new clean URLs
     if (typeof window !== 'undefined' && window.location.hash.startsWith('#/')) {
@@ -135,7 +144,7 @@ export default function App() {
   }, []);
 
   return (
-    <SettingsApplier>
+    <SettingsApplier initialSettings={loaderData}>
       <Outlet />
     </SettingsApplier>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import rehypeSlug from 'rehype-slug';
@@ -50,15 +50,21 @@ const CodeBlock = ({ inline, className, children, ...props }) => {
 };
 
 const MarkdownRenderer = ({ content }) => {
+    const [mounted, setMounted] = useState(false);
+    
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     // Sanitize the content before rendering to prevent XSS. 
-    // We allow iframe tags for youtube, tiktok embedded components
+    // We only sanitize on the client after mount to ensure the initial hydration matches the server's raw string
     const cleanContent = useMemo(() => {
-        if (typeof window === 'undefined') return content;
+        if (!mounted || typeof window === 'undefined') return content;
         return DOMPurify.sanitize(content, {
             ADD_TAGS: ['iframe'],
             ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling']
         });
-    }, [content]);
+    }, [content, mounted]);
 
     return (
         <div className={styles.markdownContent}>
@@ -68,7 +74,11 @@ const MarkdownRenderer = ({ content }) => {
                     code: CodeBlock,
                     iframe: ({ node, allowFullScreen, allowfullscreen, ...props }) => {
                         const isFullScreen = allowFullScreen === "true" || allowFullScreen === true || allowfullscreen === "true" || allowfullscreen === "";
-                        return <iframe {...props} allowFullScreen={isFullScreen} />;
+                        return (
+                            <span className={styles.iframeWrapper}>
+                                <iframe {...props} allowFullScreen={isFullScreen} />
+                            </span>
+                        );
                     },
                     a: ({ ...props }) => {
                         const url = props.href;
@@ -77,18 +87,18 @@ const MarkdownRenderer = ({ content }) => {
                             const ytMatch = url.match(/(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/i);
                             if (ytMatch) {
                                 return (
-                                    <div className={styles.videoWrapper}>
+                                    <span className={styles.videoWrapper}>
                                         <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${ytMatch[1]}`} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen={true}></iframe>
-                                    </div>
+                                    </span>
                                 );
                             }
                             // TikTok
                             const tkMatch = url.match(/tiktok\.com\/@.*\/video\/(\d+)/i);
                             if (tkMatch) {
                                 return (
-                                    <div className={styles.videoWrapper}>
+                                    <span className={styles.videoWrapper}>
                                         <iframe src={`https://www.tiktok.com/embed/v2/${tkMatch[1]}`} style={{ width: '100%', height: '100%' }} frameBorder="0" allow="encrypted-media;" allowFullScreen={true}></iframe>
-                                    </div>
+                                    </span>
                                 );
                             }
                             // Facebook video
@@ -96,9 +106,9 @@ const MarkdownRenderer = ({ content }) => {
                             if (fbMatch) {
                                 const encodedUrl = encodeURIComponent(url);
                                 return (
-                                    <div className={styles.videoWrapper}>
+                                    <span className={styles.videoWrapper}>
                                         <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodedUrl}&show_text=0&width=560`} width="100%" height="100%" style={{ border: 'none', overflow: 'hidden' }} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
-                                    </div>
+                                    </span>
                                 );
                             }
                         }
