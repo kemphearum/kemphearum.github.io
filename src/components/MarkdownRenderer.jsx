@@ -72,11 +72,10 @@ const MarkdownRenderer = ({ content }) => {
                 rehypePlugins={[rehypeRaw, rehypeSlug]}
                 components={{
                     code: CodeBlock,
-                    iframe: ({ node, allowFullScreen, allowfullscreen, ...props }) => {
-                        const isFullScreen = allowFullScreen === "true" || allowFullScreen === true || allowfullscreen === "true" || allowfullscreen === "";
+                    iframe: ({ node, allowFullScreen: _, allowfullscreen: __, ...props }) => {
                         return (
                             <span className={styles.iframeWrapper}>
-                                <iframe {...props} allowFullScreen={isFullScreen} />
+                                <iframe {...props} allowFullScreen={true} />
                             </span>
                         );
                     },

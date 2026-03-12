@@ -2,7 +2,9 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { analytics } from '../firebase';
 import { logEvent } from 'firebase/analytics';
-import AnalyticsService from '../services/AnalyticsService';
+import { AnalyticsService } from '../services/AnalyticsService';
+// Local reference to avoid some scope/minification issues
+const analyticsSvc = AnalyticsService;
 import { fetchGeoData } from '../utils/geoUtils';
 import { parseUserAgent, isReturningVisitor } from '../utils/uaUtils';
 
@@ -85,7 +87,7 @@ export const useAnalytics = () => {
                     timestamp: new Date()
                 };
 
-                const visitId = await AnalyticsService.logVisit(visitRecord);
+                const visitId = await analyticsSvc.logVisit(visitRecord);
                 
                 // Store visit ID to update duration on cleanup
                 if (visitId) {
@@ -114,7 +116,7 @@ export const useAnalytics = () => {
             
             // Only update if they stayed for more than 2 seconds (ignore bounces/skips)
             if (visitId && durationSeconds > 2) {
-                AnalyticsService.updateVisitDuration(visitId, durationSeconds).catch(() => {});
+                analyticsSvc.updateVisitDuration(visitId, durationSeconds).catch(() => {});
                 sessionStorage.removeItem(`last_visit_id_${path}`);
             }
         };

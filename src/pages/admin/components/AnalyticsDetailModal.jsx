@@ -1,5 +1,6 @@
 import React from 'react';
-import { TrendingUp, Globe, Monitor, FileText, MapPin, Share2, RefreshCw } from 'lucide-react';
+import { TrendingUp, Globe, Monitor, FileText, MapPin, Share2, RefreshCw, Users, UserCheck, Calendar } from 'lucide-react';
+import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import styles from '../../Admin.module.scss';
 import BaseModal from './BaseModal';
 
@@ -19,6 +20,7 @@ const AnalyticsDetailModal = ({
     analyticsLogsLoading,
     analyticsLogs = [],
     analyticsLogsTotal,
+    quotaExceeded = false
 }) => {
     if (!analyticsDetail) return null;
 
@@ -44,10 +46,17 @@ const AnalyticsDetailModal = ({
                         {analyticsDetail === 'pages' && <><FileText size={24} /> Content Performance Metrics</>}
                         {analyticsDetail === 'cities' && <><MapPin size={24} /> Regional Engagement Breakdown</>}
                         {analyticsDetail === 'referrers' && <><Share2 size={24} /> Acquisition & Traffic Sources</>}
+                        {analyticsDetail === 'retention' && <><Users size={24} /> Audience Loyalty & Retention Analysis</>}
                     </h3>
                     <p>
                         Detailed insights based on {analyticsLogsTotal || analyticsLogs.length} tracked interactions
                     </p>
+                    {quotaExceeded && (
+                        <div style={{ marginTop: '0.5rem', color: '#ffab40', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Activity size={14} /> 
+                            <span>Firestore quota reached. Showing partial or local data.</span>
+                        </div>
+                    )}
                 </>
             }
             footerContent={
@@ -113,64 +122,98 @@ const AnalyticsDetailModal = ({
                             </div>
                         )}
                     </div>
-                ) : ['countries', 'devices', 'pages', 'cities', 'referrers'].includes(analyticsDetail) ? (
-                    <div style={{ padding: '1.5rem 1rem' }}>
-                        <div style={{ background: 'rgba(255,255,255,0.015)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)', overflowX: 'auto' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '700' }}>
-                                    Metrics Distribution Report
-                                </h4>
-                                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
-                                    Analysis of {analyticsLogs.length} snapshots
-                                </span>
-                            </div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '400px' }}>
-                                <thead>
-                                    <tr style={{ textAlign: 'left', background: 'rgba(0,0,0,0.2)' }}>
-                                        <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.7rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', width: '50%' }}>
-                                            {analyticsDetail === 'countries' ? 'Country Grouping' : analyticsDetail === 'devices' ? 'Device Profile' : analyticsDetail === 'pages' ? 'Content Identifier (URL)' : analyticsDetail === 'cities' ? 'Geographic Location' : 'Visitor Origin Header'}
-                                        </th>
-                                        <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.7rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'center', opacity: 0.8, width: '20%' }}>Events</th>
-                                        <th style={{ padding: '0.85rem 1.25rem', fontSize: '0.7rem', letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', textAlign: 'right', opacity: 0.8, width: '30%' }}>Volume Share</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {(() => {
-                                        const groupMap = {};
-                                        analyticsLogs.forEach(v => {
-                                            let key;
-                                            if (analyticsDetail === 'countries') key = v.country || 'Unknown';
-                                            else if (analyticsDetail === 'devices') { const d = v.device || 'unknown'; key = d.charAt(0).toUpperCase() + d.slice(1); }
-                                            else if (analyticsDetail === 'pages') key = v.path || '/';
-                                            else if (analyticsDetail === 'cities') { const city = v.city || 'Unknown'; const country = v.country || ''; key = `${city}, ${country}`.replace(/, $/, ''); }
-                                            else key = v.referrer || 'Direct';
-                                            groupMap[key] = (groupMap[key] || 0) + 1;
-                                        });
-                                        const total = analyticsLogs.length || 1;
-                                        return Object.entries(groupMap)
-                                            .sort(([, a], [, b]) => b - a)
-                                            .map(([name, count]) => (
-                                                <tr key={name} style={{ transition: 'all 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                                                    <td style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.03)', fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                                                        {analyticsDetail === 'referrers' && name === 'Direct' ? 'Direct Navigation / Bookmarked' : name}
-                                                    </td>
-                                                    <td style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.03)', textAlign: 'center' }}>
-                                                        <span style={{ display: 'inline-block', padding: '0.25rem 0.6rem', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', fontWeight: 700, fontSize: '0.85rem' }}>{count.toLocaleString()}</span>
-                                                    </td>
-                                                    <td style={{ padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.03)', textAlign: 'right' }}>
-                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                                                            <span style={{ fontWeight: 700, color: 'var(--primary-color)' }}>{((count / total) * 100).toFixed(1)}%</span>
-                                                            <div style={{ width: '80px', height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
-                                                                <div style={{ width: `${(count / total) * 100}%`, height: '100%', background: 'var(--primary-color)', boxShadow: '0 0 10px var(--primary-color)' }}></div>
-                                                            </div>
-                                                        </div>
-                                                    </td>
+                ) : analyticsDetail === 'retention' ? (
+                    <div style={{ padding: '1.5rem' }}>
+                        {(() => {
+                            // Calculate Daily Trends
+                            const dailyRetention = {};
+                            const ipFrequency = {};
+                            analyticsLogs.forEach(v => {
+                                const date = v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toISOString().split('T')[0] : v.date;
+                                if (date) {
+                                    if (!dailyRetention[date]) dailyRetention[date] = { date, new: 0, returning: 0 };
+                                    if (v.isReturning) dailyRetention[date].returning++;
+                                    else dailyRetention[date].new++;
+                                }
+                                if (v.ip) {
+                                    if (!ipFrequency[v.ip]) ipFrequency[v.ip] = { ip: v.ip, count: 0, first: v.timestamp, last: v.timestamp, country: v.country, city: v.city };
+                                    ipFrequency[v.ip].count++;
+                                    if (v.timestamp?.seconds && (!ipFrequency[v.ip].last?.seconds || v.timestamp.seconds > ipFrequency[v.ip].last.seconds)) ipFrequency[v.ip].last = v.timestamp;
+                                    if (v.timestamp?.seconds && (!ipFrequency[v.ip].first?.seconds || v.timestamp.seconds < ipFrequency[v.ip].first.seconds)) ipFrequency[v.ip].first = v.timestamp;
+                                }
+                            });
+                            const trends = Object.values(dailyRetention).sort((a, b) => a.date.localeCompare(b.date));
+                            const frequentVisitors = Object.values(ipFrequency).filter(v => v.count > 1).sort((a, b) => b.count - a.count);
+                            const totalReturning = analyticsLogs.filter(v => v.isReturning).length;
+                            const uniqueReturning = Object.values(ipFrequency).filter(v => v.count > 1).length;
+                            const avgVisits = uniqueReturning ? (totalReturning / uniqueReturning).toFixed(1) : 0;
+
+                            return (
+                                <>
+                                    <div className={styles.analyticsGrid} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                                        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><UserCheck size={14} /> Total Returning</div>
+                                            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#7c4dff' }}>{totalReturning}</div>
+                                        </div>
+                                        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><Users size={14} /> Unique Returnees</div>
+                                            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--primary-color)' }}>{uniqueReturning}</div>
+                                        </div>
+                                        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><TrendingUp size={14} /> Avg. Visits / User</div>
+                                            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#ff6090' }}>{avgVisits}</div>
+                                        </div>
+                                    </div>
+
+                                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem' }}><Calendar size={18} /> Daily Retention Trends</h4>
+                                    <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '1.5rem', marginBottom: '2.5rem' }}>
+                                        <ResponsiveContainer width="100%" height={300}>
+                                            <LineChart data={trends}>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                                                <XAxis dataKey="date" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickFormatter={(v) => { const d = new Date(v + 'T00:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }} />
+                                                <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
+                                                <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} />
+                                                <Legend />
+                                                <Line type="monotone" dataKey="new" stroke="#64ffda" strokeWidth={3} name="New Visitors" dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                                <Line type="monotone" dataKey="returning" stroke="#7c4dff" strokeWidth={3} name="Returning Visitors" dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+
+                                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem' }}><UserCheck size={18} /> Returning Visitor Frequency</h4>
+                                    <div className={styles.tableWrapper} style={{ borderRadius: '16px', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+                                            <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
+                                                <tr>
+                                                    <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>Visitor IP</th>
+                                                    <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>Location</th>
+                                                    <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' }}>Total Visits</th>
+                                                    <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'right' }}>Latest Activity</th>
                                                 </tr>
-                                            ));
-                                    })()}
-                                </tbody>
-                            </table>
-                        </div>
+                                            </thead>
+                                            <tbody>
+                                                {frequentVisitors.length > 0 ? frequentVisitors.slice(0, 50).map((pv, idx) => (
+                                                    <tr key={pv.ip} style={{ transition: 'background 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                        <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', fontFamily: 'monospace', fontSize: '0.85rem' }}>{pv.ip}</td>
+                                                        <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.85rem' }}>
+                                                            {pv.city && pv.country ? `${pv.city}, ${pv.country}` : pv.country || 'Unknown'}
+                                                        </td>
+                                                        <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'center' }}>
+                                                            <span style={{ background: 'rgba(100, 255, 218, 0.1)', color: 'var(--primary-color)', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 'bold' }}>{pv.count}</span>
+                                                        </td>
+                                                        <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'right', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                            {pv.last?.seconds ? new Date(pv.last.seconds * 1000).toLocaleString() : 'Recent'}
+                                                        </td>
+                                                    </tr>
+                                                )) : (
+                                                    <tr><td colSpan={4} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>No frequent visitors identified in this range.</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </>
+                            );
+                        })()}
                     </div>
                 ) : null}
             </div>

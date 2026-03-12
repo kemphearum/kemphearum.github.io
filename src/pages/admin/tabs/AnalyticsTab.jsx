@@ -25,6 +25,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     const [analyticsLogs, setAnalyticsLogs] = useState([]);
     const [analyticsLogsLoading, setAnalyticsLogsLoading] = useState(false);
     const [analyticsLogsTotal, setAnalyticsLogsTotal] = useState(0);
+    const [quotaExceeded, setQuotaExceeded] = useState(false);
 
     const {
         data: visits = [],
@@ -35,9 +36,19 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     } = useQuery({
         queryKey: ['analytics', analyticsRange.start, analyticsRange.end],
         queryFn: async () => {
-            return await AnalyticsService.fetchAnalytics(userRole, analyticsRange, trackRead);
+            setQuotaExceeded(false);
+            try {
+                return await AnalyticsService.fetchAnalytics(userRole, analyticsRange, trackRead);
+            } catch (error) {
+                if (error.message === 'QUOTA_EXCEEDED') {
+                    setQuotaExceeded(true);
+                    return [];
+                }
+                throw error;
+            }
         },
-        enabled: (userRole === 'superadmin' || userRole === 'admin')
+        enabled: (userRole === 'superadmin' || userRole === 'admin'),
+        retry: (failureCount, error) => error.message !== 'QUOTA_EXCEEDED' && failureCount < 3
     });
 
     const handleAnalyticsDetail = useCallback(async (type) => {
@@ -45,14 +56,30 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         setAnalyticsLogsLoading(true);
         setAnalyticsLogs([]);
         setAnalyticsLogsTotal(0);
+
+        // Optimization: If we already have visits data loaded for this range, reuse it
+        if (visits && visits.length > 0) {
+            setAnalyticsLogs(visits);
+            setAnalyticsLogsTotal(visits.length);
+            setAnalyticsLogsLoading(false);
+            return;
+        }
+
         try {
             const result = await AnalyticsService.fetchAnalyticsDetails(userRole, analyticsRange, type, 200, trackRead);
+            if (result.quotaExceeded) {
+                setQuotaExceeded(true);
+                showToast("Firestore quota exceeded. Showing partial data.", "warning");
+            }
             setAnalyticsLogsTotal(result.total);
             setAnalyticsLogs(result.logs);
-        } catch (error) { console.error("Error fetching analytics details:", error); showToast("Failed to load details.", "error"); }
-        finally { setAnalyticsLogsLoading(false); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userRole, analyticsRange, showToast]);
+        } catch (error) { 
+            console.error("Error fetching analytics details:", error); 
+            showToast("Failed to load details.", "error"); 
+        } finally { 
+            setAnalyticsLogsLoading(false); 
+        }
+    }, [userRole, analyticsRange, showToast, visits, trackRead]);
 
     const handleRefreshAll = useCallback(async () => {
         try {
@@ -164,8 +191,27 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
     const retentionData = useMemo(() => {
         let n = 0, r = 0;
-        visits.forEach(v => { if (v.isReturning) r++; else n++; });
-        return [{ name: 'New', value: n }, { name: 'Returning', value: r }];
+        const dailyRetention = {};
+        
+        visits.forEach(v => {
+            const date = v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toISOString().split('T')[0] : v.date;
+            if (date) {
+                if (!dailyRetention[date]) dailyRetention[date] = { date, new: 0, returning: 0 };
+                if (v.isReturning) {
+                    r++;
+                    dailyRetention[date].returning++;
+                } else {
+                    n++;
+                    dailyRetention[date].new++;
+                }
+            }
+        });
+
+        const trends = Object.values(dailyRetention).sort((a, b) => a.date.localeCompare(b.date));
+        return {
+            pie: [{ name: 'New', value: n }, { name: 'Returning', value: r }],
+            trends
+        };
     }, [visits]);
 
     const topPages = useMemo(() => {
@@ -258,6 +304,28 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                     </div>
                 }
             />
+
+            {quotaExceeded && (
+                <div style={{ 
+                    background: 'rgba(255, 171, 64, 0.1)', 
+                    border: '1px solid rgba(255, 171, 64, 0.3)', 
+                    borderRadius: '12px', 
+                    padding: '1rem 1.5rem', 
+                    marginBottom: '2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    color: '#ffab40'
+                }}>
+                    <Activity size={20} />
+                    <div>
+                        <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Firestore Quota Exceeded</strong>
+                        <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.9 }}>
+                            The daily free tier limit for Firestore has been reached. Some analytics data may be missing until the quota resets (usually at midnight PST).
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Stat Summary Grid */}
             <div className={styles.analyticsGrid} style={{ marginBottom: '2.5rem' }}>
@@ -452,12 +520,13 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 <ChartCard
                     title="Visitor Retention"
                     icon={Users}
+                    onViewDetails={() => handleAnalyticsDetail('retention')}
                 >
-                    {retentionData.length > 0 ? (
+                    {retentionData.pie.length > 0 ? (
                         <>
                             <ResponsiveContainer width="100%" height={250}>
                                 <PieChart>
-                                    <Pie data={retentionData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
+                                    <Pie data={retentionData.pie} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
                                         <Cell fill="#64ffda" />
                                         <Cell fill="#7c4dff" />
                                     </Pie>
@@ -465,7 +534,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                                 </PieChart>
                             </ResponsiveContainer>
                             <ul className={styles.legendList}>
-                                {retentionData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: i === 0 ? "#64ffda" : "#7c4dff" }} />{entry.name} ({entry.value})</li>))}
+                                {retentionData.pie.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: i === 0 ? "#64ffda" : "#7c4dff" }} />{entry.name} ({entry.value})</li>))}
                             </ul>
                         </>
                     ) : (<div className={styles.emptyState}><p>No retention data.</p></div>)}
@@ -499,6 +568,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 analyticsLogsLoading={analyticsLogsLoading}
                 analyticsLogs={analyticsLogs}
                 analyticsLogsTotal={analyticsLogsTotal}
+                quotaExceeded={quotaExceeded}
             />
         </div>
     );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLoaderData } from 'react-router-dom';
 import BlogService from '../services/BlogService';
 import { useActivity } from '../hooks/useActivity';
 import MarkdownRenderer from '../components/MarkdownRenderer';
@@ -46,6 +46,7 @@ export function meta({ data }) {
 
 const BlogPost = () => {
     const { slug } = useParams();
+    const loaderData = useLoaderData();
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [readProgress, setReadProgress] = useState(0);
     const [copied, setCopied] = useState(false);
@@ -60,6 +61,7 @@ const BlogPost = () => {
             trackRead(0, `Viewed blog: ${postData.title}`);
             return postData;
         },
+        initialData: loaderData || undefined,
         retry: false
     });
 

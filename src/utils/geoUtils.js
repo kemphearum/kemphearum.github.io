@@ -20,19 +20,18 @@ export const fetchGeoData = async () => {
 
     // 3. Fallback Chain
     const providers = [
-        // Provider 1: ipwho.org (New Premium Provider)
+        // Provider 1: geo.ipify.org (Premium) - CORS Friendly
         async () => {
-            const apiKey = import.meta.env.VITE_IPWHO_API_KEY;
-            if (!apiKey) throw new Error('API Key missing');
-            const res = await fetch(`https://ipwho.org/api/all?key=${apiKey}`);
+            const apiKey = import.meta.env.VITE_IPIFY_API_KEY;
+            if (!apiKey) throw new Error('Ipify API Key missing');
+            const res = await fetch(`https://geo.ipify.org/api/v2/country,city?apiKey=${apiKey}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const d = await res.json();
-            if (!d.success) throw new Error(d.message || 'API Error');
             return {
-                country_name: d.data.geoLocation.country || 'Unknown',
-                city: d.data.geoLocation.city || 'Unknown',
-                ip: d.data.ip || 'Unknown',
-                country_code: d.data.geoLocation.countryCode || 'UN'
+                country_name: d.location?.country || 'Unknown',
+                city: d.location?.city || 'Unknown',
+                ip: d.ip || 'Unknown',
+                country_code: d.location?.country || 'UN'
             };
         },
         // Provider 2: ipwho.is (Free fallback)
@@ -47,7 +46,7 @@ export const fetchGeoData = async () => {
                 country_code: d.country_code || 'UN'
             };
         },
-        // Provider 3: ipify (Final fallback for IP address only)
+        // Provider 3: api.ipify.org (Final fallback for IP only)
         async () => {
             const res = await fetch('https://api.ipify.org?format=json');
             if (!res.ok) throw new Error(`HTTP ${res.status}`);

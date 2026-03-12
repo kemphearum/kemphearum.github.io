@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import { getTodayDateKey } from '../utils/dateUtils';
 import { fetchGeoData } from '../utils/geoUtils';
-import { ActivityContext } from '../context/ActivityContextValue';
+import { useTheme } from '../context/ThemeContext';
+import { useActivity } from '../hooks/useActivity';
 import { getSessionId, getDeviceType } from '../hooks/useAnalytics';
 import { useQueryClient } from '@tanstack/react-query';
 import SettingsService from '../services/SettingsService';
