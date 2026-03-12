@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLoaderData } from 'react-router';
 import ProjectService from '../services/ProjectService';
 import { useActivity } from '../hooks/useActivity';
 import MarkdownRenderer from '../components/MarkdownRenderer';
@@ -44,6 +43,7 @@ export function meta({ data }) {
 
 const ProjectDetail = () => {
     const { slug } = useParams();
+    const loaderData = useLoaderData();
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [readProgress, setReadProgress] = useState(0);
     const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -59,6 +59,7 @@ const ProjectDetail = () => {
             trackRead(0, `Viewed project: ${projectData.title}`);
             return projectData;
         },
+        initialData: loaderData || undefined,
         retry: false
     });
 
