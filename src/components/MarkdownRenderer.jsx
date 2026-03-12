@@ -62,7 +62,7 @@ const MarkdownRenderer = ({ content }) => {
         if (!mounted || typeof window === 'undefined') return content;
         return DOMPurify.sanitize(content, {
             ADD_TAGS: ['iframe'],
-            ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling']
+            ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling', 'width', 'height', 'style']
         });
     }, [content, mounted]);
 
@@ -100,13 +100,27 @@ const MarkdownRenderer = ({ content }) => {
                                     </span>
                                 );
                             }
-                            // Facebook video
-                            const fbMatch = url.match(/facebook\.com\/.*\/videos\/(\d+)/i);
-                            if (fbMatch) {
+                            // Facebook (Post or Video)
+                            const fbMatch = url.match(/facebook\.com\/(?:.*\/videos\/(\d+)|([a-zA-Z0-9.]+)\/posts\/([a-zA-Z0-9]+)|permalink\.php\?story_fbid=([a-zA-Z0-9]+)&id=([a-zA-Z0-9]+))/i);
+                            if (fbMatch || url.includes('facebook.com')) {
                                 const encodedUrl = encodeURIComponent(url);
+                                const isVideo = url.includes('/videos/');
+                                const fbSrc = isVideo 
+                                    ? `https://www.facebook.com/plugins/video.php?href=${encodedUrl}&show_text=0&width=560`
+                                    : `https://www.facebook.com/plugins/post.php?href=${encodedUrl}&show_text=true&width=500`;
+
                                 return (
-                                    <span className={styles.videoWrapper}>
-                                        <iframe src={`https://www.facebook.com/plugins/video.php?href=${encodedUrl}&show_text=0&width=560`} width="100%" height="100%" style={{ border: 'none', overflow: 'hidden' }} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                                    <span className={isVideo ? styles.videoWrapper : styles.iframeWrapper}>
+                                        <iframe 
+                                            src={fbSrc} 
+                                            width="100%" 
+                                            height={isVideo ? "100%" : "auto"} 
+                                            style={{ border: 'none', overflow: 'hidden', minHeight: isVideo ? 'none' : '500px' }} 
+                                            scrolling="no" 
+                                            frameBorder="0" 
+                                            allowFullScreen={true} 
+                                            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                                        ></iframe>
                                     </span>
                                 );
                             }
