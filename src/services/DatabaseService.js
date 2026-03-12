@@ -76,7 +76,46 @@ class DatabaseService {
                 if (trackRead) trackRead(querySnapshot.size, `Exported ${collName}`);
                 if (!querySnapshot.empty) {
                     exportData.collections[collName] = {};
-                    querySnapshot.forEach((d) => { exportData.collections[collName][d.id] = d.data(); });
+                    
+                    for (const d of querySnapshot.docs) {
+                        exportData.collections[collName][d.id] = d.data();
+                        
+                        // Check for history subcollections
+                        if (['posts', 'projects', 'experience', 'content', 'users'].includes(collName)) {
+                            try {
+                                const historyQ = query(collection(db, collName, d.id, 'history'));
+                                const historySnap = await getDocs(historyQ);
+                                if (!historySnap.empty) {
+                                    if (trackRead) trackRead(historySnap.size, `Exported ${collName}/${d.id}/history`);
+                                    const historyPath = `${collName}/${d.id}/history`;
+                                    exportData.collections[historyPath] = {};
+                                    historySnap.forEach(h => {
+                                        exportData.collections[historyPath][h.id] = h.data();
+                                    });
+                                }
+                            } catch (e) {
+                                console.warn(`Could not export history for ${collName}/${d.id}:`, e);
+                            }
+                        }
+
+                        // Check for logs subcollections under dailyUsage
+                        if (collName === 'dailyUsage') {
+                            try {
+                                const logsQ = query(collection(db, collName, d.id, 'logs'));
+                                const logsSnap = await getDocs(logsQ);
+                                if (!logsSnap.empty) {
+                                    if (trackRead) trackRead(logsSnap.size, `Exported ${collName}/${d.id}/logs`);
+                                    const logsPath = `${collName}/${d.id}/logs`;
+                                    exportData.collections[logsPath] = {};
+                                    logsSnap.forEach(l => {
+                                        exportData.collections[logsPath][l.id] = l.data();
+                                    });
+                                }
+                            } catch (e) {
+                                console.warn(`Could not export logs for ${collName}/${d.id}:`, e);
+                            }
+                        }
+                    }
                 }
             } catch (colError) {
                 console.warn(`Skipping collection ${collName}:`, colError);

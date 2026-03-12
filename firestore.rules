@@ -67,11 +67,22 @@ service cloud.firestore {
       // Superadmin has full access
       allow read, write: if isSuperAdmin();
       
-      // Users can manage their own profile (assuming UID-keyed)
-      allow read, update: if isSignedIn() && request.auth.uid == userId;
+      // Users can read their own profile (assuming UID-keyed)
+      allow read: if isSignedIn() && request.auth.uid == userId;
+
+      // Users can ONLY update safe fields (like displayName) on their own profile.
+      // They CANNOT modify role, isActive, or email.
+      allow update: if isSignedIn() 
+                    && request.auth.uid == userId
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                        .hasAny(['role', 'isActive', 'email']);
       
-      // Allow creation by self if authenticated (for first-time login)
-      allow create: if isSignedIn() && request.auth.uid == userId;
+      // Secure creation: role must be 'pending', isActive must be true, and email must match auth
+      allow create: if isSignedIn() 
+                    && request.auth.uid == userId
+                    && request.resource.data.role == 'pending'
+                    && request.resource.data.isActive == true
+                    && request.resource.data.email == request.auth.token.email;
       
       // Support for existing email-based queries (read and delete for own record)
       allow read, delete: if isSignedIn() && resource.data.email == request.auth.token.email;
@@ -97,7 +108,10 @@ service cloud.firestore {
 
     // Global Activity Tracker
     match /dailyUsage/{date} {
-      allow read, create, update: if true;
+      allow read, create: if true;
+      allow update: if true 
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['reads', 'writes', 'deletes', 'lastUpdated']);
       allow delete: if isAdmin();
       
       match /logs/{logId} {
