@@ -67,7 +67,8 @@ export default {
         blogSlugs.forEach((slug: string) => routes.push(`/blog/${slug}`));
         projectSlugs.forEach((slug: string) => routes.push(`/projects/${slug}`));
 
-        console.log(`[Prerender] Final routes list (${routes.length}):`, routes);
+        console.log(`[Prerender] Final routes list (${routes.length}):`);
+        routes.forEach(r => console.log(`  - ${r}`));
         return routes;
     }
 } satisfies Config;

@@ -52,7 +52,25 @@ export default function Home() {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     
-    // Check if we need to restore scroll position
+    // Handle hash scrolling on initial mount or when hash changes
+    const scrollToHash = () => {
+      const hash = window.location.hash.substring(1);
+      if (hash) {
+        const checkElement = setInterval(() => {
+          const el = document.getElementById(hash);
+          if (el && el.getBoundingClientRect().height > 50) {
+            const headerOffset = 70;
+            const elementPosition = el.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+            clearInterval(checkElement);
+          }
+        }, 100);
+        setTimeout(() => clearInterval(checkElement), 3000);
+      }
+    };
+
+    // Check if we need to restore scroll position or scroll to hash
     const isReload = window.performance &&
       window.performance.getEntriesByType("navigation").length > 0 &&
       window.performance.getEntriesByType("navigation")[0].type === "reload";
@@ -75,6 +93,9 @@ export default function Home() {
         }, 100);
         setTimeout(() => clearInterval(scrollInterval), 3000);
       }
+    } else {
+      // If not a reload, check for hash and scroll to it
+      scrollToHash();
     }
 
     return () => {

@@ -38,8 +38,8 @@ class BlogService extends BaseService {
      * @returns {Promise<Object|null>}
      */
     async fetchPostBySlug(slug, trackRead, includeHidden = false) {
-        const q = query(collection(db, this.collectionName), where("slug", "==", slug));
-        const querySnapshot = await getDocs(q);
+        let q = query(collection(db, this.collectionName), where("slug", "==", slug));
+        let querySnapshot = await getDocs(q);
 
         if (trackRead) {
             trackRead(querySnapshot.size, `Queried blog post by slug: ${slug}`);
@@ -50,6 +50,14 @@ class BlogService extends BaseService {
             if (!includeHidden && docData.visible === false) return null;
             return { id: querySnapshot.docs[0].id, ...docData };
         }
+
+        // Fallback: Check if the slug is actually an ID
+        const docById = await this.getById(slug);
+        if (docById) {
+            if (!includeHidden && docById.visible === false) return null;
+            return docById;
+        }
+
         return null;
     }
 

@@ -98,8 +98,8 @@ class ProjectService extends BaseService {
      * @returns {Promise<Object|null>}
      */
     async fetchProjectBySlug(slug, trackRead, includeHidden = false) {
-        const q = query(collection(db, this.collectionName), where("slug", "==", slug));
-        const querySnapshot = await getDocs(q);
+        let q = query(collection(db, this.collectionName), where("slug", "==", slug));
+        let querySnapshot = await getDocs(q);
 
         if (trackRead) {
             trackRead(querySnapshot.size, `Queried project by slug: ${slug}`);
@@ -110,6 +110,14 @@ class ProjectService extends BaseService {
             if (!includeHidden && docData.visible === false) return null;
             return { id: querySnapshot.docs[0].id, ...docData };
         }
+
+        // Fallback: Check if the slug is actually an ID
+        const docById = await this.getById(slug);
+        if (docById) {
+            if (!includeHidden && docById.visible === false) return null;
+            return docById;
+        }
+
         return null;
     }
 

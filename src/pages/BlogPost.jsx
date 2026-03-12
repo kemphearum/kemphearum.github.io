@@ -18,7 +18,7 @@ import Footer from '../components/Footer';
 import RelatedArticles from '../components/RelatedArticles';
 import styles from './BlogPost.module.scss';
 import { db } from '../firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 
 export async function loader({ params }) {
     const q = query(collection(db, 'posts'), where("slug", "==", params.slug));
@@ -26,6 +26,18 @@ export async function loader({ params }) {
     if (!querySnapshot.empty) {
         return querySnapshot.docs[0].data();
     }
+    
+    // Fallback: search by ID if slug not found
+    try {
+        const docRef = doc(db, 'posts', params.slug);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return docSnap.data();
+        }
+    } catch (e) {
+        console.error("Error in loader fallback:", e);
+    }
+    
     return null;
 }
 

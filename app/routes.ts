@@ -7,4 +7,5 @@ export default [
   route("projects/:slug", "routes/project-detail.jsx"),
   route("blog", "routes/blog.jsx"),
   route("blog/:slug", "routes/blog-post.jsx"),
+  route("*", "routes/not-found.jsx"),
 ] satisfies RouteConfig;
