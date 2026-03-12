@@ -7,8 +7,9 @@ import { useNavigate } from 'react-router-dom';
 import {
     LogOut, ChevronLeft, ChevronRight, ExternalLink, FileText, Database, User, BarChart2, Sun, Moon
 } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
-import { useActivity } from '../hooks/useActivity';
+import { getTodayDateKey } from '../utils/dateUtils';
+import { fetchGeoData } from '../utils/geoUtils';
+import { ActivityContext } from '../context/ActivityContextValue';
 import { getSessionId, getDeviceType } from '../hooks/useAnalytics';
 import { useQueryClient } from '@tanstack/react-query';
 import SettingsService from '../services/SettingsService';
@@ -506,23 +507,11 @@ const Admin = () => {
             try {
                 let currentIp = 'Unknown';
                 let locData = { country: 'Unknown', city: 'Unknown' };
-                try {
-                    const ipRes = await fetch('https://ipwho.is/');
-                    if (ipRes.ok) {
-                        const ipData = await ipRes.json();
-                        if (ipData.ip) currentIp = ipData.ip;
-                        if (ipData.country) locData.country = ipData.country;
-                        if (ipData.city) locData.city = ipData.city;
-                    }
-                } catch {
-                    try {
-                        const fallbackRes = await fetch('https://api.ipify.org?format=json');
-                        if (fallbackRes.ok) {
-                            const fallbackData = await fallbackRes.json();
-                            if (fallbackData.ip) currentIp = fallbackData.ip;
-                        }
-                    } catch { /* silently ignore */ }
-                }
+                const geoData = await fetchGeoData();
+                currentIp = geoData.ip;
+                locData.country = geoData.country_name;
+                locData.city = geoData.city;
+
 
                 await AuditLogService.addAuditLog({
                     email,

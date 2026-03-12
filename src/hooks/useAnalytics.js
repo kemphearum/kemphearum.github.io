@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { analytics } from '../firebase';
 import { logEvent } from 'firebase/analytics';
 import AnalyticsService from '../services/AnalyticsService';
+import { fetchGeoData } from '../utils/geoUtils';
 
 export const getSessionId = () => {
     let sessionId = sessionStorage.getItem('analytics_session_id');
@@ -56,34 +57,8 @@ export const useAnalytics = () => {
                     if (diffMinutes < 30) return; // Don't re-log within 30 minutes
                 }
 
-                // Fetch basic geo-data (completely free, no API key needed for basic usage)
-                let geoData = { country_name: 'Unknown', city: 'Unknown', ip: 'Unknown', country_code: 'UN' };
-
-                try {
-                    const storedGeo = sessionStorage.getItem('analytics_geo');
-                    const hasFailed = sessionStorage.getItem('analytics_geo_failed');
-
-                    if (storedGeo) {
-                        geoData = JSON.parse(storedGeo);
-                    } else if (!hasFailed) {
-                        // Use ipwho.is (CORS friendly)
-                        const res = await fetch('https://ipwho.is/');
-                        if (res.ok) {
-                            const data = await res.json();
-                            geoData = {
-                                country_name: data.country || 'Unknown',
-                                city: data.city || 'Unknown',
-                                ip: data.ip || 'Unknown',
-                                country_code: data.country_code || 'UN'
-                            };
-                            sessionStorage.setItem('analytics_geo', JSON.stringify(geoData));
-                        } else {
-                            sessionStorage.setItem('analytics_geo_failed', 'true');
-                        }
-                    }
-                } catch (e) {
-                    sessionStorage.setItem('analytics_geo_failed', 'true');
-                }
+                // Fetch geo-data using centralized utility with fallbacks
+                const geoData = await fetchGeoData();
 
                 // Save to Firestore via Service
                 await AnalyticsService.logVisit({
