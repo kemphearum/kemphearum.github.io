@@ -440,7 +440,7 @@ const BlogTab = ({ userRole, showToast }) => {
                                         </div>
                                     </div>
                                     <div className={styles.itemActions} style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button onClick={(e) => { e.stopPropagation(); window.open(`#/blog/${p.slug}`, '_blank'); }} title="View" className={styles.editBtn}><ExternalLink size={16} /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); window.open(`/blog/${p.slug}`, '_blank'); }} title="View" className={styles.editBtn}><ExternalLink size={16} /></button>
                                         {userRole !== 'editor' && (
                                             <>
                                                 <button onClick={(e) => { e.stopPropagation(); toggleFeaturedPost(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={styles.editBtn}>

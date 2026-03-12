@@ -477,7 +477,7 @@ const ProjectsTab = ({ userRole, showToast }) => {
                                         </div>
                                     </div>
                                     <div className={styles.itemActions} style={{ display: 'flex', gap: '0.5rem' }}>
-                                        {p.slug && <button onClick={(e) => { e.stopPropagation(); window.open(`#/projects/${p.slug}`, '_blank'); }} title="View Detail" className={styles.editBtn}><ExternalLink size={16} /></button>}
+                                        {p.slug && <button onClick={(e) => { e.stopPropagation(); window.open(`/projects/${p.slug}`, '_blank'); }} title="View Detail" className={styles.editBtn}><ExternalLink size={16} /></button>}
                                         {userRole !== 'editor' && (
                                             <>
                                                 <button onClick={(e) => { e.stopPropagation(); toggleFeatured(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={styles.editBtn}>
