@@ -1,6 +1,9 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
-import { collection, getDocs, query, where, orderBy, getCountFromServer, limit as firestoreLimit, addDoc, serverTimestamp } from 'firebase/firestore';
+import { 
+    collection, getDocs, query, where, orderBy, getCountFromServer, 
+    limit as firestoreLimit, addDoc, serverTimestamp, doc, updateDoc 
+} from 'firebase/firestore';
 
 class AnalyticsService extends BaseService {
     constructor() {
