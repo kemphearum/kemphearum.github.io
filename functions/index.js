@@ -2,8 +2,9 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
+// Existing toggleUserStatus function...
 exports.toggleUserStatus = functions.https.onCall(async (data, context) => {
-    // 1. Verify caller is authenticated
+    // ... existing implementation ...
     if (!context.auth) {
         throw new functions.https.HttpsError(
             'unauthenticated',
@@ -11,7 +12,6 @@ exports.toggleUserStatus = functions.https.onCall(async (data, context) => {
         );
     }
 
-    // 2. Verify caller is the Super Admin
     if (context.auth.token.email !== 'kem.phearum@gmail.com') {
         throw new functions.https.HttpsError(
             'permission-denied',
@@ -29,10 +29,7 @@ exports.toggleUserStatus = functions.https.onCall(async (data, context) => {
     }
 
     try {
-        // 3. Look up the user by email
         const userRecord = await admin.auth().getUserByEmail(targetEmail);
-
-        // 4. Update the user's disabled status in Firebase Auth
         await admin.auth().updateUser(userRecord.uid, {
             disabled: disableFlag
         });
@@ -43,14 +40,12 @@ exports.toggleUserStatus = functions.https.onCall(async (data, context) => {
         };
     } catch (error) {
         console.error("Error toggling user status:", error);
-
         if (error.code === 'auth/user-not-found') {
             throw new functions.https.HttpsError(
                 'not-found',
                 `No user found with email ${targetEmail}.`
             );
         }
-
         throw new functions.https.HttpsError(
             'internal',
             'An internal error occurred while updating the user.'

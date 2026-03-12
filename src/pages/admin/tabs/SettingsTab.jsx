@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Save, Type, Minus, Plus } from 'lucide-react';
+import { Upload, Save, Type, Minus, Plus, RefreshCw, CheckCircle, AlertCircle, Key, Eye, EyeOff } from 'lucide-react';
 import styles from '../../Admin.module.scss';
 import ImageProcessingService from '../../../services/ImageProcessingService';
+import axios from 'axios';
 
 import FormSelect from '../components/FormSelect';
 
@@ -40,8 +41,17 @@ const getFontWeight = (key, defaultWeight) => key === 'kantumruy-pro-medium' ? 5
 const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, sidebarPersistent, setSidebarPersistent }) => {
     const [settingsFavicon, setSettingsFavicon] = useState(null);
     const [previewBase64, setPreviewBase64] = useState('');
+    const [rebuildStatus, setRebuildStatus] = useState({ state: 'idle', message: '' });
+    
+    // GitHub Token States (stored in localStorage, not Firestore)
+    const [githubToken, setGithubToken] = useState('');
+    const [showToken, setShowToken] = useState(false);
 
     useEffect(() => {
+        // Load token from localStorage on mount
+        const savedToken = localStorage.getItem('github_dispatch_token');
+        if (savedToken) setGithubToken(savedToken);
+
         if (!settingsFavicon) {
             setPreviewBase64('');
             return;
@@ -71,9 +81,67 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
             });
             await saveSectionData('settings', payload);
             setSettingsFavicon(null);
+
+            // Save token separately to localStorage
+            if (githubToken) {
+                localStorage.setItem('github_dispatch_token', githubToken);
+            }
         } catch (error) {
             console.error("Settings handleSave error:", error);
             throw error;
+        }
+    };
+
+    const handleTriggerRebuild = async () => {
+        if (!githubToken) {
+            alert('Please enter your GitHub Personal Access Token first.');
+            return;
+        }
+
+        if (!window.confirm('This will trigger a full site rebuild and deployment using your browser. New blog posts and projects will be pre-rendered. Continue?')) {
+            return;
+        }
+
+        setRebuildStatus({ state: 'loading', message: 'Connecting to GitHub API...' });
+        
+        try {
+            const GITHUB_OWNER = 'kemphearum';
+            const GITHUB_REPO = 'kemphearum.github.io';
+            const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/dispatches`;
+
+            await axios.post(
+                url,
+                { event_type: 'manual_rebuild' },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${githubToken}`,
+                        'Accept': 'application/vnd.github+json',
+                        'X-GitHub-Api-Version': '2022-11-28'
+                    }
+                }
+            );
+            
+            setRebuildStatus({ 
+                state: 'success', 
+                message: 'Successfully triggered rebuild! Deployment typically takes ~2 minutes.' 
+            });
+
+            // Reset status after 10 seconds
+            setTimeout(() => setRebuildStatus({ state: 'idle', message: '' }), 10000);
+        } catch (error) {
+            console.error("Rebuild trigger error:", error);
+            let errMsg = 'Failed to trigger rebuild.';
+            
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                errMsg = 'Invalid or expired GitHub Token. Please check your token settings.';
+            } else if (error.response?.data?.message) {
+                errMsg = `GitHub Error: ${error.response.data.message}`;
+            }
+
+            setRebuildStatus({ 
+                state: 'error', 
+                message: errMsg
+            });
         }
     };
 
@@ -341,7 +409,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     </div>
                 </div>
 
-                {/* ─── Group 4: Visual Experience ─── */}
+                {/* Visual Experience Section */}
                 <div className={styles.sectionHeader} style={{ marginTop: '2rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
                     <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Visual Experience</h4>
                 </div>
@@ -357,7 +425,6 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             { value: 'aurora', label: '🌈 Aurora Borealis' }
                         ]}
                         fullWidth
-                        hint="Choose the overall visual aesthetic for the animated background."
                     />
                     <div className={styles.inputGroup}>
                         <label>Particle Density ({settingsData.bgDensity ?? 50}%)</label>
@@ -369,59 +436,145 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             onChange={(e) => setSettingsData({ ...settingsData, bgDensity: parseInt(e.target.value) })}
                             style={{ width: '100%', accentColor: 'var(--primary-color)' }}
                         />
-                        <span className={styles.hint}>Higher means more particles</span>
                     </div>
-                    <div className={styles.inputGroup}>
-                        <label>Animation Speed ({settingsData.bgSpeed ?? 50}%)</label>
-                        <input
-                            type="range"
-                            min="1"
-                            max="100"
-                            value={settingsData.bgSpeed ?? 50}
-                            onChange={(e) => setSettingsData({ ...settingsData, bgSpeed: parseInt(e.target.value) })}
-                            style={{ width: '100%', accentColor: 'var(--primary-color)' }}
-                        />
-                        <span className={styles.hint}>Speed of background drift</span>
-                    </div>
-                    <div className={styles.inputGroup}>
-                        <label>Aurora Glow Opacity ({settingsData.bgGlowOpacity ?? 50}%)</label>
-                        <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={settingsData.bgGlowOpacity ?? 50}
-                            onChange={(e) => setSettingsData({ ...settingsData, bgGlowOpacity: parseInt(e.target.value) })}
-                            style={{ width: '100%', accentColor: 'var(--primary-color)' }}
-                        />
-                        <span className={styles.hint}>Intensity of background gradient</span>
-                    </div>
+                </div>
 
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--input-border)', cursor: 'pointer', gridColumn: '1 / -1' }}>
-                        <input type="checkbox" checked={settingsData.bgInteractive ?? true} onChange={(e) => setSettingsData({ ...settingsData, bgInteractive: e.target.checked })} />
-                        <div>
-                            <div style={{ fontWeight: '500', color: 'var(--text-primary)', fontSize: '0.9rem' }}>Interactive Particles</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Particles will react and move away from the user's mouse cursor.</div>
+                {/* Deployment & Refresh Section */}
+                <div className={styles.sectionHeader} style={{ marginTop: '2.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
+                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Deployment & Refresh (No-Backend)</h4>
+                </div>
+                <div style={{ 
+                    background: 'rgba(255,255,255,0.02)', 
+                    border: '1px solid var(--input-border)', 
+                    borderRadius: '16px', 
+                    padding: '1.5rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1.5rem'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                        <div style={{ 
+                            background: 'rgba(108,99,255,0.1)', 
+                            padding: '0.75rem', 
+                            borderRadius: '12px',
+                            color: 'var(--primary-color)' 
+                        }}>
+                            <RefreshCw size={24} className={rebuildStatus.state === 'loading' ? styles.spinning : ''} />
                         </div>
-                    </label>
-                </div>
-
-                {/* ─── Group 5: System Preferences ─── */}
-                <div className={styles.sectionHeader} style={{ marginTop: '2rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
-                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>System Preferences</h4>
-                </div>
-                <div className={styles.formGrid}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--input-border)', cursor: 'pointer', gridColumn: 'span 2' }}>
-                        <input type="checkbox" checked={sidebarPersistent} onChange={(e) => setSidebarPersistent(e.target.checked)} />
-                        <div>
-                            <div style={{ fontWeight: '500', color: 'var(--text-primary)', fontSize: '0.9rem' }}>Keep Sidebar Open on Select</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>The sidebar will stay open after clicking items. Great for desktop users!</div>
+                        <div style={{ flex: 1 }}>
+                            <h5 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', color: 'var(--text-primary)' }}>Site Snapshot Sync</h5>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                                Trigger a full site rebuild directly from your browser. This ensures all your latest 
+                                <strong> Blog Posts</strong> and <strong>Projects</strong> are pre-rendered into 
+                                static HTML for speed and SEO.
+                            </p>
                         </div>
-                    </label>
+                    </div>
+
+                    {/* GitHub Token Input Layer */}
+                    <div style={{ 
+                        background: 'rgba(255,255,255,0.03)', 
+                        padding: '1.25rem', 
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.75rem'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Key size={16} style={{ color: 'var(--primary-color)' }} />
+                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>GitHub Access Token</span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginLeft: 'auto' }}>Stored only in your browser</span>
+                        </div>
+                        <div style={{ position: 'relative' }}>
+                            <input 
+                                type={showToken ? "text" : "password"}
+                                value={githubToken}
+                                onChange={(e) => setGithubToken(e.target.value)}
+                                placeholder="ghp_..."
+                                style={{ 
+                                    width: '100%', 
+                                    paddingRight: '40px',
+                                    fontFamily: 'monospace',
+                                    fontSize: '0.85rem',
+                                    background: 'rgba(0,0,0,0.2)'
+                                }}
+                            />
+                            <button 
+                                type="button"
+                                onClick={() => setShowToken(!showToken)}
+                                style={{ 
+                                    position: 'absolute', 
+                                    right: '10px', 
+                                    top: '50%', 
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    padding: '5px',
+                                    color: 'var(--text-secondary)',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                {showToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
+                    </div>
+
+                    <button 
+                        type="button" 
+                        disabled={rebuildStatus.state === 'loading'}
+                        onClick={handleTriggerRebuild}
+                        className={styles.submitBtn}
+                        style={{ 
+                            width: '100%', 
+                            padding: '1rem', 
+                            background: rebuildStatus.state === 'error' ? 'var(--error-color)' : 'var(--primary-color)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.75rem'
+                        }}
+                    >
+                        {rebuildStatus.state === 'loading' ? (
+                            <>Connecting to GitHub API...</>
+                        ) : (
+                            <><RefreshCw size={18} /> Rebuild & Refresh Site</>
+                        )}
+                    </button>
+
+                    {rebuildStatus.state !== 'idle' && (
+                        <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '0.75rem', 
+                            padding: '0.75rem 1rem', 
+                            borderRadius: '10px',
+                            background: rebuildStatus.state === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                            border: `1px solid ${rebuildStatus.state === 'success' ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                            color: rebuildStatus.state === 'success' ? '#4ade80' : '#f87171',
+                            fontSize: '0.85rem'
+                        }}>
+                            {rebuildStatus.state === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+                            {rebuildStatus.message}
+                        </div>
+                    )}
+                    
+                    <div style={{ 
+                        fontSize: '0.75rem', 
+                        color: 'var(--text-secondary)', 
+                        padding: '0.75rem', 
+                        background: 'rgba(255,255,255,0.02)', 
+                        borderRadius: '8px',
+                        borderLeft: '3px solid var(--primary-color)'
+                    }}>
+                        <strong>Note:</strong> Since we are using the <strong>No-Backend</strong> version, your GitHub 
+                        token must be entered above to trigger the build. This ensures 100% free hosting.
+                    </div>
                 </div>
 
-                <div className={styles.formFooter}>
+                <div className={styles.formFooter} style={{ marginTop: '2rem' }}>
                     <button type="submit" disabled={loading} className={styles.submitBtn}>
-                        {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save </>}
+                        {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save Settings </>}
                     </button>
                 </div>
             </form>
