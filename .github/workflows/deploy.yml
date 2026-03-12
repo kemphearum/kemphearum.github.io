@@ -40,17 +40,17 @@ jobs:
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
         run: |
           npm run build
-          cp build/client/index.html build/client/404.html
+          cp dist/index.html dist/404.html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./build/client
+          path: ./dist
 
       - name: Upload dist for Firebase
         uses: actions/upload-artifact@v4
         with:
           name: build-output
-          path: ./build/client
+          path: ./dist
 
   deploy-github-pages:
     environment:
@@ -74,7 +74,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-output
-          path: ./build/client
+          path: ./dist
 
       - name: Deploy to Primary Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
