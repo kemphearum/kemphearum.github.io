@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { analytics } from '../firebase';
 import { logEvent } from 'firebase/analytics';
-import AnalyticsService from '../services/AnalyticsService';
 import { fetchGeoData } from '../utils/geoUtils';
+import { parseUserAgent, isReturningVisitor } from '../utils/uaUtils';
 
 export const getSessionId = () => {
     let sessionId = sessionStorage.getItem('analytics_session_id');
@@ -29,12 +29,16 @@ export const getDeviceType = () => {
 export const useAnalytics = () => {
     const location = useLocation();
     const hasLogFired = useRef({});
+    const startTimeRef = useRef(Date.now());
 
     useEffect(() => {
+        const path = location.pathname;
+        startTimeRef.current = Date.now();
+
         // --- 1. FIREBASE GA4 TRACKING ---
         if (analytics) {
             logEvent(analytics, 'page_view', {
-                page_path: location.pathname + location.search,
+                page_path: path + location.search,
                 page_title: document.title,
             });
         }
@@ -42,37 +46,50 @@ export const useAnalytics = () => {
         // --- 2. CUSTOM FIRESTORE TRACKING (For Admin Dashboard) ---
         const logVisitToFirestore = async () => {
             // Prevent strict-mode double-firing on the exact same path
-            if (hasLogFired.current[location.pathname]) return;
-            hasLogFired.current[location.pathname] = true;
+            if (hasLogFired.current[path]) return;
+            hasLogFired.current[path] = true;
 
             try {
                 const sessionId = getSessionId();
                 const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
                 // Client-side dedup using sessionStorage (avoids needing Firestore read permissions)
-                const dedupKey = `visit_${location.pathname}`;
+                const dedupKey = `visit_${path}`;
                 const lastLogged = sessionStorage.getItem(dedupKey);
                 if (lastLogged) {
                     const diffMinutes = (Date.now() - parseInt(lastLogged, 10)) / (1000 * 60);
                     if (diffMinutes < 30) return; // Don't re-log within 30 minutes
                 }
 
-                // Fetch geo-data using centralized utility with fallbacks
+                // Fetch geo-data and UA details
                 const geoData = await fetchGeoData();
+                const { browser, os } = parseUserAgent(navigator.userAgent);
+                const isReturning = isReturningVisitor();
 
                 // Save to Firestore via Service
-                await AnalyticsService.logVisit({
+                const visitRecord = {
                     sessionId,
-                    path: location.pathname,
+                    path,
                     date: today,
                     userAgent: navigator.userAgent,
                     device: getDeviceType(),
+                    browser,
+                    os,
+                    isReturning,
                     country: geoData.country_name,
                     countryCode: geoData.country_code,
                     city: geoData.city,
                     ip: geoData.ip,
-                    referrer: document.referrer || 'Direct'
-                });
+                    referrer: document.referrer || 'Direct',
+                    timestamp: new Date()
+                };
+
+                const visitId = await AnalyticsService.logVisit(visitRecord);
+                
+                // Store visit ID to update duration on cleanup
+                if (visitId) {
+                    sessionStorage.setItem(`last_visit_id_${path}`, visitId);
+                }
 
                 // Mark as logged in sessionStorage
                 sessionStorage.setItem(dedupKey, Date.now().toString());
@@ -87,7 +104,19 @@ export const useAnalytics = () => {
             logVisitToFirestore();
         }, 1000);
 
-        return () => clearTimeout(timeoutId);
+        // --- 3. DURATION TRACKING (Cleanup) ---
+        return () => {
+            clearTimeout(timeoutId);
+            const endTime = Date.now();
+            const durationSeconds = Math.round((endTime - startTimeRef.current) / 1000);
+            const visitId = sessionStorage.getItem(`last_visit_id_${path}`);
+            
+            // Only update if they stayed for more than 2 seconds (ignore bounces/skips)
+            if (visitId && durationSeconds > 2) {
+                AnalyticsService.updateVisitDuration(visitId, durationSeconds).catch(() => {});
+                sessionStorage.removeItem(`last_visit_id_${path}`);
+            }
+        };
     }, [location.pathname, location.search]);
 
     const trackEvent = (eventName, eventParams = {}) => {

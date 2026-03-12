@@ -58,12 +58,25 @@ class AnalyticsService extends BaseService {
     /**
      * Logs a public page visit tracking event.
      * @param {Object} visitData
-     * @returns {Promise<void>}
+     * @returns {Promise<string>} The ID of the created visit document
      */
     async logVisit(visitData) {
-        await addDoc(collection(db, this.collectionName), {
+        const docRef = await addDoc(collection(db, this.collectionName), {
             ...visitData,
             timestamp: serverTimestamp()
+        });
+        return docRef.id;
+    }
+
+    /**
+     * Updates the duration of a visit.
+     * @param {string} visitId 
+     * @param {number} durationSeconds 
+     */
+    async updateVisitDuration(visitId, durationSeconds) {
+        const docRef = doc(db, this.collectionName, visitId);
+        await updateDoc(docRef, {
+            duration: durationSeconds
         });
     }
 }

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Eye as EyeIcon, Users, Globe, TrendingUp, Monitor, Smartphone, Tablet, MapPin, Share2, FileText, Calendar, RefreshCw, X } from 'lucide-react';
+import { Eye as EyeIcon, Users, Globe, TrendingUp, Monitor, Smartphone, Tablet, MapPin, Share2, FileText, Calendar, RefreshCw, X, Download, Layout, Activity, Clock } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { jsonToCsv } from '../../../utils/csvUtils';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery } from '@tanstack/react-query';
 import styles from '../../Admin.module.scss';
@@ -79,6 +80,39 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         setAnalyticsRange({ start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0], preset });
     }, []);
 
+    const handleExportCsv = useCallback(() => {
+        if (!visits || !visits.length) {
+            showToast('No data to export', 'error');
+            return;
+        }
+
+        const exportData = visits.map(v => ({
+            Date: v.date || (v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toISOString().split('T')[0] : 'Unknown'),
+            Path: v.path,
+            IP: v.ip,
+            Country: v.country,
+            City: v.city,
+            Device: v.device,
+            Browser: v.browser || 'Unknown',
+            OS: v.os || 'Unknown',
+            Type: v.isReturning ? 'Returning' : 'New',
+            Duration: v.duration ? `${v.duration}s` : '0s',
+            Referrer: v.referrer
+        }));
+
+        const csv = jsonToCsv(exportData);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `portfolio_analytics_${analyticsRange.start}_to_${analyticsRange.end}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Analytics exported to CSV', 'success');
+    }, [visits, analyticsRange, showToast]);
+
     // Derived data
     const dailyVisits = useMemo(() => {
         const map = {};
@@ -116,6 +150,24 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         return Object.entries(map).sort(([, a], [, b]) => b - a).slice(0, 8).map(([name, value]) => ({ name, value }));
     }, [visits]);
 
+    const browserData = useMemo(() => {
+        const map = {};
+        visits.forEach(v => { const b = v.browser || 'Unknown'; map[b] = (map[b] || 0) + 1; });
+        return Object.entries(map).sort(([, a], [, b]) => b - a).map(([name, value]) => ({ name, value }));
+    }, [visits]);
+
+    const osData = useMemo(() => {
+        const map = {};
+        visits.forEach(v => { const o = v.os || 'Unknown'; map[o] = (map[o] || 0) + 1; });
+        return Object.entries(map).sort(([, a], [, b]) => b - a).map(([name, value]) => ({ name, value }));
+    }, [visits]);
+
+    const retentionData = useMemo(() => {
+        let n = 0, r = 0;
+        visits.forEach(v => { if (v.isReturning) r++; else n++; });
+        return [{ name: 'New', value: n }, { name: 'Returning', value: r }];
+    }, [visits]);
+
     const topPages = useMemo(() => {
         const map = {};
         visits.forEach(v => { const p = v.path || '/'; map[p] = (map[p] || 0) + 1; });
@@ -126,7 +178,23 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         const uniqueIPs = new Set(visits.map(v => v.ip).filter(Boolean));
         const topCountry = countryData[0]?.name || '-';
         const topPage = topPages[0]?.path || '-';
-        return { total: visits.length, unique: uniqueIPs.size, topCountry, topPage };
+        
+        // Engagement Calculations
+        const totalDuration = visits.reduce((acc, v) => acc + (v.duration || 0), 0);
+        const avgDuration = visits.length ? Math.round(totalDuration / visits.length) : 0;
+        
+        // Bounce Rate (one-page sessions with < 10s duration) - Approximation
+        const bounces = visits.filter(v => (v.duration || 0) < 10).length;
+        const bounceRate = visits.length ? Math.round((bounces / visits.length) * 100) : 0;
+
+        return { 
+            total: visits.length, 
+            unique: uniqueIPs.size, 
+            topCountry, 
+            topPage,
+            avgDuration: `${Math.floor(avgDuration / 60)}m ${avgDuration % 60}s`,
+            bounceRate: `${bounceRate}%`
+        };
     }, [visits, countryData, topPages]);
 
     if (analyticsLoading) {
@@ -178,6 +246,14 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 icon={TrendingUp}
                 rightElement={
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <button 
+                            className={styles.refreshBtn} 
+                            style={{ background: 'rgba(100, 255, 218, 0.1)', color: '#64ffda', border: '1px solid rgba(100, 255, 218, 0.2)' }}
+                            onClick={handleExportCsv}
+                        >
+                            <Download size={14} />
+                            Export CSV
+                        </button>
                         {dateFilter}
                     </div>
                 }
@@ -198,15 +274,15 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                     color="#7c4dff"
                 />
                 <StatCard
-                    icon={Globe}
-                    value={summaryStats.topCountry}
-                    label="Top Country"
+                    icon={Clock}
+                    value={summaryStats.avgDuration}
+                    label="Avg. Session"
                     color="#ff6090"
                 />
                 <StatCard
-                    icon={FileText}
-                    value={summaryStats.topPage}
-                    label="Most Visited"
+                    icon={Activity}
+                    value={summaryStats.bounceRate}
+                    label="Bounce Rate"
                     color="#ffab40"
                 />
             </div>
@@ -324,6 +400,75 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                             </ul>
                         </>
                     ) : (<div className={styles.emptyState}><p>No referrer data.</p></div>)}
+                </ChartCard>
+            </div>
+
+            {/* Browsers, OS & Retention Row */}
+            <div className={styles.chartRow}>
+                <ChartCard
+                    title="Top Browsers"
+                    icon={Layout}
+                    onViewDetails={() => handleAnalyticsDetail('browsers')}
+                >
+                    {browserData.length > 0 ? (
+                        <>
+                            <ResponsiveContainer width="100%" height={250}>
+                                <PieChart>
+                                    <Pie data={browserData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
+                                        {browserData.map((entry, i) => <Cell key={`br-${entry.name || i}`} fill={CHART_COLORS[(i + 6) % CHART_COLORS.length]} />)}
+                                    </Pie>
+                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <ul className={styles.legendList}>
+                                {browserData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 6) % CHART_COLORS.length] }} />{entry.name} ({entry.value})</li>))}
+                            </ul>
+                        </>
+                    ) : (<div className={styles.emptyState}><p>No browser data.</p></div>)}
+                </ChartCard>
+
+                <ChartCard
+                    title="Operating Systems"
+                    icon={Monitor}
+                    onViewDetails={() => handleAnalyticsDetail('os')}
+                >
+                    {osData.length > 0 ? (
+                        <>
+                            <ResponsiveContainer width="100%" height={250}>
+                                <PieChart>
+                                    <Pie data={osData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
+                                        {osData.map((entry, i) => <Cell key={`os-${entry.name || i}`} fill={CHART_COLORS[(i + 2) % CHART_COLORS.length]} />)}
+                                    </Pie>
+                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <ul className={styles.legendList}>
+                                {osData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 2) % CHART_COLORS.length] }} />{entry.name} ({entry.value})</li>))}
+                            </ul>
+                        </>
+                    ) : (<div className={styles.emptyState}><p>No OS data.</p></div>)}
+                </ChartCard>
+
+                <ChartCard
+                    title="Visitor Retention"
+                    icon={Users}
+                >
+                    {retentionData.length > 0 ? (
+                        <>
+                            <ResponsiveContainer width="100%" height={250}>
+                                <PieChart>
+                                    <Pie data={retentionData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
+                                        <Cell fill="#64ffda" />
+                                        <Cell fill="#7c4dff" />
+                                    </Pie>
+                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <ul className={styles.legendList}>
+                                {retentionData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: i === 0 ? "#64ffda" : "#7c4dff" }} />{entry.name} ({entry.value})</li>))}
+                            </ul>
+                        </>
+                    ) : (<div className={styles.emptyState}><p>No retention data.</p></div>)}
                 </ChartCard>
             </div>
 
