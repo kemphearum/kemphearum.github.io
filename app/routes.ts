@@ -1,11 +1,11 @@
 import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
-  index("routes/home.jsx"),
-  route("admin", "routes/admin.jsx"),
-  route("projects", "routes/projects.jsx"),
-  route("projects/:slug", "routes/project-detail.jsx"),
-  route("blog", "routes/blog.jsx"),
-  route("blog/:slug", "routes/blog-post.jsx"),
-  route("*", "routes/not-found.jsx"),
+  index("route-entries/home.jsx"),
+  route("admin", "route-entries/admin.jsx"),
+  route("projects", "route-entries/projects.jsx"),
+  route("projects/:slug", "route-entries/project-detail.jsx"),
+  route("blog", "route-entries/blog.jsx"),
+  route("blog/:slug", "route-entries/blog-post.jsx"),
+  route("*", "route-entries/not-found.jsx"),
 ] satisfies RouteConfig;
