@@ -35,13 +35,13 @@ export const fetchGeoData = async () => {
                 country_code: d.data.geoLocation.countryCode || 'UN'
             };
         },
-        // Provider 2: ipapi.co (Reliable fallback, 30k requests/mo free)
+        // Provider 2: ipwho.is (Free fallback)
         async () => {
-            const res = await fetch('https://ipapi.co/json/');
+            const res = await fetch('https://ipwho.is/');
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const d = await res.json();
             return {
-                country_name: d.country_name || 'Unknown',
+                country_name: d.country || 'Unknown',
                 city: d.city || 'Unknown',
                 ip: d.ip || 'Unknown',
                 country_code: d.country_code || 'UN'
@@ -56,14 +56,14 @@ export const fetchGeoData = async () => {
         }
     ];
 
-    for (const provider of providers) {
+    for (const [index, provider] of providers.entries()) {
         try {
             const data = await provider();
             sessionStorage.setItem('analytics_geo', JSON.stringify(data));
             sessionStorage.removeItem(COOLDOWN_KEY); // Reset cooldown on success
             return data;
         } catch (e) {
-            // Silently try next provider
+            if (index === 0) console.warn("Premium IP Geolocation failed, switching to fallback:", e.message);
             continue;
         }
     }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { analytics } from '../firebase';
 import { logEvent } from 'firebase/analytics';
+import AnalyticsService from '../services/AnalyticsService';
 import { fetchGeoData } from '../utils/geoUtils';
 import { parseUserAgent, isReturningVisitor } from '../utils/uaUtils';
 
