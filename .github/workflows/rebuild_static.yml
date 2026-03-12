@@ -8,6 +8,12 @@ on:
     # Allows manual triggering from the GitHub Actions tab
   repository_dispatch:
     types: [manual_rebuild]
+    
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  actions: read
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -29,7 +35,9 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Build and Prerender
-        run: npm run build
+        run: |
+          npm run build
+          cp build/client/index.html build/client/404.html
         env:
           # If your app needs any build-time environment variables, add them here
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
@@ -39,6 +47,14 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./build/client
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
 
       - name: Deploy to Primary Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
