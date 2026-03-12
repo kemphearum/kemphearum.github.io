@@ -1,3 +1,3 @@
-export { default } from "../../src/pages/ProjectDetail";
-export * from "../../src/pages/ProjectDetail";
-export { loader, meta } from "../../src/pages/ProjectDetail";
+import ProjectDetail, { loader, meta } from "../../src/pages/ProjectDetail";
+export default ProjectDetail;
+export { loader, meta };

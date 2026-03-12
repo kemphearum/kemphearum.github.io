@@ -1,2 +1,2 @@
-export { default } from "../../src/pages/ProjectsPage";
-export * from "../../src/pages/ProjectsPage";
+import ProjectsPage from "../../src/pages/ProjectsPage";
+export default ProjectsPage;

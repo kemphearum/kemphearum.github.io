@@ -1,2 +1,2 @@
-export { default } from "../../src/pages/Admin";
-export * from "../../src/pages/Admin";
+import Admin from "../../src/pages/Admin";
+export default Admin;

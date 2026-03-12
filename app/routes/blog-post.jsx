@@ -1,3 +1,3 @@
-export { default } from "../../src/pages/BlogPost";
-export * from "../../src/pages/BlogPost";
-export { loader, meta } from "../../src/pages/BlogPost";
+import BlogPost, { loader, meta } from "../../src/pages/BlogPost";
+export default BlogPost;
+export { loader, meta };

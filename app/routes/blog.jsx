@@ -1,2 +1,2 @@
-export { default } from "../../src/pages/Blog";
-export * from "../../src/pages/Blog";
+import Blog from "../../src/pages/Blog";
+export default Blog;
