@@ -20,16 +20,19 @@ export const fetchGeoData = async () => {
 
     // 3. Fallback Chain
     const providers = [
-        // Provider 1: ipwho.is (Original, but currently 403 for some)
+        // Provider 1: ipwho.org (New Premium Provider)
         async () => {
-            const res = await fetch('https://ipwho.is/');
+            const apiKey = import.meta.env.VITE_IPWHO_API_KEY;
+            if (!apiKey) throw new Error('API Key missing');
+            const res = await fetch(`https://ipwho.org/api/all?key=${apiKey}`);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const d = await res.json();
+            if (!d.success) throw new Error(d.message || 'API Error');
             return {
-                country_name: d.country || 'Unknown',
-                city: d.city || 'Unknown',
-                ip: d.ip || 'Unknown',
-                country_code: d.country_code || 'UN'
+                country_name: d.data.geoLocation.country || 'Unknown',
+                city: d.data.geoLocation.city || 'Unknown',
+                ip: d.data.ip || 'Unknown',
+                country_code: d.data.geoLocation.countryCode || 'UN'
             };
         },
         // Provider 2: ipapi.co (Reliable fallback, 30k requests/mo free)
