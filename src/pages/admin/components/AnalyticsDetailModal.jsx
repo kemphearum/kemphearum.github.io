@@ -1,6 +1,6 @@
 import React from 'react';
 import { TrendingUp, Globe, Monitor, FileText, MapPin, Share2, RefreshCw, Users, UserCheck, Calendar } from 'lucide-react';
-import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import styles from '../../Admin.module.scss';
 import BaseModal from './BaseModal';
 
@@ -215,7 +215,103 @@ const AnalyticsDetailModal = ({
                             );
                         })()}
                     </div>
-                ) : null}
+                ) : (
+                    <div style={{ padding: '2rem' }}>
+                        {(() => {
+                            const CHART_COLORS = ['#64ffda', '#7c4dff', '#ff6090', '#ffab40', '#69f0ae', '#40c4ff', '#ea80fc', '#ffd740', '#b388ff', '#84ffff'];
+                            
+                            // Generic Aggregation
+                            const dataMap = {};
+                            const total = analyticsLogs.length;
+                            
+                            analyticsLogs.forEach(v => {
+                                let key = 'Unknown';
+                                if (analyticsDetail === 'countries') key = v.country || 'Unknown';
+                                else if (analyticsDetail === 'cities') key = v.city ? `${v.city}, ${v.country || ''}` : v.country || 'Unknown';
+                                else if (analyticsDetail === 'devices') key = (v.device || 'desktop').charAt(0).toUpperCase() + (v.device || 'desktop').slice(1);
+                                else if (analyticsDetail === 'pages') key = v.path || '/';
+                                else if (analyticsDetail === 'referrers') key = v.referrer || 'Direct';
+                                else if (analyticsDetail === 'browsers') key = parseBrowser(v.userAgent);
+                                else if (analyticsDetail === 'os') key = v.os || 'Unknown';
+                                
+                                dataMap[key] = (dataMap[key] || 0) + 1;
+                            });
+                            
+                            const aggregatedData = Object.entries(dataMap)
+                                .map(([name, value]) => ({ 
+                                    name, 
+                                    value, 
+                                    percentage: total ? (value / total) * 100 : 0 
+                                }))
+                                .sort((a, b) => b.value - a.value);
+
+                            const chartType = ['cities', 'pages'].includes(analyticsDetail) ? 'bar' : 'pie';
+
+                            return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                                    <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '1.5rem' }}>
+                                        <ResponsiveContainer width="100%" height={320}>
+                                            {chartType === 'bar' ? (
+                                                <BarChart data={aggregatedData.slice(0, 10)} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={false} />
+                                                    <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
+                                                    <YAxis dataKey="name" type="category" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} width={120} />
+                                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px' }} />
+                                                    <Bar dataKey="value" name="Visits" radius={[0, 4, 4, 0]}>
+                                                        {aggregatedData.slice(0, 10).map((entry, i) => <Cell key={`cell-${i}`} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                                    </Bar>
+                                                </BarChart>
+                                            ) : (
+                                                <PieChart>
+                                                    <Pie data={aggregatedData.slice(0, 8)} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value" nameKey="name" label={({name, percent}) => `${name} (${(percent*100).toFixed(1)}%)`}>
+                                                        {aggregatedData.slice(0, 8).map((entry, i) => <Cell key={`cell-${i}`} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                                                    </Pie>
+                                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px' }} />
+                                                    <Legend verticalAlign="bottom" height={36}/>
+                                                </PieChart>
+                                            )}
+                                        </ResponsiveContainer>
+                                    </div>
+
+                                    <div className={styles.tableWrapper} style={{ borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+                                            <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
+                                                <tr>
+                                                    <th style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>
+                                                        {analyticsDetail === 'countries' ? 'Country' : 
+                                                         analyticsDetail === 'cities' ? 'City' : 
+                                                         analyticsDetail === 'devices' ? 'Device' : 
+                                                         analyticsDetail === 'pages' ? 'Page Path' : 
+                                                         analyticsDetail === 'referrers' ? 'Source' : 
+                                                         analyticsDetail === 'browsers' ? 'Browser' : 'Operating System'}
+                                                    </th>
+                                                    <th style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'center', width: '100px' }}>Visits</th>
+                                                    <th style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'right', width: '120px' }}>Percentage</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {aggregatedData.map((d, i) => (
+                                                    <tr key={d.name} style={{ transition: 'background 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                        <td style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.04)', fontWeight: 600 }}>{d.name}</td>
+                                                        <td style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'center' }}>{d.value.toLocaleString()}</td>
+                                                        <td style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'right' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem' }}>
+                                                                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{d.percentage.toFixed(1)}%</span>
+                                                                <div style={{ width: '60px', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', overflow: 'hidden' }}>
+                                                                    <div style={{ width: `${d.percentage}%`, height: '100%', background: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                )}
             </div>
         </BaseModal>
     );

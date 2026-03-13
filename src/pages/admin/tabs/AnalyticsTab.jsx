@@ -18,8 +18,8 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     const [analyticsRange, setAnalyticsRange] = useState(() => {
         const end = new Date();
         const start = new Date();
-        start.setDate(start.getDate() - 30);
-        return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0], preset: '30d' };
+        // Default to today
+        return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0], preset: 'today' };
     });
     const [analyticsDetail, setAnalyticsDetail] = useState(null);
     const [analyticsLogs, setAnalyticsLogs] = useState([]);
@@ -98,6 +98,9 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         const end = new Date();
         const start = new Date();
         switch (preset) {
+            case 'today': 
+                // Both start and end are today (already set)
+                break;
             case '7d': start.setDate(end.getDate() - 7); break;
             case '30d': start.setDate(end.getDate() - 30); break;
             case '90d': start.setDate(end.getDate() - 90); break;
@@ -255,30 +258,67 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     const dateFilter = (
         <div className={styles.dateFilterBar}>
             <div className={styles.datePresets}>
-                {[{ label: '7D', value: '7d' }, { label: '30D', value: '30d' }, { label: '90D', value: '90d' }, { label: 'All', value: 'all' }].map(p => (
-                    <button key={p.value} className={`${styles.presetBtn} ${analyticsRange.preset === p.value ? styles.presetActive : ''}`} onClick={() => handleAnalyticsPreset(p.value)}>{p.label}</button>
+                {[
+                    { label: 'Today', value: 'today' },
+                    { label: '7D', value: '7d' }, 
+                    { label: '30D', value: '30d' }, 
+                    { label: '90D', value: '90d' }, 
+                    { label: 'All', value: 'all' }
+                ].map(p => (
+                    <button 
+                        key={p.value} 
+                        className={`${styles.presetBtn} ${analyticsRange.preset === p.value ? styles.presetActive : ''}`} 
+                        onClick={() => handleAnalyticsPreset(p.value)}
+                    >
+                        {p.label}
+                    </button>
                 ))}
             </div>
+            
             <div className={styles.dateInputs}>
-                <Calendar size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
-                <input type="date" value={analyticsRange.start} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, start: e.target.value, preset: '' }))} className={styles.dateInput} onClick={(e) => e.target.showPicker?.()} />
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>to</span>
-                <input type="date" value={analyticsRange.end} onChange={(e) => setAnalyticsRange(prev => ({ ...prev, end: e.target.value, preset: '' }))} className={styles.dateInput} onClick={(e) => e.target.showPicker?.()} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginLeft: '0.5rem' }}>
-                    {dataUpdatedAt && (
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', opacity: 0.6, whiteSpace: 'nowrap' }}>
-                            Updated: {new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                    )}
+                <div className={styles.dateRangeGroup}>
+                    <Calendar size={14} className={styles.inputIcon} />
+                    <input 
+                        type="date" 
+                        value={analyticsRange.start} 
+                        onChange={(e) => setAnalyticsRange(prev => ({ ...prev, start: e.target.value, preset: '' }))} 
+                        className={styles.dateInput} 
+                        onClick={(e) => e.target.showPicker?.()} 
+                    />
+                    <span className={styles.dateSeparator}>to</span>
+                    <input 
+                        type="date" 
+                        value={analyticsRange.end} 
+                        onChange={(e) => setAnalyticsRange(prev => ({ ...prev, end: e.target.value, preset: '' }))} 
+                        className={styles.dateInput} 
+                        onClick={(e) => e.target.showPicker?.()} 
+                    />
+                </div>
+
+                <div className={styles.actionGroup}>
+                    <button 
+                        className={styles.exportBtn} 
+                        onClick={handleExportCsv}
+                        title="Export to CSV"
+                    >
+                        <Download size={14} />
+                        Export
+                    </button>
+                    
                     <button
                         className={styles.refreshBtn}
-                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', gap: '0.4rem' }}
                         onClick={handleRefreshAll}
                         disabled={analyticsFetching}
                     >
                         <RefreshCw size={14} className={analyticsFetching ? styles.spin : ''} />
                         Refresh
                     </button>
+
+                    {dataUpdatedAt && (
+                        <span className={styles.lastUpdated}>
+                            Updated: {new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    )}
                 </div>
             </div>
         </div>
@@ -290,19 +330,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 title="Analytics Dashboard"
                 description="Monitor visitor traffic, behavior, and geographical distribution."
                 icon={TrendingUp}
-                rightElement={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <button 
-                            className={styles.refreshBtn} 
-                            style={{ background: 'rgba(100, 255, 218, 0.1)', color: '#64ffda', border: '1px solid rgba(100, 255, 218, 0.2)' }}
-                            onClick={handleExportCsv}
-                        >
-                            <Download size={14} />
-                            Export CSV
-                        </button>
-                        {dateFilter}
-                    </div>
-                }
+                rightElement={dateFilter}
             />
 
             {quotaExceeded && (
