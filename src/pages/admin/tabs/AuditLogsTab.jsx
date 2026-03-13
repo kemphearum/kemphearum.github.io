@@ -188,7 +188,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                     <div className={styles.emptyState}>Only Super Admins can view audit logs.</div>
                 ) : (
                     <>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem', flexWrap: 'wrap' }}>
                             <div className={styles.searchBox} style={{ margin: 0, flex: 1 }}>
                                 <Search size={16} className={styles.searchIcon} />
                                 <input type="text" placeholder="Search by email or IP..." value={searchUsers} onChange={(e) => { setSearchUsers(e.target.value); setAuditPage(1); }} />
