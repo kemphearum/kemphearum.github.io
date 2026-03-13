@@ -5,8 +5,11 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  isRouteErrorResponse,
+  useRouteError,
 } from "react-router";
-import ErrorBoundary from '../src/components/ErrorBoundary';
+import MaintenancePage from '../src/components/MaintenancePage';
+import ComponentErrorBoundary from '../src/components/ErrorBoundary';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { ActivityProvider } from '../src/context/ActivityContext';
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
@@ -33,7 +36,7 @@ export function Layout({ children }) {
         <Links />
       </head>
       <body>
-          <ErrorBoundary>
+          <ComponentErrorBoundary>
             <QueryClientProvider client={queryClient}>
               <ThemeProvider>
                 <ActivityProvider>
@@ -41,7 +44,7 @@ export function Layout({ children }) {
                 </ActivityProvider>
               </ThemeProvider>
             </QueryClientProvider>
-          </ErrorBoundary>
+          </ComponentErrorBoundary>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -129,6 +132,41 @@ function SettingsApplier({ children, initialSettings }) {
       />
       {children}
     </>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error)) {
+    let title = "Page Not Found";
+    let message = "The link you followed might be broken, or the page may have moved.";
+    
+    if (error.status === 404) {
+      title = "404 - Lost in Space";
+    } else if (error.status === 401) {
+      title = "401 - Unauthorized";
+      message = "You don't have permission to access this area.";
+    } else if (error.status === 503) {
+      title = "503 - Under Maintenance";
+      message = "Our servers are currently undergoing maintenance. We'll be back shortly!";
+    }
+
+    return (
+      <MaintenancePage 
+        title={title}
+        message={message}
+        error={error}
+      />
+    );
+  }
+
+  return (
+    <MaintenancePage 
+      title="Something went wrong"
+      message="An unexpected error occurred. Please try refreshing or return to the home page."
+      error={error instanceof Error ? error : new Error("Unknown error")}
+    />
   );
 }
 

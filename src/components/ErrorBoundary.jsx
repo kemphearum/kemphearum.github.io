@@ -1,31 +1,29 @@
 import React from 'react';
+import MaintenancePage from './MaintenancePage';
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { hasError: false, error: null, errorInfo: null };
+        this.state = { hasError: false, error: null };
     }
 
-    static getDerivedStateFromError() {
-        return { hasError: true };
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
     }
 
     componentDidCatch(error, errorInfo) {
-        this.setState({ error, errorInfo });
         console.error("Uncaught error:", error, errorInfo);
     }
 
     render() {
         if (this.state.hasError) {
             return (
-                <div style={{ color: 'red', padding: '20px', background: 'white', zIndex: 9999, position: 'relative' }}>
-                    <h1>Something went wrong.</h1>
-                    <details style={{ whiteSpace: 'pre-wrap' }}>
-                        {this.state.error && this.state.error.toString()}
-                        <br />
-                        {this.state.errorInfo && this.state.errorInfo.componentStack}
-                    </details>
-                </div>
+                <MaintenancePage 
+                    title="Component Error"
+                    message="We hit a snag loading a part of this page. You can try refreshing to fix it."
+                    error={this.state.error}
+                    resetErrorBoundary={() => this.setState({ hasError: false, error: null })}
+                />
             );
         }
 

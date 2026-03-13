@@ -1,0 +1,142 @@
+@import '../styles/variables';
+
+.maintenanceWrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    background: #0a0a12;
+    color: #fff;
+}
+
+.content {
+    @include glass;
+    max-width: 600px;
+    width: 100%;
+    padding: 3rem 2rem;
+    border-radius: 24px;
+    text-align: center;
+    z-index: 10;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(15, 15, 25, 0.7);
+    backdrop-filter: blur(20px);
+}
+
+.iconWrapper {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, rgba($primary-color, 0.2), rgba($primary-color, 0.05));
+    border: 1px solid rgba($primary-color, 0.3);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 2rem;
+    color: $primary-color;
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: -10px;
+        background: radial-gradient(circle, rgba($primary-color, 0.2), transparent 70%);
+        z-index: -1;
+    }
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.message {
+    font-size: 1.1rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.primaryBtn {
+    @include wow-hover;
+    background: linear-gradient(135deg, $primary-color, $primary-light);
+    color: #fff;
+    padding: 0.8rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.secondaryBtn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 0.8rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-size: 1rem;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+}
+
+.errorDetail {
+    margin-top: 3rem;
+    text-align: left;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    summary {
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.4);
+        padding: 0.5rem;
+        user-select: none;
+
+        &:hover {
+            color: rgba(255, 255, 255, 0.6);
+        }
+    }
+
+    pre {
+        margin-top: 1rem;
+        color: #ff6b6b;
+        white-space: pre-wrap;
+        word-break: break-all;
+        padding: 0.5rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+}

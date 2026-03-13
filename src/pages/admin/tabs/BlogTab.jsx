@@ -430,7 +430,17 @@ const BlogTab = ({ userRole, showToast }) => {
                                 <SortableHeader label="Featured" field="featured" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
                             </div>
                             {paginatedPosts.map((p, index) => (
-                                <div key={p.id || `post-${index}`} className={`${styles.listItem} ${styles.clickableRow}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)', marginBottom: '0.75rem', borderRadius: '12px', cursor: 'pointer' }} onClick={() => setViewingPost(p)}>
+                                <div key={p.id || `post-${index}`} className={`${styles.listItem} ${styles.clickableRow}`} onClick={() => setViewingPost(p)}>
+                                    <div className={styles.itemThumbnail}>
+                                        {p.coverImage ? (
+                                            <img src={p.coverImage} alt={p.title} />
+                                        ) : (
+                                            <div className={styles.placeholder}>
+                                                <FileText size={24} />
+                                                <span>BLOG</span>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className={styles.itemInfo}>
                                         <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: '600', color: 'var(--text-primary)' }}>{p.title}</h4>
                                         <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{p.excerpt}</p>

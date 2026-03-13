@@ -467,7 +467,17 @@ const ProjectsTab = ({ userRole, showToast }) => {
                                 <SortableHeader label="Visibility" field="visible" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
                             </div>
                             {paginatedProjects.map((p, index) => (
-                                <div key={p.id || `proj-${index}`} className={`${styles.listItem} ${p.visible === false ? styles.hiddenItem : ''} ${styles.clickableRow}`} onClick={() => setViewingProject(p)} style={{ cursor: 'pointer' }}>
+                                <div key={p.id || `proj-${index}`} className={`${styles.listItem} ${p.visible === false ? styles.hiddenItem : ''} ${styles.clickableRow}`} onClick={() => setViewingProject(p)}>
+                                    <div className={styles.itemThumbnail}>
+                                        {p.imageUrl ? (
+                                            <img src={p.imageUrl} alt={p.title} />
+                                        ) : (
+                                            <div className={styles.placeholder}>
+                                                <FileText size={24} />
+                                                <span>PROJ</span>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className={styles.listItemInfo}>
                                         <h4>{p.title} {p.visible === false && <span className={styles.hiddenBadge}>Hidden</span>}</h4>
                                         <div className={styles.techTags}>
