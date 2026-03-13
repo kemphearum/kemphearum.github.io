@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft, Settings2, FileText, Download, ChevronDown } from 'lucide-react';
+import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft, Settings2, FileText, Download, ChevronDown, Clock } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sortData } from '../../../utils/sortData';
@@ -423,47 +423,88 @@ const BlogTab = ({ userRole, showToast }) => {
                         <div className={styles.emptyState}>{searchPosts ? 'No matching posts found.' : 'No posts yet.'}</div>
                     ) : (
                         <>
-                            <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'var(--editor-toolbar-bg, var(--card-bg))', border: '1px solid var(--editor-border, var(--divider))', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
-                                <SortableHeader label="Title" field="title" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
-                                <SortableHeader label="Date" field="createdAt" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
-                                <SortableHeader label="Status" field="visible" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
-                                <SortableHeader label="Featured" field="featured" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
+                            <div className={styles.tableHeaderRow}>
+                                <div className={styles.colThumbnail}></div>
+                                <div className={styles.colInfo}>
+                                    <div className={styles.colHeaderFlex}>
+                                        <SortableHeader label="Title" field="title" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
+                                    </div>
+                                </div>
+                                <div className={styles.colDescription}>Description</div>
+                                <div className={styles.colTags}>
+                                    <SortableHeader label="Tags" field="tags" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
+                                </div>
+                                <div className={styles.colReadTime}>
+                                    <SortableHeader label="Read" field="content" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
+                                </div>
+                                <div className={styles.colDate}>
+                                    <SortableHeader label="Date" field="createdAt" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
+                                </div>
+                                <div className={styles.colStatus}>
+                                    <SortableHeader label="Status" field="visible" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
+                                </div>
+                                <div className={styles.colActions}>Actions</div>
                             </div>
                             {paginatedPosts.map((p, index) => (
                                 <div key={p.id || `post-${index}`} className={`${styles.listItem} ${styles.clickableRow}`} onClick={() => setViewingPost(p)}>
-                                    <div className={styles.itemThumbnail}>
-                                        {p.coverImage ? (
-                                            <img src={p.coverImage} alt={p.title} />
-                                        ) : (
-                                            <div className={styles.placeholder}>
-                                                <FileText size={24} />
-                                                <span>BLOG</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className={styles.itemInfo}>
-                                        <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: '600', color: 'var(--text-primary)' }}>{p.title}</h4>
-                                        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{p.excerpt}</p>
-                                        <div className={styles.meta} style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                            <span className={styles.date}>{p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
-                                            <span style={{ marginLeft: '1rem', color: p.visible ? 'var(--primary-color)' : '#ff9800' }}>{p.visible ? 'Published' : 'Draft'}</span>
+                                    <div className={styles.colThumbnail}>
+                                        <div className={styles.itemThumbnail}>
+                                            {p.coverImage ? (
+                                                <img src={p.coverImage} alt={p.title} />
+                                            ) : (
+                                                <div className={styles.placeholder}>
+                                                    <FileText size={20} />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <div className={styles.itemActions} style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button onClick={(e) => { e.stopPropagation(); window.open(`/blog/${p.slug}`, '_blank'); }} title="View" className={styles.editBtn}><ExternalLink size={16} /></button>
-                                        {userRole !== 'editor' && (
-                                            <>
-                                                <button onClick={(e) => { e.stopPropagation(); toggleFeaturedPost(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={styles.editBtn}>
-                                                    <Star size={16} fill={p.featured ? "currentColor" : "none"} style={{ color: p.featured ? '#FFD700' : 'inherit' }} />
-                                                </button>
-                                                <button onClick={(e) => { e.stopPropagation(); toggleVisibility(p.id, p.visible); }} title={p.visible ? "Hide" : "Show"} className={styles.editBtn}>
-                                                    {p.visible ? <Eye size={16} /> : <EyeOff size={16} />}
-                                                </button>
-                                            </>
-                                        )}
-                                        <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={styles.editBtn} title="View Edit History"><History size={16} /></button>
-                                        <button onClick={(e) => { e.stopPropagation(); setPost(p); setShowPostForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} title="Edit" className={styles.editBtn}><Edit2 size={16} /></button>
-                                        {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeletePost(p.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
+                                    <div className={styles.colInfo}>
+                                        <div className={styles.itemMainInfo}>
+                                            <h4 className={styles.itemTitle}>{p.title}</h4>
+                                        </div>
+                                    </div>
+                                    <div className={styles.colDescription}>
+                                        <p className={styles.itemDescription}>{p.excerpt}</p>
+                                    </div>
+                                    <div className={styles.colTags}>
+                                        <div className={styles.inlineTags}>
+                                            {(Array.isArray(p.tags) ? p.tags : []).slice(0, 2).map((t, i) => (
+                                                <span key={i} className={styles.miniTag}>{t}</span>
+                                            ))}
+                                            {p.tags?.length > 2 && <span className={styles.moreTags}>+{p.tags.length - 2}</span>}
+                                            {(!p.tags || p.tags.length === 0) && <span className={styles.noData}>None</span>}
+                                        </div>
+                                    </div>
+                                    <div className={styles.colReadTime}>
+                                        <span className={styles.readTimeText}>
+                                            {Math.ceil((p.content?.split(/\s+/)?.length || 0) / 200)}m
+                                        </span>
+                                    </div>
+                                    <div className={styles.colDate}>
+                                        <span className={styles.dateText}>{p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
+                                    </div>
+                                    <div className={styles.colStatus}>
+                                        <span className={`${styles.statusBadge} ${p.visible ? styles.statusPublished : styles.statusDraft}`}>
+                                            {p.visible ? 'Published' : 'Unpublished'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.colActions}>
+                                        <div className={styles.itemActions}>
+                                            <button onClick={(e) => { e.stopPropagation(); window.open(`/blog/${p.slug}`, '_blank'); }} title="View" className={styles.editBtn}><ExternalLink size={16} /></button>
+                                            {userRole !== 'editor' && (
+                                                <>
+                                                    <button onClick={(e) => { e.stopPropagation(); toggleFeaturedPost(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={styles.editBtn}>
+                                                        <Star size={16} fill={p.featured ? "currentColor" : "none"} style={{ color: p.featured ? '#FFD700' : 'inherit' }} />
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); toggleVisibility(p.id, p.visible); }} title={p.visible ? "Hide" : "Show"} className={styles.editBtn}>
+                                                        {p.visible ? <Eye size={16} /> : <EyeOff size={16} />}
+                                                    </button>
+                                                </>
+                                            )}
+                                            <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={styles.editBtn} title="View Edit History"><History size={16} /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); setPost(p); setShowPostForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} title="Edit" className={styles.editBtn}><Edit2 size={16} /></button>
+                                            {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeletePost(p.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -474,7 +515,7 @@ const BlogTab = ({ userRole, showToast }) => {
             ) : (
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
-                        <h3>{editingPost ? <Edit2 size={24} /> : <Plus size={24} />} {editingPost ? 'Edit Post' : 'New Blog Post'}</h3>
+                        <h3>{post.id ? <Edit2 size={24} /> : <Plus size={24} />} {post.id ? 'Edit Post' : 'New Blog Post'}</h3>
                         <button
                             onClick={() => {
                                 setPost({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
@@ -539,7 +580,7 @@ const BlogTab = ({ userRole, showToast }) => {
 
                         <FormDropzone
                             label="Cover Image"
-                            hint={editingPost ? "leave empty to keep current" : ""}
+                            hint={post.id ? "leave empty to keep current" : ""}
                             file={postImage}
                             onFileChange={setPostImage}
                             currentImageUrl={post.coverImage}

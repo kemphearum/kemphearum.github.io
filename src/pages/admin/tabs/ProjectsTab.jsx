@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft, History, Settings2, FileText, Download, ChevronDown } from 'lucide-react';
+import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft, History, Settings2, FileText, Download, ChevronDown, Github } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { sortData } from '../../../utils/sortData';
@@ -461,46 +461,83 @@ const ProjectsTab = ({ userRole, showToast }) => {
                         <div className={styles.emptyState}>{searchProjects ? 'No matching projects found.' : 'No projects yet.'}</div>
                     ) : (
                         <>
-                            <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'var(--editor-toolbar-bg, var(--card-bg))', border: '1px solid var(--editor-border, var(--divider))', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
-                                <SortableHeader label="Title" field="title" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
-                                <SortableHeader label="Featured" field="featured" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
-                                <SortableHeader label="Visibility" field="visible" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
+                            <div className={styles.tableHeaderRow}>
+                                <div className={styles.colThumbnail}></div>
+                                <div className={styles.colInfo}>
+                                    <div className={styles.colHeaderFlex}>
+                                        <SortableHeader label="Title" field="title" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
+                                    </div>
+                                </div>
+                                <div className={styles.colDescription}>Description</div>
+                                <div className={styles.colTech}>
+                                    <SortableHeader label="Tech Stack" field="techStack" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
+                                </div>
+                                <div className={styles.colLinks}>
+                                    <SortableHeader label="Links" field="githubUrl" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
+                                </div>
+                                <div className={styles.colStatus}>
+                                    <SortableHeader label="Status" field="visible" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
+                                </div>
+                                <div className={styles.colActions}>Actions</div>
                             </div>
                             {paginatedProjects.map((p, index) => (
                                 <div key={p.id || `proj-${index}`} className={`${styles.listItem} ${p.visible === false ? styles.hiddenItem : ''} ${styles.clickableRow}`} onClick={() => setViewingProject(p)}>
-                                    <div className={styles.itemThumbnail}>
-                                        {p.imageUrl ? (
-                                            <img src={p.imageUrl} alt={p.title} />
-                                        ) : (
-                                            <div className={styles.placeholder}>
-                                                <FileText size={24} />
-                                                <span>PROJ</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className={styles.listItemInfo}>
-                                        <h4>{p.title} {p.visible === false && <span className={styles.hiddenBadge}>Hidden</span>}</h4>
-                                        <div className={styles.techTags}>
-                                            {(Array.isArray(p.techStack) ? p.techStack : []).map((t, i) => (
-                                                <span key={`${p.id}-tag-${t}-${i}`} className={styles.techTag}>{t}</span>
-                                            ))}
+                                    <div className={styles.colThumbnail}>
+                                        <div className={styles.itemThumbnail}>
+                                            {p.imageUrl ? (
+                                                <img src={p.imageUrl} alt={p.title} />
+                                            ) : (
+                                                <div className={styles.placeholder}>
+                                                    <FileText size={20} />
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <div className={styles.itemActions} style={{ display: 'flex', gap: '0.5rem' }}>
-                                        {p.slug && <button onClick={(e) => { e.stopPropagation(); window.open(`/projects/${p.slug}`, '_blank'); }} title="View Detail" className={styles.editBtn}><ExternalLink size={16} /></button>}
-                                        {userRole !== 'editor' && (
-                                            <>
-                                                <button onClick={(e) => { e.stopPropagation(); toggleFeatured(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={styles.editBtn}>
-                                                    <Star size={16} fill={p.featured ? "currentColor" : "none"} style={{ color: p.featured ? '#FFD700' : 'inherit' }} />
-                                                </button>
-                                                <button onClick={(e) => { e.stopPropagation(); toggleVisibility(p.id, p.visible !== false); }} title={p.visible !== false ? "Hide" : "Show"} className={styles.editBtn}>
-                                                    {p.visible !== false ? <Eye size={16} /> : <EyeOff size={16} />}
-                                                </button>
-                                            </>
-                                        )}
-                                        <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={styles.editBtn} title="View Edit History"><History size={16} /></button>
-                                        <button onClick={(e) => { e.stopPropagation(); handleEditClick(p); }} className={styles.editBtn} title="Edit"><Edit2 size={16} /></button>
-                                        {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
+                                    <div className={styles.colInfo}>
+                                        <div className={styles.itemMainInfo}>
+                                            <h4 className={styles.itemTitle}>{p.title}</h4>
+                                        </div>
+                                    </div>
+                                    <div className={styles.colDescription}>
+                                        <p className={styles.itemDescription}>{p.description}</p>
+                                    </div>
+                                    <div className={styles.colTech}>
+                                        <div className={styles.inlineTags}>
+                                            {(Array.isArray(p.techStack) ? p.techStack : []).slice(0, 3).map((t, i) => (
+                                                <span key={i} className={styles.miniTag}>{t}</span>
+                                            ))}
+                                            {p.techStack?.length > 3 && <span className={styles.moreTags}>+{p.techStack.length - 3}</span>}
+                                            {(!p.techStack || p.techStack.length === 0) && <span className={styles.noData}>None</span>}
+                                        </div>
+                                    </div>
+                                    <div className={styles.colLinks}>
+                                        <div className={styles.linkSummary}>
+                                            <Github size={14} className={p.githubUrl ? styles.linkIconActive : styles.linkIconInactive} title={p.githubUrl ? "GitHub Repo Available" : "No GitHub Repo"} />
+                                            <ExternalLink size={14} className={p.liveUrl ? styles.linkIconActive : styles.linkIconInactive} title={p.liveUrl ? "Live Demo Available" : "No Live Demo"} />
+                                        </div>
+                                    </div>
+                                    <div className={styles.colStatus}>
+                                        <span className={`${styles.statusBadge} ${p.visible !== false ? styles.statusPublished : styles.statusDraft}`}>
+                                            {p.visible !== false ? 'Published' : 'Unpublished'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.colActions}>
+                                        <div className={styles.itemActions}>
+                                            {p.slug && <button onClick={(e) => { e.stopPropagation(); window.open(`/projects/${p.slug}`, '_blank'); }} title="View Detail" className={styles.editBtn}><ExternalLink size={16} /></button>}
+                                            {userRole !== 'editor' && (
+                                                <>
+                                                    <button onClick={(e) => { e.stopPropagation(); toggleFeatured(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={styles.editBtn}>
+                                                        <Star size={16} fill={p.featured ? "currentColor" : "none"} style={{ color: p.featured ? '#FFD700' : 'inherit' }} />
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); toggleVisibility(p.id, p.visible !== false); }} title={p.visible !== false ? "Hide" : "Show"} className={styles.editBtn}>
+                                                        {p.visible !== false ? <Eye size={16} /> : <EyeOff size={16} />}
+                                                    </button>
+                                                </>
+                                            )}
+                                            <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={styles.editBtn} title="View Edit History"><History size={16} /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleEditClick(p); }} className={styles.editBtn} title="Edit"><Edit2 size={16} /></button>
+                                            {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
