@@ -31,7 +31,7 @@ import styles from './Blog.module.scss'; // We need to create this
 const Blog = () => {
     const { data: postsData, isLoading: loadingPosts } = useQuery({
         queryKey: ['posts'],
-        queryFn: () => BlogService.getAll()
+        queryFn: () => BlogService.getAll("createdAt", "desc")
     });
 
     const { data: globalConfig } = useQuery({

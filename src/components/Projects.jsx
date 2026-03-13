@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
 const Projects = () => {
     const { data: projectsData, isLoading: loadingProjects } = useQuery({
         queryKey: ['projects'],
-        queryFn: () => ProjectService.getAll()
+        queryFn: () => ProjectService.getAll("createdAt", "desc")
     });
 
     const { data: globalConfig } = useQuery({

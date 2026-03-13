@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 const FeaturedProjects = () => {
     const { data: projectsData, isLoading: loading } = useQuery({
         queryKey: ['projects'],
-        queryFn: () => ProjectService.getAll()
+        queryFn: () => ProjectService.getAll("createdAt", "desc")
     });
 
     const projects = projectsData || [];
@@ -27,8 +27,18 @@ const FeaturedProjects = () => {
             const dateA = a.createdAt?.seconds || 0;
             const dateB = b.createdAt?.seconds || 0;
             return dateB - dateA;
-        }).slice(0, 3);
+        });
+    } else {
+        // Even if hand-picked, sort by latest
+        featuredList.sort((a, b) => {
+            const dateA = a.createdAt?.seconds || 0;
+            const dateB = b.createdAt?.seconds || 0;
+            return dateB - dateA;
+        });
     }
+
+    // Always limit to 3 for consistent layout
+    featuredList = featuredList.slice(0, 3);
 
     return (
         <section id="projects" className={styles.section}>

@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 const FeaturedBlogs = () => {
     const { data: postsData, isLoading: loading } = useQuery({
         queryKey: ['posts'],
-        queryFn: () => BlogService.getAll()
+        queryFn: () => BlogService.getAll("createdAt", "desc")
     });
 
     const posts = postsData || [];
@@ -20,14 +20,24 @@ const FeaturedBlogs = () => {
     // Filter: Visible posts for the "View All" count
     const visiblePosts = posts.filter(p => p.visible !== false);
 
-    // Fallback: If no hand-picked featured posts, show the 3 newest visible ones
+    // Fallback: If no hand-picked featured projects, show the 3 newest visible ones
     if (featuredList.length === 0) {
         featuredList = [...visiblePosts].sort((a, b) => {
             const dateA = a.createdAt?.seconds || 0;
             const dateB = b.createdAt?.seconds || 0;
             return dateB - dateA;
-        }).slice(0, 3);
+        });
+    } else {
+        // Even if hand-picked, sort by latest
+        featuredList.sort((a, b) => {
+            const dateA = a.createdAt?.seconds || 0;
+            const dateB = b.createdAt?.seconds || 0;
+            return dateB - dateA;
+        });
     }
+
+    // Always limit to 3 for consistent layout
+    featuredList = featuredList.slice(0, 3);
 
     return (
         <section id="featured-blogs" className={styles.postsSection} style={{ paddingTop: '6rem', paddingBottom: '6rem' }}>

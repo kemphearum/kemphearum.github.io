@@ -5,6 +5,7 @@ import ImageProcessingService from '../../../services/ImageProcessingService';
 import axios from 'axios';
 
 import FormSelect from '../components/FormSelect';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 const FONT_OPTIONS = [
     { value: 'inter', label: 'Inter' },
@@ -41,11 +42,26 @@ const getFontWeight = (key, defaultWeight) => key === 'kantumruy-pro-medium' ? 5
 const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, sidebarPersistent, setSidebarPersistent }) => {
     const [settingsFavicon, setSettingsFavicon] = useState(null);
     const [previewBase64, setPreviewBase64] = useState('');
-    const [rebuildStatus, setRebuildStatus] = useState({ state: 'idle', message: '' });
+    const [rebuildStatus, setRebuildStatus] = useState({ 
+        state: 'idle', 
+        message: '',
+        runId: null,
+        startTime: null
+    });
     
     // GitHub Token States (stored in localStorage, not Firestore)
     const [githubToken, setGithubToken] = useState('');
     const [showToken, setShowToken] = useState(false);
+
+    // Custom Confirmation Dialog State
+    const [confirmDialog, setConfirmDialog] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null,
+        confirmText: 'Confirm',
+        type: 'warning'
+    });
 
     useEffect(() => {
         // Load token from localStorage on mount
@@ -92,57 +108,151 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         }
     };
 
+    // Polling logic for GitHub Actions
+    useEffect(() => {
+        let pollInterval;
+        let timeoutId;
+
+        const poll = async () => {
+            if (!githubToken || !rebuildStatus.startTime) return;
+
+            try {
+                const GITHUB_OWNER = 'kemphearum';
+                const GITHUB_REPO = 'kemphearum.github.io';
+                
+                // 1. Try to find the run if we don't have a runId yet
+                if (!rebuildStatus.runId) {
+                    const runsUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs?event=repository_dispatch&per_page=5`;
+                    const response = await axios.get(runsUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${githubToken}`,
+                            'Accept': 'application/vnd.github+json'
+                        }
+                    });
+
+                    const latestRun = response.data.workflow_runs.find(run => 
+                        new Date(run.created_at) >= new Date(rebuildStatus.startTime - 10000) // 10s grace period
+                    );
+
+                    if (latestRun) {
+                        setRebuildStatus(prev => ({ 
+                            ...prev, 
+                            runId: latestRun.id,
+                            state: latestRun.status === 'completed' ? (latestRun.conclusion === 'success' ? 'success' : 'error') : latestRun.status,
+                            message: `Workflow started: ${latestRun.name}`
+                        }));
+                    }
+                    return;
+                }
+
+                // 2. Poll the specific run status
+                const runUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${rebuildStatus.runId}`;
+                const response = await axios.get(runUrl, {
+                    headers: {
+                        'Authorization': `Bearer ${githubToken}`,
+                        'Accept': 'application/vnd.github+json'
+                    }
+                });
+
+                const run = response.data;
+                const newState = run.status === 'completed' ? (run.conclusion === 'success' ? 'success' : 'error') : run.status;
+                
+                setRebuildStatus(prev => ({ 
+                    ...prev, 
+                    state: newState,
+                    message: newState === 'success' ? 'Build successful! Your site is updated.' : 
+                             newState === 'error' ? `Build failed: ${run.conclusion}` : 
+                             `Current Status: ${run.status.replace('_', ' ')}...`
+                }));
+
+                if (run.status === 'completed') {
+                    clearInterval(pollInterval);
+                    // Clear success message after 15 seconds
+                    timeoutId = setTimeout(() => {
+                        setRebuildStatus({ state: 'idle', message: '', runId: null, startTime: null });
+                    }, 15000);
+                }
+
+            } catch (error) {
+                console.error("Polling error:", error);
+                // Don't stop polling on single error, just log it
+            }
+        };
+
+        if (rebuildStatus.state !== 'idle' && rebuildStatus.state !== 'success' && rebuildStatus.state !== 'error') {
+            poll(); // Immediate poll
+            pollInterval = setInterval(poll, 5000); // Pulse every 5 seconds
+        }
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            if (timeoutId) clearTimeout(timeoutId);
+        };
+    }, [rebuildStatus.state, rebuildStatus.runId, rebuildStatus.startTime, githubToken]);
+
     const handleTriggerRebuild = async () => {
         if (!githubToken) {
             alert('Please enter your GitHub Personal Access Token first.');
             return;
         }
 
-        if (!window.confirm('This will trigger a full site rebuild and deployment using your browser. New blog posts and projects will be pre-rendered. Continue?')) {
-            return;
-        }
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Trigger Site Rebuild',
+            message: 'This will trigger a full site rebuild and deployment. You can track the progress in real-time below.\n\nContinue?',
+            confirmText: 'Rebuild Now',
+            type: 'warning',
+            onConfirm: async () => {
+                const startTime = Date.now();
+                setRebuildStatus({ 
+                    state: 'loading', 
+                    message: 'Initializing sync with GitHub...', 
+                    runId: null, 
+                    startTime 
+                });
+                
+                try {
+                    const GITHUB_OWNER = 'kemphearum';
+                    const GITHUB_REPO = 'kemphearum.github.io';
+                    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/dispatches`;
 
-        setRebuildStatus({ state: 'loading', message: 'Connecting to GitHub API...' });
-        
-        try {
-            const GITHUB_OWNER = 'kemphearum';
-            const GITHUB_REPO = 'kemphearum.github.io';
-            const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/dispatches`;
+                    await axios.post(
+                        url,
+                        { event_type: 'manual_rebuild' },
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${githubToken}`,
+                                'Accept': 'application/vnd.github+json',
+                                'X-GitHub-Api-Version': '2022-11-28'
+                            }
+                        }
+                    );
+                    
+                    setRebuildStatus(prev => ({ 
+                        ...prev, 
+                        state: 'requested', 
+                        message: 'Request sent! Waiting for GitHub to start the build...' 
+                    }));
 
-            await axios.post(
-                url,
-                { event_type: 'manual_rebuild' },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${githubToken}`,
-                        'Accept': 'application/vnd.github+json',
-                        'X-GitHub-Api-Version': '2022-11-28'
+                } catch (error) {
+                    console.error("Rebuild trigger error:", error);
+                    let errMsg = 'Failed to trigger rebuild.';
+                    
+                    if (error.response?.status === 401 || error.response?.status === 403) {
+                        errMsg = 'Invalid or expired GitHub Token. Please check your token settings.';
+                    } else if (error.response?.data?.message) {
+                        errMsg = `GitHub Error: ${error.response.data.message}`;
                     }
+
+                    setRebuildStatus({ 
+                        state: 'error', 
+                        message: errMsg,
+                        runId: null,
+                        startTime: null
+                    });
                 }
-            );
-            
-            setRebuildStatus({ 
-                state: 'success', 
-                message: 'Successfully triggered rebuild! Deployment typically takes ~2 minutes.' 
-            });
-
-            // Reset status after 10 seconds
-            setTimeout(() => setRebuildStatus({ state: 'idle', message: '' }), 10000);
-        } catch (error) {
-            console.error("Rebuild trigger error:", error);
-            let errMsg = 'Failed to trigger rebuild.';
-            
-            if (error.response?.status === 401 || error.response?.status === 403) {
-                errMsg = 'Invalid or expired GitHub Token. Please check your token settings.';
-            } else if (error.response?.data?.message) {
-                errMsg = `GitHub Error: ${error.response.data.message}`;
             }
-
-            setRebuildStatus({ 
-                state: 'error', 
-                message: errMsg
-            });
-        }
+        });
     };
 
     const handleSizeAdjust = (field, currentSize, increment = true) => {
@@ -437,6 +547,49 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             style={{ width: '100%', accentColor: 'var(--primary-color)' }}
                         />
                     </div>
+                    <div className={styles.inputGroup}>
+                        <label>Animation Speed ({settingsData.bgSpeed ?? 50}%)</label>
+                        <input
+                            type="range"
+                            min="1"
+                            max="100"
+                            value={settingsData.bgSpeed ?? 50}
+                            onChange={(e) => setSettingsData({ ...settingsData, bgSpeed: parseInt(e.target.value) })}
+                            style={{ width: '100%', accentColor: 'var(--primary-color)' }}
+                        />
+                    </div>
+                    <div className={styles.inputGroup}>
+                        <label>Glow Intensity ({settingsData.bgGlowOpacity ?? 50}%)</label>
+                        <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={settingsData.bgGlowOpacity ?? 50}
+                            onChange={(e) => setSettingsData({ ...settingsData, bgGlowOpacity: parseInt(e.target.value) })}
+                            style={{ width: '100%', accentColor: 'var(--primary-color)' }}
+                        />
+                    </div>
+                    <div className={styles.inputGroup} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+                            <input
+                                type="checkbox"
+                                checked={settingsData.bgInteractive ?? true}
+                                onChange={(e) => setSettingsData({ ...settingsData, bgInteractive: e.target.checked })}
+                                style={{ 
+                                    width: '18px', 
+                                    height: '18px', 
+                                    accentColor: 'var(--primary-color)',
+                                    cursor: 'pointer'
+                                }}
+                            />
+                            <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 500 }}>
+                                Interactive Mouse Effect
+                            </span>
+                        </label>
+                        <p style={{ margin: '0.25rem 0 0 2rem', fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.7 }}>
+                            Background particles respond to mouse movement.
+                        </p>
+                    </div>
                 </div>
 
                 {/* Deployment & Refresh Section */}
@@ -471,101 +624,249 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         </div>
                     </div>
 
-                    {/* GitHub Token Input Layer */}
+                    {/* GitHub Token & Action Row */}
                     <div style={{ 
-                        background: 'rgba(255,255,255,0.03)', 
-                        padding: '1.25rem', 
-                        borderRadius: '12px',
-                        border: '1px solid rgba(255,255,255,0.05)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.75rem'
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '0.75rem',
+                        maxWidth: '900px' 
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Key size={16} style={{ color: 'var(--primary-color)' }} />
-                            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>GitHub Access Token</span>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginLeft: 'auto' }}>Stored only in your browser</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', margin: 0, cursor: 'text' }}>
+                                <Key size={16} style={{ color: 'var(--primary-color)' }} />
+                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>GitHub Access Token</span>
+                            </label>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.8 }}>Stored only in your browser</span>
                         </div>
-                        <div style={{ position: 'relative' }}>
-                            <input 
-                                type={showToken ? "text" : "password"}
-                                value={githubToken}
-                                onChange={(e) => setGithubToken(e.target.value)}
-                                placeholder="ghp_..."
-                                style={{ 
-                                    width: '100%', 
-                                    paddingRight: '40px',
-                                    fontFamily: 'monospace',
-                                    fontSize: '0.85rem',
-                                    background: 'rgba(0,0,0,0.2)'
-                                }}
-                            />
+                        
+                        <div style={{ 
+                            display: 'flex', 
+                            gap: '0.75rem', 
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            width: '100%'
+                        }}>
+                            <div style={{ 
+                                flex: 1,
+                                minWidth: '300px',
+                                position: 'relative'
+                            }}>
+                                <input 
+                                    type={showToken ? "text" : "password"}
+                                    value={githubToken}
+                                    onChange={(e) => setGithubToken(e.target.value)}
+                                    placeholder="ghp_..."
+                                    style={{ 
+                                        width: '100%', 
+                                        height: '50px', // Precise height match
+                                        paddingLeft: '1rem',
+                                        paddingRight: '45px',
+                                        fontFamily: 'monospace',
+                                        fontSize: '0.9rem',
+                                        background: 'rgba(255,255,255,0.03)',
+                                        border: '1px solid var(--input-border)',
+                                        borderRadius: '12px',
+                                        color: 'var(--text-primary)',
+                                        outline: 'none',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    onFocus={(e) => {
+                                        e.target.style.borderColor = 'var(--primary-color)';
+                                        e.target.style.background = 'rgba(255,255,255,0.05)';
+                                    }}
+                                    onBlur={(e) => {
+                                        e.target.style.borderColor = 'var(--input-border)';
+                                        e.target.style.background = 'rgba(255,255,255,0.03)';
+                                    }}
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowToken(!showToken)}
+                                    title={showToken ? "Hide Token" : "Show Token"}
+                                    style={{ 
+                                        position: 'absolute', 
+                                        right: '12px', 
+                                        top: '50%', 
+                                        transform: 'translateY(-50%)',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        width: '32px',
+                                        height: '32px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'var(--text-secondary)',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+                                >
+                                    {showToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+
                             <button 
-                                type="button"
-                                onClick={() => setShowToken(!showToken)}
+                                type="button" 
+                                disabled={rebuildStatus.state === 'loading'}
+                                onClick={handleTriggerRebuild}
+                                className={styles.submitBtn}
+                                onMouseEnter={(e) => {
+                                    if (rebuildStatus.state !== 'loading') {
+                                        e.currentTarget.style.transform = 'translateY(-2px)';
+                                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(108, 99, 255, 0.3)';
+                                        e.currentTarget.style.filter = 'brightness(1.1)';
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
+                                    e.currentTarget.style.filter = 'brightness(1)';
+                                }}
+                                onMouseDown={(e) => {
+                                    if (rebuildStatus.state !== 'loading') {
+                                        e.currentTarget.style.transform = 'translateY(0) scale(0.98)';
+                                    }
+                                }}
+                                onMouseUp={(e) => {
+                                    if (rebuildStatus.state !== 'loading') {
+                                        e.currentTarget.style.transform = 'translateY(-2px) scale(1)';
+                                    }
+                                }}
                                 style={{ 
-                                    position: 'absolute', 
-                                    right: '10px', 
-                                    top: '50%', 
-                                    transform: 'translateY(-50%)',
-                                    background: 'none',
+                                    height: '50px', // Exact match
+                                    padding: '0 2rem', 
+                                    background: rebuildStatus.state === 'error' 
+                                        ? 'linear-gradient(135deg, #ef4444, #f87171)' 
+                                        : 'linear-gradient(135deg, var(--primary-color), #8b80ff)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.6rem',
                                     border: 'none',
-                                    padding: '5px',
-                                    color: 'var(--text-secondary)',
-                                    cursor: 'pointer'
+                                    borderRadius: '12px',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    cursor: rebuildStatus.state === 'loading' ? 'not-allowed' : 'pointer',
+                                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
+                                    opacity: rebuildStatus.state === 'loading' ? 0.7 : 1,
+                                    whiteSpace: 'nowrap'
                                 }}
                             >
-                                {showToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                                {rebuildStatus.state === 'loading' ? (
+                                    <>
+                                        <RefreshCw size={18} className={styles.spinning} />
+                                        <span>Syncing...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <RefreshCw size={18} />
+                                        <span>Rebuild</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
 
-                    <button 
-                        type="button" 
-                        disabled={rebuildStatus.state === 'loading'}
-                        onClick={handleTriggerRebuild}
-                        className={styles.submitBtn}
-                        style={{ 
-                            width: '100%', 
-                            padding: '1rem', 
-                            background: rebuildStatus.state === 'error' ? 'var(--error-color)' : 'var(--primary-color)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.75rem'
-                        }}
-                    >
-                        {rebuildStatus.state === 'loading' ? (
-                            <>Connecting to GitHub API...</>
-                        ) : (
-                            <><RefreshCw size={18} /> Rebuild & Refresh Site</>
-                        )}
-                    </button>
-
                     {rebuildStatus.state !== 'idle' && (
-                        <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '0.75rem', 
-                            padding: '0.75rem 1rem', 
-                            borderRadius: '10px',
-                            background: rebuildStatus.state === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
-                            border: `1px solid ${rebuildStatus.state === 'success' ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`,
-                            color: rebuildStatus.state === 'success' ? '#4ade80' : '#f87171',
-                            fontSize: '0.85rem'
+                        <div style={{
+                            marginTop: '0.5rem',
+                            padding: '1rem 0',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1rem',
+                            maxWidth: '900px',
+                            animation: 'slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                         }}>
-                            {rebuildStatus.state === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
-                            {rebuildStatus.message}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <div style={{
+                                        width: '32px',
+                                        height: '32px',
+                                        borderRadius: '50%',
+                                        background: rebuildStatus.state === 'error' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(108, 99, 255, 0.1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: rebuildStatus.state === 'error' ? '#ef4444' : 'var(--primary-color)'
+                                    }}>
+                                        {rebuildStatus.state === 'success' ? <CheckCircle size={18} /> :
+                                         rebuildStatus.state === 'error' ? <AlertCircle size={18} /> :
+                                         <RefreshCw size={18} className={styles.spinning} />}
+                                    </div>
+                                    <div>
+                                        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                            {rebuildStatus.state === 'success' ? 'Rebuild Complete' :
+                                             rebuildStatus.state === 'error' ? 'Rebuild Failed' :
+                                             'Rebuild in Progress'}
+                                        </h4>
+                                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', opacity: 0.8 }}>
+                                            {rebuildStatus.message}
+                                        </p>
+                                    </div>
+                                </div>
+                                {rebuildStatus.state === 'success' && (
+                                    <button
+                                        onClick={() => setRebuildStatus({ state: 'idle', message: '', runId: null, startTime: null })}
+                                        style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8rem' }}
+                                    >
+                                        Dismiss
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Multi-stage Progress Bar */}
+                            <div style={{ position: 'relative', height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', marginTop: '0.5rem', overflow: 'hidden' }}>
+                                <div style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    height: '100%',
+                                    width: rebuildStatus.state === 'success' ? '100%' :
+                                           rebuildStatus.state === 'in_progress' ? '66%' :
+                                           rebuildStatus.state === 'queued' || rebuildStatus.state === 'requested' ? '33%' : '10%',
+                                    background: rebuildStatus.state === 'error' ? '#ef4444' : 'linear-gradient(90deg, var(--primary-color), #8b80ff)',
+                                    boxShadow: '0 0 10px rgba(108, 99, 255, 0.5)',
+                                    transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
+                                }} />
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                                <div style={{ textAlign: 'center', flex: 1 }}>
+                                    <span style={{
+                                        fontSize: '0.7rem',
+                                        fontWeight: 600,
+                                        color: (rebuildStatus.state === 'requested' || rebuildStatus.state === 'queued' || rebuildStatus.state === 'in_progress' || rebuildStatus.state === 'success') ? 'var(--primary-color)' : 'var(--text-secondary)'
+                                    }}>Triggered</span>
+                                </div>
+                                <div style={{ textAlign: 'center', flex: 1 }}>
+                                    <span style={{
+                                        fontSize: '0.7rem',
+                                        fontWeight: 600,
+                                        color: (rebuildStatus.state === 'in_progress' || rebuildStatus.state === 'success') ? 'var(--primary-color)' : 'var(--text-secondary)'
+                                    }}>Building</span>
+                                </div>
+                                <div style={{ textAlign: 'center', flex: 1 }}>
+                                    <span style={{
+                                        fontSize: '0.7rem',
+                                        fontWeight: 600,
+                                        color: rebuildStatus.state === 'success' ? 'var(--primary-color)' : 'var(--text-secondary)'
+                                    }}>Finished</span>
+                                </div>
+                            </div>
                         </div>
                     )}
-                    
                     <div style={{ 
                         fontSize: '0.75rem', 
                         color: 'var(--text-secondary)', 
                         padding: '0.75rem', 
                         background: 'rgba(255,255,255,0.02)', 
                         borderRadius: '8px',
-                        borderLeft: '3px solid var(--primary-color)'
+                        borderLeft: '3px solid var(--primary-color)',
+                        marginTop: '1.25rem'
                     }}>
                         <strong>Note:</strong> Since we are using the <strong>No-Backend</strong> version, your GitHub 
                         token must be entered above to trigger the build. This ensures 100% free hosting.
@@ -578,6 +879,11 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     </button>
                 </div>
             </form>
+
+            <ConfirmDialog 
+                confirmDialog={confirmDialog} 
+                setConfirmDialog={setConfirmDialog} 
+            />
         </div>
     );
 };
