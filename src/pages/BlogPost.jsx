@@ -8,7 +8,7 @@ import { calculateReadTime } from '../utils/helpers';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, X, Calendar, Clock, Tag,
-    Share2, Copy, Check, ArrowLeft, ChevronRight,
+    Share2, Copy, Check, ArrowLeft, ChevronRight, Maximize2,
     Facebook, Instagram, Linkedin, Send
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -60,7 +60,7 @@ const BlogPost = () => {
     const { slug } = useParams();
     const loaderData = useLoaderData();
     const [showScrollTop, setShowScrollTop] = useState(false);
-    const [readProgress, setReadProgress] = useState(0);
+    const [lightboxOpen, setLightboxOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const [instaCopied, setInstaCopied] = useState(false);
     const { trackRead } = useActivity();
@@ -91,6 +91,21 @@ const BlogPost = () => {
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
     }, [handleScroll]);
+
+    // Lightbox Scroll Lock
+    useEffect(() => {
+        const handleKey = (e) => { 
+            if (e.key === 'Escape') setLightboxOpen(false); 
+        };
+        if (lightboxOpen) {
+            document.addEventListener('keydown', handleKey);
+            document.body.style.overflow = 'hidden';
+        }
+        return () => {
+            document.removeEventListener('keydown', handleKey);
+            document.body.style.overflow = '';
+        };
+    }, [lightboxOpen]);
 
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -196,9 +211,9 @@ const BlogPost = () => {
                         <span className={styles.current}>{post.title}</span>
                     </motion.nav>
 
-                    {/* Contained Featured Image */}
                     <motion.div
                         className={styles.featuredImage}
+                        onClick={() => coverImg && setLightboxOpen(true)}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1, duration: 0.5 }}
@@ -211,6 +226,11 @@ const BlogPost = () => {
                             </div>
                         )}
                         <div className={styles.imageOverlay} />
+                        {coverImg && (
+                            <span className={styles.viewHint}>
+                                <Maximize2 size={12} /> View
+                            </span>
+                        )}
                     </motion.div>
 
                     {/* Two-Column Layout */}
@@ -338,6 +358,35 @@ const BlogPost = () => {
                     >
                         <ArrowUp size={20} />
                     </motion.button>
+                )}
+            </AnimatePresence>
+
+            {/* Lightbox */}
+            <AnimatePresence>
+                {lightboxOpen && (
+                    <motion.div
+                        className={styles.lightbox}
+                        onClick={() => setLightboxOpen(false)}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <button 
+                            className={styles.lightboxClose} 
+                            onClick={() => setLightboxOpen(false)} 
+                            aria-label="Close"
+                        >
+                            <X size={22} />
+                        </button>
+                        <motion.img
+                            src={coverImg}
+                            alt={post.title}
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                            exit={{ scale: 0.9 }}
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </motion.div>
                 )}
             </AnimatePresence>
 
