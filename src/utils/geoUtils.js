@@ -82,9 +82,9 @@ export const fetchGeoData = async () => {
                 } catch (e) {
                     const status = e.message;
                     // If it's a 403/401, block this provider for 24h to stop console noise
-                    if (status === '403' || status === '401') {
+                    if (status.includes('403') || status.includes('401')) {
                         localStorage.setItem(`${BLOCKLIST_PREFIX}${provider.name}`, (Date.now() + BLOCK_DURATION).toString());
-                    } else if (provider.name === 'ipify_premium') {
+                    } else if (provider.name === 'ipify_premium' && !status.includes('missing')) {
                         console.warn("Premium IP Geolocation failed:", status);
                     }
                     continue;
