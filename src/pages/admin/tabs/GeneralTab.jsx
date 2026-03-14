@@ -45,7 +45,7 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                         <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>Home Section</h3>
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>Configure the main hero content of your landing page.</p>
                     </div>
-                    <button onClick={() => setHistoryModal({ isOpen: true, recordId: 'home', title: 'Home Section' })} className={styles.editBtn} title="View Edit History">
+                    <button onClick={() => setHistoryModal({ isOpen: true, recordId: 'home', title: 'Home Section' })} className={styles.historyBtn} title="View Edit History">
                         <History size={16} /> History
                     </button>
                 </div>
@@ -120,7 +120,7 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                         <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>About Section</h3>
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>Update your short biography and technical skills.</p>
                     </div>
-                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'about', title: 'About Section' })} className={styles.editBtn} title="View Edit History">
+                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'about', title: 'About Section' })} className={styles.historyBtn} title="View Edit History">
                         <History size={16} /> History
                     </button>
                 </div>
@@ -167,7 +167,7 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                         <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>Contact Section</h3>
                         <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>Manage the intro text displayed above your contact form.</p>
                     </div>
-                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'contact', title: 'Contact Section' })} className={styles.editBtn} title="View Edit History">
+                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'contact', title: 'Contact Section' })} className={styles.historyBtn} title="View Edit History">
                         <History size={16} /> History
                     </button>
                 </div>

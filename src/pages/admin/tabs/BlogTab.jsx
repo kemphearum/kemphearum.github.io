@@ -501,7 +501,7 @@ const BlogTab = ({ userRole, showToast }) => {
                                                     </button>
                                                 </>
                                             )}
-                                            <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={styles.editBtn} title="View Edit History"><History size={16} /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={styles.historyIconBtn} title="View Edit History"><History size={16} /></button>
                                             <button onClick={(e) => { e.stopPropagation(); setPost(p); setShowPostForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} title="Edit" className={styles.editBtn}><Edit2 size={16} /></button>
                                             {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeletePost(p.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
                                         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Save, Type, Minus, Plus, RefreshCw, CheckCircle, AlertCircle, Key, Eye, EyeOff } from 'lucide-react';
+import { Upload, Save, Type, Minus, Plus, RefreshCw, CheckCircle, AlertCircle, Key, Eye, EyeOff, Globe, ExternalLink, Trash2, PlusCircle } from 'lucide-react';
 import styles from '../../Admin.module.scss';
 import ImageProcessingService from '../../../services/ImageProcessingService';
 import axios from 'axios';
@@ -88,6 +88,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                 ...settingsData,
                 title: settingsData.title || '',
                 favicon: faviconUrl,
+                mirrors: mirrors,
                 fontSize: settingsData.fontSize || 'default',
                 adminFontOverride: settingsData.adminFontOverride ?? true,
             };
@@ -275,6 +276,32 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     const getFontSize = (field, fallback) => settingsData[field] || fallback;
     const size = settingsData.fontSize || 'default';
     const adminOverride = settingsData.adminFontOverride ?? true;
+
+    // Default mirrors if none exist
+    const defaultMirrors = [
+        { name: 'GitHub Pages', url: 'https://kemphearum.github.io/' },
+        { name: 'Vercel Mirror', url: 'https://phearum-info.vercel.app/' },
+        { name: 'Firebase Primary', url: 'https://phearum-info.web.app/' },
+        { name: 'Firebase Mirror', url: 'https://kem-phearum.web.app/' }
+    ];
+
+    const mirrors = settingsData.mirrors || defaultMirrors;
+
+    const handleAddMirror = () => {
+        const newMirrors = [...mirrors, { name: '', url: '' }];
+        setSettingsData({ ...settingsData, mirrors: newMirrors });
+    };
+
+    const handleUpdateMirror = (index, field, value) => {
+        const newMirrors = [...mirrors];
+        newMirrors[index] = { ...newMirrors[index], [field]: value };
+        setSettingsData({ ...settingsData, mirrors: newMirrors });
+    };
+
+    const handleRemoveMirror = (index) => {
+        const newMirrors = mirrors.filter((_, i) => i !== index);
+        setSettingsData({ ...settingsData, mirrors: newMirrors });
+    };
 
     return (
         <div className={styles.card}>
@@ -596,6 +623,146 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             Background particles respond to mouse movement.
                         </p>
                     </div>
+                </div>
+
+                {/* ─── Group 4: Site Mirrors & Access ─── */}
+                <div className={styles.sectionHeader} style={{ marginTop: '2.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
+                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Site Mirrors & Access</h4>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--input-border)', borderRadius: '16px', padding: '1.5rem' }}>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+                        Manage different live versions of your site. These links will be displayed in the footer for fallback access.
+                    </p>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {mirrors.map((mirror, index) => (
+                            <div key={index} style={{ 
+                                display: 'flex', 
+                                gap: '0.75rem', 
+                                alignItems: 'center',
+                                background: 'rgba(255,255,255,0.03)',
+                                padding: '1rem',
+                                borderRadius: '12px',
+                                border: '1px solid var(--divider)'
+                            }}>
+                                <div style={{ 
+                                    width: '32px', 
+                                    height: '32px', 
+                                    borderRadius: '8px', 
+                                    background: 'rgba(108, 99, 255, 0.1)', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    color: 'var(--primary-color)',
+                                    flexShrink: 0
+                                }}>
+                                    <Globe size={16} />
+                                </div>
+                                <div style={{ flex: 1, display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                    <input 
+                                        type="text" 
+                                        placeholder="Site Name (e.g. Vercel)" 
+                                        value={mirror.name} 
+                                        onChange={(e) => handleUpdateMirror(index, 'name', e.target.value)}
+                                        style={{ 
+                                            flex: 1, 
+                                            minWidth: '150px',
+                                            padding: '0.6rem 0.8rem',
+                                            fontSize: '0.85rem',
+                                            background: 'rgba(0,0,0,0.2)',
+                                            border: '1px solid var(--input-border)',
+                                            borderRadius: '8px',
+                                            color: 'var(--text-primary)'
+                                        }}
+                                    />
+                                    <div style={{ flex: 2, minWidth: '200px', position: 'relative' }}>
+                                        <input 
+                                            type="text" 
+                                            placeholder="URL (https://...)" 
+                                            value={mirror.url} 
+                                            onChange={(e) => handleUpdateMirror(index, 'url', e.target.value)}
+                                            style={{ 
+                                                width: '100%', 
+                                                padding: '0.6rem 0.8rem',
+                                                paddingRight: '35px',
+                                                fontSize: '0.85rem',
+                                                background: 'rgba(0,0,0,0.2)',
+                                                border: '1px solid var(--input-border)',
+                                                borderRadius: '8px',
+                                                color: 'var(--text-primary)'
+                                            }}
+                                        />
+                                        {mirror.url && (
+                                            <a href={mirror.url} target="_blank" rel="noopener noreferrer" style={{
+                                                position: 'absolute',
+                                                right: '10px',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                color: 'var(--text-secondary)',
+                                                opacity: 0.5,
+                                                display: 'flex',
+                                                alignItems: 'center'
+                                            }} title="Open Link">
+                                                <ExternalLink size={14} />
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                                <button 
+                                    type="button" 
+                                    onClick={() => handleRemoveMirror(index)}
+                                    style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(239, 68, 68, 0.2)',
+                                        background: 'rgba(239, 68, 68, 0.05)',
+                                        color: '#ef4444',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'}
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+
+                    <button 
+                        type="button" 
+                        onClick={handleAddMirror}
+                        style={{
+                            marginTop: '1rem',
+                            padding: '0.75rem 1.25rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.6rem',
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--divider)',
+                            borderRadius: '10px',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.85rem',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                            e.currentTarget.style.color = 'var(--text-primary)';
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                            e.currentTarget.style.color = 'var(--text-secondary)';
+                        }}
+                    >
+                        <PlusCircle size={16} />
+                        Add New Mirror
+                    </button>
                 </div>
 
                 {/* Deployment & Refresh Section */}

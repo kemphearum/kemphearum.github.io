@@ -9,12 +9,21 @@ const Footer = () => {
         queryFn: () => SettingsService.fetchGlobalSettings()
     });
 
+    const DEFAULT_MIRRORS = [
+        { name: 'GitHub Pages', url: 'https://kemphearum.github.io/' },
+        { name: 'Vercel Mirror', url: 'https://phearum-info.vercel.app/' },
+        { name: 'Firebase Primary', url: 'https://phearum-info.web.app/' },
+        { name: 'Firebase Mirror', url: 'https://kem-phearum.web.app/' }
+    ];
+
     const settings = globalConfig?.site || globalConfig || {
         footerText: '',
         logoHighlight: '',
         logoText: '',
         tagline: ''
     };
+
+    const mirrors = settings.mirrors || DEFAULT_MIRRORS;
 
     return (
         <footer className={styles.footer}>
@@ -24,6 +33,18 @@ const Footer = () => {
                         <span className={styles.logo}>{settings.logoHighlight}<span className={styles.highlight}>{settings.logoText}</span></span>
                         <p className={styles.tagline}>{settings.tagline || 'ICT Security & IT Audit Professional'}</p>
                     </div>
+
+                    <div className={styles.mirrorsSection}>
+                        <h5 className={styles.sectionTitle}>Site Mirrors</h5>
+                        <div className={styles.mirrorsList}>
+                            {mirrors.map((mirror, index) => (
+                                <a key={index} href={mirror.url} target="_blank" rel="noopener noreferrer" className={styles.mirrorLink}>
+                                    {mirror.name}
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
                     <div className={styles.socialLinks}>
                         <a href="https://github.com/kemphearum" target="_blank" rel="noopener noreferrer" className={styles.socialLink} title="GitHub">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

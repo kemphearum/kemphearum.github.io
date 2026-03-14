@@ -280,7 +280,7 @@ const ExperienceTab = ({ userRole, showToast }) => {
                                         <button className={`${styles.visibilityBtn} ${exp.visible === false ? styles.off : ''}`} onClick={(e) => { e.stopPropagation(); toggleVisibility(exp.id, exp.visible !== false); }} title={exp.visible === false ? 'Show on homepage' : 'Hide from homepage'}>
                                             {exp.visible === false ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
-                                        <button className={styles.editBtn} onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: exp.id, title: `${exp.role} at ${exp.company}` }); }} title="View Edit History">
+                                        <button className={styles.historyIconBtn} onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: exp.id, title: `${exp.role} at ${exp.company}` }); }} title="View Edit History">
                                             <History size={16} />
                                         </button>
                                         <button className={styles.editBtn} onClick={(e) => { e.stopPropagation(); handleEditExperienceClick(exp); }} title="Edit">

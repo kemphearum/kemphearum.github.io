@@ -714,6 +714,59 @@
     }
 }
 
+.historyBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--divider);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+
+    svg {
+        opacity: 0.7;
+        transition: transform 0.3s ease;
+    }
+
+    &:hover {
+        color: $primary-color;
+        background: rgba($primary-color, 0.08);
+        border-color: rgba($primary-color, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+        svg {
+            opacity: 1;
+            transform: rotate(-30deg);
+        }
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
+// Icon-only version for lists
+.historyIconBtn {
+    @extend .historyBtn;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 8px;
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
 // USAGE BAR
 .usageContainer {
     display: flex;
