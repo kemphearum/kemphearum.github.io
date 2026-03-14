@@ -3,17 +3,20 @@ import { useParams, Link, useLoaderData } from 'react-router';
 import ProjectService from '../services/ProjectService';
 import { useActivity } from '../hooks/useActivity';
 import MarkdownRenderer from '../components/MarkdownRenderer';
+import { generateMetaTags } from '../utils/SeoHelper';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ArrowUp, ExternalLink, Code, X, Calendar,
+    ArrowUp, ExternalLink, Code, X, Calendar, Clock,
     Share2, Copy, Check, ArrowLeft, Maximize2, ChevronRight,
     Facebook, Instagram, Linkedin, Send
 } from 'lucide-react';
+import { calculateReadTime } from '../utils/helpers';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import RelatedProjects from '../components/RelatedProjects';
+import TableOfContents from '../components/TableOfContents';
 import styles from './ProjectDetail.module.scss';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -41,17 +44,13 @@ export async function loader({ params }) {
 
 export function meta({ data }) {
     if (!data) return [{ title: "Project Not Found | Kem Phearum" }];
-    const tags = [
-        { title: `${data.title} | Projects - Kem Phearum` },
-        { name: "description", content: data.description || 'Project details' },
-        { property: "og:title", content: data.title },
-        { property: "og:description", content: data.description },
-        { property: "og:type", content: "article" },
-    ];
-    if (data.imageUrl) {
-        tags.push({ property: "og:image", content: data.imageUrl });
-    }
-    return tags;
+
+    return generateMetaTags({
+        title: data.title,
+        description: data.description || 'Project details and technical implementation.',
+        image: data.imageUrl,
+        type: 'article'
+    });
 }
 
 const ProjectDetail = () => {
@@ -218,7 +217,7 @@ const ProjectDetail = () => {
                         transition={{ delay: 0.1, duration: 0.5 }}
                     >
                         {heroImg ? (
-                            <img src={heroImg} alt={project.title} />
+                            <img src={heroImg} alt={project.title} width="1200" height="630" />
                         ) : (
                             <div className={styles.heroPlaceholder}>
                                 <span>{project.title}</span>
@@ -271,6 +270,9 @@ const ProjectDetail = () => {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.3, duration: 0.5 }}
                         >
+                            {/* Table of Contents */}
+                            <TableOfContents content={project.content} />
+
                             {/* Project Info */}
                             <div className={styles.sidebarCard}>
                                 <h4>Project Info</h4>
@@ -278,6 +280,10 @@ const ProjectDetail = () => {
                                     <div className={styles.infoRow}>
                                         <span className={styles.label}><Calendar size={14} /> Date</span>
                                         <span className={styles.value}>{formatDate(project.createdAt)}</span>
+                                    </div>
+                                    <div className={styles.infoRow}>
+                                        <span className={styles.label}><Clock size={14} /> Read Time</span>
+                                        <span className={styles.value}>{calculateReadTime(project.content || '')}</span>
                                     </div>
                                     <div className={styles.infoRow}>
                                         <span className={styles.label}>Status</span>

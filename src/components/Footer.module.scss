@@ -154,5 +154,22 @@
     .topSection {
         flex-direction: column;
         text-align: center;
+        gap: 2rem;
+    }
+
+    .mirrorsList {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .mirrorLink {
+        min-width: calc(50% - 0.5rem);
+        flex: 1;
+    }
+
+    .socialLinks {
+        justify-content: center;
+        width: 100%;
     }
 }

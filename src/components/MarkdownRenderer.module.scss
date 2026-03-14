@@ -12,16 +12,24 @@
     h5,
     h6 {
         color: var(--heading-color, #fff);
-        margin-top: 2.5rem;
-        margin-bottom: 1rem;
+        margin-top: 3.5rem; // Increased for better rhythm
+        margin-bottom: 1.25rem;
         font-weight: 600;
         line-height: 1.3;
+        letter-spacing: -0.02em;
+    }
+
+    h1:first-child,
+    h2:first-child,
+    h3:first-child {
+        margin-top: 0;
     }
 
     h2 {
         font-size: calc(var(--font-size-heading) * 1.5);
         border-bottom: 1px solid var(--divider);
-        padding-bottom: 0.5rem;
+        padding-bottom: 0.75rem;
+        margin-top: 4rem;
     }
 
     h3 {
@@ -29,7 +37,8 @@
     }
 
     p {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.8rem; // Better spacing for flow
+        line-height: 1.8;
     }
 
     a {

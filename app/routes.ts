@@ -7,5 +7,6 @@ export default [
   route("projects/:slug", "routes/projects.$slug.jsx", { id: "project-detail" }),
   route("blog", "routes/blog._index.jsx", { id: "blog" }),
   route("blog/:slug", "routes/blog.$slug.jsx", { id: "blog-post" }),
+  route("sitemap.xml", "routes/sitemap[.]xml.jsx"),
   route("*", "routes/$.jsx", { id: "not-found" }),
 ] satisfies RouteConfig;

@@ -144,3 +144,17 @@
         justify-content: center;
     }
 }
+
+@media (max-width: 480px) {
+    .section {
+        padding: 4rem 0 !important;
+    }
+    
+    .bioText {
+        font-size: 0.85rem !important;
+    }
+
+    .subtext {
+        font-size: 1rem !important;
+    }
+}

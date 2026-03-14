@@ -135,6 +135,10 @@
     font-family: var(--font-display, inherit);
     font-weight: var(--font-weight-display, 800);
     font-size: calc(var(--font-size-display) * 2.25);
+    
+    @media (max-width: 480px) {
+        font-size: calc(var(--font-size-display) * 1.5) !important;
+    }
     color: var(--text-primary);
     margin-bottom: 0.5rem;
     line-height: 1.1;
@@ -160,6 +164,12 @@
     margin-bottom: 2.5rem;
     max-width: 540px;
     line-height: 1.8;
+
+    @media (max-width: 480px) {
+        font-size: 0.85rem;
+        margin-bottom: 2rem;
+        padding: 0 0.5rem;
+    }
 }
 
 .cta {
@@ -167,6 +177,16 @@
     gap: 1rem;
     align-items: center;
     flex-wrap: wrap;
+
+    @media (max-width: 480px) {
+        gap: 0.75rem;
+        
+        .ctaButton, .ctaSecondary {
+            width: 100%;
+            justify-content: center;
+            padding: 0.8rem 1.2rem;
+        }
+    }
 }
 
 .ctaButton {
@@ -404,6 +424,11 @@
         .imageContainer {
             width: 220px;
             height: 220px;
+            
+            @media (max-width: 480px) {
+                width: 180px;
+                height: 180px;
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import BlogService from '../services/BlogService';
 import { useActivity } from '../hooks/useActivity';
 import MarkdownRenderer from '../components/MarkdownRenderer';
 import { calculateReadTime } from '../utils/helpers';
+import { generateMetaTags } from '../utils/SeoHelper';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -16,6 +17,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 import RelatedArticles from '../components/RelatedArticles';
+import TableOfContents from '../components/TableOfContents';
 import styles from './BlogPost.module.scss';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -43,17 +45,13 @@ export async function loader({ params }) {
 
 export function meta({ data }) {
     if (!data) return [{ title: "Post Not Found | Kem Phearum" }];
-    const tags = [
-        { title: `${data.title} | Blog - Kem Phearum` },
-        { name: "description", content: data.excerpt || 'Read this article by Kem Phearum' },
-        { property: "og:title", content: data.title },
-        { property: "og:description", content: data.excerpt },
-        { property: "og:type", content: "article" },
-    ];
-    if (data.coverImage) {
-        tags.push({ property: "og:image", content: data.coverImage });
-    }
-    return tags;
+
+    return generateMetaTags({
+        title: data.title,
+        description: data.excerpt || data.content?.substring(0, 160).replace(/[#*`]/g, '') + '...',
+        image: data.coverImage,
+        type: 'article'
+    });
 }
 
 const BlogPost = () => {
@@ -220,7 +218,7 @@ const BlogPost = () => {
                         transition={{ delay: 0.1, duration: 0.5 }}
                     >
                         {coverImg ? (
-                            <img src={coverImg} alt={post.title} />
+                            <img src={coverImg} alt={post.title} width="1200" height="630" />
                         ) : (
                             <div className={styles.heroPlaceholder}>
                                 <span>{post.title}</span>
@@ -272,6 +270,9 @@ const BlogPost = () => {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.3, duration: 0.5 }}
                         >
+                            {/* Table of Contents */}
+                            <TableOfContents content={post.content} />
+
                             {/* Article Info */}
                             <div className={styles.sidebarCard}>
                                 <h4>Article Info</h4>

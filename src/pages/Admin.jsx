@@ -411,7 +411,16 @@ const Admin = () => {
         setLoading(true);
         try {
             if (section === 'settings') {
-                const typographyKeys = ['fontDisplay', 'fontHeading', 'fontSubheading', 'fontNav', 'fontBody', 'fontUI', 'fontSize', 'adminFontOverride'];
+                const typographyKeys = [
+                    'fontDisplay', 'fontDisplayWeight', 'fontDisplayItalic', 'fontDisplaySize',
+                    'fontHeading', 'fontHeadingWeight', 'fontHeadingItalic', 'fontHeadingSize',
+                    'fontSubheading', 'fontSubheadingWeight', 'fontSubheadingItalic', 'fontSubheadingSize',
+                    'fontNav', 'fontNavWeight', 'fontNavItalic', 'fontNavSize',
+                    'fontBody', 'fontBodyWeight', 'fontBodyItalic', 'fontBodySize',
+                    'fontUI', 'fontUIWeight', 'fontUIItalic', 'fontUISize',
+                    'fontMono', 'fontMonoWeight', 'fontMonoItalic', 'fontMonoSize',
+                    'fontSize', 'adminFontOverride'
+                ];
                 const systemKeys = ['sidebarPersistent'];
 
                 const typography = {};

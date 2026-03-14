@@ -218,6 +218,18 @@ h6 {
     }
 }
 
+@media (max-width: 480px) {
+    h1, .section-title {
+        font-size: calc(var(--font-size-heading) * 1.5) !important;
+    }
+    h2 {
+        font-size: calc(var(--font-size-heading) * 1.25) !important;
+    }
+    .container {
+        padding: 0 1.25rem !important;
+    }
+}
+
 .btn {
     padding: 0.8rem 1.5rem;
     border-radius: $border-radius;
