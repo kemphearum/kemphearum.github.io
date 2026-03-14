@@ -41,7 +41,21 @@ if (typeof window !== 'undefined') {
   }
 }
 
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+export let db;
+export let auth;
+
+try {
+  db = getFirestore(app);
+} catch (error) {
+  console.error("Firestore Initialization Error:", error);
+  db = {}; // Fallback dummy object
+}
+
+try {
+  auth = getAuth(app);
+} catch (error) {
+  console.error("Auth Initialization Error:", error);
+  auth = {}; // Fallback dummy object
+}
 
 export default app;

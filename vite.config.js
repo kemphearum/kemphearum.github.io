@@ -5,6 +5,17 @@ import { vercelPreset } from "@vercel/react-router/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [reactRouter({ presets: [vercelPreset()] })],
+  ssr: {
+    noExternal: [
+      "react-markdown",
+      "rehype-raw",
+      "rehype-slug",
+      "dompurify",
+      "lucide-react",
+      "framer-motion",
+      "react-syntax-highlighter"
+    ]
+  },
   test: {
     globals: true,
     environment: 'jsdom',

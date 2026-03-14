@@ -1,0 +1,211 @@
+{
+  "buildManifest": {
+    "serverBundles": {
+      "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0": {
+        "id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+        "file": "build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    },
+    "routeIdToServerBundleId": {
+      "routes/_index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "admin": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "projects": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "project-detail": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "blog": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "blog-post": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "not-found": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "app/root.jsx",
+        "path": "",
+        "config": {}
+      },
+      "routes/_index": {
+        "id": "routes/_index",
+        "parentId": "root",
+        "file": "app/routes/_index.jsx",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "admin": {
+        "id": "admin",
+        "parentId": "root",
+        "file": "app/routes/admin.jsx",
+        "path": "admin",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "projects": {
+        "id": "projects",
+        "parentId": "root",
+        "file": "app/routes/projects._index.jsx",
+        "path": "projects",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "project-detail": {
+        "id": "project-detail",
+        "parentId": "root",
+        "file": "app/routes/projects.$slug.jsx",
+        "path": "projects/:slug",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "blog": {
+        "id": "blog",
+        "parentId": "root",
+        "file": "app/routes/blog._index.jsx",
+        "path": "blog",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "blog-post": {
+        "id": "blog-post",
+        "parentId": "root",
+        "file": "app/routes/blog.$slug.jsx",
+        "path": "blog/:slug",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "not-found": {
+        "id": "not-found",
+        "parentId": "root",
+        "file": "app/routes/$.jsx",
+        "path": "*",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    }
+  },
+  "reactRouterConfig": {
+    "appDirectory": "D:/portfolio/app",
+    "basename": "/",
+    "buildDirectory": "D:/portfolio/build",
+    "future": {
+      "unstable_optimizeDeps": false,
+      "unstable_subResourceIntegrity": false,
+      "unstable_trailingSlashAwareDataRequests": false,
+      "unstable_previewServerPrerendering": false,
+      "v8_middleware": false,
+      "v8_splitRouteModules": false,
+      "v8_viteEnvironmentApi": false
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "root.jsx",
+        "path": ""
+      },
+      "routes/_index": {
+        "id": "routes/_index",
+        "parentId": "root",
+        "file": "routes/_index.jsx",
+        "index": true
+      },
+      "admin": {
+        "id": "admin",
+        "parentId": "root",
+        "file": "routes/admin.jsx",
+        "path": "admin"
+      },
+      "projects": {
+        "id": "projects",
+        "parentId": "root",
+        "file": "routes/projects._index.jsx",
+        "path": "projects"
+      },
+      "project-detail": {
+        "id": "project-detail",
+        "parentId": "root",
+        "file": "routes/projects.$slug.jsx",
+        "path": "projects/:slug"
+      },
+      "blog": {
+        "id": "blog",
+        "parentId": "root",
+        "file": "routes/blog._index.jsx",
+        "path": "blog"
+      },
+      "blog-post": {
+        "id": "blog-post",
+        "parentId": "root",
+        "file": "routes/blog.$slug.jsx",
+        "path": "blog/:slug"
+      },
+      "not-found": {
+        "id": "not-found",
+        "parentId": "root",
+        "file": "routes/$.jsx",
+        "path": "*"
+      }
+    },
+    "routeDiscovery": {
+      "mode": "initial"
+    },
+    "serverBuildFile": "index.js",
+    "serverModuleFormat": "esm",
+    "ssr": true,
+    "allowedActionOrigins": false,
+    "unstable_routeConfig": [
+      {
+        "id": "root",
+        "path": "",
+        "file": "root.jsx",
+        "children": [
+          {
+            "file": "routes/_index.jsx",
+            "index": true
+          },
+          {
+            "file": "routes/admin.jsx",
+            "path": "admin",
+            "id": "admin"
+          },
+          {
+            "file": "routes/projects._index.jsx",
+            "path": "projects",
+            "id": "projects"
+          },
+          {
+            "file": "routes/projects.$slug.jsx",
+            "path": "projects/:slug",
+            "id": "project-detail"
+          },
+          {
+            "file": "routes/blog._index.jsx",
+            "path": "blog",
+            "id": "blog"
+          },
+          {
+            "file": "routes/blog.$slug.jsx",
+            "path": "blog/:slug",
+            "id": "blog-post"
+          },
+          {
+            "file": "routes/$.jsx",
+            "path": "*",
+            "id": "not-found"
+          }
+        ]
+      }
+    ]
+  },
+  "viteConfig": {
+    "build": {
+      "assetsDir": "assets"
+    }
+  }
+}

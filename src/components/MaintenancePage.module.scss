@@ -1,4 +1,4 @@
-@import '../styles/variables';
+@use '../styles/variables' as *;
 
 .maintenanceWrapper {
     min-height: 100vh;
