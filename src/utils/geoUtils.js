@@ -1,13 +1,13 @@
 /**
  * Centralized utility for fetching IP geolocation data with multiple fallbacks.
- * Prevents console spam by blocking failing providers for 24h and handling concurrent calls.
+ * Prevents console spam by blocking failing providers and handling concurrent calls.
  */
 
 const DEFAULT_GEO = { country_name: 'Unknown', city: 'Unknown', ip: 'Unknown', country_code: 'UN' };
 const COOLDOWN_KEY = 'analytics_geo_failed_cooldown';
 const BLOCKLIST_PREFIX = 'analytics_geo_blocked_';
-const COOLDOWN_TIME = 1000 * 60 * 60; // 1 hour global cooldown if all fail
-const BLOCK_DURATION = 1000 * 60 * 60 * 24; // 24 hours block for specific failing providers
+const COOLDOWN_TIME = 1000 * 60 * 60 * 24; // 24 hour global cooldown if all fail
+const BLOCK_DURATION = 1000 * 60 * 60 * 24 * 7; // 7 days block for specific failing providers
 
 let pendingPromise = null;
 
@@ -32,7 +32,9 @@ export const fetchGeoData = async () => {
                     name: 'ipify_premium',
                     fn: async () => {
                         const apiKey = import.meta.env.VITE_IPIFY_API_KEY;
-                        if (!apiKey) throw new Error('Ipify API Key missing');
+                        // If key is missing, treat as permanent error to avoid network noise
+                        if (!apiKey) throw new Error('CONFIG_MISSING');
+                        
                         const res = await fetch(`https://geo.ipify.org/api/v2/country,city?apiKey=${apiKey}`);
                         if (!res.ok) throw new Error(`${res.status}`);
                         const d = await res.json();
@@ -70,9 +72,11 @@ export const fetchGeoData = async () => {
             ];
 
             for (const provider of providers) {
-                // Check if this specific provider is blocked (prevents the 403 call entirely)
+                // Check if this specific provider is blocked (prevents the call entirely)
                 const blockedUntil = localStorage.getItem(`${BLOCKLIST_PREFIX}${provider.name}`);
-                if (blockedUntil && Date.now() < parseInt(blockedUntil, 10)) continue;
+                if (blockedUntil && (blockedUntil === 'permanent' || Date.now() < parseInt(blockedUntil, 10))) {
+                    continue;
+                }
 
                 try {
                     const data = await provider.fn();
@@ -81,11 +85,18 @@ export const fetchGeoData = async () => {
                     return data;
                 } catch (e) {
                     const status = e.message;
-                    // If it's a 403/401, block this provider for 24h to stop console noise
-                    if (status.includes('403') || status.includes('401')) {
+                    
+                    // If config is missing, block permanently
+                    if (status === 'CONFIG_MISSING') {
+                        localStorage.setItem(`${BLOCKLIST_PREFIX}${provider.name}`, 'permanent');
+                    } else {
+                        // For all other errors (403, network failure), block for 7 days
                         localStorage.setItem(`${BLOCKLIST_PREFIX}${provider.name}`, (Date.now() + BLOCK_DURATION).toString());
-                    } else if (provider.name === 'ipify_premium' && !status.includes('missing')) {
-                        console.warn("Premium IP Geolocation failed:", status);
+                        
+                        // Only log real functional errors, not expected blocks/missing keys
+                        if (provider.name === 'ipify_premium' && status !== '403' && status !== '401') {
+                            console.warn("Premium Geolocation failed:", status);
+                        }
                     }
                     continue;
                 }
