@@ -11,7 +11,12 @@ import Experience from '../../src/components/Experience';
 import SettingsService from '../../src/services/SettingsService';
 
 export async function loader() {
-  return await SettingsService.fetchGlobalSettings();
+  try {
+    return await SettingsService.fetchGlobalSettings();
+  } catch (error) {
+    console.error("Home Loader Error:", error);
+    return null;
+  }
 }
 
 export function meta({ data }) {

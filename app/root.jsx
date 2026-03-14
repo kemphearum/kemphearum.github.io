@@ -21,8 +21,14 @@ import '../src/styles/global.scss';
 import { useAnalytics } from '../src/hooks/useAnalytics';
 
 export async function loader() {
-  const globalSettings = await SettingsService.fetchGlobalSettings();
-  return globalSettings;
+  try {
+    const globalSettings = await SettingsService.fetchGlobalSettings();
+    return globalSettings || {};
+  } catch (error) {
+    console.error("Vercel Root Loader Error:", error);
+    // Return empty settings to avoid crashing the whole server
+    return {};
+  }
 }
 
 export function Layout({ children }) {
