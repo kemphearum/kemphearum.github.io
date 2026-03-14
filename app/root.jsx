@@ -102,6 +102,7 @@ function SettingsApplier({ children, initialSettings }) {
         { field: 'fontHeading', prop: '--font-heading', weightProp: '--font-weight-heading', styleProp: '--font-style-heading', sizeProp: '--font-size-heading', defaultWeight: '700', defaultSize: '1.25rem' },
         { field: 'fontSubheading', prop: '--font-subheading', weightProp: '--font-weight-subheading', styleProp: '--font-style-subheading', sizeProp: '--font-size-subheading', defaultWeight: '600', defaultSize: '1rem' },
         { field: 'fontNav', prop: '--font-nav', weightProp: '--font-weight-nav', styleProp: '--font-style-nav', sizeProp: '--font-size-nav', defaultWeight: '500', defaultSize: '0.85rem' },
+        { field: 'fontLogo', prop: '--font-logo', weightProp: '--font-weight-logo', styleProp: '--font-style-logo', sizeProp: '--font-size-logo', defaultWeight: '700', defaultSize: '1.25rem' },
         { field: 'fontBody', prop: '--font-body', weightProp: '--font-weight-body', styleProp: '--font-style-body', sizeProp: '--font-size-body', defaultWeight: '400', defaultSize: '0.9rem' },
         { field: 'fontUI', prop: '--font-ui', weightProp: '--font-weight-ui', styleProp: '--font-style-ui', sizeProp: '--font-size-ui', defaultWeight: '600', defaultSize: '0.8rem' },
         { field: 'fontMono', prop: '--font-mono', weightProp: '--font-weight-mono', styleProp: '--font-style-mono', sizeProp: '--font-size-mono', defaultWeight: '400', defaultSize: '0.85rem' },

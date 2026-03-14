@@ -37,8 +37,10 @@
 }
 
 .logo {
-    font-size: calc(var(--font-size-nav) * 1.5);
-    font-weight: 700;
+    font-family: var(--font-logo, inherit);
+    font-size: var(--font-size-logo, calc(var(--font-size-nav) * 1.5));
+    font-weight: var(--font-weight-logo, 700);
+    font-style: var(--font-style-logo, normal);
     color: var(--text-primary);
     letter-spacing: 0.5px;
     z-index: 1002;
