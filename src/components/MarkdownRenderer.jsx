@@ -79,9 +79,10 @@ const MarkdownRenderer = ({ content }) => {
                             </span>
                         );
                     },
-                    img: ({ ...props }) => (
-                        <img {...props} loading="lazy" alt={props.alt || 'Content image'} />
-                    ),
+                    img: ({ ...props }) => {
+                        if (!props.src) return null;
+                        return <img {...props} loading="lazy" alt={props.alt || 'Content image'} />;
+                    },
                     a: ({ ...props }) => {
                         const url = props.href;
                         if (url) {

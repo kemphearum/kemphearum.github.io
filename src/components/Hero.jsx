@@ -127,13 +127,15 @@ const Hero = () => {
                 <motion.div variants={itemVariants} className={styles.imageWrapper}>
                     <div className={styles.imageContainer}>
                         <div className={styles.imageGlow} />
-                        <img
-                            src={content.profileImageUrl || "https://ui-avatars.com/api/?name=Kem+Phearum&background=6C63FF&color=fff&size=350"}
-                            alt="Profile"
-                            className={styles.profileImage}
-                            width="320"
-                            height="320"
-                        />
+                        {(content.profileImageUrl || loading) && (
+                            <img
+                                src={content.profileImageUrl || "https://ui-avatars.com/api/?name=Kem+Phearum&background=6C63FF&color=fff&size=350"}
+                                alt="Profile"
+                                className={styles.profileImage}
+                                width="320"
+                                height="320"
+                            />
+                        )}
                         <div className={styles.imageRing} />
                     </div>
                     {/* Status badge */}
