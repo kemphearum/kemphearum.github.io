@@ -147,6 +147,7 @@
     min-height: 100vh;
     background: $background-color;
     color: var(--text-primary);
+    overflow-x: hidden; // Prevent horizontal scroll from background elements
 }
 
 // ===========================
@@ -331,9 +332,15 @@
     max-width: 100%;
     /* Let it expand to fit the window */
     transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 0; // Prevent content blowout
 
     &.contentExpanded {
         margin-left: 0;
+    }
+
+    @media (max-width: 768px) {
+        margin-left: 0 !important;
+        padding: 4rem 1.25rem 2rem;
     }
 }
 

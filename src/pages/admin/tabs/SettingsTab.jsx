@@ -402,12 +402,18 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                 transition: 'border-color 0.2s ease',
                             }}>
                                 {/* Category Header */}
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'space-between',
+                                    flexWrap: 'wrap',
+                                    gap: '0.5rem'
+                                }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                         <span style={{ fontSize: '1.15rem' }}>{cat.icon}</span>
-                                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{cat.label}</span>
+                                        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{cat.label}</span>
                                     </div>
-                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', opacity: 0.7 }}>{cat.hint}</span>
+                                    <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', opacity: 0.7, whiteSpace: 'nowrap' }}>{cat.hint}</span>
                                 </div>
 
                                 {/* Font Family Select — full width */}
