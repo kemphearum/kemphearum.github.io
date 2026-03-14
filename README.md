@@ -2,7 +2,7 @@
 
 A modern, responsive personal portfolio built with **React**, **Firebase**, and **SCSS**. Features dark & light theme support, glassmorphism UI, animated sections powered by Framer Motion, a full-featured admin dashboard with role-based access control, and automated deployment to GitHub Pages.
 
-🔗 **Live Site**: [kemphearum.github.io](https://kemphearum.github.io/)
+🔗 **Live Sites**: [GitHub Pages](https://kemphearum.github.io/) | [Vercel](https://phearum-info.vercel.app/) | [Firebase (Primary)](https://phearum-info.web.app/) | [Firebase (Mirror)](https://kem-phearum.web.app/)
 
 ---
 
@@ -12,9 +12,9 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 - **Hero Section** — Animated greeting with profile image, floating particles, pulsing glow, and scroll indicator
 - **About** — Bio and skill tags with hover effects and skeleton loading
 - **Experience** — Timeline layout with glassmorphism cards, sorted by date
-- **Projects** — Filterable project grid with tech-stack filter buttons and smooth layout animations
-- **Blog** — Custom Markdown blog system with syntax-highlighted code blocks, copy button, embedded media support, and `DOMPurify` HTML sanitization
-- **Contact** — Contact form that saves messages to Firestore (features local rate-limiting for spam prevention)
+- **Projects** — Filterable project grid with tech-stack filter buttons and smooth layout animations. Includes direct **Telegram Sharing** integration.
+- **Blog** — Custom Markdown blog system with syntax-highlighted code blocks, copy button, embedded media support, and `DOMPurify` HTML sanitization. Supports social sharing via **Telegram**.
+- **Contact** — Contact form that saves messages to Firestore (features local rate-limiting and silent geolocation for spam prevention)
 - **Footer** — Social links (GitHub, Email) with hover animations
 - **🌗 Dark / Light Theme** — Toggle between dark and light modes; preference is saved to `localStorage` and respects the user's system setting by default
 
@@ -23,18 +23,19 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 - 📝 Full CRUD for **Projects**, **Experience**, and **Blog Posts**
 - 🏠 Edit **Home**, **About**, **Contact**, and **General Settings** content
 - 📬 View and manage contact form **Messages**
-- 👥 **User Management** with role-based access control (Superadmin / Admin / Editor / Viewer)
+- 👥 **User Management** with role-based access control (Superadmin / Admin / Editor / Viewer). Features refined UI for password resets and account management.
 - 📋 **Audit Logs** — tracks login events, user actions, and admin activity
 - 🔄 **Reusable Pagination** with items-per-page selector (5 / 10 / 25) across all tabs
 - 🔍 **Search & Filter** on Experience, Projects, Blog, Users, and Audit Logs
 - ⭐ **Featured Projects & Blog** toggle for homepage pinning
 - 🖼️ Base64 image compression and direct Firestore storage (bypasses Firebase Storage limits)
-- 🔔 Toast notifications and custom confirmation modals
-- 📱 Responsive sidebar with mobile drawer
+- ⚙️ **Site Sync** — trigger full site rebuilds and static generation directly from the dashboard
+- 📱 **Premium Mobile UI** — Fully responsive admin panel optimized for Safari on iOS (iPhone 15 Pro testing)
 
 ### Technical Highlights
 - **React Router v7 (SSG)** — Full Static Site Generation for lightning-fast loads and perfect SEO (replaces traditional CSR)
 - **Clean URLs** — Modern navigation with no hashes (`/#/`), including automatic redirection for legacy links
+- **SSR Compatibility** — Full ESM support for syntax highlighting and pre-rendering (zero-crash builds)
 - **Custom Firebase hooks** (`useFirebaseDoc`, `useFirebaseCollection`) with in-memory caching and request deduplication
 - **ThemeContext** with `ThemeProvider` for global dark/light mode state management
 - **Skeleton loaders** for every data-fetching section
