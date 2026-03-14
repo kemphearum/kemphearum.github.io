@@ -19,6 +19,7 @@ import SettingsService from '../src/services/SettingsService';
 import AnimatedBackground from '../src/components/AnimatedBackground';
 import '../src/styles/global.scss';
 import { useAnalytics } from '../src/hooks/useAnalytics';
+import { Analytics } from "@vercel/analytics/react";
 
 export async function loader() {
   try {
@@ -47,6 +48,7 @@ export function Layout({ children }) {
               <ThemeProvider>
                 <ActivityProvider>
                   {children}
+                  <Analytics />
                 </ActivityProvider>
               </ThemeProvider>
             </QueryClientProvider>
