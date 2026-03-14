@@ -44,7 +44,7 @@ const Hero = () => {
                 {[...Array(6)].map((_, i) => (
                     <div key={i} className={styles.particle} style={{
                         '--delay': `${i * 2}s`,
-                        '--x': `${15 + i * 15}%`,
+                        '--x': `${10 + (i % 4) * 20}%`, // Narrower range (10-70%) to prevent edge overflow
                         '--y': `${10 + (i % 3) * 30}%`,
                         '--size': `${60 + i * 30}px`
                     }} />
