@@ -4,7 +4,7 @@ import { vercelPreset } from "@vercel/react-router/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [reactRouter({ presets: [vercelPreset()] })],
+  plugins: [!process.env.VITEST && reactRouter({ presets: [vercelPreset()] })].filter(Boolean),
   ssr: {
     noExternal: [
       "react-markdown",
