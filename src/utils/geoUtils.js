@@ -5,15 +5,15 @@
 
 const DEFAULT_GEO = { country_name: 'Unknown', city: 'Unknown', ip: 'Unknown', country_code: 'UN' };
 const COOLDOWN_KEY = 'analytics_geo_failed_cooldown';
-const COOLDOWN_TIME = 1000 * 60 * 15; // 15 minutes cooldown if all providers fail
+const COOLDOWN_TIME = 1000 * 60 * 60; // 1 hour cooldown if all providers fail
 
 export const fetchGeoData = async () => {
     // 1. Check if we have a success in session storage
     const stored = sessionStorage.getItem('analytics_geo');
     if (stored) return JSON.parse(stored);
 
-    // 2. Check for recent failure cooldown
-    const lastFailed = sessionStorage.getItem(COOLDOWN_KEY);
+    // 2. Check for recent failure cooldown (multi-session)
+    const lastFailed = localStorage.getItem(COOLDOWN_KEY);
     if (lastFailed && (Date.now() - parseInt(lastFailed, 10) < COOLDOWN_TIME)) {
         return DEFAULT_GEO;
     }
@@ -59,7 +59,7 @@ export const fetchGeoData = async () => {
         try {
             const data = await provider();
             sessionStorage.setItem('analytics_geo', JSON.stringify(data));
-            sessionStorage.removeItem(COOLDOWN_KEY); // Reset cooldown on success
+            localStorage.removeItem(COOLDOWN_KEY); // Reset cooldown on success
             return data;
         } catch (e) {
             // Silently skip to next provider if it's a known auth/origin error
@@ -73,7 +73,7 @@ export const fetchGeoData = async () => {
         }
     }
 
-    // All failed: Trigger cooldown
-    sessionStorage.setItem(COOLDOWN_KEY, Date.now().toString());
+    // All failed: Trigger multi-session cooldown
+    localStorage.setItem(COOLDOWN_KEY, Date.now().toString());
     return DEFAULT_GEO;
 };
