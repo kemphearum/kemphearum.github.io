@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, X, ImageIcon, Image as ImageIcon2, FolderPlus, Trash2, Eye, XCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, X, ImageIcon, Image as ImageIcon2, FolderPlus, Trash2, Eye, XCircle, CheckCircle2, Maximize2 } from 'lucide-react';
+import BaseModal from './BaseModal';
 import styles from '../../Admin.module.scss';
 
 /**
@@ -17,8 +18,8 @@ const FormDropzone = ({
 }) => {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [error, setError] = useState(null);
     const [internalClear, setInternalClear] = useState(false);
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const fileInputRef = useRef(null);
 
     useEffect(() => {
@@ -177,22 +178,18 @@ const FormDropzone = ({
                                 className={styles.unifiedControlPill}
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                <a 
-                                    href={previewUrl || currentImageUrl || '#'}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                <button 
+                                    type="button"
                                     className={styles.pillActionBtn}
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        if (!e.currentTarget.href || e.currentTarget.href.endsWith('#')) {
-                                            e.preventDefault();
-                                        }
+                                        setIsPreviewModalOpen(true);
                                     }}
-                                    title="View Full Size"
+                                    title="Preview Image"
                                 >
-                                    <Eye size={18} />
-                                    <span>View</span>
-                                </a>
+                                    <Maximize2 size={18} />
+                                    <span>Preview</span>
+                                </button>
                                 
                                 <div className={styles.pillDivider} />
                                 
@@ -267,18 +264,8 @@ const FormDropzone = ({
                             </div>
                             <div className={styles.fullUploadText}>
                                 <span className={styles.main}>{placeholder}</span>
-                                <span className={styles.sub}>Drag and drop your image here, or use the button below</span>
+                                <span className={styles.sub}>Drag and drop your image here, or click to browse</span>
                             </div>
-                            <div className={styles.divider}>
-                                <span>or</span>
-                            </div>
-                            <button 
-                                type="button" 
-                                className={styles.primaryBrowseBtn}
-                                onClick={handleBrowseClick}
-                            >
-                                <FolderPlus size={18} /> Browse Files
-                            </button>
                         </div>
                         {error && (
                             <div className={styles.validationErrorFull}>
@@ -288,6 +275,26 @@ const FormDropzone = ({
                     </div>
                 )}
             </div>
+
+            {/* Integrated Preview Modal */}
+            <BaseModal
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+                headerContent={
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <ImageIcon2 size={20} className={styles.primaryText} />
+                        <span>Image Preview</span>
+                    </div>
+                }
+                maxWidth="1000px"
+                bodyStyle={{ padding: 0, background: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}
+            >
+                <img 
+                    src={previewUrl || currentImageUrl} 
+                    alt="Preview" 
+                    className={styles.modalPreviewImg} 
+                />
+            </BaseModal>
         </div>
     );
 };
