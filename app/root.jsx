@@ -86,7 +86,11 @@ function SettingsApplier({ children, initialSettings }) {
         link.href = favicon;
       }
 
-      const typpo = globalConfig.typography || globalConfig;
+      const typpo = {
+        ...(globalConfig.site || {}),
+        ...(globalConfig.typography || {}),
+        ...globalConfig
+      };
       const fontMap = {
         'inter': "'Inter', system-ui, -apple-system, sans-serif",
         'kantumruy-pro': "'Kantumruy Pro', system-ui, sans-serif",

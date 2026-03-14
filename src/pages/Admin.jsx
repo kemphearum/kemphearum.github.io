@@ -415,6 +415,7 @@ const Admin = () => {
                     'fontDisplay', 'fontDisplayWeight', 'fontDisplayItalic', 'fontDisplaySize',
                     'fontHeading', 'fontHeadingWeight', 'fontHeadingItalic', 'fontHeadingSize',
                     'fontSubheading', 'fontSubheadingWeight', 'fontSubheadingItalic', 'fontSubheadingSize',
+                    'fontLogo', 'fontLogoWeight', 'fontLogoItalic', 'fontLogoSize',
                     'fontNav', 'fontNavWeight', 'fontNavItalic', 'fontNavSize',
                     'fontBody', 'fontBodyWeight', 'fontBodyItalic', 'fontBodySize',
                     'fontUI', 'fontUIWeight', 'fontUIItalic', 'fontUISize',
