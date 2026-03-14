@@ -20,6 +20,7 @@ const FormDropzone = ({
     const [isDragging, setIsDragging] = useState(false);
     const [internalClear, setInternalClear] = useState(false);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [error, setError] = useState(null);
     const fileInputRef = useRef(null);
 
     useEffect(() => {

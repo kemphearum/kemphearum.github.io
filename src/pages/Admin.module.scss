@@ -1,3 +1,4 @@
+@use 'sass:color';
 ﻿@use '../styles/variables' as *;
 
 @mixin custom-scrollbar {
@@ -1839,7 +1840,7 @@
     margin-bottom: 0.25rem;
 
     .uploadActionZone:hover & {
-        background: linear-gradient(135deg, $primary-color, darken($primary-color, 15%));
+        background: linear-gradient(135deg, $primary-color, color.adjust($primary-color, $lightness: -15%));
         color: white;
         transform: scale(1.1) rotate(5deg);
         box-shadow: 0 8px 20px rgba($primary-color, 0.4);
@@ -1954,7 +1955,7 @@
 
         .uploadIconCircle {
             transform: scale(1.1) translateY(-5px);
-            background: linear-gradient(135deg, $primary-color, darken($primary-color, 10%));
+            background: linear-gradient(135deg, $primary-color, color.adjust($primary-color, $lightness: -10%));
             color: white;
             box-shadow: 0 12px 30px rgba($primary-color, 0.4);
         }
@@ -2046,7 +2047,7 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1.75rem;
-    background: linear-gradient(135deg, $primary-color, darken($primary-color, 5%));
+    background: linear-gradient(135deg, $primary-color, color.adjust($primary-color, $lightness: -5%));
     color: white;
     border: none;
     border-radius: 14px;
