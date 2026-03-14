@@ -349,17 +349,17 @@ const UsersTab = ({ user, userRole, showToast }) => {
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', width: '100%', justifyContent: 'space-between' }}>
                             <div>
                                 {viewingUser.email !== user.email && (
-                                    <button className={styles.deleteBtn} onClick={() => { handleRemoveUser(viewingUser.email, viewingUser.id); setViewingUser(null); }} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>
+                                    <button className={`${styles.deleteBtn} ${styles.modalActionBtn}`} onClick={() => { handleRemoveUser(viewingUser.email, viewingUser.id); setViewingUser(null); }}>
                                         <Trash2 size={16} /> Disable User Account
                                     </button>
                                 )}
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
-                                <button className={styles.editBtn} onClick={() => { handleResetPassword(viewingUser.email); setViewingUser(null); }}
-                                    style={{ background: 'transparent', border: '1px solid var(--glass-border)', padding: '0.6rem 1.25rem', margin: 0 }}>
-                                    🔑 Send Reset Email
+                                <button className={`${styles.editBtn} ${styles.modalActionBtn}`} onClick={() => { handleResetPassword(viewingUser.email); setViewingUser(null); }}
+                                    style={{ background: 'transparent', border: '1px solid var(--glass-border)' }}>
+                                    <Key size={16} /> Send Reset Email
                                 </button>
-                                <button onClick={() => setViewingUser(null)} className={styles.primaryBtn} style={{ padding: '0.6rem 1.5rem', margin: 0 }}>Done</button>
+                                <button onClick={() => setViewingUser(null)} className={`${styles.primaryBtn} ${styles.modalActionBtn}`}>Done</button>
                             </div>
                         </div>
                     }

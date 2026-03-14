@@ -2449,6 +2449,21 @@
     }
 }
 
+.modalActionBtn {
+    width: auto !important;
+    height: 42px !important;
+    padding: 0 1.5rem !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.6rem !important;
+    border-radius: 12px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+}
+
 .visibilityBtn {
     width: 34px;
     height: 34px;
