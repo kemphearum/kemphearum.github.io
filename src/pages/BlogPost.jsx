@@ -60,6 +60,7 @@ const BlogPost = () => {
     const { slug } = useParams();
     const loaderData = useLoaderData();
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const [readProgress, setReadProgress] = useState(0);
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const [instaCopied, setInstaCopied] = useState(false);
