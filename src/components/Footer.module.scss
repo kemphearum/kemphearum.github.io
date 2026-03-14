@@ -3,7 +3,11 @@
 .footer {
     background: var(--bg-surface-light);
     border-top: 1px solid var(--divider);
-    padding: 1.5rem 0 1rem;
+    padding: 1.5rem 0 1.5rem; // Base padding
+
+    @media (max-width: 500px) {
+        padding-bottom: 3rem; // Safe area for iOS home indicator
+    }
 }
 
 .container {
@@ -148,6 +152,7 @@
     opacity: 0.4;
     text-align: center;
     letter-spacing: 0.3px;
+    padding: 0 1rem; // Prevent text clipping on edges
 }
 
 @media (max-width: 500px) {
@@ -166,6 +171,8 @@
     .mirrorLink {
         min-width: calc(50% - 0.5rem);
         flex: 1;
+        font-size: 0.62rem; // Slightly smaller for better fit
+        padding: 0.4rem 0.3rem;
     }
 
     .socialLinks {

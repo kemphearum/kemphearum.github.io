@@ -138,6 +138,7 @@
     
     @media (max-width: 480px) {
         font-size: calc(var(--font-size-display) * 1.5) !important;
+        letter-spacing: 0 !important; // Fix name clipping ("K")
     }
     color: var(--text-primary);
     margin-bottom: 0.5rem;
@@ -156,6 +157,10 @@
     color: var(--text-secondary);
     margin-bottom: 1.5rem;
     line-height: 1.3;
+
+    @media (max-width: 480px) {
+        font-size: calc(var(--font-size-heading) * 1.2) !important;
+    }
 }
 
 .description {
@@ -316,6 +321,10 @@
             transform: scale(1.03);
             box-shadow: 0 0 60px rgba($primary-color, 0.25);
         }
+    }
+
+    @media (max-width: 480px) {
+        gap: 1rem; // Reduce gap between image and badge
     }
 }
 
