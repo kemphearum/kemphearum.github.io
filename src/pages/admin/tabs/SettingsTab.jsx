@@ -549,11 +549,27 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         border: '1px solid rgba(255,255,255,0.06)',
                     }}>
                         <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text-secondary)', marginBottom: '0.75rem', fontFamily: "'Inter', sans-serif" }}>Live Preview</div>
+                        
+                        {/* Logo Preview */}
+                        <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '1rem' }}>
+                            <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', opacity: 0.6 }}>LOGO PREVIEW</div>
+                            <div style={{
+                                fontFamily: FONT_CSS[getFont('fontLogo')],
+                                fontWeight: settingsData.fontLogoWeight || 700,
+                                fontStyle: settingsData.fontLogoItalic ? 'italic' : 'normal',
+                                fontSize: getFontSize('fontLogoSize', '1.25rem'),
+                                color: 'var(--text-primary)',
+                                letterSpacing: '0.5px'
+                            }}>
+                                {settingsData.logoHighlight || 'KEM'}<span style={{ color: 'var(--primary-color)' }}>{settingsData.logoText || 'PHEARUM'}</span>
+                            </div>
+                        </div>
+
                         <div style={{
                             fontFamily: FONT_CSS[getFont('fontDisplay')],
                             fontWeight: settingsData.fontDisplayWeight || 800,
                             fontStyle: settingsData.fontDisplayItalic ? 'italic' : 'normal',
-                            fontSize: `calc(${getFontSize('fontDisplaySize', '2rem')} * 2.25)`, marginBottom: '0.25rem', color: 'var(--text-primary)',
+                            fontSize: `calc(${getFontSize('fontDisplaySize', '2rem')} * 1.5)`, marginBottom: '0.25rem', color: 'var(--text-primary)',
                         }}>
                             កឹម ភារម្យ
                         </div>
@@ -561,7 +577,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             fontFamily: FONT_CSS[getFont('fontHeading')],
                             fontWeight: settingsData.fontHeadingWeight || 700,
                             fontStyle: settingsData.fontHeadingItalic ? 'italic' : 'normal',
-                            fontSize: `calc(${getFontSize('fontHeadingSize', '1.25rem')} * 1.8)`, marginBottom: '0.5rem', color: 'var(--text-primary)',
+                            fontSize: `calc(${getFontSize('fontHeadingSize', '1.25rem')} * 1.3)`, marginBottom: '0.5rem', color: 'var(--text-primary)',
                         }}>
                             Heading — ចំណងជើង
                         </div>
@@ -622,9 +638,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             color: '#a0a0b0',
                             overflow: 'hidden'
                         }}>
-<span style={{ color: '#6C63FF' }}>function</span> <span style={{ color: '#FF6584' }}>helloWorld</span>() &#123;<br />
-&nbsp;&nbsp;console.<span style={{ color: '#FF6584' }}>log</span>(<span style={{ color: '#48c78e' }}>"Hello Portfolio!"</span>);<br />
-&#125;
+                            <span style={{ color: '#6C63FF' }}>function</span> <span style={{ color: '#FF6584' }}>helloWorld</span>() &#123;<br />
+                            &nbsp;&nbsp;console.<span style={{ color: '#FF6584' }}>log</span>(<span style={{ color: '#48c78e' }}>"Hello Portfolio!"</span>);<br />
+                            &#125;
                         </div>
                     </div>
                 </div>

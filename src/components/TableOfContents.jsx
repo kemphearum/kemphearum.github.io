@@ -8,6 +8,10 @@ const TableOfContents = ({ content }) => {
     const [activeId, setActiveId] = useState('');
 
     useEffect(() => {
+        if (!content) {
+            setHeadings([]);
+            return;
+        }
         // Simple regex to extract H2 and H3 headings from markdown
         const headingRegex = /^##\s+(.*)$|^###\s+(.*)$/gm;
         const matches = [];
