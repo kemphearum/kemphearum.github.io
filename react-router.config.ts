@@ -3,27 +3,29 @@ import fs from "fs";
 import path from "path";
 
 // Attempt to load VITE_FIREBASE_PROJECT_ID from .env if process.env doesn't have it
-function getProjectId() {
-    if (process.env.VITE_FIREBASE_PROJECT_ID) return process.env.VITE_FIREBASE_PROJECT_ID;
+function getEnvVar(key: string, fallback: string) {
+    if (process.env[key]) return process.env[key];
     
     try {
         const envPath = path.resolve(process.cwd(), ".env");
         if (fs.existsSync(envPath)) {
             const envContent = fs.readFileSync(envPath, "utf-8");
-            const match = envContent.match(/^VITE_FIREBASE_PROJECT_ID=["']?([^"'\n\r]+)["']?/m);
+            const regex = new RegExp(`^${key}=["']?([^"'\n\r]+)["']?`, 'm');
+            const match = envContent.match(regex);
             if (match && match[1]) return match[1];
         }
     } catch (e) {
-        console.error("Error reading .env in config:", e);
+        console.error(`Error reading .env for ${key} in config:`, e);
     }
     
-    return 'phearum-info'; // Fallback
+    return fallback;
 }
 
-const PROJECT_ID = getProjectId();
+const PROJECT_ID = getEnvVar('VITE_FIREBASE_PROJECT_ID', 'phearum-info');
+const API_KEY = getEnvVar('VITE_FIREBASE_API_KEY', '');
 
 async function fetchCollectionSlugs(collectionName: string) {
-    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${collectionName}?pageSize=100`;
+    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${collectionName}?pageSize=100${API_KEY ? `&key=${API_KEY}` : ''}`;
     console.log(`[Prerender] Fetching slugs for ${collectionName} from: ${url}`);
     
     try {
