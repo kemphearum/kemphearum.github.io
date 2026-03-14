@@ -68,6 +68,8 @@ class SettingsService {
             ...payload,
             updatedAt: serverTimestamp()
         }, { merge: true });
+    }
+
     /**
      * Update typography metadata
      */
