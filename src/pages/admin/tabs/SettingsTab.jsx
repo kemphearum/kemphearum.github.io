@@ -20,7 +20,12 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     });
 
     // Use metadata from query or fallback to defaults from service
-    const typographyMetadata = metadata || SettingsService.DEFAULT_TYPOGRAPHY_METADATA;
+    const typographyMetadata = metadata || SettingsService.constructor.DEFAULT_TYPOGRAPHY_METADATA;
+    
+    if (!typographyMetadata) {
+        return <div className={styles.loadingContainer}>Loading Typography Settings...</div>;
+    }
+
     const { fontOptions, sizeOptions, weightOptions, fontCategories, fontCSS } = typographyMetadata;
 
     const [settingsFavicon, setSettingsFavicon] = useState(null);

@@ -79,7 +79,7 @@ class SettingsService {
     }
 
     // Default metadata used for initialization or fallback
-    DEFAULT_TYPOGRAPHY_METADATA = {
+    static DEFAULT_TYPOGRAPHY_METADATA = {
         fontOptions: [
             { value: 'inter', label: 'Inter' },
             { value: 'kantumruy-pro', label: 'Kantumruy Pro' },

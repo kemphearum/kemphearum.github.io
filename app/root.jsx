@@ -99,7 +99,9 @@ function SettingsApplier({ children, initialSettings }) {
         ...globalConfig
       };
 
-      const typographyMetadata = metadata || SettingsService.DEFAULT_TYPOGRAPHY_METADATA;
+      const typographyMetadata = metadata || SettingsService.constructor.DEFAULT_TYPOGRAPHY_METADATA;
+      if (!typographyMetadata || !typographyMetadata.fontCSS) return;
+      
       const fontMap = typographyMetadata.fontCSS;
 
       const root = document.documentElement;
