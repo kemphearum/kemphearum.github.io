@@ -120,6 +120,43 @@ class SettingsService {
             { field: 'fontBody', sizeField: 'fontBodySize', weightField: 'fontBodyWeight', italicField: 'fontBodyItalic', label: 'Body / Content', hint: 'Paragraphs, descriptions', icon: '📝', defaultSize: '0.9rem', defaultWeight: '400' },
             { field: 'fontUI', sizeField: 'fontUISize', weightField: 'fontUIWeight', italicField: 'fontUIItalic', label: 'UI / Labels', hint: 'Buttons, form labels, badges', icon: '🏷️', defaultSize: '0.8rem', defaultWeight: '600' },
             { field: 'fontMono', sizeField: 'fontMonoSize', weightField: 'fontMonoWeight', italicField: 'fontMonoItalic', label: 'Monospace / Code', hint: 'Code snippets, tech specs', icon: '💻', defaultSize: '0.85rem', defaultWeight: '400' },
+        ],
+        presets: [
+            {
+                id: 'modern-minimal',
+                label: 'Modern Minimal',
+                description: 'Inter for everything, clean and professional.',
+                icon: '✨',
+                config: {
+                    fontDisplay: 'inter', fontHeading: 'inter', fontSubheading: 'inter', 
+                    fontLogo: 'inter', fontNav: 'inter', fontBody: 'inter', 
+                    fontUI: 'inter', fontMono: 'inter'
+                }
+            },
+            {
+                id: 'khmer-premium',
+                label: 'Khmer Premium',
+                description: 'Kantumruy Pro for titles, Battambang for body.',
+                icon: '🐘',
+                config: {
+                    fontDisplay: 'kantumruy-pro-medium', fontHeading: 'kantumruy-pro-medium', 
+                    fontSubheading: 'kantumruy-pro', fontLogo: 'kantumruy-pro-medium', 
+                    fontNav: 'kantumruy-pro', fontBody: 'battambang', 
+                    fontUI: 'kantumruy-pro', fontMono: 'jetbrains-mono'
+                }
+            },
+            {
+                id: 'tech-developer',
+                label: 'Tech Developer',
+                description: 'High readability with JetBrains Mono and Fira Code.',
+                icon: '💻',
+                config: {
+                    fontDisplay: 'jetbrains-mono', fontHeading: 'fira-code', 
+                    fontSubheading: 'fira-code', fontLogo: 'jetbrains-mono', 
+                    fontNav: 'jetbrains-mono', fontBody: 'inter', 
+                    fontUI: 'inter', fontMono: 'jetbrains-mono'
+                }
+            }
         ]
     };
 }

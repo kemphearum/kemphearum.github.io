@@ -26,7 +26,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         return <div className={styles.loadingContainer}>Loading Typography Settings...</div>;
     }
 
-    const { fontOptions, sizeOptions, weightOptions, fontCategories, fontCSS } = typographyMetadata;
+    const { fontOptions, sizeOptions, weightOptions, fontCategories, fontCSS, presets = [] } = typographyMetadata;
 
     const [settingsFavicon, setSettingsFavicon] = useState(null);
     const [previewBase64, setPreviewBase64] = useState('');
@@ -401,69 +401,123 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Typography & Appearance</h4>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--input-border)', borderRadius: '16px', padding: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className={styles.typographyHeader}>
+                        <div className={styles.typographyLabel}>
                             <Type size={18} style={{ color: 'var(--primary-color)' }} />
                             <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Site Typography</span>
                         </div>
-                        <FormSelect
-                            label="Base Size"
-                            value={size}
-                            onChange={(e) => setSettingsData({ ...settingsData, fontSize: e.target.value })}
-                            options={sizeOptions}
-                            containerStyle={{
-                                background: 'rgba(255,255,255,0.02)',
-                                padding: '0.75rem 1.25rem',
-                                borderRadius: '12px',
-                                border: '1px solid var(--divider)',
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: '1rem'
-                            }}
-                            style={{ marginTop: 0, width: '180px', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
-                        />
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            {!metadata && (
+                        
+                        <div className={styles.typographyControls}>
+                            <FormSelect
+                                label="Base Size"
+                                value={size}
+                                onChange={(e) => setSettingsData({ ...settingsData, fontSize: e.target.value })}
+                                options={sizeOptions}
+                                containerStyle={{
+                                    background: 'rgba(255,255,255,0.02)',
+                                    padding: '0.75rem 1.25rem',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--divider)',
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    gap: '1rem',
+                                    minWidth: 'fit-content'
+                                }}
+                                style={{ marginTop: 0, width: '150px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
+                            />
+
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                {!metadata && (
+                                    <button
+                                        type="button"
+                                        onClick={handleInitializeMetadata}
+                                        className={styles.btnSecondary}
+                                        style={{ padding: '0.5rem 1rem', background: 'rgba(Voting68,99,255,0.1)', borderColor: 'var(--primary-color)', color: 'var(--primary-color)', fontSize: '0.75rem' }}
+                                        title="One-time push of typography defaults to database"
+                                    >
+                                        <PlusCircle size={14} />
+                                        Setup Metadata
+                                    </button>
+                                )}
                                 <button
                                     type="button"
-                                    onClick={handleInitializeMetadata}
+                                    onClick={() => {
+                                        setConfirmDialog({
+                                            isOpen: true,
+                                            title: 'Reset Typography',
+                                            message: 'This will reset all font families, sizes, and weights to their default values (Inter). Your other settings will be preserved.\n\nContinue?',
+                                            confirmText: 'Reset Defaults',
+                                            type: 'warning',
+                                            onConfirm: () => {
+                                                const resetData = { ...settingsData };
+                                                fontCategories.forEach(cat => {
+                                                    resetData[cat.field] = 'inter';
+                                                    resetData[cat.sizeField] = cat.defaultSize;
+                                                    resetData[cat.weightField] = cat.defaultWeight;
+                                                    resetData[cat.italicField] = false;
+                                                });
+                                                setSettingsData(resetData);
+                                            }
+                                        });
+                                    }}
                                     className={styles.btnSecondary}
-                                    style={{ padding: '0.5rem 1rem', background: 'rgba(Voting68,99,255,0.1)', borderColor: 'var(--primary-color)', color: 'var(--primary-color)', fontSize: '0.75rem' }}
-                                    title="One-time push of typography defaults to database"
+                                    style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}
                                 >
-                                    <PlusCircle size={14} />
-                                    Setup Metadata
+                                    <RefreshCw size={14} />
+                                    Reset to Defaults
                                 </button>
-                            )}
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setConfirmDialog({
-                                        isOpen: true,
-                                        title: 'Reset Typography',
-                                        message: 'This will reset all font families, sizes, and weights to their default values. Your other settings will be preserved.\n\nContinue?',
-                                        confirmText: 'Reset Defaults',
-                                        type: 'warning',
-                                        onConfirm: () => {
-                                            const resetData = { ...settingsData };
-                                            fontCategories.forEach(cat => {
-                                                resetData[cat.field] = 'inter';
-                                                resetData[cat.sizeField] = cat.defaultSize;
-                                                resetData[cat.weightField] = cat.defaultWeight;
-                                                resetData[cat.italicField] = false;
-                                            });
-                                            setSettingsData(resetData);
-                                        }
-                                    });
-                                }}
-                                className={styles.btnSecondary}
-                                style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}
-                            >
-                                <RefreshCw size={14} />
-                                Reset to Defaults
-                            </button>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Typography Presets */}
+                    {presets.length > 0 && (
+                        <div style={{ marginBottom: '2rem' }}>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '1rem', fontWeight: 600 }}>Quick Presets / Brand Styles</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                                {presets.map(preset => (
+                                    <button
+                                        key={preset.id}
+                                        type="button"
+                                        onClick={() => {
+                                            setSettingsData({
+                                                ...settingsData,
+                                                ...preset.config
+                                            });
+                                        }}
+                                        style={{
+                                            background: 'rgba(255,255,255,0.03)',
+                                            border: '1px solid var(--divider)',
+                                            borderRadius: '12px',
+                                            padding: '1rem',
+                                            textAlign: 'left',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '0.4rem',
+                                            borderLeft: '3px solid transparent'
+                                        }}
+                                        className={styles.presetCard}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                                            e.currentTarget.style.borderLeftColor = 'var(--primary-color)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                                            e.currentTarget.style.borderLeftColor = 'transparent';
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <span style={{ fontSize: '1.1rem' }}>{preset.icon}</span>
+                                            <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>{preset.label}</span>
+                                        </div>
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', lineHeight: '1.3' }}>{preset.description}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                         {fontCategories.map(cat => (
