@@ -584,6 +584,7 @@ const BlogTab = ({ userRole, showToast }) => {
                             file={postImage}
                             onFileChange={setPostImage}
                             currentImageUrl={post.coverImage}
+                            onClearExisting={() => setPost(prev => ({ ...prev, coverImage: '' }))}
                         />
 
                         <div className={styles.formFooter}>

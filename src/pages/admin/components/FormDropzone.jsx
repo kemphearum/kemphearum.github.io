@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Upload, X, ImageIcon } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Upload, X, ImageIcon, Image as ImageIcon2, FolderPlus, Trash2, Eye, XCircle, CheckCircle2 } from 'lucide-react';
 import styles from '../../Admin.module.scss';
 
 /**
@@ -11,10 +11,15 @@ const FormDropzone = ({
     file,
     onFileChange,
     currentImageUrl,
+    onClearExisting,
     accept = "image/*",
     placeholder = 'Upload Image'
 }) => {
     const [previewUrl, setPreviewUrl] = useState(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [error, setError] = useState(null);
+    const [internalClear, setInternalClear] = useState(false);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (!file) {
@@ -24,66 +29,262 @@ const FormDropzone = ({
 
         const url = URL.createObjectURL(file);
         setPreviewUrl(url);
+        setInternalClear(false); // Reset clear state when a new file is provided externally
 
-        // Clean up the URL on unmount or when file changes
         return () => URL.revokeObjectURL(url);
     }, [file]);
+
+    // Also reset clear state if the currentImageUrl changes from outside (e.g. switching between posts)
+    useEffect(() => {
+        setInternalClear(false);
+    }, [currentImageUrl]);
+
+    const validateFile = (file) => {
+        if (!file) return null;
+
+        // Check file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+        if (!validTypes.includes(file.type)) {
+            return "Invalid file type. Please upload an image (JPG, PNG, WebP, GIF, or SVG).";
+        }
+
+        // Check file size (5MB limit)
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            return "File is too large. Maximum size is 5MB.";
+        }
+
+        return null;
+    };
+
+    const handleFileSelect = (selectedFile) => {
+        const validationError = validateFile(selectedFile);
+        if (validationError) {
+            setError(validationError);
+            setTimeout(() => setError(null), 5000);
+            return;
+        }
+        setError(null);
+        setInternalClear(false);
+        onFileChange(selectedFile);
+    };
 
     const handleRemove = (e) => {
         e.preventDefault();
         e.stopPropagation();
+        
+        // Notify parent to clear new file
         onFileChange(null);
+        
+        // If there was a current image, we internally clear it for immediate UI feedback
+        if (currentImageUrl || previewUrl) {
+            setInternalClear(true);
+            if (onClearExisting) onClearExisting();
+        }
+
+        setError(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
-    const hasImage = previewUrl || currentImageUrl;
+    const handleBrowseClick = (e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        fileInputRef.current?.click();
+    };
+
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        
+        const droppedFiles = e.dataTransfer.files;
+        if (droppedFiles && droppedFiles.length > 0) {
+            handleFileSelect(droppedFiles[0]);
+        }
+    };
+
+    const formatSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    const hasData = (previewUrl || currentImageUrl) && !internalClear;
+    const isNewImage = !!previewUrl && !internalClear;
 
     return (
         <div className={styles.fileInputGroup}>
             {label && (
-                <label>
-                    {label}
-                    {hint && <span className={styles.hint}> ({hint})</span>}
+                <label className={styles.dropzoneLabel}>
+                    <div className={styles.labelTitle}>
+                        {label}
+                        {hint && <span className={styles.hint}> ({hint})</span>}
+                    </div>
                 </label>
             )}
-            <div className={`${styles.fileDropzone} ${hasImage ? styles.hasPreview : ''}`}>
+
+            <div className={styles.dropzoneRoot}>
                 <input
                     type="file"
+                    ref={fileInputRef}
                     accept={accept}
-                    onChange={(e) => onFileChange(e.target.files[0])}
-                    className={styles.fileInput}
+                    onChange={(e) => handleFileSelect(e.target.files[0])}
+                    className={styles.hiddenInput}
                 />
-                
-                {hasImage ? (
-                    <div className={styles.previewContainer}>
-                        <img 
-                            src={previewUrl || currentImageUrl} 
-                            alt="Preview" 
-                            className={styles.imagePreview} 
-                        />
-                        <div className={styles.previewOverlay}>
-                            <div className={styles.previewActions}>
-                                <button 
-                                    className={styles.removePreviewBtn} 
-                                    onClick={handleRemove}
-                                    title="Remove image"
+
+                {hasData ? (
+                    <div 
+                        className={`${styles.unifiedPreviewDropzone} ${isDragging ? styles.isDragging : ''} ${error ? styles.hasError : ''}`}
+                        onDragEnter={handleDragEnter}
+                        onDragLeave={handleDragLeave}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        onClick={handleBrowseClick}
+                    >
+                        <div className={styles.premiumImageCard}>
+                            <img 
+                                src={previewUrl || currentImageUrl} 
+                                alt="Current" 
+                                className={styles.unifiedPreviewImg} 
+                            />
+                            
+                            {/* Floating Control Pill */}
+                            <div 
+                                className={styles.unifiedControlPill}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <a 
+                                    href={previewUrl || currentImageUrl || '#'}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className={styles.pillActionBtn}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!e.currentTarget.href || e.currentTarget.href.endsWith('#')) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                    title="View Full Size"
                                 >
-                                    <X size={18} />
+                                    <Eye size={18} />
+                                    <span>View</span>
+                                </a>
+                                
+                                <div className={styles.pillDivider} />
+                                
+                                <button 
+                                    type="button"
+                                    className={styles.pillActionBtn}
+                                    onClick={handleBrowseClick}
+                                    title="Change Image"
+                                >
+                                    <FolderPlus size={18} />
+                                    <span>Change</span>
                                 </button>
-                                <div className={styles.changeHint}>
-                                    <Upload size={14} /> Click to change
-                                </div>
+                                
+                                <div className={styles.pillDivider} />
+                                
+                                <button 
+                                    type="button"
+                                    className={`${styles.pillActionBtn} ${styles.danger}`}
+                                    onClick={handleRemove}
+                                    title="Clear Image"
+                                >
+                                    <Trash2 size={18} />
+                                    <span>Clear</span>
+                                </button>
                             </div>
+
+                            {/* Dynamic Status Badge */}
+                            <div className={`${styles.topBadge} ${isNewImage ? styles.newBadge : ''}`}>
+                                {isNewImage ? (
+                                    <>
+                                        <CheckCircle2 size={12} /> Ready to Upload
+                                        {file && <span className={styles.fileMetric}>({formatSize(file.size)})</span>}
+                                    </>
+                                ) : (
+                                    <>
+                                        <ImageIcon size={12} /> Currently Published
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Hover Help Info */}
+                            <div className={styles.hoverHelp}>
+                                <Upload size={14} /> Click or Drop to Change
+                            </div>
+
+                            {/* Drop Overlay (only visible on drag) */}
+                            {isDragging && (
+                                <div className={styles.dropOverlay}>
+                                    <Upload size={32} />
+                                    <span>Drop to Replace</span>
+                                </div>
+                            )}
                         </div>
+                        {error && (
+                            <div className={styles.validationErrorUnified}>
+                                <XCircle size={14} /> {error}
+                            </div>
+                        )}
                     </div>
                 ) : (
-                    <div className={styles.fileDropzoneContent}>
-                        <div className={styles.uploadIconWrapper}>
-                            <Upload size={28} />
+                    <div 
+                        className={`${styles.fullDropzone} ${isDragging ? styles.isDragging : ''} ${error ? styles.hasError : ''}`}
+                        onDragEnter={handleDragEnter}
+                        onDragLeave={handleDragLeave}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        onClick={handleBrowseClick}
+                    >
+                        <div className={styles.fullDropzoneContent}>
+                            <div className={styles.uploadIconCircle}>
+                                <Upload size={32} />
+                            </div>
+                            <div className={styles.fullUploadText}>
+                                <span className={styles.main}>{placeholder}</span>
+                                <span className={styles.sub}>Drag and drop your image here, or use the button below</span>
+                            </div>
+                            <div className={styles.divider}>
+                                <span>or</span>
+                            </div>
+                            <button 
+                                type="button" 
+                                className={styles.primaryBrowseBtn}
+                                onClick={handleBrowseClick}
+                            >
+                                <FolderPlus size={18} /> Browse Files
+                            </button>
                         </div>
-                        <div className={styles.uploadText}>
-                            <span className={styles.primaryText}>{placeholder}</span>
-                            <span className={styles.secondaryText}>Drag and drop or click to browse</span>
-                        </div>
+                        {error && (
+                            <div className={styles.validationErrorFull}>
+                                <XCircle size={16} /> {error}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

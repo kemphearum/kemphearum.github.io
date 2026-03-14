@@ -636,6 +636,7 @@ const ProjectsTab = ({ userRole, showToast }) => {
                             file={projectImage}
                             onFileChange={setProjectImage}
                             currentImageUrl={project.imageUrl}
+                            onClearExisting={() => setProject(prev => ({ ...prev, imageUrl: '' }))}
                         />
 
                         <div className={styles.formFooter}>
