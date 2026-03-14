@@ -1,4 +1,5 @@
 import type { Config } from "@react-router/dev/config";
+import { vercelPreset } from "@vercel/react-router/vite";
 import fs from "fs";
 import path from "path";
 
@@ -53,6 +54,7 @@ async function fetchCollectionSlugs(collectionName: string) {
 
 export default {
     ssr: true,
+    presets: [vercelPreset()],
     routeDiscovery: {
         mode: "initial",
     },
