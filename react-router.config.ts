@@ -60,7 +60,7 @@ export default {
     },
     async prerender() {
         // Pre-render base routes
-        const routes = ["/", "/blog", "/projects"];
+        const routes = ["/", "/blog", "/projects", "/admin"];
 
         console.log(`[Prerender] Starting route discovery for PROJECT_ID: ${PROJECT_ID}`);
 
