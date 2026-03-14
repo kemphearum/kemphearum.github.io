@@ -18,7 +18,7 @@
 
 .text {
     max-width: 800px;
-    font-size: 1.05rem;
+    font-size: var(--font-size-body);
     line-height: 1.8;
     color: var(--text-secondary);
 }
@@ -33,7 +33,7 @@
     color: var(--text-primary);
     margin-top: 2rem;
     font-weight: 600;
-    font-size: 1.1rem;
+    font-size: calc(var(--font-size-heading) * 1.25);
     position: relative;
     display: inline-block;
 
@@ -62,7 +62,7 @@
     @include glass;
     padding: 0.55rem 1.1rem;
     border-radius: 50px;
-    font-size: 0.85rem;
+    font-size: var(--font-size-ui);
     font-weight: 500;
     color: var(--text-primary);
     cursor: default;

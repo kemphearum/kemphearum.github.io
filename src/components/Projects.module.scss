@@ -40,7 +40,7 @@
         background: var(--glass-surface);
         border: 1px solid var(--glass-border);
         color: var(--text-primary);
-        font-size: 1rem;
+        font-size: var(--font-size-ui);
         transition: all 0.3s ease;
         backdrop-filter: blur(10px);
 
@@ -77,8 +77,9 @@
 .filterBtn {
     padding: 0.45rem 1rem;
     border-radius: 50px;
-    font-size: 0.82rem;
-    font-weight: 500;
+    font-family: var(--font-nav, inherit);
+    font-size: var(--font-size-nav);
+    font-weight: var(--font-weight-nav, 500);
     color: var(--text-secondary);
     background: var(--glass-surface);
     border: 1px solid var(--glass-border);
@@ -111,13 +112,13 @@
 .empty {
     text-align: center;
     color: var(--text-secondary);
-    font-size: 1.1rem;
+    font-size: var(--font-size-heading);
     padding: 3rem;
     grid-column: 1 / -1;
 }
 
 .hint {
-    font-size: 0.9rem;
+    font-size: var(--font-size-body);
     margin-top: 0.5rem;
     opacity: 0.6;
 }
@@ -213,7 +214,7 @@
     background: var(--glass-surface);
     color: var(--text-secondary);
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: var(--font-size-ui);
     cursor: pointer;
     transition: all 0.3s ease;
 

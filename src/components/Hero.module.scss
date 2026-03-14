@@ -89,10 +89,10 @@
 
 .greeting {
     color: $primary-color;
-    font-family: 'Inter', sans-serif;
-    font-size: 1.05rem;
+    font-family: var(--font-ui, 'Inter', sans-serif);
+    font-size: var(--font-size-ui);
     margin-bottom: 1rem;
-    font-weight: 500;
+    font-weight: var(--font-weight-ui, 600);
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -134,7 +134,7 @@
 .title {
     font-family: var(--font-display, inherit);
     font-weight: var(--font-weight-display, 800);
-    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-size: calc(var(--font-size-display) * 2.25);
     color: var(--text-primary);
     margin-bottom: 0.5rem;
     line-height: 1.1;
@@ -146,15 +146,16 @@
 }
 
 .subtitle {
-    font-size: clamp(1.3rem, 3vw, 2rem);
+    font-family: var(--font-heading, inherit);
     font-weight: 600;
+    font-size: calc(var(--font-size-heading) * 1.6);
     color: var(--text-secondary);
     margin-bottom: 1.5rem;
     line-height: 1.3;
 }
 
 .description {
-    font-size: 1.05rem;
+    font-size: var(--font-size-body);
     color: var(--text-secondary);
     margin-bottom: 2.5rem;
     max-width: 540px;
@@ -173,7 +174,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.9rem 1.8rem;
-    font-size: 1rem;
+    font-size: var(--font-size-ui);
     font-weight: 600;
     color: white;
     background: linear-gradient(135deg, $primary-color, $primary-light);
@@ -200,7 +201,7 @@
     display: inline-flex;
     align-items: center;
     padding: 0.9rem 1.8rem;
-    font-size: 1rem;
+    font-size: var(--font-size-ui);
     font-weight: 600;
     color: var(--text-primary);
     background: transparent;
@@ -305,8 +306,9 @@
     padding: 0.5rem 1rem;
     @include glass;
     border-radius: 50px;
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-family: var(--font-ui, inherit);
+    font-size: calc(var(--font-size-ui) * 0.95);
+    font-weight: var(--font-weight-ui, 600);
     color: var(--text-secondary);
     letter-spacing: 0.3px;
 }

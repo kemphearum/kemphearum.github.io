@@ -12,6 +12,8 @@ const FONT_OPTIONS = [
     { value: 'kantumruy-pro', label: 'Kantumruy Pro' },
     { value: 'kantumruy-pro-medium', label: 'Kantumruy Pro Medium' },
     { value: 'battambang', label: 'Battambang' },
+    { value: 'fira-code', label: 'Fira Code' },
+    { value: 'jetbrains-mono', label: 'JetBrains Mono' },
 ];
 
 const SIZE_OPTIONS = [
@@ -21,20 +23,33 @@ const SIZE_OPTIONS = [
     { value: 'extra-large', label: 'Extra Large (20px)' },
 ];
 
+const WEIGHT_OPTIONS = [
+    { value: '300', label: '300 (Light)' },
+    { value: '400', label: '400 (Regular)' },
+    { value: '500', label: '500 (Medium)' },
+    { value: '600', label: '600 (Semi-Bold)' },
+    { value: '700', label: '700 (Bold)' },
+    { value: '800', label: '800 (Extra-Bold)' },
+    { value: '900', label: '900 (Black)' },
+];
+
 const FONT_CSS = {
     'inter': "'Inter', system-ui, -apple-system, sans-serif",
     'kantumruy-pro': "'Kantumruy Pro', system-ui, sans-serif",
     'kantumruy-pro-medium': "'Kantumruy Pro', system-ui, sans-serif",
     'battambang': "'Battambang', system-ui, sans-serif",
+    'fira-code': "'Fira Code', monospace",
+    'jetbrains-mono': "'JetBrains Mono', monospace",
 };
 
 const FONT_CATEGORIES = [
-    { field: 'fontDisplay', sizeField: 'fontDisplaySize', label: 'Display / Hero', hint: 'Hero name, banner titles', icon: '🎯', defaultSize: '2rem' },
-    { field: 'fontHeading', sizeField: 'fontHeadingSize', label: 'Headings', hint: 'Section titles (H1, H2)', icon: '📌', defaultSize: '1.25rem' },
-    { field: 'fontSubheading', sizeField: 'fontSubheadingSize', label: 'Sub Headings', hint: 'Card & modal titles (H3–H6)', icon: '📎', defaultSize: '1rem' },
-    { field: 'fontNav', sizeField: 'fontNavSize', label: 'Navigation', hint: 'Navbar, sidebar, footer links', icon: '🧭', defaultSize: '0.85rem' },
-    { field: 'fontBody', sizeField: 'fontBodySize', label: 'Body / Content', hint: 'Paragraphs, descriptions', icon: '📝', defaultSize: '0.9rem' },
-    { field: 'fontUI', sizeField: 'fontUISize', label: 'UI / Labels', hint: 'Buttons, form labels, badges', icon: '🏷️', defaultSize: '0.8rem' },
+    { field: 'fontDisplay', sizeField: 'fontDisplaySize', weightField: 'fontDisplayWeight', italicField: 'fontDisplayItalic', label: 'Display / Hero', hint: 'Hero name, banner titles', icon: '🎯', defaultSize: '2rem', defaultWeight: '800' },
+    { field: 'fontHeading', sizeField: 'fontHeadingSize', weightField: 'fontHeadingWeight', italicField: 'fontHeadingItalic', label: 'Headings', hint: 'Section titles (H1, H2)', icon: '📌', defaultSize: '1.25rem', defaultWeight: '700' },
+    { field: 'fontSubheading', sizeField: 'fontSubheadingSize', weightField: 'fontSubheadingWeight', italicField: 'fontSubheadingItalic', label: 'Sub Headings', hint: 'Card & modal titles (H3–H6)', icon: '📎', defaultSize: '1rem', defaultWeight: '600' },
+    { field: 'fontNav', sizeField: 'fontNavSize', weightField: 'fontNavWeight', italicField: 'fontNavItalic', label: 'Navigation', hint: 'Navbar, sidebar, footer links', icon: '🧭', defaultSize: '0.85rem', defaultWeight: '500' },
+    { field: 'fontBody', sizeField: 'fontBodySize', weightField: 'fontBodyWeight', italicField: 'fontBodyItalic', label: 'Body / Content', hint: 'Paragraphs, descriptions', icon: '📝', defaultSize: '0.9rem', defaultWeight: '400' },
+    { field: 'fontUI', sizeField: 'fontUISize', weightField: 'fontUIWeight', italicField: 'fontUIItalic', label: 'UI / Labels', hint: 'Buttons, form labels, badges', icon: '🏷️', defaultSize: '0.8rem', defaultWeight: '600' },
+    { field: 'fontMono', sizeField: 'fontMonoSize', weightField: 'fontMonoWeight', italicField: 'fontMonoItalic', label: 'Monospace / Code', hint: 'Code snippets, tech specs', icon: '💻', defaultSize: '0.85rem', defaultWeight: '400' },
 ];
 
 const getFontWeight = (key, defaultWeight) => key === 'kantumruy-pro-medium' ? 500 : defaultWeight;
@@ -95,6 +110,8 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
             FONT_CATEGORIES.forEach(c => {
                 payload[c.field] = settingsData[c.field] || 'inter';
                 payload[c.sizeField] = settingsData[c.sizeField] || c.defaultSize;
+                payload[c.weightField] = settingsData[c.weightField] || c.defaultWeight;
+                payload[c.italicField] = settingsData[c.italicField] ?? false;
             });
             await saveSectionData('settings', payload);
             setSettingsFavicon(null);
@@ -452,6 +469,41 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                     style={{ width: '100%' }}
                                 />
 
+                                {/* Weight and Italic Controls in a row */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <div style={{ flex: 1.5 }}>
+                                        <FormSelect
+                                            value={settingsData[cat.weightField] || cat.defaultWeight}
+                                            onChange={(e) => setSettingsData({ ...settingsData, [cat.weightField]: e.target.value })}
+                                            options={WEIGHT_OPTIONS}
+                                            noWrapper
+                                            style={{ width: '100%', padding: '0.4rem' }}
+                                        />
+                                    </div>
+                                    <div 
+                                        onClick={() => setSettingsData({ ...settingsData, [cat.italicField]: !settingsData[cat.italicField] })}
+                                        style={{ 
+                                            flex: 1,
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center',
+                                            gap: '0.4rem',
+                                            padding: '0.4rem 0.6rem',
+                                            background: settingsData[cat.italicField] ? 'rgba(108,99,255,0.2)' : 'rgba(255,255,255,0.03)',
+                                            borderRadius: '8px',
+                                            border: `1px solid ${settingsData[cat.italicField] ? 'var(--primary-color)' : 'var(--divider)'}`,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            color: settingsData[cat.italicField] ? 'var(--primary-color)' : 'var(--text-secondary)',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500
+                                        }}
+                                    >
+                                        <span style={{ fontStyle: 'italic', fontWeight: 'bold' }}>I</span>
+                                        Italic
+                                    </div>
+                                </div>
+
                                 {/* Size Stepper */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', minWidth: '28px' }}>Size</span>
@@ -498,21 +550,24 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text-secondary)', marginBottom: '0.75rem', fontFamily: "'Inter', sans-serif" }}>Live Preview</div>
                         <div style={{
                             fontFamily: FONT_CSS[getFont('fontDisplay')],
-                            fontWeight: getFontWeight(getFont('fontDisplay'), 700),
-                            fontSize: getFontSize('fontDisplaySize', '2rem'), marginBottom: '0.25rem', color: 'var(--text-primary)',
+                            fontWeight: settingsData.fontDisplayWeight || 800,
+                            fontStyle: settingsData.fontDisplayItalic ? 'italic' : 'normal',
+                            fontSize: `calc(${getFontSize('fontDisplaySize', '2rem')} * 2.25)`, marginBottom: '0.25rem', color: 'var(--text-primary)',
                         }}>
                             កឹម ភារម្យ
                         </div>
                         <div style={{
                             fontFamily: FONT_CSS[getFont('fontHeading')],
-                            fontWeight: getFontWeight(getFont('fontHeading'), 700),
-                            fontSize: getFontSize('fontHeadingSize', '1.25rem'), marginBottom: '0.5rem', color: 'var(--text-primary)',
+                            fontWeight: settingsData.fontHeadingWeight || 700,
+                            fontStyle: settingsData.fontHeadingItalic ? 'italic' : 'normal',
+                            fontSize: `calc(${getFontSize('fontHeadingSize', '1.25rem')} * 1.8)`, marginBottom: '0.5rem', color: 'var(--text-primary)',
                         }}>
                             Heading — ចំណងជើង
                         </div>
                         <div style={{
                             fontFamily: FONT_CSS[getFont('fontSubheading')],
-                            fontWeight: getFontWeight(getFont('fontSubheading'), 600),
+                            fontWeight: settingsData.fontSubheadingWeight || 600,
+                            fontStyle: settingsData.fontSubheadingItalic ? 'italic' : 'normal',
                             fontSize: getFontSize('fontSubheadingSize', '1rem'), marginBottom: '0.5rem', color: 'var(--text-primary)',
                         }}>
                             Sub Heading — ចំណងជើងរង
@@ -520,7 +575,8 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '0.5rem' }}>
                             <span style={{
                                 fontFamily: FONT_CSS[getFont('fontNav')],
-                                fontWeight: getFontWeight(getFont('fontNav'), 500),
+                                fontWeight: settingsData.fontNavWeight || 500,
+                                fontStyle: settingsData.fontNavItalic ? 'italic' : 'normal',
                                 fontSize: getFontSize('fontNavSize', '0.85rem'), color: 'var(--primary-color)',
                             }}>
                                 Home &nbsp;·&nbsp; About &nbsp;·&nbsp; Projects
@@ -528,7 +584,8 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         </div>
                         <div style={{
                             fontFamily: FONT_CSS[getFont('fontBody')],
-                            fontWeight: getFontWeight(getFont('fontBody'), 400),
+                            fontWeight: settingsData.fontBodyWeight || 400,
+                            fontStyle: settingsData.fontBodyItalic ? 'italic' : 'normal',
                             fontSize: getFontSize('fontBodySize', '0.9rem'), color: 'var(--text-secondary)', lineHeight: 1.7,
                         }}>
                             This is a sample paragraph to preview the body text font. The quick brown fox jumps over the lazy dog.
@@ -536,18 +593,37 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
                             <span style={{
                                 fontFamily: FONT_CSS[getFont('fontUI')],
-                                fontWeight: getFontWeight(getFont('fontUI'), 600),
+                                fontWeight: settingsData.fontUIWeight || 600,
+                                fontStyle: settingsData.fontUIItalic ? 'italic' : 'normal',
                                 fontSize: getFontSize('fontUISize', '0.8rem'), padding: '0.3rem 0.8rem',
                                 background: 'rgba(108,99,255,0.15)', borderRadius: '6px',
                                 color: 'var(--primary-color)',
                             }}>Button</span>
                             <span style={{
                                 fontFamily: FONT_CSS[getFont('fontUI')],
-                                fontWeight: getFontWeight(getFont('fontUI'), 500),
+                                fontWeight: settingsData.fontUIWeight || 500,
+                                fontStyle: settingsData.fontUIItalic ? 'italic' : 'normal',
                                 fontSize: getFontSize('fontUISize', '0.75rem'), padding: '0.25rem 0.6rem',
                                 background: 'rgba(255,255,255,0.05)', borderRadius: '4px',
                                 color: 'var(--text-secondary)',
                             }}>Label</span>
+                        </div>
+                        <div style={{
+                            marginTop: '0.75rem',
+                            padding: '0.75rem',
+                            background: 'rgba(0,0,0,0.3)',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            fontFamily: FONT_CSS[getFont('fontMono')],
+                            fontSize: getFontSize('fontMonoSize', '0.85rem'),
+                            fontWeight: settingsData.fontMonoWeight || 400,
+                            fontStyle: settingsData.fontMonoItalic ? 'italic' : 'normal',
+                            color: '#a0a0b0',
+                            overflow: 'hidden'
+                        }}>
+<span style={{ color: '#6C63FF' }}>function</span> <span style={{ color: '#FF6584' }}>helloWorld</span>() &#123;<br />
+&nbsp;&nbsp;console.<span style={{ color: '#FF6584' }}>log</span>(<span style={{ color: '#48c78e' }}>"Hello Portfolio!"</span>);<br />
+&#125;
                         </div>
                     </div>
                 </div>

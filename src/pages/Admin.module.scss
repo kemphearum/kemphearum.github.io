@@ -93,7 +93,7 @@
     width: 100%;
     padding: 0.85rem;
     border-radius: 12px;
-    font-size: 0.95rem;
+    font-size: var(--font-size-ui);
     font-weight: 600;
     color: white;
     background: linear-gradient(135deg, $primary-color, $primary-light);
@@ -129,7 +129,7 @@
 
 .linkBtn {
     color: var(--text-secondary);
-    font-size: 0.95rem;
+    font-size: var(--font-size-ui);
     padding: 0.5rem;
     border-radius: 8px;
     transition: all 0.3s ease;
@@ -250,7 +250,7 @@
 }
 
 .brand {
-    font-size: 1.4rem;
+    font-size: calc(var(--font-size-nav) * 1.6);
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: 0.5px;
@@ -276,7 +276,7 @@
         padding: 0.75rem 1rem;
         border-radius: 10px;
         color: var(--text-secondary);
-        font-size: 0.95rem;
+        font-size: var(--font-size-nav);
         font-weight: $font-weight-medium;
         transition: all 0.25s ease;
         position: relative;

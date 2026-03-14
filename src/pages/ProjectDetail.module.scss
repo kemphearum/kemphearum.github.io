@@ -37,7 +37,7 @@
     justify-content: center;
 
     h2 {
-        font-size: 3rem;
+        font-size: calc(var(--font-size-heading) * 2.4);
         margin-bottom: 1rem;
         color: $primary-color;
     }
@@ -90,7 +90,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 2rem 0 1.5rem;
-    font-size: 0.9rem;
+    font-size: var(--font-size-ui);
     color: var(--text-secondary);
 
     a {
@@ -109,7 +109,8 @@
 
     .current {
         color: var(--text-primary);
-        font-weight: 500;
+        font-family: var(--font-ui, inherit);
+        font-weight: var(--font-weight-ui, 600);
     }
 }
 
@@ -151,7 +152,7 @@
         display: flex;
         align-items: center;
         gap: 0.4rem;
-        font-size: 0.78rem;
+        font-size: var(--font-size-ui);
         color: rgba(255, 255, 255, 0.7);
         background: rgba(0, 0, 0, 0.45);
         backdrop-filter: blur(8px);
@@ -191,7 +192,7 @@
         }
 
         span {
-            font-size: 2.5rem;
+            font-size: calc(var(--font-size-display) * 1.25);
             font-weight: 800;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.5), rgba($primary-color, 0.4));
             -webkit-background-clip: text;
@@ -217,7 +218,8 @@
     min-width: 0; // prevent grid blowout
 
     .projectTitle {
-        font-size: 2.4rem;
+        font-size: calc(var(--font-size-display) * 1.2);
+        font-family: var(--font-display, inherit);
         font-weight: 800;
         line-height: 1.2;
         letter-spacing: -0.02em;
@@ -226,7 +228,7 @@
     }
 
     .projectDescription {
-        font-size: 1.1rem;
+        font-size: var(--font-size-body);
         line-height: 1.7;
         color: var(--text-secondary);
         margin-bottom: 2rem;
@@ -236,7 +238,7 @@
 
 /* ── Markdown Body ── */
 .markdownBody {
-    font-size: 1.05rem;
+    font-size: var(--font-size-body);
     line-height: 1.8;
     color: var(--text-primary);
     margin-bottom: 2rem;
@@ -254,7 +256,7 @@
         margin-bottom: 1.5rem;
 
         h4 {
-            font-size: 0.78rem;
+            font-size: var(--font-size-ui);
             text-transform: uppercase;
             letter-spacing: 0.1em;
             color: var(--text-secondary);
@@ -277,12 +279,12 @@
     align-items: center;
 
     .label {
-        font-size: 0.85rem;
+        font-size: var(--font-size-ui);
         color: var(--text-secondary);
     }
 
     .value {
-        font-size: 0.9rem;
+        font-size: var(--font-size-ui);
         font-weight: 600;
         color: var(--text-primary);
     }
@@ -291,7 +293,7 @@
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
-        font-size: 0.85rem;
+        font-size: var(--font-size-ui);
         font-weight: 600;
         color: #48c78e;
 
@@ -318,7 +320,7 @@
     color: $primary-color;
     padding: 0.35rem 0.85rem;
     border-radius: 50px;
-    font-size: 0.8rem;
+    font-size: var(--font-size-ui);
     font-weight: 600;
     border: 1px solid rgba($primary-color, 0.15);
     transition: all 0.3s ease;
@@ -348,7 +350,7 @@
     border-radius: 12px;
     text-decoration: none;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: var(--font-size-ui);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: none;
     box-shadow: 0 4px 15px rgba($primary-color, 0.3);
@@ -371,7 +373,7 @@
     border-radius: 12px;
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: var(--font-size-ui);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:hover {
@@ -394,7 +396,7 @@
     gap: 0.5rem;
     padding: 0.65rem 1rem;
     border-radius: 10px;
-    font-size: 0.82rem;
+    font-size: calc(var(--font-size-ui) * 0.9);
     font-weight: 600;
     text-decoration: none;
     transition: all 0.3s ease;
@@ -449,7 +451,7 @@
 
     h3 {
         color: var(--text-secondary);
-        font-size: 1.05rem;
+        font-size: var(--font-size-heading);
         margin-bottom: 1.5rem;
     }
 }
@@ -545,7 +547,7 @@
     }
 
     .mainContent .projectTitle {
-        font-size: 1.8rem;
+        font-size: calc(var(--font-size-display) * 0.9);
     }
 
     .featuredImage {
@@ -560,7 +562,7 @@
 
 @media (max-width: 480px) {
     .mainContent .projectTitle {
-        font-size: 1.5rem;
+        font-size: calc(var(--font-size-display) * 0.75);
     }
 
     .shareButtons {

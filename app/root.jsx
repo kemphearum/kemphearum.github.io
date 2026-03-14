@@ -92,22 +92,31 @@ function SettingsApplier({ children, initialSettings }) {
         'kantumruy-pro': "'Kantumruy Pro', system-ui, sans-serif",
         'kantumruy-pro-medium': "'Kantumruy Pro', system-ui, sans-serif",
         'battambang': "'Battambang', system-ui, sans-serif",
+        'fira-code': "'Fira Code', monospace",
+        'jetbrains-mono': "'JetBrains Mono', monospace",
       };
 
       const root = document.documentElement;
       const categories = [
-        { field: 'fontDisplay', prop: '--font-display', weightProp: '--font-weight-display', defaultWeight: '700' },
-        { field: 'fontHeading', prop: '--font-heading', weightProp: '--font-weight-heading', defaultWeight: '700' },
-        { field: 'fontSubheading', prop: '--font-subheading', weightProp: '--font-weight-subheading', defaultWeight: '600' },
-        { field: 'fontNav', prop: '--font-nav', weightProp: '--font-weight-nav', defaultWeight: '500' },
-        { field: 'fontBody', prop: '--font-body', weightProp: '--font-weight-body', defaultWeight: '400' },
-        { field: 'fontUI', prop: '--font-ui', weightProp: '--font-weight-ui', defaultWeight: '600' },
+        { field: 'fontDisplay', prop: '--font-display', weightProp: '--font-weight-display', styleProp: '--font-style-display', sizeProp: '--font-size-display', defaultWeight: '800', defaultSize: '2rem' },
+        { field: 'fontHeading', prop: '--font-heading', weightProp: '--font-weight-heading', styleProp: '--font-style-heading', sizeProp: '--font-size-heading', defaultWeight: '700', defaultSize: '1.25rem' },
+        { field: 'fontSubheading', prop: '--font-subheading', weightProp: '--font-weight-subheading', styleProp: '--font-style-subheading', sizeProp: '--font-size-subheading', defaultWeight: '600', defaultSize: '1rem' },
+        { field: 'fontNav', prop: '--font-nav', weightProp: '--font-weight-nav', styleProp: '--font-style-nav', sizeProp: '--font-size-nav', defaultWeight: '500', defaultSize: '0.85rem' },
+        { field: 'fontBody', prop: '--font-body', weightProp: '--font-weight-body', styleProp: '--font-style-body', sizeProp: '--font-size-body', defaultWeight: '400', defaultSize: '0.9rem' },
+        { field: 'fontUI', prop: '--font-ui', weightProp: '--font-weight-ui', styleProp: '--font-style-ui', sizeProp: '--font-size-ui', defaultWeight: '600', defaultSize: '0.8rem' },
+        { field: 'fontMono', prop: '--font-mono', weightProp: '--font-weight-mono', styleProp: '--font-style-mono', sizeProp: '--font-size-mono', defaultWeight: '400', defaultSize: '0.85rem' },
       ];
 
-      categories.forEach(({ field, prop, weightProp, defaultWeight }) => {
+      categories.forEach(({ field, prop, weightProp, styleProp, sizeProp, defaultWeight, defaultSize }) => {
         const key = typpo[field] || 'inter';
+        const sizeField = `${field}Size`;
+        const weightField = `${field}Weight`;
+        const italicField = `${field}Italic`;
+
         root.style.setProperty(prop, fontMap[key] || fontMap['inter']);
-        root.style.setProperty(weightProp, key === 'kantumruy-pro-medium' ? '500' : defaultWeight);
+        root.style.setProperty(weightProp, typpo[weightField] || (key === 'kantumruy-pro-medium' ? '500' : defaultWeight));
+        root.style.setProperty(styleProp, typpo[italicField] ? 'italic' : 'normal');
+        root.style.setProperty(sizeProp, typpo[sizeField] || defaultSize);
       });
 
       if (typpo.adminFontOverride !== false) {

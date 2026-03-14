@@ -1,9 +1,9 @@
 @use '../styles/variables' as *;
 
 .markdownContent {
-    line-height: 1.8;
+    line-height: var(--line-height-body, 1.8);
     color: var(--text-primary);
-    font-size: 1.1rem;
+    font-size: var(--font-size-body);
 
     h1,
     h2,
@@ -19,13 +19,13 @@
     }
 
     h2 {
-        font-size: 1.8rem;
+        font-size: calc(var(--font-size-heading) * 1.5);
         border-bottom: 1px solid var(--divider);
         padding-bottom: 0.5rem;
     }
 
     h3 {
-        font-size: 1.5rem;
+        font-size: calc(var(--font-size-subheading) * 1.35);
     }
 
     p {
@@ -60,7 +60,9 @@
         border-left: 4px solid $primary-color;
         background: rgba($primary-color, 0.05);
         border-radius: 0 8px 8px 0;
-        font-style: italic;
+        font-family: var(--font-body, inherit);
+        font-weight: var(--font-weight-body, 400);
+        font-style: var(--font-style-body, italic);
         color: var(--text-secondary);
 
         p {
@@ -72,8 +74,8 @@
         background: var(--glass-surface);
         padding: 0.2em 0.4em;
         border-radius: 4px;
-        font-family: 'Fira Code', monospace;
-        font-size: 0.9em;
+        font-family: var(--font-mono, monospace);
+        font-size: var(--font-size-mono);
         color: #ff7b72;
     }
 
@@ -94,8 +96,8 @@
             border-bottom: 1px solid var(--glass-border);
 
             .language {
-                font-family: 'Fira Code', monospace;
-                font-size: 0.8rem;
+                font-family: var(--font-mono, monospace);
+                font-size: calc(var(--font-size-mono) * 0.9);
                 color: var(--text-secondary);
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
@@ -108,7 +110,7 @@
                 background: transparent;
                 border: none;
                 color: var(--text-secondary);
-                font-size: 0.8rem;
+                font-size: calc(var(--font-size-ui) * 0.9);
                 cursor: pointer;
                 transition: color 0.2s ease;
                 padding: 4px 8px;
@@ -129,7 +131,8 @@
     .codeBlock {
         margin: 0 !important;
         border-radius: 0 0 8px 8px !important;
-        font-size: 0.95rem !important;
+        font-family: var(--font-mono, monospace) !important;
+        font-size: var(--font-size-mono) !important;
         background: transparent !important;
         border: none !important;
 

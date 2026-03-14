@@ -37,7 +37,7 @@
 }
 
 .logo {
-    font-size: 1.4rem;
+    font-size: calc(var(--font-size-nav) * 1.5);
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: 0.5px;
@@ -74,7 +74,7 @@
         button,
         a {
             position: relative;
-            font-size: 1rem;
+            font-size: var(--font-size-nav);
             color: var(--text-secondary);
             cursor: pointer;
             transition: color 0.3s ease;
@@ -228,7 +228,7 @@
 
             button,
             a {
-                font-size: 1.1rem;
+                font-size: calc(var(--font-size-nav) * 1.15);
                 display: block;
                 width: 100%;
                 text-align: left;

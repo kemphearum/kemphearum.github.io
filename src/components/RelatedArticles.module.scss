@@ -12,7 +12,7 @@
         gap: 1rem;
 
         h3 {
-            font-size: 1.5rem;
+            font-size: var(--font-size-subheading);
             color: var(--heading-color, #fff);
             font-weight: 600;
             white-space: nowrap;
@@ -78,7 +78,8 @@
                     background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.1) 100%);
 
                     span {
-                        font-size: 4rem;
+                        font-family: var(--font-display, inherit);
+                        font-size: var(--font-size-display);
                         font-weight: 800;
                         color: rgba(255, 255, 255, 0.1);
                         text-transform: uppercase;
@@ -97,11 +98,12 @@
                     align-items: center;
                     gap: 1rem;
                     margin-bottom: 0.8rem;
-                    font-size: 0.85rem;
+                    font-size: var(--font-size-ui);
 
                     .date {
                         color: rgba(255, 255, 255, 0.5);
-                        font-family: 'Fira Code', monospace;
+                        font-family: var(--font-ui, 'Fira Code', monospace);
+                        font-size: var(--font-size-ui);
                     }
 
                     .tag {
@@ -109,13 +111,14 @@
                         background: rgba(100, 255, 218, 0.1);
                         padding: 0.2rem 0.6rem;
                         border-radius: 4px;
-                        font-size: 0.75rem;
-                        font-weight: 500;
+                        font-family: var(--font-ui, inherit);
+                        font-size: calc(var(--font-size-ui) * 0.9);
+                        font-weight: var(--font-weight-ui, 600);
                     }
                 }
 
                 h4 {
-                    font-size: 1.2rem;
+                    font-size: calc(var(--font-size-subheading) * 1.1);
                     color: var(--heading-color, #fff);
                     margin-bottom: 0.5rem;
                     line-height: 1.4;
