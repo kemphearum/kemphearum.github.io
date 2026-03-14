@@ -70,6 +70,12 @@ function SettingsApplier({ children, initialSettings }) {
     initialData: initialSettings
   });
 
+  const { data: metadata } = useQuery({
+    queryKey: ['settings', 'metadata', 'typography'],
+    queryFn: () => SettingsService.fetchTypographyMetadata(),
+    staleTime: Infinity,
+  });
+
   useEffect(() => {
     if (globalConfig) {
       const site = globalConfig.site || globalConfig;
@@ -86,11 +92,6 @@ function SettingsApplier({ children, initialSettings }) {
         link.href = favicon;
       }
 
-      const { data: metadata } = useQuery({
-        queryKey: ['settings', 'metadata', 'typography'],
-        queryFn: () => SettingsService.fetchTypographyMetadata(),
-        staleTime: Infinity,
-      });
 
       const typpo = {
         ...(globalConfig.site || {}),
@@ -135,7 +136,7 @@ function SettingsApplier({ children, initialSettings }) {
       const sizeKey = typpo.fontSize || 'default';
       root.style.setProperty('--font-size-base', sizeMap[sizeKey] || '16px');
     }
-  }, [globalConfig]);
+  }, [globalConfig, metadata]);
 
   const siteConfig = globalConfig?.site || globalConfig || {};
   const bgDensity = siteConfig.bgDensity ?? 50;
