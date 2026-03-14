@@ -86,19 +86,20 @@ function SettingsApplier({ children, initialSettings }) {
         link.href = favicon;
       }
 
+      const { data: metadata } = useQuery({
+        queryKey: ['settings', 'metadata', 'typography'],
+        queryFn: () => SettingsService.fetchTypographyMetadata(),
+        staleTime: Infinity,
+      });
+
       const typpo = {
         ...(globalConfig.site || {}),
         ...(globalConfig.typography || {}),
         ...globalConfig
       };
-      const fontMap = {
-        'inter': "'Inter', system-ui, -apple-system, sans-serif",
-        'kantumruy-pro': "'Kantumruy Pro', system-ui, sans-serif",
-        'kantumruy-pro-medium': "'Kantumruy Pro', system-ui, sans-serif",
-        'battambang': "'Battambang', system-ui, sans-serif",
-        'fira-code': "'Fira Code', monospace",
-        'jetbrains-mono': "'JetBrains Mono', monospace",
-      };
+
+      const typographyMetadata = metadata || SettingsService.DEFAULT_TYPOGRAPHY_METADATA;
+      const fontMap = typographyMetadata.fontCSS;
 
       const root = document.documentElement;
       const categories = [

@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import SettingsService from '../../../services/SettingsService';
 import { Upload, Save, Type, Minus, Plus, RefreshCw, CheckCircle, AlertCircle, Key, Eye, EyeOff, Globe, ExternalLink, Trash2, PlusCircle } from 'lucide-react';
 import styles from '../../Admin.module.scss';
 import ImageProcessingService from '../../../services/ImageProcessingService';
@@ -7,55 +9,20 @@ import axios from 'axios';
 import FormSelect from '../components/FormSelect';
 import ConfirmDialog from '../components/ConfirmDialog';
 
-const FONT_OPTIONS = [
-    { value: 'inter', label: 'Inter' },
-    { value: 'kantumruy-pro', label: 'Kantumruy Pro' },
-    { value: 'kantumruy-pro-medium', label: 'Kantumruy Pro Medium' },
-    { value: 'battambang', label: 'Battambang' },
-    { value: 'fira-code', label: 'Fira Code' },
-    { value: 'jetbrains-mono', label: 'JetBrains Mono' },
-];
-
-const SIZE_OPTIONS = [
-    { value: 'small', label: 'Small (14px)' },
-    { value: 'default', label: 'Default (16px)' },
-    { value: 'large', label: 'Large (18px)' },
-    { value: 'extra-large', label: 'Extra Large (20px)' },
-];
-
-const WEIGHT_OPTIONS = [
-    { value: '300', label: '300 (Light)' },
-    { value: '400', label: '400 (Regular)' },
-    { value: '500', label: '500 (Medium)' },
-    { value: '600', label: '600 (Semi-Bold)' },
-    { value: '700', label: '700 (Bold)' },
-    { value: '800', label: '800 (Extra-Bold)' },
-    { value: '900', label: '900 (Black)' },
-];
-
-const FONT_CSS = {
-    'inter': "'Inter', system-ui, -apple-system, sans-serif",
-    'kantumruy-pro': "'Kantumruy Pro', system-ui, sans-serif",
-    'kantumruy-pro-medium': "'Kantumruy Pro', system-ui, sans-serif",
-    'battambang': "'Battambang', system-ui, sans-serif",
-    'fira-code': "'Fira Code', monospace",
-    'jetbrains-mono': "'JetBrains Mono', monospace",
-};
-
-const FONT_CATEGORIES = [
-    { field: 'fontDisplay', sizeField: 'fontDisplaySize', weightField: 'fontDisplayWeight', italicField: 'fontDisplayItalic', label: 'Display / Hero', hint: 'Hero name, banner titles', icon: '🎯', defaultSize: '2rem', defaultWeight: '800' },
-    { field: 'fontHeading', sizeField: 'fontHeadingSize', weightField: 'fontHeadingWeight', italicField: 'fontHeadingItalic', label: 'Headings', hint: 'Section titles (H1, H2)', icon: '📌', defaultSize: '1.25rem', defaultWeight: '700' },
-    { field: 'fontSubheading', sizeField: 'fontSubheadingSize', weightField: 'fontSubheadingWeight', italicField: 'fontSubheadingItalic', label: 'Sub Headings', hint: 'Card & modal titles (H3–H6)', icon: '📎', defaultSize: '1rem', defaultWeight: '600' },
-    { field: 'fontLogo', sizeField: 'fontLogoSize', weightField: 'fontLogoWeight', italicField: 'fontLogoItalic', label: 'Brand Logo', hint: 'Navbar logo text', icon: '🎨', defaultSize: '1.25rem', defaultWeight: '700' },
-    { field: 'fontNav', sizeField: 'fontNavSize', weightField: 'fontNavWeight', italicField: 'fontNavItalic', label: 'Navigation', hint: 'Navbar, sidebar, footer links', icon: '🧭', defaultSize: '0.85rem', defaultWeight: '500' },
-    { field: 'fontBody', sizeField: 'fontBodySize', weightField: 'fontBodyWeight', italicField: 'fontBodyItalic', label: 'Body / Content', hint: 'Paragraphs, descriptions', icon: '📝', defaultSize: '0.9rem', defaultWeight: '400' },
-    { field: 'fontUI', sizeField: 'fontUISize', weightField: 'fontUIWeight', italicField: 'fontUIItalic', label: 'UI / Labels', hint: 'Buttons, form labels, badges', icon: '🏷️', defaultSize: '0.8rem', defaultWeight: '600' },
-    { field: 'fontMono', sizeField: 'fontMonoSize', weightField: 'fontMonoWeight', italicField: 'fontMonoItalic', label: 'Monospace / Code', hint: 'Code snippets, tech specs', icon: '💻', defaultSize: '0.85rem', defaultWeight: '400' },
-];
-
 const getFontWeight = (key, defaultWeight) => key === 'kantumruy-pro-medium' ? 500 : defaultWeight;
 
 const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, sidebarPersistent, setSidebarPersistent }) => {
+    const queryClient = useQueryClient();
+    const { data: metadata } = useQuery({
+        queryKey: ['settings', 'metadata', 'typography'],
+        queryFn: () => SettingsService.fetchTypographyMetadata(),
+        staleTime: Infinity,
+    });
+
+    // Use metadata from query or fallback to defaults from service
+    const typographyMetadata = metadata || SettingsService.DEFAULT_TYPOGRAPHY_METADATA;
+    const { fontOptions, sizeOptions, weightOptions, fontCategories, fontCSS } = typographyMetadata;
+
     const [settingsFavicon, setSettingsFavicon] = useState(null);
     const [previewBase64, setPreviewBase64] = useState('');
     const [rebuildStatus, setRebuildStatus] = useState({ 
@@ -108,7 +75,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                 fontSize: settingsData.fontSize || 'default',
                 adminFontOverride: settingsData.adminFontOverride ?? true,
             };
-            FONT_CATEGORIES.forEach(c => {
+            fontCategories.forEach(c => {
                 payload[c.field] = settingsData[c.field] || 'inter';
                 payload[c.sizeField] = settingsData[c.sizeField] || c.defaultSize;
                 payload[c.weightField] = settingsData[c.weightField] || c.defaultWeight;
@@ -290,6 +257,24 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         setSettingsData({ ...settingsData, [field]: `${formattedVal}${unit}` });
     };
 
+    const handleInitializeMetadata = async () => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Initialize Typography Metadata',
+            message: 'This will push the default typography options (Fonts, Categories, Defaults) to your database. This is usually only needed once or when adding new fonts to the system.\n\nContinue?',
+            confirmText: 'Initialize Now',
+            type: 'info',
+            onConfirm: async () => {
+                try {
+                    await SettingsService.updateTypographyMetadata(SettingsService.DEFAULT_TYPOGRAPHY_METADATA);
+                    queryClient.invalidateQueries({ queryKey: ['settings', 'metadata', 'typography'] });
+                } catch (error) {
+                    console.error("Failed to initialize metadata:", error);
+                }
+            }
+        });
+    };
+
     const getFont = (field) => settingsData[field] || 'inter';
     const getFontSize = (field, fallback) => settingsData[field] || fallback;
     const size = settingsData.fontSize || 'default';
@@ -420,7 +405,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             label="Base Size"
                             value={size}
                             onChange={(e) => setSettingsData({ ...settingsData, fontSize: e.target.value })}
-                            options={SIZE_OPTIONS}
+                            options={sizeOptions}
                             containerStyle={{
                                 background: 'rgba(255,255,255,0.02)',
                                 padding: '0.75rem 1.25rem',
@@ -432,10 +417,51 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             }}
                             style={{ marginTop: 0, width: '180px', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
                         />
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {!metadata && (
+                                <button
+                                    type="button"
+                                    onClick={handleInitializeMetadata}
+                                    className={styles.btnSecondary}
+                                    style={{ padding: '0.5rem 1rem', background: 'rgba(Voting68,99,255,0.1)', borderColor: 'var(--primary-color)', color: 'var(--primary-color)', fontSize: '0.75rem' }}
+                                    title="One-time push of typography defaults to database"
+                                >
+                                    <PlusCircle size={14} />
+                                    Setup Metadata
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setConfirmDialog({
+                                        isOpen: true,
+                                        title: 'Reset Typography',
+                                        message: 'This will reset all font families, sizes, and weights to their default values. Your other settings will be preserved.\n\nContinue?',
+                                        confirmText: 'Reset Defaults',
+                                        type: 'warning',
+                                        onConfirm: () => {
+                                            const resetData = { ...settingsData };
+                                            fontCategories.forEach(cat => {
+                                                resetData[cat.field] = 'inter';
+                                                resetData[cat.sizeField] = cat.defaultSize;
+                                                resetData[cat.weightField] = cat.defaultWeight;
+                                                resetData[cat.italicField] = false;
+                                            });
+                                            setSettingsData(resetData);
+                                        }
+                                    });
+                                }}
+                                className={styles.btnSecondary}
+                                style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}
+                            >
+                                <RefreshCw size={14} />
+                                Reset to Defaults
+                            </button>
+                        </div>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-                        {FONT_CATEGORIES.map(cat => (
+                        {fontCategories.map(cat => (
                             <div key={cat.field} style={{
                                 background: 'rgba(255,255,255,0.02)',
                                 border: '1px solid var(--input-border)',
@@ -465,7 +491,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                 <FormSelect
                                     value={getFont(cat.field)}
                                     onChange={(e) => setSettingsData({ ...settingsData, [cat.field]: e.target.value })}
-                                    options={FONT_OPTIONS}
+                                    options={fontOptions}
                                     noWrapper
                                     style={{ width: '100%' }}
                                 />
@@ -476,7 +502,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                         <FormSelect
                                             value={settingsData[cat.weightField] || cat.defaultWeight}
                                             onChange={(e) => setSettingsData({ ...settingsData, [cat.weightField]: e.target.value })}
-                                            options={WEIGHT_OPTIONS}
+                                            options={weightOptions}
                                             noWrapper
                                             style={{ width: '100%', padding: '0.4rem' }}
                                         />
@@ -554,7 +580,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '1rem' }}>
                             <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', marginBottom: '0.4rem', opacity: 0.6 }}>LOGO PREVIEW</div>
                             <div style={{
-                                fontFamily: FONT_CSS[getFont('fontLogo')],
+                                fontFamily: fontCSS[getFont('fontLogo')],
                                 fontWeight: settingsData.fontLogoWeight || 700,
                                 fontStyle: settingsData.fontLogoItalic ? 'italic' : 'normal',
                                 fontSize: getFontSize('fontLogoSize', '1.25rem'),
@@ -566,7 +592,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         </div>
 
                         <div style={{
-                            fontFamily: FONT_CSS[getFont('fontDisplay')],
+                            fontFamily: fontCSS[getFont('fontDisplay')],
                             fontWeight: settingsData.fontDisplayWeight || 800,
                             fontStyle: settingsData.fontDisplayItalic ? 'italic' : 'normal',
                             fontSize: `calc(${getFontSize('fontDisplaySize', '2rem')} * 1.5)`, marginBottom: '0.25rem', color: 'var(--text-primary)',
@@ -574,7 +600,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             កឹម ភារម្យ
                         </div>
                         <div style={{
-                            fontFamily: FONT_CSS[getFont('fontHeading')],
+                            fontFamily: fontCSS[getFont('fontHeading')],
                             fontWeight: settingsData.fontHeadingWeight || 700,
                             fontStyle: settingsData.fontHeadingItalic ? 'italic' : 'normal',
                             fontSize: `calc(${getFontSize('fontHeadingSize', '1.25rem')} * 1.3)`, marginBottom: '0.5rem', color: 'var(--text-primary)',
@@ -582,7 +608,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             Heading — ចំណងជើង
                         </div>
                         <div style={{
-                            fontFamily: FONT_CSS[getFont('fontSubheading')],
+                            fontFamily: fontCSS[getFont('fontSubheading')],
                             fontWeight: settingsData.fontSubheadingWeight || 600,
                             fontStyle: settingsData.fontSubheadingItalic ? 'italic' : 'normal',
                             fontSize: getFontSize('fontSubheadingSize', '1rem'), marginBottom: '0.5rem', color: 'var(--text-primary)',
@@ -591,7 +617,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         </div>
                         <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '0.5rem' }}>
                             <span style={{
-                                fontFamily: FONT_CSS[getFont('fontNav')],
+                                fontFamily: fontCSS[getFont('fontNav')],
                                 fontWeight: settingsData.fontNavWeight || 500,
                                 fontStyle: settingsData.fontNavItalic ? 'italic' : 'normal',
                                 fontSize: getFontSize('fontNavSize', '0.85rem'), color: 'var(--primary-color)',
@@ -600,7 +626,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             </span>
                         </div>
                         <div style={{
-                            fontFamily: FONT_CSS[getFont('fontBody')],
+                            fontFamily: fontCSS[getFont('fontBody')],
                             fontWeight: settingsData.fontBodyWeight || 400,
                             fontStyle: settingsData.fontBodyItalic ? 'italic' : 'normal',
                             fontSize: getFontSize('fontBodySize', '0.9rem'), color: 'var(--text-secondary)', lineHeight: 1.7,
@@ -609,7 +635,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         </div>
                         <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
                             <span style={{
-                                fontFamily: FONT_CSS[getFont('fontUI')],
+                                fontFamily: fontCSS[getFont('fontUI')],
                                 fontWeight: settingsData.fontUIWeight || 600,
                                 fontStyle: settingsData.fontUIItalic ? 'italic' : 'normal',
                                 fontSize: getFontSize('fontUISize', '0.8rem'), padding: '0.3rem 0.8rem',
@@ -617,7 +643,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                 color: 'var(--primary-color)',
                             }}>Button</span>
                             <span style={{
-                                fontFamily: FONT_CSS[getFont('fontUI')],
+                                fontFamily: fontCSS[getFont('fontUI')],
                                 fontWeight: settingsData.fontUIWeight || 500,
                                 fontStyle: settingsData.fontUIItalic ? 'italic' : 'normal',
                                 fontSize: getFontSize('fontUISize', '0.75rem'), padding: '0.25rem 0.6rem',
@@ -631,7 +657,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             background: 'rgba(0,0,0,0.3)',
                             borderRadius: '8px',
                             border: '1px solid rgba(255,255,255,0.05)',
-                            fontFamily: FONT_CSS[getFont('fontMono')],
+                            fontFamily: fontCSS[getFont('fontMono')],
                             fontSize: getFontSize('fontMonoSize', '0.85rem'),
                             fontWeight: settingsData.fontMonoWeight || 400,
                             fontStyle: settingsData.fontMonoItalic ? 'italic' : 'normal',
