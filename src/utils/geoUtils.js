@@ -62,7 +62,13 @@ export const fetchGeoData = async () => {
             sessionStorage.removeItem(COOLDOWN_KEY); // Reset cooldown on success
             return data;
         } catch (e) {
-            if (index === 0) console.warn("Premium IP Geolocation failed, switching to fallback:", e.message);
+            // Silently skip to next provider if it's a known auth/origin error
+            const isAuthError = e.message.includes('403') || e.message.includes('401');
+            
+            // Only warn on the first provider if it's NOT an auth error (i.e. if it's a real server error)
+            if (index === 0 && !isAuthError) {
+                console.warn("Premium IP Geolocation failed:", e.message);
+            }
             continue;
         }
     }
