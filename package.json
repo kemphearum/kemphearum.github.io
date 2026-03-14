@@ -21,6 +21,7 @@
     "@tanstack/react-query-devtools": "^5.91.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/react-router": "^1.2.6",
+    "@vercel/speed-insights": "^2.0.0",
     "axios": "^1.13.6",
     "browser-image-compression": "^2.0.2",
     "diff": "^8.0.3",

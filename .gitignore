@@ -41,3 +41,5 @@ build/
 # Temporary and Build Logs
 build_log.txt
 check_actions.cjs
+.vercel
+.env*.local
