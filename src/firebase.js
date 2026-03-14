@@ -23,11 +23,22 @@ const firebaseConfig = {
   measurementId: getEnv('VITE_FIREBASE_MEASUREMENT_ID')
 };
 
-const app = initializeApp(firebaseConfig);
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (error) {
+  console.error("Firebase Initialization Error:", error);
+  // Create a dummy app to avoid crashing subsequent calls
+  app = { name: '[DEFAULT]', options: {}, automaticDataCollectionEnabled: false };
+}
 
 export let analytics = null;
 if (typeof window !== 'undefined') {
-  getAnalytics(app);
+  try {
+    analytics = getAnalytics(app);
+  } catch (err) {
+    console.error("Analytics init failed:", err);
+  }
 }
 
 export const db = getFirestore(app);

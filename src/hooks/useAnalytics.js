@@ -9,15 +9,21 @@ import { fetchGeoData } from '../utils/geoUtils';
 import { parseUserAgent, isReturningVisitor } from '../utils/uaUtils';
 
 export const getSessionId = () => {
-    let sessionId = sessionStorage.getItem('analytics_session_id');
-    if (!sessionId) {
-        sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        sessionStorage.setItem('analytics_session_id', sessionId);
+    if (typeof window === 'undefined') return 'ssr-session';
+    try {
+        let sessionId = sessionStorage.getItem('analytics_session_id');
+        if (!sessionId) {
+            sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            sessionStorage.setItem('analytics_session_id', sessionId);
+        }
+        return sessionId;
+    } catch (e) {
+        return 'no-session-support';
     }
-    return sessionId;
 };
 
 export const getDeviceType = () => {
+    if (typeof window === 'undefined' || !navigator?.userAgent) return "desktop";
     const ua = navigator.userAgent;
     if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) return "tablet";
     if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) return "mobile";
