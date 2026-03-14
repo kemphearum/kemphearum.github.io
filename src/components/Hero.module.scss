@@ -230,7 +230,7 @@
     font-weight: 600;
     color: var(--text-primary);
     background: transparent;
-    border: 1.5px solid rgba(255, 255, 255, 0.15);
+    border: 1.5px solid var(--glass-border);
     border-radius: 12px;
     text-decoration: none;
     transition: all 0.3s ease;
@@ -374,7 +374,7 @@
 .mouse {
     width: 26px;
     height: 40px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 2px solid var(--glass-border);
     border-radius: 20px;
     display: flex;
     justify-content: center;
