@@ -8,6 +8,7 @@ import { calculateReadTime } from '../utils/helpers';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, X, Calendar, Clock, Tag,
+    Share2, Copy, Check, ArrowLeft, ChevronRight,
     Facebook, Instagram, Linkedin, Send
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';

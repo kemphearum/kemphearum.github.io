@@ -7,6 +7,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, ExternalLink, Code, X, Calendar,
+    Share2, Copy, Check, ArrowLeft, Maximize2, ChevronRight,
     Facebook, Instagram, Linkedin, Send
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
