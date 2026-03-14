@@ -50,10 +50,10 @@ const FormDropzone = ({
             return "Invalid file type. Please upload an image (JPG, PNG, WebP, GIF, or SVG).";
         }
 
-        // Check file size (5MB limit)
-        const maxSize = 5 * 1024 * 1024;
+        // Check file size (1MB Firestore limit)
+        const maxSize = 1 * 1024 * 1024;
         if (file.size > maxSize) {
-            return "File is too large. Maximum size is 5MB.";
+            return "File is too large. Maximum size is 1MB to ensure database compatibility.";
         }
 
         return null;
@@ -266,6 +266,9 @@ const FormDropzone = ({
                             <div className={styles.fullUploadText}>
                                 <span className={styles.main}>{placeholder}</span>
                                 <span className={styles.sub}>Drag and drop your image here, or click to browse</span>
+                                <span className={styles.uploadRequirements}>
+                                    Max 1MB • Recommended: 1920x720 (16:6)
+                                </span>
                             </div>
                         </div>
                         {error && (
