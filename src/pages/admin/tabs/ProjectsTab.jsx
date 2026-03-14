@@ -635,6 +635,7 @@ const ProjectsTab = ({ userRole, showToast }) => {
                             hint={editingProject ? "leave empty to keep current" : ""}
                             file={projectImage}
                             onFileChange={setProjectImage}
+                            currentImageUrl={project.imageUrl}
                         />
 
                         <div className={styles.formFooter}>
