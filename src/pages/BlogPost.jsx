@@ -8,8 +8,7 @@ import { calculateReadTime } from '../utils/helpers';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, X, Calendar, Clock, Tag,
-    Share2, Copy, Check, ArrowLeft, ChevronRight,
-    Facebook, Instagram, Linkedin
+    Facebook, Instagram, Linkedin, Send
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
@@ -124,6 +123,9 @@ const BlogPost = () => {
     };
     const shareToLinkedIn = () => {
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`, '_blank');
+    };
+    const shareToTelegram = () => {
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(post.title)}`, '_blank');
     };
 
     const formatDate = (timestamp) => {
@@ -306,6 +308,13 @@ const BlogPost = () => {
                                         aria-label="Share on LinkedIn"
                                     >
                                         <Linkedin size={14} /> Share on LinkedIn
+                                    </button>
+                                    <button
+                                        className={`${styles.shareBtn} ${styles.shareTelegram}`}
+                                        onClick={shareToTelegram}
+                                        aria-label="Share on Telegram"
+                                    >
+                                        <Send size={14} /> Share on Telegram
                                     </button>
                                 </div>
                             </div>

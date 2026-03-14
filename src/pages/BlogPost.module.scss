@@ -439,6 +439,12 @@
         border-color: rgba(0, 119, 181, 0.3);
         color: #0077B5;
     }
+
+    &.shareTelegram:hover {
+        background: rgba(0, 136, 204, 0.12);
+        border-color: rgba(0, 136, 204, 0.3);
+        color: #0088cc;
+    }
 }
 
 /* ── Bottom Section ── */

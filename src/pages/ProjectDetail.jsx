@@ -7,8 +7,7 @@ import MarkdownRenderer from '../components/MarkdownRenderer';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, ExternalLink, Code, X, Calendar,
-    Share2, Copy, Check, ArrowLeft, Maximize2, ChevronRight,
-    Facebook, Instagram, Linkedin
+    Facebook, Instagram, Linkedin, Send
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
@@ -137,6 +136,9 @@ const ProjectDetail = () => {
     };
     const shareToLinkedIn = () => {
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`, '_blank');
+    };
+    const shareToTelegram = () => {
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(project.title)}`, '_blank');
     };
 
     const formatDate = (timestamp) => {
@@ -333,6 +335,9 @@ const ProjectDetail = () => {
                                     </button>
                                     <button className={`${styles.shareBtn} ${styles.shareLinkedIn}`} onClick={shareToLinkedIn}>
                                         <Linkedin size={14} /> Share on LinkedIn
+                                    </button>
+                                    <button className={`${styles.shareBtn} ${styles.shareTelegram}`} onClick={shareToTelegram}>
+                                        <Send size={14} /> Share on Telegram
                                     </button>
                                 </div>
                             </div>
