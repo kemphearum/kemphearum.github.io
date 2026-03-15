@@ -83,7 +83,7 @@ const tabLabels = {
     audit: 'Audit Logs',
     analytics: 'Analytics',
     profile: 'My Profile',
-    settings: 'Site Settings'
+    settings: '⚙️ Settings'
 };
 
 // ============================================================
@@ -705,8 +705,8 @@ const Admin = () => {
                         <p className={styles.headerSubtitle}>
                             {activeTab === 'general' ? 'Manage your portfolio primary content' : 
                              activeTab === 'profile' ? 'Manage your personal profile and account settings' :
-                             activeTab === 'settings' ? 'Configure site-wide appearance and behavior' :
-                             `Manage your portfolio ${tabLabels[activeTab]?.toLowerCase() || activeTab}`}
+                             activeTab === 'settings' ? 'Configure site-wide identity, visual aesthetics, and synchronization' :
+                             'Administrator Dashboard'}
                         </p>
                     </div>
                 </div>

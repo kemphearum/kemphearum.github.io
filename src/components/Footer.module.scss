@@ -30,8 +30,10 @@
 }
 
 .logo {
-    font-size: calc(var(--font-size-subheading) * 1.4);
-    font-weight: 700;
+    font-family: var(--font-footer-brand) !important;
+    font-size: var(--font-size-footer-brand) !important;
+    font-weight: var(--font-weight-footer-brand) !important;
+    font-style: var(--font-style-footer-brand) !important;
     color: var(--text-primary);
     letter-spacing: 0.5px;
 }
@@ -41,7 +43,10 @@
 }
 
 .tagline {
-    font-size: var(--font-size-ui);
+    font-family: var(--font-footer-tagline) !important;
+    font-size: var(--font-size-footer-tagline) !important;
+    font-weight: var(--font-weight-footer-tagline) !important;
+    font-style: var(--font-style-footer-tagline) !important;
     color: var(--text-secondary);
 }
 
@@ -54,9 +59,10 @@
 }
 
 .sectionTitle {
-    font-family: var(--font-ui, inherit);
-    font-size: 0.65rem;
-    font-weight: 600;
+    font-family: var(--font-footer-title, var(--font-ui, inherit));
+    font-size: var(--font-size-footer-title, 0.65rem);
+    font-weight: var(--font-weight-footer-title, 600);
+    font-style: var(--font-style-footer-title, normal);
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -89,7 +95,10 @@
     align-items: center;
     justify-content: center;
     min-width: 110px;
-    font-size: 0.68rem;
+    font-family: var(--font-footer-link, var(--font-ui, inherit));
+    font-size: var(--font-size-footer-link, 0.68rem);
+    font-weight: var(--font-weight-footer-link, 400);
+    font-style: var(--font-style-footer-link, normal);
     color: var(--text-secondary);
     text-decoration: none;
     padding: 0.25rem 0.5rem;
@@ -146,8 +155,10 @@
 .copyright {
     display: block;
     color: var(--text-secondary);
-    font-family: var(--font-body, inherit);
-    font-size: 0.7rem;
+    font-family: var(--font-footer-text, var(--font-body, inherit));
+    font-size: var(--font-size-footer-text, 0.7rem);
+    font-weight: var(--font-weight-footer-text, 400);
+    font-style: var(--font-style-footer-text, normal);
     line-height: 1.6;
     opacity: 0.4;
     text-align: center;

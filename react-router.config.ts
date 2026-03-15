@@ -62,6 +62,12 @@ export default {
         // Pre-render base routes
         const routes = ["/", "/blog", "/projects", "/admin"];
 
+        // Skip dynamic discovery in development to save API quota and prevent 429 errors
+        if (process.env.NODE_ENV === 'development') {
+            console.log(`[Prerender] Skipping dynamic discovery in development mode.`);
+            return routes;
+        }
+
         console.log(`[Prerender] Starting route discovery for PROJECT_ID: ${PROJECT_ID}`);
 
         // Fetch dynamic content to pre-render those specific slugs into physical files

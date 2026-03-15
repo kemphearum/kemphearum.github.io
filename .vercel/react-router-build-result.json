@@ -16,6 +16,7 @@
       "project-detail": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "blog": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "blog-post": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/sitemap[.]xml": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "not-found": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
     },
     "routes": {
@@ -75,6 +76,15 @@
         "parentId": "root",
         "file": "app/routes/blog.$slug.jsx",
         "path": "blog/:slug",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/sitemap[.]xml": {
+        "id": "routes/sitemap[.]xml",
+        "parentId": "root",
+        "file": "app/routes/sitemap[.]xml.jsx",
+        "path": "sitemap.xml",
         "config": {
           "runtime": "nodejs"
         }
@@ -145,6 +155,12 @@
         "file": "routes/blog.$slug.jsx",
         "path": "blog/:slug"
       },
+      "routes/sitemap[.]xml": {
+        "id": "routes/sitemap[.]xml",
+        "parentId": "root",
+        "file": "routes/sitemap[.]xml.jsx",
+        "path": "sitemap.xml"
+      },
       "not-found": {
         "id": "not-found",
         "parentId": "root",
@@ -193,6 +209,10 @@
             "file": "routes/blog.$slug.jsx",
             "path": "blog/:slug",
             "id": "blog-post"
+          },
+          {
+            "file": "routes/sitemap[.]xml.jsx",
+            "path": "sitemap.xml"
           },
           {
             "file": "routes/$.jsx",

@@ -114,6 +114,14 @@ function SettingsApplier({ children, initialSettings }) {
         { field: 'fontBody', prop: '--font-body', weightProp: '--font-weight-body', styleProp: '--font-style-body', sizeProp: '--font-size-body', defaultWeight: '400', defaultSize: '0.9rem' },
         { field: 'fontUI', prop: '--font-ui', weightProp: '--font-weight-ui', styleProp: '--font-style-ui', sizeProp: '--font-size-ui', defaultWeight: '600', defaultSize: '0.8rem' },
         { field: 'fontMono', prop: '--font-mono', weightProp: '--font-weight-mono', styleProp: '--font-style-mono', sizeProp: '--font-size-mono', defaultWeight: '400', defaultSize: '0.85rem' },
+        { field: 'fontFooterTitle', prop: '--font-footer-title', weightProp: '--font-weight-footer-title', styleProp: '--font-style-footer-title', sizeProp: '--font-size-footer-title', defaultWeight: '600', defaultSize: '0.65rem' },
+        { field: 'fontFooterLink', prop: '--font-footer-link', weightProp: '--font-weight-footer-link', styleProp: '--font-style-footer-link', sizeProp: '--font-size-footer-link', defaultWeight: '400', defaultSize: '0.68rem' },
+        { field: 'fontFooterText', prop: '--font-footer-text', weightProp: '--font-weight-footer-text', styleProp: '--font-style-footer-text', sizeProp: '--font-size-footer-text', defaultWeight: '400', defaultSize: '0.7rem' },
+        { field: 'fontFooterBrand', prop: '--font-footer-brand', weightProp: '--font-weight-footer-brand', styleProp: '--font-style-footer-brand', sizeProp: '--font-size-footer-brand', defaultWeight: '700', defaultSize: '1.25rem' },
+        { field: 'fontFooterTagline', prop: '--font-footer-tagline', weightProp: '--font-weight-footer-tagline', styleProp: '--font-style-footer-tagline', sizeProp: '--font-size-footer-tagline', defaultWeight: '400', defaultSize: '0.8rem' },
+        { field: 'fontAdminBrand', prop: '--font-admin-brand', weightProp: '--font-weight-admin-brand', styleProp: '--font-style-admin-brand', sizeProp: '--font-size-admin-brand', defaultWeight: '700', defaultSize: '1.25rem' },
+        { field: 'fontAdminMenu', prop: '--font-admin-menu', weightProp: '--font-weight-admin-menu', styleProp: '--font-style-admin-menu', sizeProp: '--font-size-admin-menu', defaultWeight: '500', defaultSize: '0.85rem' },
+        { field: 'fontAdminTab', prop: '--font-admin-tab', weightProp: '--font-weight-admin-tab', styleProp: '--font-style-admin-tab', sizeProp: '--font-size-admin-tab', defaultWeight: '600', defaultSize: '1rem' },
       ];
 
       categories.forEach(({ field, prop, weightProp, styleProp, sizeProp, defaultWeight, defaultSize }) => {

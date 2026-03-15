@@ -21,7 +21,8 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 ### Admin Dashboard
 - 🔒 Firebase Auth login (Email/Password)
 - 📝 Full CRUD for **Projects**, **Experience**, and **Blog Posts**
-- 🏠 Edit **Home**, **About**, **Contact**, and **General Settings** content
+- 🏠 Advanced **Settings Tab** — Categorized sub-tab layout (Identity, Typography, Visuals, Site Sync) for deep site customization.
+- 🎨 **Typography Engine** — Quick-switch between premium design presets (Signature Pro, Khmer Premium, etc.) with real-time preview.
 - 📬 View and manage contact form **Messages**
 - 👥 **User Management** with role-based access control (Superadmin / Admin / Editor / Viewer). Features refined UI for password resets and account management.
 - 📋 **Audit Logs** — tracks login events, user actions, and admin activity
@@ -29,7 +30,7 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 - 🔍 **Search & Filter** on Experience, Projects, Blog, Users, and Audit Logs
 - ⭐ **Featured Projects & Blog** toggle for homepage pinning
 - 🖼️ Base64 image compression and direct Firestore storage (bypasses Firebase Storage limits)
-- ⚙️ **Site Sync** — trigger full site rebuilds and static generation directly from the dashboard
+- ⚙️ **Site Sync** — Full mirror management (Vercel, Firebase, GitHub Pages) and manual site rebuild triggers via GitHub Actions.
 - 📱 **Premium Mobile UI** — Fully responsive admin panel optimized for Safari on iOS (iPhone 15 Pro testing)
 
 ### Technical Highlights

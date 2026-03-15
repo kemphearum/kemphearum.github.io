@@ -45,10 +45,10 @@
         transition: opacity 0.3s ease;
 
         // Apply typography properties directly to the anchor to override global nav a styles
-        font-family: var(--font-logo, inherit);
-        font-size: var(--font-size-logo, calc(var(--font-size-nav) * 1.5));
-        font-weight: var(--font-weight-logo, 700);
-        font-style: var(--font-style-logo, normal);
+        font-family: var(--font-logo) !important;
+        font-size: var(--font-size-logo) !important;
+        font-weight: var(--font-weight-logo) !important;
+        font-style: var(--font-style-logo) !important;
         color: var(--text-primary);
         letter-spacing: 0.5px;
 
@@ -78,12 +78,14 @@
         button,
         a {
             position: relative;
-            font-size: var(--font-size-nav);
+            font-family: var(--font-nav) !important;
+            font-size: var(--font-size-nav) !important;
+            font-weight: var(--font-weight-nav) !important;
+            font-style: var(--font-style-nav) !important;
             color: var(--text-secondary);
             cursor: pointer;
             transition: color 0.3s ease;
             text-transform: uppercase;
-            font-weight: 600;
             padding: 0.5rem 0.8rem;
             border-radius: 8px;
             letter-spacing: 0.5px;
