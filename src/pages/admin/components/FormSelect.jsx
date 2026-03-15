@@ -45,7 +45,7 @@ const FormSelect = ({
         <div
             className={styles.inputGroup}
             style={{
-                ...(fullWidth ? { gridColumn: 'span 2' } : {}),
+                ...(fullWidth && window.innerWidth > 600 ? { gridColumn: 'span 2' } : {}),
                 ...containerStyle
             }}
         >

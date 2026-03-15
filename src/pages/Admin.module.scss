@@ -1557,8 +1557,19 @@
     gap: 1.25rem;
 
     @media (max-width: 768px) {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
         gap: 1rem;
+    }
+}
+
+.visualsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr !important;
+        gap: 1.25rem;
     }
 }
 
@@ -4320,7 +4331,7 @@
 
     // ---- Form Grid ----
     .formGrid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
     }
 
     .card {
@@ -5729,56 +5740,6 @@
     to { opacity: 1; transform: scale(1); }
 }
 
-// ===========================
-// SETTINGS TAB COMPONENTS
-// ===========================
-.subTabNav {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.25rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--divider);
-    border-radius: 12px;
-    margin-bottom: 1rem;
-}
-
-.subTabBtn {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.6rem 1.2rem;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    white-space: nowrap;
-
-    svg {
-        opacity: 0.7;
-        transition: transform 0.3s ease;
-    }
-
-    &:hover {
-        color: var(--text-primary);
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    &.active {
-        color: $primary-color;
-        background: rgba($primary-color, 0.1);
-        box-shadow: 0 4px 15px rgba($primary-color, 0.1);
-
-        svg {
-            opacity: 1;
-            color: $primary-color;
-            transform: scale(1.1);
-        }
-    }
-}
 
 .typographyHeader {
     display: flex;
@@ -5804,4 +5765,18 @@
     align-items: center;
     gap: 1rem;
     flex-wrap: wrap;
+}
+.buttonGroupMobileStack {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+
+    @media (max-width: 600px) {
+        flex-direction: column;
+        
+        button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
 }

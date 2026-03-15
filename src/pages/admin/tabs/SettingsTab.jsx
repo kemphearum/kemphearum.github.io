@@ -441,6 +441,48 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         <input type="text" placeholder="Tutorial, Tech, Security..." value={settingsData.blogFilters || ''} onChange={(e) => setSettingsData({ ...settingsData, blogFilters: e.target.value })} />
                     </div>
                 </div>
+
+                {/* GitHub Integration Section */}
+                <div className={styles.sectionHeader} style={{ marginTop: '2.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
+                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>GitHub Integration</h4>
+                </div>
+                <div className={styles.formGrid}>
+                    <div className={styles.inputGroup} style={{ position: 'relative' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Key size={16} /> GitHub Personal Access Token
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                            <input 
+                                type={showToken ? 'text' : 'password'} 
+                                placeholder="ghp_xxxxxxxxxxxx" 
+                                value={githubToken} 
+                                onChange={(e) => setGithubToken(e.target.value)}
+                                style={{ paddingRight: '40px' }}
+                            />
+                            <button 
+                                type="button" 
+                                onClick={() => setShowToken(!showToken)}
+                                style={{ 
+                                    position: 'absolute', 
+                                    right: '12px', 
+                                    top: '50%', 
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--text-secondary)',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '4px'
+                                }}
+                            >
+                                {showToken ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                        <span className={styles.hint}>Used for triggering site rebuilds. Stored locally in your browser.</span>
+                    </div>
+                </div>
                 </div>
         )}
 
@@ -475,7 +517,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                 }}
                                 style={{ marginTop: 0, width: '160px', padding: '0.55rem 0.85rem' }}
                             />
-                            <div className={styles.buttonGroupMobileStack} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <div className={styles.buttonGroupMobileStack}>
                                 {!metadata && (
                                     <button
                                         type="button"
@@ -993,7 +1035,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         <div className={styles.sectionHeader} style={{ marginTop: 0, marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
                             <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Visual Experience</h4>
                         </div>
-                        <div className={styles.formGrid}>
+                        <div className={styles.visualsGrid}>
                             <FormSelect
                                 label="Background Style Variant"
                                 value={settingsData.bgStyle || 'plexus'}
