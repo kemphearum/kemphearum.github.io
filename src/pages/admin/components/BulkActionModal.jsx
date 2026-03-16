@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, AlertCircle, Download, Upload, FileText, Database, ExternalLink } from 'lucide-react';
 import BaseModal from './BaseModal';
-import styles from '../../Admin.module.scss';
+import styles from '../styles/adminModals.module.scss';
 
 const BulkActionModal = ({
     isOpen,

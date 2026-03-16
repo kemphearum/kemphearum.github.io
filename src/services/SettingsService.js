@@ -1,4 +1,4 @@
-import { db } from '../firebase';
+import { db } from '../core/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import AuthService from './AuthService';
 
@@ -13,9 +13,14 @@ class SettingsService {
      * @returns {Promise<Object|null>}
      */
     async fetchGlobalSettings() {
-        const docRef = doc(db, this.collectionName, this.documentId);
-        const snap = await getDoc(docRef);
-        return snap.exists() ? snap.data() : null;
+        try {
+            const docRef = doc(db, this.collectionName, this.documentId);
+            const snap = await getDoc(docRef);
+            return snap.exists() ? snap.data() : null;
+        } catch (error) {
+            console.error("SettingsService.fetchGlobalSettings failed:", error);
+            return null; // Let the caller decide the fallback
+        }
     }
 
     /**
@@ -23,9 +28,14 @@ class SettingsService {
      * @returns {Promise<Object|null>}
      */
     async fetchTypographyMetadata() {
-        const docRef = doc(db, this.collectionName, 'metadata');
-        const snap = await getDoc(docRef);
-        return snap.exists() ? snap.data().typography : null;
+        try {
+            const docRef = doc(db, this.collectionName, 'metadata');
+            const snap = await getDoc(docRef);
+            return snap.exists() ? snap.data().typography : null;
+        } catch (error) {
+            console.error("SettingsService.fetchTypographyMetadata failed:", error);
+            return SettingsService.DEFAULT_TYPOGRAPHY_METADATA; // Safe fallback
+        }
     }
 
     /**

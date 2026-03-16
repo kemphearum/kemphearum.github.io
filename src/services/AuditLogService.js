@@ -1,5 +1,5 @@
 import BaseService from './BaseService';
-import { db } from '../firebase';
+import { db } from '../core/firebase';
 import { collection, getDocs, query, orderBy, limit as firestoreLimit, collectionGroup, addDoc, serverTimestamp } from 'firebase/firestore';
 
 class AuditLogService extends BaseService {

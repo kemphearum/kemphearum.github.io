@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Upload, Home, User, Mail, Save, Edit3, History } from 'lucide-react';
-import styles from '../../Admin.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
+import formStyles from '../styles/adminForms.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
+import styles from '../styles/adminCards.module.scss'; // Defaulting to cardStyles for general structure
 import ImageProcessingService from '../../../services/ImageProcessingService';
 import HistoryModal from '../components/HistoryModal';
 import ContentService from '../../../services/ContentService';
@@ -42,20 +45,20 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div className={styles.card}>
-                <div className={styles.cardHeader}>
-                    <div className={styles.iconWrapper}>
+            <div className={cardStyles.card}>
+                <div className={cardStyles.cardHeader}>
+                    <div className={cardStyles.iconWrapper}>
                         <Home size={24} />
                     </div>
-                    <div className={styles.titleMeta}>
+                    <div className={cardStyles.titleMeta}>
                         <h3>Home Section</h3>
                         <p>Configure the main hero content of your landing page.</p>
                     </div>
-                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'home', title: 'Home Section' })} className={styles.historyBtn}>
+                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'home', title: 'Home Section' })} className={cardStyles.historyBtn}>
                         <History size={16} /> <span>History</span>
                     </button>
                 </div>
-                <form onSubmit={handleSaveHome} className={styles.form}>
+                <form onSubmit={handleSaveHome} className={formStyles.form}>
                     <FormRow>
                         <FormInput
                             label="Greeting"
@@ -115,28 +118,28 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                         aspectRatio="1/1"
                     />
 
-                    <div className={styles.formFooter}>
-                        <button type="submit" disabled={loading} className={styles.submitBtn}>
-                            {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
+                    <div className={formStyles.formFooter}>
+                        <button type="submit" disabled={loading} className={formStyles.submitBtn}>
+                            {loading ? <><span className={utilStyles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
                         </button>
                     </div>
                 </form>
             </div>
 
-            <div className={styles.card}>
-                <div className={styles.cardHeader}>
-                    <div className={styles.iconWrapper}>
+            <div className={cardStyles.card}>
+                <div className={cardStyles.cardHeader}>
+                    <div className={cardStyles.iconWrapper}>
                         <User size={24} />
                     </div>
-                    <div className={styles.titleMeta}>
+                    <div className={cardStyles.titleMeta}>
                         <h3>About Section</h3>
                         <p>Update your biography, professional summary, and key skills.</p>
                     </div>
-                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'about', title: 'About Section' })} className={styles.historyBtn}>
+                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'about', title: 'About Section' })} className={cardStyles.historyBtn}>
                         <History size={16} /> <span>History</span>
                     </button>
                 </div>
-                <form onSubmit={handleSaveAbout} className={styles.form}>
+                <form onSubmit={handleSaveAbout} className={formStyles.form}>
                     <FormMarkdownEditor
                         label="Bio"
                         id="about-bio"
@@ -157,35 +160,35 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                     />
 
                     {aboutData.skills && (
-                        <div className={styles.skillPreview}>
+                        <div className={cardStyles.skillPreview}>
                             {aboutData.skills.split(',').map((s, i) => s.trim() && (
-                                <span key={`skill-${s.trim()}-${i}`} className={styles.techTag}>{s.trim()}</span>
+                                <span key={`skill-${s.trim()}-${i}`} className={cardStyles.techTag}>{s.trim()}</span>
                             ))}
                         </div>
                     )}
 
-                    <div className={styles.formFooter}>
-                        <button type="submit" disabled={loading} className={styles.submitBtn}>
-                            {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
+                    <div className={formStyles.formFooter}>
+                        <button type="submit" disabled={loading} className={formStyles.submitBtn}>
+                            {loading ? <><span className={utilStyles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
                         </button>
                     </div>
                 </form>
             </div>
 
-            <div className={styles.card}>
-                <div className={styles.cardHeader}>
-                    <div className={styles.iconWrapper}>
+            <div className={cardStyles.card}>
+                <div className={cardStyles.cardHeader}>
+                    <div className={cardStyles.iconWrapper}>
                         <Mail size={24} />
                     </div>
-                    <div className={styles.titleMeta}>
+                    <div className={cardStyles.titleMeta}>
                         <h3>Contact Section</h3>
                         <p>Manage the intro text displayed above your contact form.</p>
                     </div>
-                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'contact', title: 'Contact Section' })} className={styles.historyBtn}>
+                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'contact', title: 'Contact Section' })} className={cardStyles.historyBtn}>
                         <History size={16} /> <span>History</span>
                     </button>
                 </div>
-                <form onSubmit={handleSaveContact} className={styles.form}>
+                <form onSubmit={handleSaveContact} className={formStyles.form}>
                     <FormMarkdownEditor
                         label="Intro Text"
                         id="contact-intro"
@@ -196,9 +199,9 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                         onTogglePreview={() => setContactPreview(!contactPreview)}
                         rows="6"
                     />
-                    <div className={styles.formFooter}>
-                        <button type="submit" disabled={loading} className={styles.submitBtn}>
-                            {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
+                    <div className={formStyles.formFooter}>
+                        <button type="submit" disabled={loading} className={formStyles.submitBtn}>
+                            {loading ? <><span className={utilStyles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
                         </button>
                     </div>
                 </form>

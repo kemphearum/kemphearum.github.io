@@ -2,21 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-// A mock of the Toast component from Admin.jsx for testing purposes
-const Toast = ({ message, type, onClose }) => {
-    React.useEffect(() => {
-        const timer = setTimeout(onClose, 4000);
-        return () => clearTimeout(timer);
-    }, [onClose]);
-
-    return (
-        <div data-testid="toast" className={`toast ${type}`}>
-            <span>{type === 'success' ? '✓' : '✕'}</span>
-            <p>{message}</p>
-            <button data-testid="toast-close" onClick={onClose} className="toastClose">×</button>
-        </div>
-    );
-};
+import Toast from './Toast';
 
 describe('Toast component', () => {
     beforeEach(() => {
@@ -37,7 +23,7 @@ describe('Toast component', () => {
         const mockOnClose = vi.fn();
         render(<Toast message="Test message" type="success" onClose={mockOnClose} />);
 
-        const closeBtn = screen.getByTestId('toast-close');
+        const closeBtn = screen.getByLabelText('Close notification');
         closeBtn.click();
 
         expect(mockOnClose).toHaveBeenCalledTimes(1);

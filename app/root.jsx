@@ -8,12 +8,12 @@ import {
   isRouteErrorResponse,
   useRouteError,
 } from "react-router";
-import MaintenancePage from '../src/components/MaintenancePage';
-import ComponentErrorBoundary from '../src/components/ErrorBoundary';
+import MaintenancePage from '../src/components/common/MaintenancePage';
+import ComponentErrorBoundary from '../src/components/common/ErrorBoundary';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { ActivityProvider } from '../src/context/ActivityContext';
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { queryClient } from '../src/queryClient';
+import { queryClient } from '../src/core/queryClient';
 import React, { useEffect } from 'react';
 import SettingsService from '../src/services/SettingsService';
 import AnimatedBackground from '../src/components/AnimatedBackground';
@@ -204,6 +204,72 @@ export function ErrorBoundary() {
   );
 }
 
+const ConnectivityMonitor = () => {
+  const [isOnline, setIsOnline] = React.useState(true);
+  const [showNotification, setShowNotification] = React.useState(false);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 3000);
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      setShowNotification(true);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  if (!showNotification && isOnline) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      bottom: '24px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      padding: '10px 20px',
+      borderRadius: '30px',
+      background: isOnline ? 'rgba(16, 185, 129, 0.9)' : 'rgba(239, 68, 68, 0.9)',
+      color: 'white',
+      backdropFilter: 'blur(10px)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      fontSize: '0.9rem',
+      fontWeight: '600',
+      transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+    }}>
+      <div style={{
+        width: '8px',
+        height: '8px',
+        borderRadius: '50%',
+        background: 'white',
+        boxShadow: '0 0 10px white',
+        animation: isOnline ? 'none' : 'pulse 1.5s infinite'
+      }} />
+      {isOnline ? 'Connection Restored' : 'No Internet Connection'}
+      <style>{`
+        @keyframes pulse {
+          0% { opacity: 1; }
+          50% { opacity: 0.4; }
+          100% { opacity: 1; }
+        }
+      `}</style>
+    </div>
+  );
+};
+
 export default function App() {
   const loaderData = useLoaderData();
 
@@ -217,6 +283,7 @@ export default function App() {
 
   return (
     <SettingsApplier initialSettings={loaderData}>
+      <ConnectivityMonitor />
       <Outlet />
     </SettingsApplier>
   );

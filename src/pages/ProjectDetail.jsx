@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useParams, Link, useLoaderData } from 'react-router';
 import ProjectService from '../services/ProjectService';
 import { useActivity } from '../hooks/useActivity';
-import MarkdownRenderer from '../components/MarkdownRenderer';
-import { generateMetaTags } from '../utils/SeoHelper';
+const MarkdownRenderer = lazy(() => import('../components/common/MarkdownRenderer'));
+import { generateMetaTags } from '../utils/seo/seoUtils';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,14 +11,14 @@ import {
     Share2, Copy, Check, ArrowLeft, Maximize2, ChevronRight,
     Facebook, Instagram, Linkedin, Send
 } from 'lucide-react';
-import { calculateReadTime } from '../utils/helpers';
+import { calculateReadTime } from '../utils/data/helpers';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import RelatedProjects from '../components/RelatedProjects';
 import TableOfContents from '../components/TableOfContents';
 import styles from './ProjectDetail.module.scss';
-import { db } from '../firebase';
+import { db } from '../core/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 
 export async function loader({ params }) {
@@ -247,7 +247,9 @@ const ProjectDetail = () => {
                             )}
 
                             <div className={styles.markdownBody}>
-                                <MarkdownRenderer content={project.content || 'No detailed overview provided for this project yet.'} />
+                                <Suspense fallback={<div className={styles.loadingContainer}><div className={styles.spinner}></div></div>}>
+                                    <MarkdownRenderer content={project.content || 'No detailed overview provided for this project yet.'} />
+                                </Suspense>
                             </div>
 
 

@@ -2,12 +2,17 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Search, Eye, EyeOff, Edit2, Trash2, X, Bold, Italic, Link as LinkIcon, Code, Save, Plus, ArrowLeft, History } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { sortData } from '../../../utils/sortData';
+import { sortData } from '../../../utils/data/sortData';
 import { icons } from '../components/constants';
-import MarkdownRenderer from '../../../components/MarkdownRenderer';
+import MarkdownRenderer from '../../../components/common/MarkdownRenderer';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
-import styles from '../../Admin.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
+import tableStyles from '../styles/adminTables.module.scss';
+import formStyles from '../styles/adminForms.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
+import layoutStyles from '../styles/adminLayout.module.scss';
+import styles from '../styles/adminTables.module.scss'; // Defaulting to tableStyles for general list styling as it matches existing usage best
 import ExperienceService from '../../../services/ExperienceService';
 import ConfirmDialog from '../components/ConfirmDialog';
 import HistoryModal from '../components/HistoryModal';
@@ -260,17 +265,17 @@ const ExperienceTab = ({ userRole, showToast }) => {
                             setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false });
                             setIsExpPreviewMode(false);
                             setShowExperienceForm(true);
-                        }} className={styles.addBtn}>
+                        }} className={cardStyles.addBtn}>
                             <Plus size={18} /> Add New
                         </button>
                     </div>
-                    <div className={styles.searchBox}>
-                        <Search size={16} className={styles.searchIcon} />
+                    <div className={formStyles.searchBox}>
+                        <Search size={16} className={formStyles.searchIcon} />
                         <input type="text" placeholder="Search by role or company..." value={searchExperience} onChange={(e) => { setSearchExperience(e.target.value); setExpPage(1); }} />
-                        {searchExperience && <span className={styles.searchResultCount}>{filteredExperiences.length} of {experiences.length}</span>}
+                        {searchExperience && <span className={formStyles.searchResultCount}>{filteredExperiences.length} of {experiences.length}</span>}
                     </div>
                     {filteredExperiences.length === 0 ? (
-                        <div className={styles.emptyState}>{searchExperience ? 'No matching experience found.' : 'No experience entries yet.'}</div>
+                        <div className={tableStyles.emptyState}>{searchExperience ? 'No matching experience found.' : 'No experience entries yet.'}</div>
                     ) : (
                         <>
                             <div style={{ display: 'flex', gap: '1.5rem', padding: '0.75rem 1.5rem', background: 'var(--editor-toolbar-bg, var(--card-bg))', border: '1px solid var(--editor-border, var(--divider))', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.5rem', alignItems: 'center' }}>
@@ -279,22 +284,22 @@ const ExperienceTab = ({ userRole, showToast }) => {
                                 <SortableHeader label="Period" field="period" sortField={expSort.field} sortDirection={expSort.dir} onSort={handleExpSort} />
                             </div>
                             {paginatedExperiences.map((exp, index) => (
-                                <div key={exp.id || `exp-${index}`} className={`${styles.listItem} ${exp.visible === false ? styles.hiddenItem : ''} ${styles.clickableRow}`} onClick={() => setViewingExperience(exp)} style={{ cursor: 'pointer' }}>
-                                    <div className={styles.listItemInfo}>
-                                        <h4>{exp.role} {exp.visible === false && <span className={styles.hiddenBadge}>Hidden</span>}</h4>
-                                        <p className={styles.listMeta}>{exp.company} • <em>{exp.period}</em></p>
+                                <div key={exp.id || `exp-${index}`} className={`${tableStyles.listItem} ${exp.visible === false ? tableStyles.hiddenItem : ''} ${tableStyles.clickableRow}`} onClick={() => setViewingExperience(exp)} style={{ cursor: 'pointer' }}>
+                                    <div className={tableStyles.listItemInfo}>
+                                        <h4>{exp.role} {exp.visible === false && <span className={tableStyles.hiddenBadge}>Hidden</span>}</h4>
+                                        <p className={tableStyles.listMeta}>{exp.company} • <em>{exp.period}</em></p>
                                     </div>
-                                    <div className={styles.listItemActions}>
-                                        <button className={`${styles.visibilityBtn} ${exp.visible === false ? styles.off : ''}`} onClick={(e) => { e.stopPropagation(); toggleVisibility(exp.id, exp.visible !== false); }} title={exp.visible === false ? 'Show on homepage' : 'Hide from homepage'}>
+                                    <div className={tableStyles.listItemActions}>
+                                        <button className={`${tableStyles.visibilityBtn} ${exp.visible === false ? tableStyles.off : ''}`} onClick={(e) => { e.stopPropagation(); toggleVisibility(exp.id, exp.visible !== false); }} title={exp.visible === false ? 'Show on homepage' : 'Hide from homepage'}>
                                             {exp.visible === false ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
-                                        <button className={styles.historyIconBtn} onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: exp.id, title: `${exp.role} at ${exp.company}` }); }} title="View Edit History">
+                                        <button className={cardStyles.historyIconBtn} onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: exp.id, title: `${exp.role} at ${exp.company}` }); }} title="View Edit History">
                                             <History size={16} />
                                         </button>
-                                        <button className={styles.editBtn} onClick={(e) => { e.stopPropagation(); handleEditExperienceClick(exp); }} title="Edit">
+                                        <button className={tableStyles.editBtn} onClick={(e) => { e.stopPropagation(); handleEditExperienceClick(exp); }} title="Edit">
                                             <Edit2 size={16} />
                                         </button>
-                                        <button className={styles.deleteBtn} onClick={(e) => { e.stopPropagation(); handleDeleteExperience(exp.id); }} title="Delete">
+                                        <button className={tableStyles.deleteBtn} onClick={(e) => { e.stopPropagation(); handleDeleteExperience(exp.id); }} title="Delete">
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
@@ -305,14 +310,14 @@ const ExperienceTab = ({ userRole, showToast }) => {
                     )}
                 </div>
             ) : (
-                <div className={styles.card}>
-                    <div className={styles.cardHeader}>
+                <div className={cardStyles.card}>
+                    <div className={cardStyles.cardHeader}>
                         <h3>{editingExperience ? <Edit2 size={24} /> : <Plus size={24} />} {editingExperience ? 'Edit Experience' : 'Add New Experience'}</h3>
-                        <button onClick={() => { setEditingExperience(null); setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false }); setShowExperienceForm(false); }} className={styles.cancelBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button onClick={() => { setEditingExperience(null); setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false }); setShowExperienceForm(false); }} className={formStyles.cancelBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <ArrowLeft size={18} /> Cancel & Return
                         </button>
                     </div>
-                    <form onSubmit={handleSaveExperience} className={styles.form}>
+                    <form onSubmit={handleSaveExperience} className={formStyles.form}>
                         <FormRow>
                             <FormInput
                                 label="Company Name"
@@ -339,7 +344,7 @@ const ExperienceTab = ({ userRole, showToast }) => {
                                 onClick={(e) => e.target.showPicker?.()}
                                 required
                             />
-                            <div className={styles.inputGroup}>
+                            <div className={formStyles.inputGroup}>
                                 <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     End Date
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer', margin: 0 }}>
@@ -363,9 +368,9 @@ const ExperienceTab = ({ userRole, showToast }) => {
                             required
                         />
 
-                        <div className={styles.formFooter}>
-                            <button type="submit" disabled={loading} className={styles.submitBtn}>
-                                {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
+                        <div className={formStyles.formFooter}>
+                            <button type="submit" disabled={loading} className={formStyles.submitBtn}>
+                                {loading ? <><span className={utilStyles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
                             </button>
                         </div>
                     </form>
@@ -388,14 +393,14 @@ const ExperienceTab = ({ userRole, showToast }) => {
                 bodyStyle={{ padding: 0 }}
                 footerStyle={{ padding: '1.25rem 2rem' }}
                 footerContent={
-                    <button onClick={() => setViewingExperience(null)} className={styles.primaryBtn} style={{ margin: 0 }}>Close</button>
+                    <button onClick={() => setViewingExperience(null)} className={cardStyles.primaryBtn} style={{ margin: 0 }}>Close</button>
                 }
             >
                 <div style={{ padding: '2rem' }}>
-                    <div className={styles.detailGrid} style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
-                        <div className={styles.detailItem} style={{ flex: '1 1 200px' }}><span className={styles.detailLabel}>Company</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary-color)', wordBreak: 'break-word' }}>{viewingExperience?.company}</span></div>
-                        <div className={styles.detailItem} style={{ flex: '1 1 200px' }}><span className={styles.detailLabel}>Role</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', wordBreak: 'break-word' }}>{viewingExperience?.role}</span></div>
-                        <div className={styles.detailItem} style={{ flex: '1 1 100%' }}><span className={styles.detailLabel}>Period</span><span className={styles.detailValue} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem 1rem', borderRadius: '8px', display: 'inline-block', marginTop: '0.4rem' }}>{viewingExperience?.period}</span></div>
+                    <div className={tableStyles.detailGrid} style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
+                        <div className={tableStyles.detailItem} style={{ flex: '1 1 200px' }}><span className={tableStyles.detailLabel}>Company</span><span className={tableStyles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary-color)', wordBreak: 'break-word' }}>{viewingExperience?.company}</span></div>
+                        <div className={tableStyles.detailItem} style={{ flex: '1 1 200px' }}><span className={tableStyles.detailLabel}>Role</span><span className={tableStyles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', wordBreak: 'break-word' }}>{viewingExperience?.role}</span></div>
+                        <div className={tableStyles.detailItem} style={{ flex: '1 1 100%' }}><span className={tableStyles.detailLabel}>Period</span><span className={tableStyles.detailValue} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem 1rem', borderRadius: '8px', display: 'inline-block', marginTop: '0.4rem' }}>{viewingExperience?.period}</span></div>
                     </div>
                     <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
                         <MarkdownRenderer content={viewingExperience?.description || ''} />

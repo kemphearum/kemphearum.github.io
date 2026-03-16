@@ -1,8 +1,13 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Search, Mail, MailOpen, Trash2, X, Reply } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
-import { sortData } from '../../../utils/sortData';
-import styles from '../../Admin.module.scss';
+import { sortData } from '../../../utils/data/sortData';
+import cardStyles from '../styles/adminCards.module.scss';
+import tableStyles from '../styles/adminTables.module.scss';
+import formStyles from '../styles/adminForms.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
+import layoutStyles from '../styles/adminLayout.module.scss';
+import styles from '../styles/adminTables.module.scss'; // Defaulting to tableStyles for general list styling
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
 import MessageService from '../../../services/MessageService';
@@ -170,10 +175,10 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
             />
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div className={styles.searchBox} style={{ margin: 0, flex: 1, minWidth: '250px' }}>
-                    <Search size={16} className={styles.searchIcon} />
+                <div className={formStyles.searchBox} style={{ margin: 0, flex: 1, minWidth: '250px' }}>
+                    <Search size={16} className={formStyles.searchIcon} />
                     <input type="text" placeholder="Search by name, email, or message..." value={searchMessages} onChange={(e) => { setSearchMessages(e.target.value); setMessagesPage(1); }} />
-                    {searchMessages && <span className={styles.searchResultCount}>{filteredMessages.length} of {messages.length}</span>}
+                    {searchMessages && <span className={formStyles.searchResultCount}>{filteredMessages.length} of {messages.length}</span>}
                 </div>
 
                 {selectedMessages.length > 0 && (
@@ -181,13 +186,13 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
                         <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginRight: '0.5rem' }}>
                             {selectedMessages.length} selected
                         </span>
-                        <button onClick={() => handleBatchMarkMessages(true)} className={styles.secondaryBtn} title="Mark as Read" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
+                        <button onClick={() => handleBatchMarkMessages(true)} className={cardStyles.secondaryBtn} title="Mark as Read" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
                             <MailOpen size={14} /> Read
                         </button>
-                        <button onClick={() => handleBatchMarkMessages(false)} className={styles.secondaryBtn} title="Mark as Unread" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
+                        <button onClick={() => handleBatchMarkMessages(false)} className={cardStyles.secondaryBtn} title="Mark as Unread" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
                             <Mail size={14} /> Unread
                         </button>
-                        <button onClick={handleBatchDeleteMessages} className={styles.deleteBtn} title="Delete Selected" style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
+                        <button onClick={handleBatchDeleteMessages} className={tableStyles.deleteBtn} title="Delete Selected" style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
                             <Trash2 size={14} /> Delete
                         </button>
                     </div>
@@ -195,13 +200,13 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
             </div>
 
             {filteredMessages.length === 0 ? (
-                <div className={styles.emptyState}>
+                <div className={tableStyles.emptyState}>
                     <Mail size={40} style={{ opacity: 0.3, marginBottom: '1rem' }} />
                     <p>{searchMessages ? 'No matching messages found.' : 'Your inbox is empty.'}</p>
                 </div>
             ) : (
                 <>
-                    <div className={styles.messageHeader}>
+                    <div className={tableStyles.messageHeader}>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
                             <input
                                 type="checkbox"
@@ -224,7 +229,7 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
                             <div
                                 key={msg.id || `msg-${index}`}
                                 onClick={(e) => { if (e.target.type !== 'checkbox' && !e.target.closest('button')) handleViewMessage(msg); }}
-                                className={`${styles.messageGrid} ${isUnread ? styles.unread : ''} ${isSelected ? styles.selected : ''}`}
+                                className={`${tableStyles.messageGrid} ${isUnread ? tableStyles.unread : ''} ${isSelected ? tableStyles.selected : ''}`}
                             >
                                 <div onClick={(e) => e.stopPropagation()}>
                                     <input
@@ -245,10 +250,10 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
                                     {msg.createdAt?.seconds ? new Date(msg.createdAt.seconds * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently'}
                                 </div>
                                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                                    <button onClick={(e) => { e.stopPropagation(); handleToggleMessageRead(msg.id, msg.isRead); }} className={styles.iconBtn} title={msg.isRead ? "Mark Unread" : "Mark Read"} style={{ background: isUnread ? 'rgba(108, 99, 255, 0.1)' : 'transparent' }}>
+                                    <button onClick={(e) => { e.stopPropagation(); handleToggleMessageRead(msg.id, msg.isRead); }} className={cardStyles.iconBtn} title={msg.isRead ? "Mark Unread" : "Mark Read"} style={{ background: isUnread ? 'rgba(108, 99, 255, 0.1)' : 'transparent' }}>
                                         {msg.isRead ? <MailOpen size={15} /> : <Mail size={15} style={{ color: 'var(--primary-color)' }} />}
                                     </button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }} className={styles.iconBtn} title="Delete" style={{ color: '#ef4444' }}>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteMessage(msg.id); }} className={cardStyles.iconBtn} title="Delete" style={{ color: '#ef4444' }}>
                                         <Trash2 size={15} />
                                     </button>
                                 </div>
@@ -282,14 +287,14 @@ const MessagesTab = ({ userRole, showToast, messages, setMessages }) => {
                 footerStyle={{ padding: '1.25rem 2rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.05)', justifyContent: 'space-between' }}
                 footerContent={
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', justifyContent: 'space-between', width: '100%' }}>
-                        <button onClick={() => { handleDeleteMessage(viewingMessage?.id); setViewingMessage(null); }} className={styles.deleteBtn} style={{ padding: '0.6rem 1.25rem', margin: 0, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                        <button onClick={() => { handleDeleteMessage(viewingMessage?.id); setViewingMessage(null); }} className={tableStyles.deleteBtn} style={{ padding: '0.6rem 1.25rem', margin: 0, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                             <Trash2 size={16} /> Delete
                         </button>
                         <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
-                            <button onClick={() => handleToggleMessageRead(viewingMessage?.id, viewingMessage?.isRead)} className={styles.secondaryBtn} style={{ margin: 0 }}>
+                            <button onClick={() => handleToggleMessageRead(viewingMessage?.id, viewingMessage?.isRead)} className={cardStyles.secondaryBtn} style={{ margin: 0 }}>
                                 {viewingMessage?.isRead ? <><MailOpen size={18} /> Mark Unread</> : <><Mail size={18} /> Mark Read</>}
                             </button>
-                            <a href={`mailto:${viewingMessage?.email}?subject=Re: Inquiry from ${encodeURIComponent(viewingMessage?.name || '')}`} className={styles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.75rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                            <a href={`mailto:${viewingMessage?.email}?subject=Re: Inquiry from ${encodeURIComponent(viewingMessage?.name || '')}`} className={cardStyles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.75rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                                 <Reply size={18} /> Reply Now
                             </a>
                         </div>

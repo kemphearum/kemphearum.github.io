@@ -1,4 +1,4 @@
-import { db } from '../../src/firebase';
+import { db } from '../../src/core/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
 export async function loader() {

@@ -2,13 +2,18 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft, History, Settings2, FileText, Download, ChevronDown, Github } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { sortData } from '../../../utils/sortData';
+import { sortData } from '../../../utils/data/sortData';
 import { icons } from '../components/constants';
 import ImageProcessingService from '../../../services/ImageProcessingService';
-import MarkdownRenderer from '../../../components/MarkdownRenderer';
+import MarkdownRenderer from '../../../components/common/MarkdownRenderer';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
-import styles from '../../Admin.module.scss';
+import tableStyles from '../styles/adminTables.module.scss';
+import formStyles from '../styles/adminForms.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
+import modalStyles from '../styles/adminModals.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
+import tabStyles from '../styles/adminTabs.module.scss';
 import ProjectService from '../../../services/ProjectService';
 import ConfirmDialog from '../components/ConfirmDialog';
 import HistoryModal from '../components/HistoryModal';
@@ -18,7 +23,7 @@ import FormInput from '../components/FormInput';
 import FormMarkdownEditor from '../components/FormMarkdownEditor';
 import FormDropzone from '../components/FormDropzone';
 import BulkActionModal from '../components/BulkActionModal';
-import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
+import { jsonToCsv, csvToJson } from '../../../utils/data/csvUtils';
 
 const ProjectsTab = ({ userRole, showToast }) => {
     const [project, setProject] = useState({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' });
@@ -402,17 +407,17 @@ const ProjectsTab = ({ userRole, showToast }) => {
     return (
         <>
             {!showProjectForm ? (
-                <div className={styles.listSection}>
-                    <div className={styles.listSectionHeader}>
-                        <h3 className={styles.listTitle}>Existing Projects</h3>
+                <div className={cardStyles.listSection}>
+                    <div className={cardStyles.listSectionHeader}>
+                        <h3 className={cardStyles.listTitle}>Existing Projects</h3>
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setShowProjectForm(true); }} className={styles.addBtn}>
+                            <button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setShowProjectForm(true); }} className={cardStyles.addBtn}>
                                 <Plus size={18} /> Add New
                             </button>
-                            <div className={styles.dropdownWrapper}>
+                            <div className={tabStyles.dropdownWrapper}>
                                 <button
                                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                                    className={styles.secondaryBtn}
+                                    className={formStyles.secondaryBtn}
                                     style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                                 >
                                     <Settings2 size={16} /> Bulk Actions <ChevronDown size={14} style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
@@ -420,23 +425,23 @@ const ProjectsTab = ({ userRole, showToast }) => {
 
                                 {dropdownOpen && (
                                     <>
-                                        <div className={styles.modalOverlay} style={{ background: 'rgba(0, 0, 0, 0.3)', backdropFilter: 'none', WebkitBackdropFilter: 'none', zIndex: 999 }} onClick={() => setDropdownOpen(false)} />
-                                        <div className={styles.dropdownMenu}>
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadCSVTemplate(); }}>
+                                        <div className={modalStyles.modalOverlay} style={{ background: 'rgba(0, 0, 0, 0.3)', backdropFilter: 'none', WebkitBackdropFilter: 'none', zIndex: 999 }} onClick={() => setDropdownOpen(false)} />
+                                        <div className={tabStyles.dropdownMenu}>
+                                            <button className={tabStyles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadCSVTemplate(); }}>
                                                 <FileText size={16} /> Download CSV Template
                                             </button>
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadTemplate(); }}>
+                                            <button className={tabStyles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadTemplate(); }}>
                                                 <FileText size={16} /> Download JSON Template
                                             </button>
-                                            <hr className={styles.dropdownDivider} />
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportCSV(); }}>
+                                            <hr className={tabStyles.dropdownDivider} />
+                                            <button className={tabStyles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportCSV(); }}>
                                                 <ExternalLink size={16} /> Export CSV
                                             </button>
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportJSON(); }}>
+                                            <button className={tabStyles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportJSON(); }}>
                                                 <ExternalLink size={16} /> Export JSON
                                             </button>
-                                            <hr className={styles.dropdownDivider} />
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); fileInputRef.current?.click(); }}>
+                                            <hr className={tabStyles.dropdownDivider} />
+                                            <button className={tabStyles.dropdownItem} onClick={() => { setDropdownOpen(false); fileInputRef.current?.click(); }}>
                                                 <Upload size={16} /> Import (JSON/CSV)
                                             </button>
                                         </div>
@@ -452,91 +457,91 @@ const ProjectsTab = ({ userRole, showToast }) => {
                             </div>
                         </div>
                     </div>
-                    <div className={styles.searchBox}>
-                        <Search size={16} className={styles.searchIcon} />
+                    <div className={formStyles.searchBox}>
+                        <Search size={16} className={formStyles.searchIcon} />
                         <input type="text" placeholder="Search by title or technology..." value={searchProjects} onChange={(e) => { setSearchProjects(e.target.value); setProjPage(1); }} />
-                        {searchProjects && <span className={styles.searchResultCount}>{filteredProjects.length} of {projects.length}</span>}
+                        {searchProjects && <span className={formStyles.searchResultCount}>{filteredProjects.length} of {projects.length}</span>}
                     </div>
                     {filteredProjects.length === 0 ? (
-                        <div className={styles.emptyState}>{searchProjects ? 'No matching projects found.' : 'No projects yet.'}</div>
+                        <div className={tableStyles.emptyState}>{searchProjects ? 'No matching projects found.' : 'No projects yet.'}</div>
                     ) : (
                         <>
-                            <div className={styles.tableHeaderRow}>
-                                <div className={styles.colThumbnail}></div>
-                                <div className={styles.colInfo}>
-                                    <div className={styles.colHeaderFlex}>
+                            <div className={tableStyles.tableHeaderRow}>
+                                <div className={tableStyles.colThumbnail}></div>
+                                <div className={tableStyles.colInfo}>
+                                    <div className={tableStyles.colHeaderFlex}>
                                         <SortableHeader label="Title" field="title" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
                                     </div>
                                 </div>
-                                <div className={styles.colDescription}>Description</div>
-                                <div className={styles.colTech}>
+                                <div className={tableStyles.colDescription}>Description</div>
+                                <div className={tableStyles.colTech}>
                                     <SortableHeader label="Tech Stack" field="techStack" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
                                 </div>
-                                <div className={styles.colLinks}>
+                                <div className={tableStyles.colLinks}>
                                     <SortableHeader label="Links" field="githubUrl" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
                                 </div>
-                                <div className={styles.colStatus}>
+                                <div className={tableStyles.colStatus}>
                                     <SortableHeader label="Status" field="visible" sortField={projSort.field} sortDirection={projSort.dir} onSort={handleProjSort} />
                                 </div>
-                                <div className={styles.colActions}>Actions</div>
+                                <div className={tableStyles.colActions}>Actions</div>
                             </div>
                             {paginatedProjects.map((p, index) => (
-                                <div key={p.id || `proj-${index}`} className={`${styles.listItem} ${p.visible === false ? styles.hiddenItem : ''} ${styles.clickableRow}`} onClick={() => setViewingProject(p)}>
-                                    <div className={styles.colThumbnail}>
-                                        <div className={styles.itemThumbnail}>
+                                <div key={p.id || `proj-${index}`} className={`${tableStyles.listItem} ${p.visible === false ? tableStyles.hiddenItem : ''} ${tableStyles.clickableRow}`} onClick={() => setViewingProject(p)}>
+                                    <div className={tableStyles.colThumbnail}>
+                                        <div className={tableStyles.itemThumbnail}>
                                             {p.imageUrl ? (
                                                 <img src={p.imageUrl} alt={p.title} />
                                             ) : (
-                                                <div className={styles.placeholder}>
+                                                <div className={tableStyles.placeholder}>
                                                     <FileText size={20} />
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                    <div className={styles.colInfo}>
-                                        <div className={styles.itemMainInfo}>
-                                            <h4 className={styles.itemTitle}>{p.title}</h4>
+                                    <div className={tableStyles.colInfo}>
+                                        <div className={tableStyles.itemMainInfo}>
+                                            <h4 className={tableStyles.itemTitle}>{p.title}</h4>
                                         </div>
                                     </div>
-                                    <div className={styles.colDescription}>
-                                        <p className={styles.itemDescription}>{p.description}</p>
+                                    <div className={tableStyles.colDescription}>
+                                        <p className={tableStyles.itemDescription}>{p.description}</p>
                                     </div>
-                                    <div className={styles.colTech}>
-                                        <div className={styles.inlineTags}>
+                                    <div className={tableStyles.colTech}>
+                                        <div className={tableStyles.inlineTags}>
                                             {(Array.isArray(p.techStack) ? p.techStack : []).slice(0, 3).map((t, i) => (
-                                                <span key={i} className={styles.miniTag}>{t}</span>
+                                                <span key={i} className={tableStyles.miniTag}>{t}</span>
                                             ))}
-                                            {p.techStack?.length > 3 && <span className={styles.moreTags}>+{p.techStack.length - 3}</span>}
-                                            {(!p.techStack || p.techStack.length === 0) && <span className={styles.noData}>None</span>}
+                                            {p.techStack?.length > 3 && <span className={tableStyles.moreTags}>+{p.techStack.length - 3}</span>}
+                                            {(!p.techStack || p.techStack.length === 0) && <span className={tableStyles.noData}>None</span>}
                                         </div>
                                     </div>
-                                    <div className={styles.colLinks}>
-                                        <div className={styles.linkSummary}>
-                                            <Github size={14} className={p.githubUrl ? styles.linkIconActive : styles.linkIconInactive} title={p.githubUrl ? "GitHub Repo Available" : "No GitHub Repo"} />
-                                            <ExternalLink size={14} className={p.liveUrl ? styles.linkIconActive : styles.linkIconInactive} title={p.liveUrl ? "Live Demo Available" : "No Live Demo"} />
+                                    <div className={tableStyles.colLinks}>
+                                        <div className={tableStyles.linkSummary}>
+                                            <Github size={14} className={p.githubUrl ? tableStyles.linkIconActive : tableStyles.linkIconInactive} title={p.githubUrl ? "GitHub Repo Available" : "No GitHub Repo"} />
+                                            <ExternalLink size={14} className={p.liveUrl ? tableStyles.linkIconActive : tableStyles.linkIconInactive} title={p.liveUrl ? "Live Demo Available" : "No Live Demo"} />
                                         </div>
                                     </div>
-                                    <div className={styles.colStatus}>
-                                        <span className={`${styles.statusBadge} ${p.visible !== false ? styles.statusPublished : styles.statusDraft}`}>
+                                    <div className={tableStyles.colStatus}>
+                                        <span className={`${tableStyles.statusBadge} ${p.visible !== false ? tableStyles.statusPublished : tableStyles.statusDraft}`}>
                                             {p.visible !== false ? 'Published' : 'Unpublished'}
                                         </span>
                                     </div>
-                                    <div className={styles.colActions}>
-                                        <div className={styles.itemActions}>
-                                            {p.slug && <button onClick={(e) => { e.stopPropagation(); window.open(`/projects/${p.slug}`, '_blank'); }} title="View Detail" className={styles.editBtn}><ExternalLink size={16} /></button>}
+                                    <div className={tableStyles.colActions}>
+                                        <div className={tableStyles.itemActions}>
+                                            {p.slug && <button onClick={(e) => { e.stopPropagation(); window.open(`/projects/${p.slug}`, '_blank'); }} title="View Detail" className={tableStyles.editBtn}><ExternalLink size={16} /></button>}
                                             {userRole !== 'editor' && (
                                                 <>
-                                                    <button onClick={(e) => { e.stopPropagation(); toggleFeatured(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={styles.editBtn}>
+                                                    <button onClick={(e) => { e.stopPropagation(); toggleFeatured(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={tableStyles.editBtn}>
                                                         <Star size={16} fill={p.featured ? "currentColor" : "none"} style={{ color: p.featured ? '#FFD700' : 'inherit' }} />
                                                     </button>
-                                                    <button onClick={(e) => { e.stopPropagation(); toggleVisibility(p.id, p.visible !== false); }} title={p.visible !== false ? "Hide" : "Show"} className={styles.editBtn}>
+                                                    <button onClick={(e) => { e.stopPropagation(); toggleVisibility(p.id, p.visible !== false); }} title={p.visible !== false ? "Hide" : "Show"} className={tableStyles.editBtn}>
                                                         {p.visible !== false ? <Eye size={16} /> : <EyeOff size={16} />}
                                                     </button>
                                                 </>
                                             )}
-                                            <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={styles.historyIconBtn} title="View Edit History"><History size={16} /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleEditClick(p); }} className={styles.editBtn} title="Edit"><Edit2 size={16} /></button>
-                                            {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
+                                            <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={tableStyles.historyIconBtn} title="View Edit History"><History size={16} /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleEditClick(p); }} className={tableStyles.editBtn} title="Edit"><Edit2 size={16} /></button>
+                                            {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }} className={tableStyles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
                                         </div>
                                     </div>
                                 </div>
@@ -546,8 +551,8 @@ const ProjectsTab = ({ userRole, showToast }) => {
                     )}
                 </div>
             ) : (
-                <div className={styles.card}>
-                    <div className={styles.cardHeader}>
+                <div className={cardStyles.card}>
+                    <div className={cardStyles.cardHeader}>
                         <h3>{editingProject ? <Edit2 size={24} /> : <Plus size={24} />} {editingProject ? 'Edit Project' : 'Add New Project'}</h3>
                         <button
                             onClick={() => {
@@ -557,12 +562,12 @@ const ProjectsTab = ({ userRole, showToast }) => {
                                 setIsProjectPreviewMode(false);
                                 setShowProjectForm(false);
                             }}
-                            className={styles.cancelBtn}
+                            className={formStyles.cancelBtn}
                         >
                             <ArrowLeft size={18} /> Cancel & Return
                         </button>
                     </div>
-                    <form onSubmit={handleSaveProject} className={styles.form}>
+                    <form onSubmit={handleSaveProject} className={formStyles.form}>
                         <FormRow>
                             <FormInput
                                 label="Project Title"
@@ -639,9 +644,9 @@ const ProjectsTab = ({ userRole, showToast }) => {
                             onClearExisting={() => setProject(prev => ({ ...prev, imageUrl: '' }))}
                         />
 
-                        <div className={styles.formFooter}>
-                            <button type="submit" disabled={loading} className={styles.submitBtn}>
-                                {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
+                        <div className={formStyles.formFooter}>
+                            <button type="submit" disabled={loading} className={formStyles.submitBtn}>
+                                {loading ? <><span className={utilStyles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
                             </button>
                         </div>
                     </form>
@@ -665,30 +670,30 @@ const ProjectsTab = ({ userRole, showToast }) => {
                 bodyStyle={{ padding: 0 }}
                 footerStyle={{ padding: '1.25rem 2rem' }}
                 footerContent={
-                    <button onClick={() => setViewingProject(null)} className={styles.primaryBtn} style={{ margin: 0 }}>Close</button>
+                    <button onClick={() => setViewingProject(null)} className={cardStyles.primaryBtn} style={{ margin: 0 }}>Close</button>
                 }
             >
                 <div style={{ padding: '2rem' }}>
-                    <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                            <span className={styles.detailLabel}>Title</span>
-                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingProject?.title}</span>
+                    <div className={tableStyles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                        <div className={tableStyles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={tableStyles.detailLabel}>Title</span>
+                            <span className={tableStyles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingProject?.title}</span>
                         </div>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                            <span className={styles.detailLabel}>Description</span>
-                            <span className={styles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingProject?.description}</span>
+                        <div className={tableStyles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={tableStyles.detailLabel}>Description</span>
+                            <span className={tableStyles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingProject?.description}</span>
                         </div>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                            <span className={styles.detailLabel}>Tech Stack</span>
-                            <div className={styles.techTags} style={{ marginTop: '0.6rem' }}>
+                        <div className={tableStyles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={tableStyles.detailLabel}>Tech Stack</span>
+                            <div className={tableStyles.techTags} style={{ marginTop: '0.6rem' }}>
                                 {(Array.isArray(viewingProject?.techStack) ? viewingProject.techStack : []).map((t, i) => (
-                                    <span key={`preview-tag-${t}-${i}`} className={styles.techTag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>{t}</span>
+                                    <span key={`preview-tag-${t}-${i}`} className={tableStyles.techTag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>{t}</span>
                                 ))}
                             </div>
                         </div>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'row', gap: '1.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
-                            {viewingProject?.liveUrl && <a href={viewingProject.liveUrl} target="_blank" rel="noopener noreferrer" className={styles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem' }}><ExternalLink size={16} /> Live Demo</a>}
-                            {viewingProject?.githubUrl && <a href={viewingProject.githubUrl} target="_blank" rel="noopener noreferrer" className={styles.editBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><LinkIcon size={16} /> GitHub Repository</a>}
+                        <div className={tableStyles.detailItem} style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'row', gap: '1.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                            {viewingProject?.liveUrl && <a href={viewingProject.liveUrl} target="_blank" rel="noopener noreferrer" className={cardStyles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem' }}><ExternalLink size={16} /> Live Demo</a>}
+                            {viewingProject?.githubUrl && <a href={viewingProject.githubUrl} target="_blank" rel="noopener noreferrer" className={tableStyles.editBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><LinkIcon size={16} /> GitHub Repository</a>}
                         </div>
                     </div>
                     <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>

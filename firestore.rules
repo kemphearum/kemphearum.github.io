@@ -11,21 +11,19 @@ service cloud.firestore {
     }
     
     function getRole() {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
-        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role 
-        : 'anonymous';
+      return isSignedIn() ? request.auth.token.role : 'anonymous';
     }
     
     function isSuperAdmin() {
-      return isSignedIn() && (request.auth.token.email == 'kem.phearum@gmail.com' || getRole() == 'superadmin');
+      return isSignedIn() && (request.auth.token.email == 'kem.phearum@gmail.com' || request.auth.token.role == 'superadmin');
     }
     
     function isAdmin() {
-      return isSignedIn() && (getRole() == 'admin' || isSuperAdmin());
+      return isSignedIn() && (request.auth.token.role == 'admin' || isSuperAdmin());
     }
     
     function isEditor() {
-      return isSignedIn() && (getRole() == 'editor' || isAdmin());
+      return isSignedIn() && (request.auth.token.role == 'editor' || isAdmin());
     }
 
     // Allow public read for content, projects, experience, and posts
@@ -100,30 +98,61 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin();
     }
 
-    // Analytics/Visits Tracking: Anyone can log a visit, only admin can read
-    match /visits/{document=**} {
-      allow create;
-      allow read, delete, update: if isAdmin();
+    // Analytics/Visits Tracking: Public can log a visit, only admin can read
+    match /visits/{visitId} {
+      allow create: if request.resource.data.keys().hasOnly([
+        'sessionId', 'path', 'date', 'userAgent', 'device', 'browser', 'os', 
+        'isReturning', 'country', 'countryCode', 'city', 'ip', 'referrer', 'timestamp'
+      ]) 
+      && request.resource.data.sessionId is string
+      && request.resource.data.path is string
+      && request.resource.data.timestamp is timestamp;
+      
+      allow update: if isAdmin() || (
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['duration'])
+        && request.resource.data.duration is number
+      );
+      
+      allow read, delete: if isAdmin();
     }
 
     // Global Activity Tracker
     match /dailyUsage/{date} {
-      allow read, create: if true;
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['reads', 'writes', 'deletes', 'lastUpdated'])
+                    && request.resource.data.reads is int
+                    && request.resource.data.writes is int
+                    && request.resource.data.deletes is int;
+      
       allow update: if true 
                     && request.resource.data.diff(resource.data).affectedKeys()
-                        .hasOnly(['reads', 'writes', 'deletes', 'lastUpdated']);
+                        .hasOnly(['reads', 'writes', 'deletes', 'lastUpdated'])
+                    && (request.resource.data.reads == resource.data.reads || request.resource.data.reads is int)
+                    && (request.resource.data.writes == resource.data.writes || request.resource.data.writes is int)
+                    && (request.resource.data.deletes == resource.data.deletes || request.resource.data.deletes is int);
+      
       allow delete: if isAdmin();
       
+      function isValidLog() {
+        return request.resource.data.keys().hasOnly(['type', 'label', 'count', 'user', 'time', 'details'])
+               && request.resource.data.type in ['read', 'write', 'delete']
+               && request.resource.data.count is int
+               && request.resource.data.time is timestamp;
+      }
+
       match /logs/{logId} {
         allow read, delete: if isAdmin();
-        allow create: if true;
+        allow create: if isValidLog();
       }
     }
       
-    // Logs Collection Group
+    // Logs Collection Group (requires index for read)
     match /{path=**}/logs/{logId} {
       allow read, delete: if isAdmin();
-      allow create: if true;
+      allow create: if request.resource.data.keys().hasOnly(['type', 'label', 'count', 'user', 'time', 'details'])
+                    && request.resource.data.type in ['read', 'write', 'delete']
+                    && request.resource.data.count is int
+                    && request.resource.data.time is timestamp;
     }
   }
 }

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import ContentService from '../services/ContentService';
 import styles from './About.module.scss';
 import { motion } from 'framer-motion';
-import MarkdownRenderer from './MarkdownRenderer';
+import MarkdownRenderer from '../components/common/MarkdownRenderer';
 
 const About = () => {
     const { data, isLoading: loading } = useQuery({

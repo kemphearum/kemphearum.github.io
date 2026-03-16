@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { getFunctions } from 'firebase/functions';
 import { getAnalytics } from "firebase/analytics";
 
 const getEnv = (key) => {
@@ -24,16 +25,21 @@ const firebaseConfig = {
 };
 
 let app;
+let isInitialized = false;
+
 try {
   app = initializeApp(firebaseConfig);
+  isInitialized = true;
 } catch (error) {
   console.error("Firebase Initialization Error:", error);
   // Create a dummy app to avoid crashing subsequent calls
   app = { name: '[DEFAULT]', options: {}, automaticDataCollectionEnabled: false };
 }
 
+export const isFirebaseReady = () => isInitialized;
+
 export let analytics = null;
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && isInitialized) {
   try {
     analytics = getAnalytics(app);
   } catch (err) {
@@ -43,19 +49,23 @@ if (typeof window !== 'undefined') {
 
 export let db;
 export let auth;
+export let functions;
 
-try {
-  db = getFirestore(app);
-} catch (error) {
-  console.error("Firestore Initialization Error:", error);
-  db = {}; // Fallback dummy object
-}
-
-try {
-  auth = getAuth(app);
-} catch (error) {
-  console.error("Auth Initialization Error:", error);
-  auth = {}; // Fallback dummy object
+if (isInitialized) {
+  try {
+    db = getFirestore(app);
+    auth = getAuth(app);
+    functions = getFunctions(app);
+  } catch (error) {
+    console.error("Firebase Service Initialization Error:", error);
+    db = {}; 
+    auth = {};
+    functions = {};
+  }
+} else {
+  db = {}; 
+  auth = {};
+  functions = {};
 }
 
 export default app;

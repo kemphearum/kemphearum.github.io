@@ -1,6 +1,7 @@
 import React from 'react';
 import { Trash2, Key } from 'lucide-react';
-import styles from '../../Admin.module.scss';
+import styles from '../styles/adminModals.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
 import BaseModal from './BaseModal';
 
 const ConfirmDialog = ({ confirmDialog, setConfirmDialog }) => {
@@ -34,15 +35,18 @@ const ConfirmDialog = ({ confirmDialog, setConfirmDialog }) => {
             }
             footerContent={
                 <>
-                    <button onClick={handleClose} className={`${styles.cancelBtn} ${styles.modalActionBtn}`}>
+                    <button onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })} className={cardStyles.secondaryBtn} style={{ margin: 0 }}>
                         Cancel
                     </button>
-                    <button 
-                        onClick={() => { confirmDialog.onConfirm?.(); handleClose(); }} 
-                        className={isDanger ? `${styles.deleteBtn} ${styles.modalActionBtn}` : `${styles.primaryBtn} ${styles.modalActionBtn}`}
-                        style={isDanger ? { background: '#ef4444', color: 'white', border: 'none' } : {}}
+                    <button
+                        onClick={() => {
+                            confirmDialog.onConfirm?.();
+                            setConfirmDialog({ ...confirmDialog, isOpen: false });
+                        }}
+                        className={confirmDialog.type === 'danger' ? cardStyles.deleteBtn : cardStyles.primaryBtn}
+                        style={{ margin: 0, padding: '0.65rem 1.5rem' }}
                     >
-                        {confirmDialog.confirmText}
+                        {confirmDialog.confirmText || 'Confirm'}
                     </button>
                 </>
             }

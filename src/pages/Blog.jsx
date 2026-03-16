@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { db } from '../firebase';
+import { db } from '../core/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
 export async function loader() {

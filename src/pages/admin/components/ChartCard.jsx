@@ -1,5 +1,6 @@
 import React from 'react';
-import styles from '../../Admin.module.scss';
+import styles from '../styles/adminCards.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
 import { RefreshCw } from 'lucide-react';
 
 const ChartCard = ({

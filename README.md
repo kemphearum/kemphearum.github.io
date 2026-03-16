@@ -89,6 +89,42 @@ npm run preview
 
 ---
 
+## 🚀 Deployment
+
+The project is optimized for static hosting and includes a full CI/CD pipeline via GitHub Actions.
+
+### Automated Deployment
+Pushing to the `main` branch automatically triggers a rebuild and deployment to:
+- **GitHub Pages** (Production)
+- **Firebase Hosting** (Primary & Mirror)
+
+### Manual Rebuild
+You can manually trigger a site refresh from the **Admin Dashboard > Settings > Site Sync** or via the GitHub Actions tab.
+
+### Static Hosting Compatibility
+The project is verified for:
+1. **GitHub Pages**: Uses `gh-pages` branch or Actions. Requires `404.html` for SPA routing.
+2. **Firebase Hosting**: Configuration in `firebase.json` points to `build/client`.
+3. **Vercel**: Uses `@vercel/react-router` preset. No additional config needed for static output.
+
+### Local Build for Release
+```bash
+npm run build
+# Verify output in build/client
+```
+
+---
+
+## 🏷️ Release
+
+To tag a new release:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+---
+
 ## 📄 License
 
 This project is open source and available under the [MIT License](LICENSE).

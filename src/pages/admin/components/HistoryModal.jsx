@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { X, Clock, History, AlertCircle, ChevronDown, ChevronRight, PlusCircle, MinusCircle, Edit3 } from 'lucide-react';
-import styles from '../../Admin.module.scss';
+import styles from '../styles/adminModals.module.scss';
+import tableStyles from '../styles/adminTables.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
 import { useQuery } from '@tanstack/react-query';
 import { diffWordsWithSpace } from 'diff';
 import BaseModal from './BaseModal';
@@ -172,17 +174,17 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
             }
         >
             {isLoading ? (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
-                    <div className={styles.spinner}></div>
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+                    <span className={utilStyles.spinner} />
                 </div>
             ) : error ? (
-                <div className={styles.emptyState} style={{ padding: '3rem 2rem', textAlign: 'center' }}>
+                <div className={tableStyles.emptyState} style={{ padding: '3rem 2rem', textAlign: 'center' }}>
                     <AlertCircle size={40} style={{ margin: '0 auto 1rem', color: '#ef4444' }} />
                     <h3 style={{ margin: '0 0 0.5rem 0', color: '#ef4444' }}>Error loading history</h3>
                     <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{error.message || 'An unknown error occurred.'}</p>
                 </div>
-            ) : history.length === 0 ? (
-                <div className={styles.emptyState} style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
+            ) : enhancedHistory.length === 0 ? (
+                <div className={tableStyles.emptyState} style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
                     <Clock size={48} style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }} />
                     <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>No History Recorded</h3>
                     <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>This record was likely created before history tracking was enabled.</p>

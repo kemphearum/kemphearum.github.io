@@ -2,9 +2,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import SettingsService from '../../../services/SettingsService';
 import { Upload, Save, Type, Minus, Plus, RefreshCw, CheckCircle, AlertCircle, Key, Eye, EyeOff, Globe, ExternalLink, Trash2, PlusCircle, X, Monitor, Github, Activity, Cloud, Terminal, Triangle, Flame } from 'lucide-react';
-import styles from '../../Admin.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
+import formStyles from '../styles/adminForms.module.scss';
+import tabStyles from '../styles/adminTabs.module.scss';
+import layoutStyles from '../styles/adminLayout.module.scss';
+import styles from '../styles/adminSettings.module.scss'; // New module for settings-specific styles
 import ImageProcessingService from '../../../services/ImageProcessingService';
-import axios from 'axios';
+
 
 import FormSelect from '../components/FormSelect';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -23,7 +28,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     const typographyMetadata = metadata || SettingsService.constructor.DEFAULT_TYPOGRAPHY_METADATA;
 
     if (!typographyMetadata) {
-        return <div className={styles.loadingContainer}>Loading Typography Settings...</div>;
+        return <div className={layoutStyles.loadingContainer}>Loading Typography Settings...</div>;
     }
 
     const { fontOptions, sizeOptions, weightOptions, fontCategories, fontCSS, presets = [] } = typographyMetadata;
@@ -36,10 +41,6 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         runId: null,
         startTime: null
     });
-
-    // GitHub Token States (stored in localStorage, not Firestore)
-    const [githubToken, setGithubToken] = useState('');
-    const [showToken, setShowToken] = useState(false);
 
     // Sub-tab Navigation State
     const [activeSubTab, setActiveSubTab] = useState('identity');
@@ -62,10 +63,6 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     });
 
     useEffect(() => {
-        // Load token from localStorage on mount
-        const savedToken = localStorage.getItem('github_dispatch_token');
-        if (savedToken) setGithubToken(savedToken);
-
         if (!settingsFavicon) {
             setPreviewBase64('');
             return;
@@ -98,40 +95,33 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
             });
             await saveSectionData('settings', payload);
             setSettingsFavicon(null);
-
-            // Save token separately to localStorage
-            if (githubToken) {
-                localStorage.setItem('github_dispatch_token', githubToken);
-            }
         } catch (error) {
             console.error("Settings handleSave error:", error);
             throw error;
         }
     };
 
-    // Polling logic for GitHub Actions
+    // Polling logic for GitHub Actions (using Cloud Function)
     useEffect(() => {
         let pollInterval;
         let timeoutId;
 
         const poll = async () => {
-            if (!githubToken || !rebuildStatus.startTime) return;
+            if (!rebuildStatus.startTime) return;
 
             try {
-                const GITHUB_OWNER = 'kemphearum';
-                const GITHUB_REPO = 'kemphearum.github.io';
+                const { httpsCallable } = await import('firebase/functions');
+                const { functions } = await import('../../../core/firebase');
+                const getBuildStatusFn = httpsCallable(functions, 'getBuildStatus');
 
                 // 1. Try to find the run if we don't have a runId yet
                 if (!rebuildStatus.runId) {
-                    const runsUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs?event=repository_dispatch&per_page=5`;
-                    const response = await axios.get(runsUrl, {
-                        headers: {
-                            'Authorization': `Bearer ${githubToken}`,
-                            'Accept': 'application/vnd.github+json'
-                        }
-                    });
+                    const result = await getBuildStatusFn({ startTime: rebuildStatus.startTime });
+                    const data = result.data.data;
 
-                    const latestRun = response.data.workflow_runs.find(run =>
+                    if (!data || !data.workflow_runs) return;
+
+                    const latestRun = data.workflow_runs.find(run =>
                         new Date(run.created_at) >= new Date(rebuildStatus.startTime - 10000) // 10s grace period
                     );
 
@@ -147,15 +137,10 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                 }
 
                 // 2. Poll the specific run status
-                const runUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${rebuildStatus.runId}`;
-                const response = await axios.get(runUrl, {
-                    headers: {
-                        'Authorization': `Bearer ${githubToken}`,
-                        'Accept': 'application/vnd.github+json'
-                    }
-                });
+                const result = await getBuildStatusFn({ runId: rebuildStatus.runId });
+                const run = result.data.data;
 
-                const run = response.data;
+                if (!run) return;
                 const newState = run.status === 'completed' ? (run.conclusion === 'success' ? 'success' : 'error') : run.status;
 
                 setRebuildStatus(prev => ({
@@ -176,7 +161,6 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
 
             } catch (error) {
                 console.error("Polling error:", error);
-                // Don't stop polling on single error, just log it
             }
         };
 
@@ -189,14 +173,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
             if (pollInterval) clearInterval(pollInterval);
             if (timeoutId) clearTimeout(timeoutId);
         };
-    }, [rebuildStatus.state, rebuildStatus.runId, rebuildStatus.startTime, githubToken]);
+    }, [rebuildStatus.state, rebuildStatus.runId, rebuildStatus.startTime]);
 
     const handleTriggerRebuild = async () => {
-        if (!githubToken) {
-            showToast('Please enter your GitHub Personal Access Token first.', 'error');
-            return;
-        }
-
         setConfirmDialog({
             isOpen: true,
             title: 'Trigger Site Rebuild',
@@ -213,37 +192,28 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                 });
 
                 try {
-                    const GITHUB_OWNER = 'kemphearum';
-                    const GITHUB_REPO = 'kemphearum.github.io';
-                    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/dispatches`;
+                    const { httpsCallable } = await import('firebase/functions');
+                    const { functions } = await import('../../../core/firebase');
+                    const triggerBuildFn = httpsCallable(functions, 'triggerBuild');
+                    
+                    const result = await triggerBuildFn({ event_type: 'manual_rebuild' });
 
-                    await axios.post(
-                        url,
-                        { event_type: 'manual_rebuild' },
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${githubToken}`,
-                                'Accept': 'application/vnd.github+json',
-                                'X-GitHub-Api-Version': '2022-11-28'
-                            }
-                        }
-                    );
-
-                    setRebuildStatus(prev => ({
-                        ...prev,
-                        state: 'requested',
-                        message: 'Request sent! Waiting for GitHub to start the build...'
-                    }));
-                    showToast('Rebuild request sent successfully!');
-
+                    if (result.data.success) {
+                        setRebuildStatus(prev => ({
+                            ...prev,
+                            state: 'requested',
+                            message: 'Request sent! Waiting for GitHub to start the build...'
+                        }));
+                        showToast('Rebuild request sent successfully!');
+                    }
                 } catch (error) {
                     console.error("Rebuild trigger error:", error);
-                    let errMsg = 'Failed to trigger rebuild.';
-
-                    if (error.response?.status === 401 || error.response?.status === 403) {
-                        errMsg = 'Invalid or expired GitHub Token. Please check your token settings.';
-                    } else if (error.response?.data?.message) {
-                        errMsg = `GitHub Error: ${error.response.data.message}`;
+                    let errMsg = error.message || 'Failed to trigger rebuild.';
+                    
+                    if (error.code === 'permission-denied') {
+                        errMsg = 'Unauthorized: Only admins can trigger rebuilds.';
+                    } else if (error.code === 'unauthenticated') {
+                        errMsg = 'Please log in to trigger a rebuild.';
                     }
 
                     setRebuildStatus({
@@ -340,16 +310,16 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     };
 
     return (
-        <div className={styles.card}>
-            <div className={styles.cardHeader}>
+        <div className={cardStyles.card}>
+            <div className={cardStyles.cardHeader}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: '100%', gap: '1rem', flexWrap: 'wrap' }}>
 
-                    <nav className={styles.subTabNav}>
+                    <nav className={tabStyles.subTabNav}>
                         {subTabs.map(tab => (
                             <button
                                 key={tab.id}
                                 type="button"
-                                className={`${styles.subTabBtn} ${activeSubTab === tab.id ? styles.active : ''}`}
+                                className={`${tabStyles.subTabBtn} ${activeSubTab === tab.id ? tabStyles.active : ''}`}
                                 onClick={() => setActiveSubTab(tab.id)}
                             >
                                 {React.cloneElement(tab.icon, { size: 18, style: { flexShrink: 0 } })}
@@ -360,43 +330,43 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                 </div>
             </div>
 
-            <form onSubmit={handleSaveSettings} className={styles.form}>
+            <form onSubmit={handleSaveSettings} className={formStyles.form}>
                 <div style={{ display: 'contents' }}>
                     {/* ─── Tab 1: Identity ─── */}
                     {/* ─── Tab 1: Identity ─── */}
                     {activeSubTab === 'identity' && (
                         <div className={styles.tabContentFadeIn}>
-                            <div className={styles.sectionHeader} style={{ marginTop: 0, marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
+                            <div className={layoutStyles.sectionHeader} style={{ marginTop: 0, marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
                                 <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Branding & Identity</h4>
                             </div>
-                            <div className={styles.formGrid}>
-                                <div className={styles.inputGroup}>
+                            <div className={formStyles.formGrid}>
+                                <div className={formStyles.inputGroup}>
                                     <label>Page Title (Browser Tab)</label>
                                     <input type="text" placeholder="Kem Phearum | Portfolio" value={settingsData.title || ''} onChange={(e) => setSettingsData({ ...settingsData, title: e.target.value })} />
                                 </div>
                             </div>
-                            <div className={styles.formGrid}>
-                                <div className={styles.inputGroup}>
+                            <div className={formStyles.formGrid}>
+                                <div className={formStyles.inputGroup}>
                                     <label>Logo Highlight</label>
                                     <input type="text" placeholder="Kem" value={settingsData.logoHighlight} onChange={(e) => setSettingsData({ ...settingsData, logoHighlight: e.target.value })} />
                                 </div>
-                                <div className={styles.inputGroup}>
+                                <div className={formStyles.inputGroup}>
                                     <label>Logo Text</label>
                                     <input type="text" placeholder="Phearum" value={settingsData.logoText} onChange={(e) => setSettingsData({ ...settingsData, logoText: e.target.value })} />
                                 </div>
-                                <div className={styles.inputGroup}>
+                                <div className={formStyles.inputGroup}>
                                     <label>Tagline</label>
                                     <input type="text" placeholder="ICT Security & IT Audit Professional" value={settingsData.tagline} onChange={(e) => setSettingsData({ ...settingsData, tagline: e.target.value })} />
                                 </div>
                             </div>
 
-                            <div className={styles.formGrid}>
-                                <div className={styles.inputGroup} style={{ flex: 2 }}>
+                            <div className={formStyles.formGrid}>
+                                <div className={formStyles.inputGroup} style={{ flex: 2 }}>
                                     <label>Footer Text</label>
                                     <input type="text" placeholder="© 2026 Your Name. All Rights Reserved." value={settingsData.footerText} onChange={(e) => setSettingsData({ ...settingsData, footerText: e.target.value })} />
                                 </div>
-                                <div className={styles.fileInputGroup} style={{ flex: 1 }}>
-                                    <label>Favicon <span className={styles.hint}>(replaces default)</span></label>
+                                <div className={formStyles.fileInputGroup} style={{ flex: 1 }}>
+                                    <label>Favicon <span className={formStyles.hint}>(replaces default)</span></label>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                                         {(settingsFavicon || settingsData.favicon) && (
                                             <div style={{
@@ -420,9 +390,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                                 ) : null}
                                             </div>
                                         )}
-                                        <div className={styles.fileDropzone} style={{ padding: '0.45rem', flex: 1, minWidth: '140px' }}>
+                                        <div className={formStyles.fileDropzone} style={{ padding: '0.45rem', flex: 1, minWidth: '140px' }}>
                                             <input type="file" accept="image/x-icon,image/png,image/svg+xml" onChange={(e) => setSettingsFavicon(e.target.files[0])} />
-                                            <div className={styles.fileDropzoneContent} style={{ flexDirection: 'row', gap: '0.5rem' }}>
+                                            <div className={formStyles.fileDropzoneContent} style={{ flexDirection: 'row', gap: '0.5rem' }}>
                                                 <Upload size={16} />
                                                 <span style={{ fontSize: '0.75rem' }}>{settingsFavicon ? settingsFavicon.name : (settingsData.favicon ? 'Update Favicon' : 'Upload Icon')}</span>
                                             </div>
@@ -431,13 +401,13 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                 </div>
                             </div>
 
-                            <div className={styles.formGrid}>
-                                <div className={styles.inputGroup}>
-                                    <label>Project Filters <span className={styles.hint}>(comma separated)</span></label>
+                            <div className={formStyles.formGrid}>
+                                <div className={formStyles.inputGroup}>
+                                    <label>Project Filters <span className={formStyles.hint}>(comma separated)</span></label>
                                     <input type="text" placeholder="React, Python, Firebase..." value={settingsData.projectFilters || ''} onChange={(e) => setSettingsData({ ...settingsData, projectFilters: e.target.value })} />
                                 </div>
-                                <div className={styles.inputGroup}>
-                                    <label>Blog Filters <span className={styles.hint}>(comma separated)</span></label>
+                                <div className={formStyles.inputGroup}>
+                                    <label>Blog Filters <span className={formStyles.hint}>(comma separated)</span></label>
                                     <input type="text" placeholder="Tutorial, Tech, Security..." value={settingsData.blogFilters || ''} onChange={(e) => setSettingsData({ ...settingsData, blogFilters: e.target.value })} />
                                 </div>
                             </div>
@@ -447,7 +417,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     {/* ─── Tab 2: Typography ─── */}
                     {activeSubTab === 'typography' && (
                         <div className={styles.tabContentFadeIn}>
-                            <div className={styles.sectionHeader} style={{ marginTop: 0, marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
+                            <div className={layoutStyles.sectionHeader} style={{ marginTop: 0, marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
                                 <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Typography & Appearance</h4>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--input-border)', borderRadius: '16px', padding: '1.5rem' }}>
@@ -480,7 +450,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                                 <button
                                                     type="button"
                                                     onClick={handleInitializeMetadata}
-                                                    className={styles.btnSecondary}
+                                                    className={cardStyles.btnSecondary}
                                                     style={{
                                                         display: 'flex',
                                                         alignItems: 'center',
@@ -521,7 +491,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                                         }
                                                     });
                                                 }}
-                                                className={styles.btnSecondary}
+                                                className={cardStyles.btnSecondary}
                                                 style={{
                                                     display: 'flex',
                                                     alignItems: 'center',
@@ -987,7 +957,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     {/* ─── Tab 3: Visuals ─── */}
                     {activeSubTab === 'visuals' && (
                         <div className={styles.tabContentFadeIn}>
-                            <div className={styles.sectionHeader} style={{ marginTop: 0, marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
+                            <div className={layoutStyles.sectionHeader} style={{ marginTop: 0, marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
                                 <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Visual Experience</h4>
                             </div>
                             <div className={styles.visualsGrid}>
@@ -1003,7 +973,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                     ]}
                                     fullWidth
                                 />
-                                <div className={styles.inputGroup}>
+                                <div className={formStyles.inputGroup}>
                                     <label>Particle Density ({settingsData.bgDensity ?? 50}%)</label>
                                     <input
                                         type="range"
@@ -1014,7 +984,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                         style={{ width: '100%', accentColor: 'var(--primary-color)' }}
                                     />
                                 </div>
-                                <div className={styles.inputGroup}>
+                                <div className={formStyles.inputGroup}>
                                     <label>Animation Speed ({settingsData.bgSpeed ?? 50}%)</label>
                                     <input
                                         type="range"
@@ -1025,7 +995,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                         style={{ width: '100%', accentColor: 'var(--primary-color)' }}
                                     />
                                 </div>
-                                <div className={styles.inputGroup}>
+                                <div className={formStyles.inputGroup}>
                                     <label>Glow Intensity ({settingsData.bgGlowOpacity ?? 50}%)</label>
                                     <input
                                         type="range"
@@ -1036,7 +1006,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                         style={{ width: '100%', accentColor: 'var(--primary-color)' }}
                                     />
                                 </div>
-                                <div className={styles.inputGroup} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                                <div className={formStyles.inputGroup} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: '0.5rem' }}>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
                                         <input
                                             type="checkbox"
@@ -1057,7 +1027,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                         Background particles respond to mouse movement.
                                     </p>
                                 </div>
-                                <div className={styles.inputGroup} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                                <div className={formStyles.inputGroup} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: '0.5rem' }}>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
                                         <input
                                             type="checkbox"
@@ -1078,7 +1048,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                         Show popup alerts in the top right for actions (saving, deleting, etc).
                                     </p>
                                 </div>
-                                <div className={styles.inputGroup} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                                <div className={formStyles.inputGroup} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: '0.5rem' }}>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
                                         <input
                                             type="checkbox"
@@ -1107,7 +1077,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     {activeSubTab === 'sync' && (
                         <div className={styles.tabContentFadeIn}>
                             {/* Site Mirrors Section */}
-                            <div className={styles.sectionHeader} style={{ marginTop: 0, marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
+                            <div className={layoutStyles.sectionHeader} style={{ marginTop: 0, marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
                                 <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Site Synchronization</h4>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.25rem', marginBottom: '1.25rem' }}>
@@ -1146,7 +1116,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                                     </div>
                                                 </div>
 
-                                                <div className={styles.inputGroup} style={{ marginBottom: 0 }}>
+                                                <div className={formStyles.inputGroup} style={{ marginBottom: 0 }}>
                                                     <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', display: 'block', opacity: 0.8 }}>Mirror Name</label>
                                                     <input
                                                         type='text'
@@ -1156,7 +1126,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                                         style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px' }}
                                                     />
                                                 </div>
-                                                <div className={styles.inputGroup} style={{ marginBottom: 0 }}>
+                                                <div className={formStyles.inputGroup} style={{ marginBottom: 0 }}>
                                                     <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem', display: 'block', opacity: 0.8 }}>Repository URL</label>
                                                     <div style={{ position: 'relative' }}>
                                                         <input
@@ -1215,55 +1185,13 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             </div>
 
                             {/* Deployment & Refresh Section */}
-                            <div className={styles.sectionHeader} style={{ marginTop: '2.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
-                                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Deployment & Refresh (No-Backend)</h4>
+                            <div className={layoutStyles.sectionHeader} style={{ marginTop: '2.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
+                                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Site Deployment</h4>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--input-border)', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                                 <div style={{ flex: 1 }}>
-                                    <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>Github Action</h4>
-                                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Trigger a manual rebuild and deployment of your site. This will push your current configuration to GitHub and trigger the configured CI/CD pipeline.</p>
-                                </div>
-
-                                {/* GitHub Integration Section */}
-                                <div className={styles.sectionHeader} style={{ marginTop: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
-                                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>GitHub Integration</h4>
-                                </div>
-                                <div className={styles.formGrid}>
-                                    <div className={styles.inputGroup} style={{ position: 'relative' }}>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <Key size={16} /> GitHub Personal Access Token
-                                        </label>
-                                        <div style={{ position: 'relative' }}>
-                                            <input
-                                                type={showToken ? 'text' : 'password'}
-                                                placeholder="ghp_xxxxxxxxxxxx"
-                                                value={githubToken}
-                                                onChange={(e) => setGithubToken(e.target.value)}
-                                                style={{ paddingRight: '40px' }}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowToken(!showToken)}
-                                                style={{
-                                                    position: 'absolute',
-                                                    right: '12px',
-                                                    top: '50%',
-                                                    transform: 'translateY(-50%)',
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    color: 'var(--text-secondary)',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    padding: '4px'
-                                                }}
-                                            >
-                                                {showToken ? <EyeOff size={18} /> : <Eye size={18} />}
-                                            </button>
-                                        </div>
-                                        <span className={styles.hint}>Used for triggering site rebuilds. Stored locally in your browser.</span>
-                                    </div>
+                                    <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>GitHub Actions Build</h4>
+                                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Trigger a manual rebuild and deployment of your site. This will push your current configuration to GitHub and trigger the configured CI/CD pipeline securely via Cloud Functions.</p>
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
@@ -1271,7 +1199,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                         type='button'
                                         disabled={rebuildStatus.state === 'loading'}
                                         onClick={handleTriggerRebuild}
-                                        className={styles.submitBtn}
+                                        className={formStyles.submitBtn}
                                         style={{
                                             width: '100%',
                                             maxWidth: '300px',
@@ -1296,28 +1224,28 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                         <div style={{ padding: '0.5rem 0 1rem 0', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid var(--divider)' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                                                 <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Status: <strong style={{ fontWeight: 700, color: rebuildStatus.state === 'success' ? '#48c78e' : rebuildStatus.state === 'error' ? '#f14668' : 'var(--primary-color)' }}>{rebuildStatus.state.toUpperCase()}</strong></span>
-                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.7 }}>Last Updated: {rebuildStatus.lastChecked ? new Date(rebuildStatus.lastChecked).toLocaleTimeString() : 'Never'}</span>
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.7 }}>Last Updated: {rebuildStatus.lastChecked ? new Date(rebuildStatus.lastChecked).toLocaleTimeString() : 'Just now'}</span>
                                             </div>
                                             {rebuildStatus.message && <div style={{ padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)', borderLeft: '3px solid var(--primary-color)' }}>{rebuildStatus.message}</div>}
                                         </div>
                                     )}
                                 </div>
 
-                                <div style={{ padding: '1rem', background: 'rgba(255, 166, 0, 0.05)', borderRadius: '12px', border: '1px solid rgba(255, 166, 0, 0.1)', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                                    <AlertCircle size={18} style={{ color: '#ffa600', flexShrink: 0, marginTop: '2px' }} />
-                                    <div style={{ fontSize: '0.85rem', color: 'rgba(255, 166, 0, 0.9)', lineHeight: '1.4' }}>
-                                        <strong>Note:</strong> Since we are using the <strong>No-Backend</strong> version, your GitHub token must be entered above to trigger the build. This ensures 100% free hosting.
+                                <div style={{ padding: '1rem', background: 'rgba(16, 185, 129, 0.05)', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.1)', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                                    <CheckCircle size={18} style={{ color: '#10b981', flexShrink: 0, marginTop: '2px' }} />
+                                    <div style={{ fontSize: '0.85rem', color: 'rgba(16, 185, 129, 0.9)', lineHeight: '1.4' }}>
+                                        <strong>Secure Deployment:</strong> Rebuilds are now handled via Firebase Cloud Functions. Your GitHub token is stored securely on the server and is no longer required in your browser.
                                     </div>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    <div className={styles.formFooter} style={{ marginTop: '3rem', display: 'flex', justifyContent: 'flex-end' }}>
+                    <div className={formStyles.formFooter} style={{ marginTop: '3rem', display: 'flex', justifyContent: 'flex-end' }}>
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`${styles.primaryBtn} ${styles.modalActionBtn}`}
+                            className={`${cardStyles.primaryBtn} ${cardStyles.modalActionBtn}`}
                             style={{ width: '100%', maxWidth: '320px', height: '52px', fontSize: '1rem' }}
                         >
                             {loading ? <><RefreshCw size={18} className={styles.spinning} /> Saving...</> : <><Save size={18} /> Save Settings </>}

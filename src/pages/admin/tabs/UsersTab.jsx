@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import UserService from '../../../services/UserService';
 import { Search, Edit, Trash2, Key, X, UserPlus, Users, Clock, History } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
-import { sortData } from '../../../utils/sortData';
+import { sortData } from '../../../utils/data/sortData';
 import { tabLabels } from '../components/constants';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
@@ -11,7 +11,12 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import BaseModal from '../components/BaseModal';
 import FormInput from '../components/FormInput';
 import FormSelect from '../components/FormSelect';
-import styles from '../../Admin.module.scss';
+import tableStyles from '../styles/adminTables.module.scss';
+import formStyles from '../styles/adminForms.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
+import modalStyles from '../styles/adminModals.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
+import layoutStyles from '../styles/adminLayout.module.scss';
 
 const UsersTab = ({ user, userRole, showToast }) => {
     const [searchUsers, setSearchUsers] = useState('');
@@ -139,32 +144,55 @@ const UsersTab = ({ user, userRole, showToast }) => {
     };
 
     return (
-        <div className={styles.section} style={{ paddingBottom: '4rem' }}>
-            <div className={styles.listSection} style={{ marginTop: '0' }}>
-                <div className={styles.listSectionHeader}>
-                    <h3 className={styles.listTitle}>User Management</h3>
+        <div className={layoutStyles.section} style={{ paddingBottom: '4rem' }}>
+            <div className={cardStyles.listSection} style={{ marginTop: '0' }}>
+                <div className={cardStyles.listSectionHeader}>
+                    <h3 className={cardStyles.listTitle}>User Management</h3>
                 </div>
 
                 {userRole !== 'superadmin' ? (
-                    <div className={styles.emptyState}>Only Super Admins can manage users.</div>
+                    <div className={tableStyles.emptyState}>Only Super Admins can manage users.</div>
                 ) : (
                     <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <div className={styles.searchBox} style={{ margin: 0, flex: 1, marginRight: '1rem' }}>
-                                <Search size={16} className={styles.searchIcon} />
+                            <div className={formStyles.searchBox} style={{ margin: 0, flex: 1, marginRight: '1rem' }}>
+                                <Search size={16} className={formStyles.searchIcon} />
                                 <input type="text" placeholder="Search by email or role..." value={searchUsers} onChange={(e) => { setSearchUsers(e.target.value); setUsersPage(1); }} />
-                                {searchUsers && <span className={styles.searchResultCount}>{filteredUsers.length} of {usersList.length}</span>}
+                                {searchUsers && <span className={formStyles.searchResultCount}>{filteredUsers.length} of {usersList.length}</span>}
                             </div>
-                            <button onClick={() => setShowAddUserForm(!showAddUserForm)} className={styles.primaryBtn} style={{ margin: 0 }}>
-                                {showAddUserForm ? 'Cancel' : '+ Add User'}
-                            </button>
+                            <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                {user?.email === 'kem.phearum@gmail.com' && (
+                                    <button 
+                                        onClick={async () => {
+                                            try {
+                                                setLoading(true);
+                                                await UserService.bootstrapSuperAdmin(user.email);
+                                                showToast('Super Admin role synced! Please log out and back in to refresh your token.', 'success');
+                                            } catch (err) {
+                                                console.error(err);
+                                                showToast('Sync failed: ' + err.message, 'error');
+                                            } finally {
+                                                setLoading(false);
+                                            }
+                                        }} 
+                                        className={cardStyles.btnSecondary}
+                                        disabled={loading}
+                                        title="Initializes your Super Admin role in Firebase Authentication"
+                                    >
+                                        👑 Sync My Role
+                                    </button>
+                                )}
+                                <button onClick={() => setShowAddUserForm(!showAddUserForm)} className={cardStyles.primaryBtn} style={{ margin: 0 }}>
+                                    {showAddUserForm ? 'Cancel' : '+ Add User'}
+                                </button>
+                            </div>
                         </div>
 
                         {filteredUsers.length === 0 ? (
-                            <div className={styles.emptyState}>{searchUsers ? 'No matching users found.' : 'No users registered yet.'}</div>
+                            <div className={tableStyles.emptyState}>{searchUsers ? 'No matching users found.' : 'No users registered yet.'}</div>
                         ) : (
                             <>
-                                <div className={styles.userHeader}>
+                                <div className={tableStyles.userHeader}>
                                     <SortableHeader label="User" field="email" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
                                     <SortableHeader label="Role" field="role" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
                                     <SortableHeader label="Registered" field="createdAt" sortField={usersSort.field} sortDirection={usersSort.dir} onSort={handleUsersSort} />
@@ -173,35 +201,35 @@ const UsersTab = ({ user, userRole, showToast }) => {
                                 {paginatedUsers.map((u, index) => {
                                     const initials = (u.displayName || u.email || '??').split(/[@.\s]/).filter(Boolean).slice(0, 2).map(s => s[0]).join('').toUpperCase();
                                     const avatarColors = { superadmin: 'linear-gradient(135deg, #10b981, #059669)', admin: 'linear-gradient(135deg, #6366f1, #8b5cf6)', editor: 'linear-gradient(135deg, #f59e0b, #d97706)', pending: 'linear-gradient(135deg, #ef4444, #dc2626)' };
-                                    const roleBadgeClass = { superadmin: styles.roleSuperadmin, admin: styles.roleAdmin, editor: styles.roleEditor, pending: styles.rolePending }[u.role] || styles.rolePending;
+                                    const roleBadgeClass = { superadmin: tableStyles.roleSuperadmin, admin: tableStyles.roleAdmin, editor: tableStyles.roleEditor, pending: tableStyles.rolePending }[u.role] || tableStyles.rolePending;
                                     const roleLabels = { superadmin: '⭐ Super Admin', admin: '🛡️ Admin', editor: '✍️ Editor', pending: '⏳ Pending' };
                                     const isUserDisabled = u.disabled === true;
                                     return (
-                                        <div key={u.id || `user-${index}`} className={`${styles.userGrid} ${styles.userGridRowHover}`} style={{ opacity: isUserDisabled ? 0.6 : 1, filter: isUserDisabled ? 'grayscale(100%)' : 'none' }}
+                                        <div key={u.id || `user-${index}`} className={`${tableStyles.userGrid} ${tableStyles.userGridRowHover}`} style={{ opacity: isUserDisabled ? 0.6 : 1, filter: isUserDisabled ? 'grayscale(100%)' : 'none' }}
                                             onClick={(e) => { if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT' && !e.target.closest('button') && !e.target.closest('select')) setViewingUser(u); }}>
-                                            <div className={styles.userIdentity}>
-                                                <div className={styles.userAvatar} style={{ background: avatarColors[u.role] || avatarColors.pending }}>{initials}</div>
-                                                <div className={styles.userIdentityText}>
-                                                    <span className={styles.userEmailText} title={u.email}>{isUserDisabled ? <strike>{u.email}</strike> : u.email}</span>
-                                                    {u.displayName && <span className={styles.userDisplayName}>{u.displayName}</span>}
+                                            <div className={tableStyles.userIdentity}>
+                                                <div className={tableStyles.userAvatar} style={{ background: avatarColors[u.role] || avatarColors.pending }}>{initials}</div>
+                                                <div className={tableStyles.userIdentityText}>
+                                                    <span className={tableStyles.userEmailText} title={u.email}>{isUserDisabled ? <strike>{u.email}</strike> : u.email}</span>
+                                                    {u.displayName && <span className={tableStyles.userDisplayName}>{u.displayName}</span>}
                                                 </div>
                                             </div>
                                             <div>
                                                 {isUserDisabled ? (
-                                                    <span className={`${styles.roleBadge} ${styles.rolePending}`} style={{ background: 'rgba(255,255,255,0.1)', color: '#888', border: '1px solid rgba(255,255,255,0.2)' }}>🚫 Disabled</span>
+                                                    <span className={`${tableStyles.roleBadge} ${tableStyles.rolePending}`} style={{ background: 'rgba(255,255,255,0.1)', color: '#888', border: '1px solid rgba(255,255,255,0.2)' }}>🚫 Disabled</span>
                                                 ) : (
-                                                    <span className={`${styles.roleBadge} ${roleBadgeClass}`}>{roleLabels[u.role] || u.role}</span>
+                                                    <span className={`${tableStyles.roleBadge} ${roleBadgeClass}`}>{roleLabels[u.role] || u.role}</span>
                                                 )}
                                             </div>
-                                            <div className={styles.userMeta}>{u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown'}</div>
-                                            <div className={styles.userActions} style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                            <div className={tableStyles.userMeta}>{u.createdAt?.seconds ? new Date(u.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown'}</div>
+                                            <div className={tableStyles.userActions} style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center' }}>
                                                 {u.email === user.email ? (
-                                                    <span className={styles.youBadge} style={{ margin: 'auto 0 auto auto' }}>✓ You</span>
+                                                    <span className={tableStyles.youBadge} style={{ margin: 'auto 0 auto auto' }}>✓ You</span>
                                                 ) : (
                                                     <>
-                                                        <button title="Edit Profile" className={styles.editBtn} onClick={(e) => { e.stopPropagation(); setViewingUser(u); }}><Edit size={16} /></button>
-                                                        <button title="Send Password Reset" className={styles.editBtn} onClick={(e) => { e.stopPropagation(); handleResetPassword(u.email); }}><Key size={16} /></button>
-                                                        <button title="Remove User" className={styles.deleteBtn} disabled={userRole !== 'superadmin' || u.role === 'superadmin'}
+                                                        <button title="Edit Profile" className={tableStyles.editBtn} onClick={(e) => { e.stopPropagation(); setViewingUser(u); }}><Edit size={16} /></button>
+                                                        <button title="Send Password Reset" className={tableStyles.editBtn} onClick={(e) => { e.stopPropagation(); handleResetPassword(u.email); }}><Key size={16} /></button>
+                                                        <button title="Remove User" className={tableStyles.deleteBtn} disabled={userRole !== 'superadmin' || u.role === 'superadmin'}
                                                             onClick={(e) => { e.stopPropagation(); handleRemoveUser(u.email, u.id); }}
                                                             style={{ opacity: (userRole !== 'superadmin' || u.role === 'superadmin') ? 0.3 : 1, cursor: (userRole !== 'superadmin' || u.role === 'superadmin') ? 'not-allowed' : 'pointer' }}>
                                                             <Trash2 size={16} />
@@ -224,7 +252,7 @@ const UsersTab = ({ user, userRole, showToast }) => {
                 <div style={{ marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '2rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                         <div>
-                            <h3 className={styles.listTitle} style={{ marginBottom: '0.25rem' }}>Role Permissions</h3>
+                            <h3 className={cardStyles.listTitle} style={{ marginBottom: '0.25rem' }}>Role Permissions</h3>
                             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>Control which sidebar tabs each role can access.</p>
                         </div>
                         <button onClick={() => {
@@ -235,7 +263,7 @@ const UsersTab = ({ user, userRole, showToast }) => {
                                 setEditingRolePerms(initial);
                             }
                             setShowRolePerms(!showRolePerms);
-                        }} className={styles.primaryBtn}>
+                        }} className={cardStyles.primaryBtn}>
                             {showRolePerms ? 'Close Editor' : '⚙️ Configure Permissions'}
                         </button>
                     </div>
@@ -266,7 +294,7 @@ const UsersTab = ({ user, userRole, showToast }) => {
                                                 );
                                             })}
                                         </div>
-                                        <button onClick={() => saveRolePermissions(role, editingRolePerms[role] || [])} className={styles.primaryBtn} style={{ fontSize: '0.8rem', padding: '0.4rem 1rem' }}>
+                                        <button onClick={() => saveRolePermissions(role, editingRolePerms[role] || [])} className={cardStyles.primaryBtn} style={{ fontSize: '0.8rem', padding: '0.4rem 1rem' }}>
                                             Save {role} permissions
                                         </button>
                                     </div>
@@ -322,9 +350,9 @@ const UsersTab = ({ user, userRole, showToast }) => {
                             ]}
                         />
                     </div>
-                    <div className={styles.modalFooter} style={{ padding: '1.25rem 2rem', background: 'transparent', borderTop: '1px solid var(--divider)', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                        <button type="button" onClick={() => setShowAddUserForm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
-                        <button type="submit" className={styles.primaryBtn} disabled={loading} style={{ margin: 0, padding: '0.6rem 1.75rem' }}>{loading ? 'Creating...' : 'Create User'}</button>
+                    <div className={modalStyles.modalFooter} style={{ padding: '1.25rem 2rem', background: 'transparent', borderTop: '1px solid var(--divider)', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                        <button type="button" onClick={() => setShowAddUserForm(false)} className={formStyles.cancelBtn} style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
+                        <button type="submit" className={cardStyles.primaryBtn} disabled={loading} style={{ margin: 0, padding: '0.6rem 1.75rem' }}>{loading ? 'Creating...' : 'Create User'}</button>
                     </div>
                 </form>
             </BaseModal>
@@ -349,42 +377,42 @@ const UsersTab = ({ user, userRole, showToast }) => {
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', width: '100%', justifyContent: 'space-between' }}>
                             <div>
                                 {viewingUser.email !== user.email && (
-                                    <button className={`${styles.deleteBtn} ${styles.modalActionBtn}`} onClick={() => { handleRemoveUser(viewingUser.email, viewingUser.id); setViewingUser(null); }}>
+                                    <button className={`${tableStyles.deleteBtn} ${modalStyles.modalActionBtn}`} onClick={() => { handleRemoveUser(viewingUser.email, viewingUser.id); setViewingUser(null); }}>
                                         <Trash2 size={16} /> Disable User Account
                                     </button>
                                 )}
                             </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem' }}>
-                                <button className={`${styles.editBtn} ${styles.modalActionBtn}`} onClick={() => { handleResetPassword(viewingUser.email); setViewingUser(null); }}
+                                <button className={`${tableStyles.editBtn} ${modalStyles.modalActionBtn}`} onClick={() => { handleResetPassword(viewingUser.email); setViewingUser(null); }}
                                     style={{ background: 'transparent', border: '1px solid var(--glass-border)' }}>
                                     <Key size={16} /> Send Reset Email
                                 </button>
-                                <button onClick={() => setViewingUser(null)} className={`${styles.primaryBtn} ${styles.modalActionBtn}`}>Done</button>
+                                <button onClick={() => setViewingUser(null)} className={`${cardStyles.primaryBtn} ${modalStyles.modalActionBtn}`}>Done</button>
                             </div>
                         </div>
                     }
                 >
                     <div style={{ padding: '2rem' }}>
-                        <div className={styles.detailGrid} style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                            <div className={styles.detailItem} style={{ flex: '1 1 100%' }}>
-                                <span className={styles.detailLabel}>Authentication Email</span>
-                                <span className={styles.detailValue} style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--text-primary)', wordBreak: 'break-all' }}>{viewingUser.email}</span>
+                        <div className={tableStyles.detailGrid} style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                            <div className={tableStyles.detailItem} style={{ flex: '1 1 100%' }}>
+                                <span className={tableStyles.detailLabel}>Authentication Email</span>
+                                <span className={tableStyles.detailValue} style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--text-primary)', wordBreak: 'break-all' }}>{viewingUser.email}</span>
                             </div>
-                            <div className={styles.detailItem} style={{ flex: '1 1 200px' }}>
-                                <span className={styles.detailLabel}>Display Name</span>
-                                <span className={styles.detailValue} style={{ fontSize: '1rem' }}>{viewingUser.displayName || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', opacity: 0.6 }}>Not set by user</span>}</span>
+                            <div className={tableStyles.detailItem} style={{ flex: '1 1 200px' }}>
+                                <span className={tableStyles.detailLabel}>Display Name</span>
+                                <span className={tableStyles.detailValue} style={{ fontSize: '1rem' }}>{viewingUser.displayName || <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', opacity: 0.6 }}>Not set by user</span>}</span>
                             </div>
-                            <div className={styles.detailItem} style={{ flex: '1 1 180px' }}>
-                                <span className={styles.detailLabel}>Status & Security</span>
-                                <span className={styles.detailValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div className={tableStyles.detailItem} style={{ flex: '1 1 180px' }}>
+                                <span className={tableStyles.detailLabel}>Status & Security</span>
+                                <span className={tableStyles.detailValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     {viewingUser.isActive === false ? <span style={{ color: '#ef4444', fontWeight: 'bold' }}>● Disabled</span> : <span style={{ color: '#10b981', fontWeight: 'bold' }}>● Active Account</span>}
                                 </span>
                             </div>
-                            <div className={styles.detailItem} style={{ flex: '1 1 200px' }}>
-                                <span className={styles.detailLabel}>Administrative Role</span>
+                            <div className={tableStyles.detailItem} style={{ flex: '1 1 200px' }}>
+                                <span className={tableStyles.detailLabel}>Administrative Role</span>
                                 {viewingUser.email === user.email ? (
                                     <div style={{ marginTop: '0.6rem' }}>
-                                        <span className={`${styles.roleBadge} ${viewingUser.role === 'superadmin' ? styles.roleSuperadmin : (viewingUser.role === 'admin' ? styles.roleAdmin : styles.roleEditor)}`}>
+                                        <span className={`${tableStyles.roleBadge} ${viewingUser.role === 'superadmin' ? tableStyles.roleSuperadmin : (viewingUser.role === 'admin' ? tableStyles.roleAdmin : tableStyles.roleEditor)}`}>
                                             {viewingUser.role.toUpperCase()} (YOU)
                                         </span>
                                     </div>
@@ -403,13 +431,13 @@ const UsersTab = ({ user, userRole, showToast }) => {
                                     />
                                 )}
                             </div>
-                            <div className={styles.detailItem} style={{ flex: '1 1 180px' }}>
-                                <span className={styles.detailLabel}>Registration Date</span>
-                                <span className={styles.detailValue} style={{ fontSize: '0.9rem' }}>{viewingUser.createdAt?.seconds ? new Date(viewingUser.createdAt.seconds * 1000).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' }) : 'Unknown'}</span>
+                            <div className={tableStyles.detailItem} style={{ flex: '1 1 180px' }}>
+                                <span className={tableStyles.detailLabel}>Registration Date</span>
+                                <span className={tableStyles.detailValue} style={{ fontSize: '0.9rem' }}>{viewingUser.createdAt?.seconds ? new Date(viewingUser.createdAt.seconds * 1000).toLocaleString('en-US', { dateStyle: 'long', timeStyle: 'short' }) : 'Unknown'}</span>
                             </div>
-                            <div className={styles.detailItem} style={{ flex: '1 1 100%' }}>
-                                <span className={styles.detailLabel}>System Universal ID (UID)</span>
-                                <span className={styles.detailValue} style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '0.4rem 0.8rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', display: 'block', wordBreak: 'break-all' }}>{viewingUser.id}</span>
+                            <div className={tableStyles.detailItem} style={{ flex: '1 1 100%' }}>
+                                <span className={tableStyles.detailLabel}>System Universal ID (UID)</span>
+                                <span className={tableStyles.detailValue} style={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.03)', padding: '0.4rem 0.8rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)', display: 'block', wordBreak: 'break-all' }}>{viewingUser.id}</span>
                             </div>
                         </div>
 

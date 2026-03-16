@@ -1,0 +1,380 @@
+﻿node.exe : 
+[31mΓ£ù[39m Build 
+failed in 4.87s
+At C:\Program Files\nod
+ejs\npm.ps1:29 char:3
++   & $NODE_EXE 
+$NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo     
+         : 
+NotSpecified    : 
+([31mΓ£ù[39m Bu    
+ild failed in 4.87s    
+:String) [], Remote    
+Exception
+    + 
+FullyQualifiedErr    
+orId : NativeComman    
+dError
+ 
+[31m[vite]: Rollup 
+failed to resolve 
+import "axios" from "D:
+/portfolio/src/pages/ad
+min/tabs/SettingsTab.js
+x".
+This is most likely 
+unintended because it 
+can break your 
+application at runtime.
+If you do want to 
+externalize this 
+module explicitly add 
+it to
+`build.rollupOptions.ex
+ternal`[39m
+    at viteLog (file://
+/D:/portfolio/node_modu
+les/vite/dist/node/chun
+ks/config.js:33635:57)
+    at file:///D:/portf
+olio/node_modules/vite/
+dist/node/chunks/config
+.js:33669:73
+    at onwarn (D:\portf
+olio\node_modules\@reac
+t-router\dev\dist\cli\i
+ndex.js:1670:11)
+    at file:///D:/portf
+olio/node_modules/vite/
+dist/node/chunks/config
+.js:33669:28
+    at onRollupLog (fil
+e:///D:/portfolio/node_
+modules/vite/dist/node/
+chunks/config.js:33664:
+63)
+    at onLog (file:///D
+:/portfolio/node_module
+s/vite/dist/node/chunks
+/config.js:33467:4)
+    at file:///D:/portf
+olio/node_modules/rollu
+p/dist/es/shared/node-e
+ntry.js:20958:32
+    at Object.logger 
+[as onLog] (file:///D:/
+portfolio/node_modules/
+rollup/dist/es/shared/n
+ode-entry.js:22945:9)
+    at ModuleLoader.han
+dleInvalidResolvedId (f
+ile:///D:/portfolio/nod
+e_modules/rollup/dist/e
+s/shared/node-entry.js:
+21689:26)
+    at file:///D:/portf
+olio/node_modules/rollu
+p/dist/es/shared/node-e
+ntry.js:21647:26 {
+  watchFiles: [
+    'D:\\portfolio\\pac
+kage.json',
+    'D:/portfolio/node_
+modules/@react-router/d
+ev/dist/config/defaults
+/entry.client.tsx',
+    'D:/portfolio/app/r
+outes/admin.jsx',
+    'D:/portfolio/app/r
+oot.jsx',
+    'D:/portfolio/app/r
+outes/projects.$slug.js
+x',
+    'D:/portfolio/app/r
+outes/_index.jsx',
+    'D:/portfolio/app/r
+outes/sitemap[.]xml.jsx
+',
+    'D:/portfolio/app/r
+outes/$.jsx',
+    'D:/portfolio/app/r
+outes/blog.$slug.jsx',
+    'D:/portfolio/app/r
+outes/blog._index.jsx',
+    'D:/portfolio/app/r
+outes/projects._index.j
+sx',
+    'D:/portfolio/node_
+modules/react-dom/clien
+t.js',
+    'D:/portfolio/node_
+modules/react/jsx-runti
+me.js',
+    'D:/portfolio/node_
+modules/react/index.js'
+,
+    'D:/portfolio/node_
+modules/react-router/di
+st/development/dom-expo
+rt.mjs',
+    'D:/portfolio/node_
+modules/react/cjs/react
+-jsx-runtime.production
+.js',
+    'D:/portfolio/node_
+modules/react/cjs/react
+.production.js',
+    'D:/portfolio/node_
+modules/react-dom/index
+.js',
+    'D:/portfolio/node_
+modules/react-router/di
+st/development/chunk-JP
+UPSTYD.mjs',
+    'D:/portfolio/node_
+modules/react-router/di
+st/development/chunk-LF
+PYN7LY.mjs',
+    'D:/portfolio/node_
+modules/react-dom/cjs/r
+eact-dom-client.product
+ion.js',
+    'D:/portfolio/node_
+modules/scheduler/index
+.js',
+    'D:/portfolio/node_
+modules/react-router/di
+st/development/index.mj
+s',
+    'D:/portfolio/src/p
+ages/ProjectsPage.jsx',
+    'D:/portfolio/src/p
+ages/NotFound.jsx',
+    'D:/portfolio/src/p
+ages/Admin.jsx',
+    'D:/portfolio/src/p
+ages/Home.jsx',
+    'D:/portfolio/src/p
+ages/Blog.jsx',
+    'D:/portfolio/node_
+modules/react-dom/cjs/r
+eact-dom.production.js'
+,
+    'D:/portfolio/src/p
+ages/ProjectDetail.jsx'
+,
+    'D:/portfolio/src/p
+ages/BlogPost.jsx',
+    'D:/portfolio/node_
+modules/set-cookie-pars
+er/lib/set-cookie.js',
+    'D:/portfolio/node_
+modules/cookie/dist/ind
+ex.js',
+    'D:/portfolio/node_
+modules/@tanstack/react
+-query/build/modern/ind
+ex.js',
+    'D:/portfolio/src/c
+omponents/common/Mainte
+nancePage.jsx',
+    'D:/portfolio/src/c
+ontext/ThemeContext.jsx
+',
+    'D:/portfolio/src/c
+ore/queryClient.js',
+    'D:/portfolio/src/s
+ervices/SettingsService
+.js',
+    'D:/portfolio/src/h
+ooks/useAnalytics.js',
+    'D:/portfolio/node_
+modules/@vercel/analyti
+cs/dist/react/index.mjs
+',
+    'D:/portfolio/src/c
+omponents/AnimatedBackg
+round.jsx',
+    'D:/portfolio/src/c
+ontext/ActivityContext.
+jsx',
+    'D:/portfolio/src/s
+tyles/global.scss',
+    'D:/portfolio/src/c
+omponents/common/ErrorB
+oundary.jsx',
+    'D:/portfolio/node_
+modules/scheduler/cjs/s
+cheduler.production.js'
+,
+    'D:/portfolio/src/c
+ore/firebase.js',
+    'D:/portfolio/node_
+modules/firebase/firest
+ore/dist/esm/index.esm.
+js',
+    'D:/portfolio/src/c
+omponents/Footer.jsx',
+    'D:/portfolio/src/c
+omponents/Navbar.jsx',
+    'D:/portfolio/src/p
+ages/Blog.module.scss',
+    'D:/portfolio/src/c
+omponents/Projects.jsx'
+,
+    'D:/portfolio/src/c
+omponents/FeaturedBlogs
+.jsx',
+    'D:/portfolio/node_
+modules/framer-motion/d
+ist/es/index.mjs',
+    'D:/portfolio/src/s
+ervices/BlogService.js'
+,
+    'D:/portfolio/src/c
+omponents/FeaturedProje
+cts.jsx',
+    'D:/portfolio/node_
+modules/react-router-do
+m/dist/index.mjs',
+    'D:/portfolio/src/s
+ervices/MessageService.
+js',
+    'D:/portfolio/src/u
+tils/browser/geoUtils.j
+s',
+    'D:/portfolio/src/s
+ervices/ContentService.
+js',
+    'D:/portfolio/src/h
+ooks/useActivity.js',
+    'D:/portfolio/src/u
+tils/date/dateUtils.js'
+,
+    'D:/portfolio/src/s
+ervices/UserService.js'
+,
+    'D:/portfolio/src/c
+omponents/Hero.jsx',
+    'D:/portfolio/src/c
+omponents/About.jsx',
+    'D:/portfolio/node_
+modules/lucide-react/di
+st/esm/lucide-react.js'
+,
+    'D:/portfolio/src/c
+omponents/Contact.jsx',
+    'D:/portfolio/src/c
+omponents/Experience.js
+x',
+    'D:/portfolio/src/s
+ervices/AuthService.js'
+,
+    'D:/portfolio/src/c
+omponents/admin/layout/
+AdminLayout.jsx',
+    'D:/portfolio/src/s
+ervices/AuditLogService
+.js',
+    'D:/portfolio/src/c
+omponents/common/Toast.
+jsx',
+    'D:/portfolio/src/p
+ages/admin/tabs/General
+Tab.jsx',
+    'D:/portfolio/src/p
+ages/admin/tabs/Profile
+Tab.jsx',
+    'D:/portfolio/src/p
+ages/admin/tabs/Message
+sTab.jsx',
+    'D:/portfolio/src/p
+ages/admin/tabs/Experie
+nceTab.jsx',
+    'D:/portfolio/src/p
+ages/admin/tabs/UsersTa
+b.jsx',
+    'D:/portfolio/src/p
+ages/admin/tabs/Setting
+sTab.jsx',
+    'D:/portfolio/src/p
+ages/admin/tabs/Project
+sTab.jsx',
+    'D:/portfolio/src/p
+ages/admin/tabs/Databas
+eTab.jsx',
+    'D:/portfolio/src/p
+ages/admin/tabs/BlogTab
+.jsx',
+    'D:/portfolio/src/p
+ages/admin/styles/admin
+Layout.module.scss',
+    'D:/portfolio/src/p
+ages/admin/tabs/Analyti
+csTab.jsx',
+    'D:/portfolio/src/p
+ages/admin/styles/admin
+Login.module.scss',
+    'D:/portfolio/src/p
+ages/admin/tabs/AuditLo
+gsTab.jsx',
+    'D:/portfolio/src/p
+ages/admin/styles/admin
+Utilities.module.scss',
+    'D:/portfolio/src/u
+tils/data/helpers.js',
+    'D:/portfolio/src/u
+tils/seo/seoUtils.js',
+    'D:/portfolio/src/s
+ervices/ProjectService.
+js',
+    'D:/portfolio/src/c
+omponents/TableOfConten
+ts.jsx',
+    'D:/portfolio/src/c
+omponents/RelatedProjec
+ts.jsx',
+    'D:/portfolio/src/p
+ages/ProjectDetail.modu
+le.scss',
+    'D:/portfolio/src/c
+omponents/common/Markdo
+wnRenderer.jsx',
+    'D:/portfolio/src/c
+omponents/RelatedArticl
+es.jsx',
+    'D:/portfolio/node_
+modules/@tanstack/query
+-core/build/modern/inde
+x.js',
+    'D:/portfolio/node_
+modules/@tanstack/react
+-query/build/modern/typ
+es.js',
+    'D:/portfolio/node_
+modules/@tanstack/react
+-query/build/modern/use
+Queries.js',
+    'D:/portfolio/node_
+modules/@tanstack/react
+-query/build/modern/use
+SuspenseQuery.js',
+    'D:/portfolio/node_
+modules/@tanstack/react
+-query/build/modern/use
+SuspenseInfiniteQuery.j
+s',
+    'D:/portfolio/node_
+modules/@tanstack/react
+-query/build/modern/use
+PrefetchQuery.js',
+    'D:/portfolio/node_
+modules/@tanstack/react
+-query/build/modern/use
+SuspenseQueries.js',
+    ... 18 more items
+  ]
+}

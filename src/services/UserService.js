@@ -1,5 +1,5 @@
 import BaseService from './BaseService';
-import { db, auth } from '../firebase';
+import { db, auth } from '../core/firebase';
 import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, orderBy, query, updateDoc, where, serverTimestamp } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
 
@@ -51,9 +51,27 @@ class UserService extends BaseService {
     }
 
     async updateRole(userRole, userId, newRole, trackWrite) {
-        if (userRole !== 'superadmin') throw new Error("Only Superadmins can modify users.");
-        return this.update(userId, { role: newRole }, trackWrite);
+        // We now use Cloud Function for roles because it sets Auth Custom Claims
+        const { httpsCallable } = await import('firebase/functions');
+        const { functions } = await import('../core/firebase');
+        const setUserRoleFn = httpsCallable(functions, 'setUserRole');
+
+        // Fetch user doc to get email
+        const userDoc = await this.fetchUserById(userId);
+        if (!userDoc) throw new Error("User not found");
+
+        const result = await setUserRoleFn({ targetEmail: userDoc.email, role: newRole });
+        if (trackWrite) trackWrite(1, `Updated role for ${userDoc.email} to ${newRole}`);
+        return result.data;
     }
+
+    async bootstrapSuperAdmin(email) {
+        const { httpsCallable } = await import('firebase/functions');
+        const { functions } = await import('../core/firebase');
+        const setUserRoleFn = httpsCallable(functions, 'setUserRole');
+        return setUserRoleFn({ targetEmail: email, role: 'superadmin' });
+    }
+
 
     async removeUser(userRole, userId, trackDelete) {
         if (userRole !== 'superadmin') throw new Error("Only Superadmins can remove users.");

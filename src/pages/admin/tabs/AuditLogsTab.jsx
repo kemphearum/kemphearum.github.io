@@ -3,10 +3,14 @@ import AuditLogService from '../../../services/AuditLogService';
 import { Activity, Search, Filter, Download, Trash2, Eye, Shield, UserX, Clock, MapPin, Monitor, Globe, Edit2, AlertCircle, RefreshCw, BarChart2, ShieldAlert, CheckCircle2, ChevronRight, X, Smartphone, Tablet, Mail, Key } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery } from '@tanstack/react-query';
-import { sortData } from '../../../utils/sortData';
+import { sortData } from '../../../utils/data/sortData';
+import { getTodayDateKey } from '../../../utils/date/dateUtils';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
-import styles from '../../Admin.module.scss';
+import tableStyles from '../styles/adminTables.module.scss';
+import formStyles from '../styles/adminForms.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
 import BaseModal from '../components/BaseModal';
 import SectionHeader from '../components/SectionHeader';
 import UsageBar from '../components/UsageBar';
@@ -133,8 +137,8 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                                 style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', fontSize: '0.85rem', width: 'auto' }}
                             />
                         </div>
-                        <button onClick={async () => { setIsRefreshingActivity(true); try { await refreshActivity(); showToast('Activity data refreshed!', 'success'); } catch { showToast('Failed to refresh activity', 'error'); } finally { setIsRefreshingActivity(false); } }} className={styles.iconBtn} title="Refresh Stats" disabled={isRefreshingActivity} style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)', width: '36px', height: '36px', color: 'var(--text-primary)', padding: 0 }}>
-                            <RefreshCw size={16} className={isRefreshingActivity ? styles.spin : ''} style={{ color: 'var(--primary-color)' }} />
+                        <button onClick={async () => { setIsRefreshingActivity(true); try { await refreshActivity(); showToast('Activity data refreshed!', 'success'); } catch { showToast('Failed to refresh activity', 'error'); } finally { setIsRefreshingActivity(false); } }} className={cardStyles.iconBtn} title="Refresh Stats" disabled={isRefreshingActivity} style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)', width: '36px', height: '36px', color: 'var(--text-primary)', padding: 0 }}>
+                            <RefreshCw size={16} className={isRefreshingActivity ? utilStyles.spin : ''} style={{ color: 'var(--primary-color)' }} />
                         </button>
                     </div>
                 }
@@ -142,9 +146,9 @@ const AuditLogsTab = ({ userRole, showToast }) => {
 
             {/* ========== ESTIMATED ACTIVITY CARDS ========== */}
             <div style={{ marginBottom: '3rem' }}>
-                <div className={styles.analyticsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+                <div className={cardStyles.analyticsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
                     {/* READS Card */}
-                    <div className={`${styles.statCard} ${styles.activityDetailCard} ${aggregatedUsage.reads > 40000 ? styles.highUsage : ''}`} onClick={() => handleActivityDetail('reads')} style={{ borderTop: 'none', borderLeft: '3px solid #38bdf8', padding: '1.25rem' }}>
+                    <div className={`${cardStyles.statCard} ${cardStyles.activityDetailCard} ${aggregatedUsage.reads > 40000 ? cardStyles.highUsage : ''}`} onClick={() => handleActivityDetail('reads')} style={{ borderTop: 'none', borderLeft: '3px solid #38bdf8', padding: '1.25rem' }}>
                         <UsageBar
                             label="READ OPERATIONS"
                             current={isAggregating ? 0 : ((aggregatedUsage.reads || 0) + (activityDateRange === 'today' ? pendingRef.current.reads : 0))}
@@ -155,7 +159,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                     </div>
 
                     {/* WRITES Card */}
-                    <div className={`${styles.statCard} ${styles.activityDetailCard} ${aggregatedUsage.writes > 15000 ? styles.highUsage : ''}`} onClick={() => handleActivityDetail('writes')} style={{ borderTop: 'none', borderLeft: '3px solid #a78bfa', padding: '1.25rem' }}>
+                    <div className={`${cardStyles.statCard} ${cardStyles.activityDetailCard} ${aggregatedUsage.writes > 15000 ? cardStyles.highUsage : ''}`} onClick={() => handleActivityDetail('writes')} style={{ borderTop: 'none', borderLeft: '3px solid #a78bfa', padding: '1.25rem' }}>
                         <UsageBar
                             label="WRITE OPERATIONS"
                             current={isAggregating ? 0 : ((aggregatedUsage.writes || 0) + (activityDateRange === 'today' ? pendingRef.current.writes : 0))}
@@ -166,7 +170,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                     </div>
 
                     {/* DELETES Card */}
-                    <div className={`${styles.statCard} ${styles.activityDetailCard} ${aggregatedUsage.deletes > 15000 ? styles.highUsage : ''}`} onClick={() => handleActivityDetail('deletes')} style={{ borderTop: 'none', borderLeft: '3px solid #fb923c', padding: '1.25rem' }}>
+                    <div className={`${cardStyles.statCard} ${cardStyles.activityDetailCard} ${aggregatedUsage.deletes > 15000 ? cardStyles.highUsage : ''}`} onClick={() => handleActivityDetail('deletes')} style={{ borderTop: 'none', borderLeft: '3px solid #fb923c', padding: '1.25rem' }}>
                         <UsageBar
                             label="DELETE OPERATIONS"
                             current={isAggregating ? 0 : ((aggregatedUsage.deletes || 0) + (activityDateRange === 'today' ? pendingRef.current.deletes : 0))}
@@ -185,14 +189,14 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                 </h4>
 
                 {userRole !== 'superadmin' ? (
-                    <div className={styles.emptyState}>Only Super Admins can view audit logs.</div>
+                    <div className={tableStyles.emptyState}>Only Super Admins can view audit logs.</div>
                 ) : (
                     <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem', flexWrap: 'wrap' }}>
-                            <div className={styles.searchBox} style={{ margin: 0, flex: 1 }}>
-                                <Search size={16} className={styles.searchIcon} />
+                            <div className={formStyles.searchBox} style={{ margin: 0, flex: 1 }}>
+                                <Search size={16} className={formStyles.searchIcon} />
                                 <input type="text" placeholder="Search by email or IP..." value={searchUsers} onChange={(e) => { setSearchUsers(e.target.value); setAuditPage(1); }} />
-                                {searchUsers && <span className={styles.searchResultCount}>{filteredAuditLogs.length} of {auditLogsList.length}</span>}
+                                {searchUsers && <span className={formStyles.searchResultCount}>{filteredAuditLogs.length} of {auditLogsList.length}</span>}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.35rem 0.75rem' }}>
@@ -225,17 +229,17 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                                     link.click();
                                     document.body.removeChild(link);
                                     showToast(`Exported ${filteredAuditLogs.length} audit logs to CSV.`);
-                                }} className={styles.iconBtn} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)', fontSize: '0.85rem' }} title="Export as CSV">
+                                }} className={cardStyles.iconBtn} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)', fontSize: '0.85rem' }} title="Export as CSV">
                                     <Download size={14} /> Export
                                 </button>
                             </div>
                         </div>
 
                         {filteredAuditLogs.length === 0 ? (
-                            <div className={styles.emptyState}>{searchUsers ? 'No matching logs found.' : 'No audit logs recorded yet.'}</div>
+                            <div className={tableStyles.emptyState}>{searchUsers ? 'No matching logs found.' : 'No audit logs recorded yet.'}</div>
                         ) : (
                             <>
-                                <div className={styles.auditHeader}>
+                                <div className={tableStyles.auditHeader}>
                                     <SortableHeader label="User Email" field="email" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                     <SortableHeader label="IP Address" field="ipAddress" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                     <SortableHeader label="Device" field="deviceType" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
@@ -243,7 +247,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                                     <SortableHeader label="Timestamp" field="timestamp" sortField={auditSort.field} sortDirection={auditSort.dir} onSort={handleAuditSort} />
                                 </div>
                                 {paginatedAuditLogs.map((log, index) => (
-                                    <div key={log.id || `audit-${index}`} onClick={() => setSelectedAuditLog(log)} className={`${styles.auditGrid} ${styles.userGridRowHover}`}>
+                                    <div key={log.id || `audit-${index}`} onClick={() => setSelectedAuditLog(log)} className={`${tableStyles.auditGrid} ${tableStyles.userGridRowHover}`}>
                                         <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--primary-color)', fontWeight: 500 }}>{log.email}</div>
                                         <div style={{ fontFamily: 'monospace', color: 'var(--text-secondary)' }}>{log.ipAddress}</div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)' }}>
@@ -277,7 +281,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                 bodyStyle={{ padding: '1.5rem' }}
                 footerStyle={{ padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.02)', display: 'flex', justifyContent: 'flex-end' }}
                 footerContent={
-                    <button onClick={() => setSelectedAuditLog(null)} className={styles.closeBtnFooter}>Close</button>
+                    <button onClick={() => setSelectedAuditLog(null)} className={cardStyles.closeBtnFooter}>Close</button>
                 }
             >
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
@@ -333,17 +337,17 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                                 {activityLogs.reduce((acc, log) => acc + (log.count || 1), 0).toLocaleString()}
                             </strong>
                         </div>
-                        <button onClick={() => setActivityDetailType(null)} className={styles.primaryBtn} style={{ padding: '0.6rem 2rem', margin: 0 }}>Dismiss</button>
+                        <button onClick={() => setActivityDetailType(null)} className={cardStyles.primaryBtn} style={{ padding: '0.6rem 2rem', margin: 0 }}>Dismiss</button>
                     </>
                 }
             >
                 {activityLogsLoading ? (
                     <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-secondary)' }}>
-                        <RefreshCw size={32} className={styles.spin} style={{ opacity: 0.3, marginBottom: '1.5rem' }} />
+                        <RefreshCw size={32} className={utilStyles.spin} style={{ opacity: 0.3, marginBottom: '1.5rem' }} />
                         <p style={{ letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 'bold' }}>Synchronizing Logs...</p>
                     </div>
                 ) : activityLogs.length === 0 ? (
-                    <div className={styles.emptyState} style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
+                    <div className={tableStyles.emptyState} style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
                         <Activity size={48} style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }} />
                         No {activityDetailType} records found for today's session.
                     </div>

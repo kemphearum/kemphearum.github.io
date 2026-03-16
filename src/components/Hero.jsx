@@ -4,7 +4,7 @@ import ContentService from '../services/ContentService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Hero.module.scss';
 import { motion } from 'framer-motion';
-import MarkdownRenderer from './MarkdownRenderer';
+import MarkdownRenderer from './common/MarkdownRenderer';
 
 const Hero = () => {
     const { trackEvent } = useAnalytics();

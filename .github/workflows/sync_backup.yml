@@ -29,4 +29,4 @@ jobs:
         env:
           SA_SOURCE: ${{ secrets.SA_SOURCE_JSON }}
           SA_TARGET: ${{ secrets.SA_TARGET_JSON }}
-        run: node migrate.cjs
+        run: node tools/migrate.cjs

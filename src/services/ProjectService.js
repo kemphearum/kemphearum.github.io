@@ -1,5 +1,5 @@
 import BaseService from './BaseService';
-import { db } from '../firebase';
+import { db } from '../core/firebase';
 import { serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 
 class ProjectService extends BaseService {

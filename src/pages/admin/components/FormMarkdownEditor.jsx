@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bold, Italic, Link as LinkIcon, Code, Eye, Edit2 } from 'lucide-react';
-import styles from '../../Admin.module.scss';
-import MarkdownRenderer from '../../../components/MarkdownRenderer';
+import styles from '../styles/adminForms.module.scss';
+import MarkdownRenderer from '../../../components/common/MarkdownRenderer';
 
 /**
  * FormMarkdownEditor component with toolbar actions and preview capability.

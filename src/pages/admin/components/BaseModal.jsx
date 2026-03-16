@@ -1,6 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
-import styles from '../../Admin.module.scss';
+import styles from '../styles/adminModals.module.scss';
 
 const BaseModal = ({
     isOpen,

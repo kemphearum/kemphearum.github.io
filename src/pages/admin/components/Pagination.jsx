@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import styles from '../../Admin.module.scss';
+import styles from '../styles/adminTables.module.scss';
 
 // Reusable Pagination component
 const Pagination = ({ currentPage, totalPages, onPageChange, perPage, onPerPageChange, totalItems }) => {

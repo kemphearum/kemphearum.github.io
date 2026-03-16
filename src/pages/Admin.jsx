@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import UserService from '../services/UserService';
 import MessageService from '../services/MessageService';
 import ContentService from '../services/ContentService';
-import styles from './Admin.module.scss';
+import layoutStyles from './admin/styles/adminLayout.module.scss';
+import loginStyles from './admin/styles/adminLogin.module.scss';
+import utilStyles from './admin/styles/adminUtilities.module.scss';
 import { useNavigate } from 'react-router-dom';
 import {
     LogOut, ChevronLeft, ChevronRight, ExternalLink, FileText, Database, User, BarChart2, Sun, Moon
 } from 'lucide-react';
-import { getTodayDateKey } from '../utils/dateUtils';
-import { fetchGeoData } from '../utils/geoUtils';
+import { getTodayDateKey } from '../utils/date/dateUtils';
+import { fetchGeoData } from '../utils/browser/geoUtils';
 import { useTheme } from '../context/ThemeContext';
 import { useActivity } from '../hooks/useActivity';
 import { getSessionId, getDeviceType } from '../hooks/useAnalytics';
@@ -17,20 +19,22 @@ import SettingsService from '../services/SettingsService';
 import AuthService from '../services/AuthService';
 import AuditLogService from '../services/AuditLogService';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../core/firebase';
 
-// Tab components
-import GeneralTab from './admin/tabs/GeneralTab';
-import ProfileTab from './admin/tabs/ProfileTab';
-import SettingsTab from './admin/tabs/SettingsTab';
-import MessagesTab from './admin/tabs/MessagesTab';
-import ExperienceTab from './admin/tabs/ExperienceTab';
-import UsersTab from './admin/tabs/UsersTab';
-import ProjectsTab from './admin/tabs/ProjectsTab';
-import BlogTab from './admin/tabs/BlogTab';
-import DatabaseTab from './admin/tabs/DatabaseTab';
-import AuditLogsTab from './admin/tabs/AuditLogsTab';
-import AnalyticsTab from './admin/tabs/AnalyticsTab';
+// Tab components (Lazy Loaded)
+const GeneralTab = lazy(() => import('./admin/tabs/GeneralTab'));
+const ProfileTab = lazy(() => import('./admin/tabs/ProfileTab'));
+const SettingsTab = lazy(() => import('./admin/tabs/SettingsTab'));
+const MessagesTab = lazy(() => import('./admin/tabs/MessagesTab'));
+const ExperienceTab = lazy(() => import('./admin/tabs/ExperienceTab'));
+const UsersTab = lazy(() => import('./admin/tabs/UsersTab'));
+const ProjectsTab = lazy(() => import('./admin/tabs/ProjectsTab'));
+const BlogTab = lazy(() => import('./admin/tabs/BlogTab'));
+const DatabaseTab = lazy(() => import('./admin/tabs/DatabaseTab'));
+const AuditLogsTab = lazy(() => import('./admin/tabs/AuditLogsTab'));
+const AnalyticsTab = lazy(() => import('./admin/tabs/AnalyticsTab'));
+import AdminLayout from '../components/admin/layout/AdminLayout';
+import Toast from '../components/common/Toast';
 
 // ============================================================
 // Icons
@@ -86,33 +90,7 @@ const tabLabels = {
     settings: '⚙️ Settings'
 };
 
-// ============================================================
-// Toast Component
-// ============================================================
-const Toast = ({ message, type, onClose }) => {
-    useEffect(() => {
-        const timer = setTimeout(onClose, 4000);
-        return () => clearTimeout(timer);
-    }, [onClose, message]);
 
-    const getIcon = () => {
-        switch (type) {
-            case 'success': return '✓';
-            case 'error': return '✕';
-            case 'warning': return '⚠️';
-            case 'info': return 'ℹ️';
-            default: return '•';
-        }
-    };
-
-    return (
-        <div className={`${styles.toast} ${styles[type]} `}>
-            <span style={{ fontWeight: 'bold' }}>{getIcon()}</span>
-            <p>{message}</p>
-            <button onClick={onClose} className={styles.toastClose}>×</button>
-        </div>
-    );
-};
 
 // ============================================================
 // Admin Component (Shell)
@@ -284,16 +262,22 @@ const Admin = () => {
         try {
             const perms = await UserService.fetchRolePermissions(trackRead);
             setRolePermissions(perms);
-        } catch (error) { console.error("Error fetching role permissions:", error); }
-    }, [trackRead]);
+        } catch (error) { 
+            console.error("Error fetching role permissions:", error); 
+            showToast("Failed to load permissions. Some features may be restricted.", "error");
+        }
+    }, [trackRead, showToast]);
 
     const fetchMessages = useCallback(async () => {
         try {
             const msgs = await MessageService.getAll('createdAt', 'desc');
             trackRead(msgs.length, 'Fetched inbox messages');
             setMessages(msgs);
-        } catch (error) { console.error("Error fetching messages:", error); }
-    }, [trackRead]);
+        } catch (error) { 
+            console.error("Error fetching messages:", error); 
+            showToast("Could not sync messages with server.", "warning");
+        }
+    }, [trackRead, showToast]);
 
     // ====== Migration Bridge ======
     useEffect(() => {
@@ -550,33 +534,32 @@ const Admin = () => {
     // ============================================================
     const renderActiveTab = () => {
         const commonProps = { userRole, showToast, userId, userDisplayName };
-
+        
+        let TabComponent;
         switch (activeTab) {
-            case 'general':
-                return <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} loading={loading} saveSectionData={saveSectionData} />;
-            case 'profile':
-                return <ProfileTab {...commonProps} user={user} setUserDisplayName={setUserDisplayName} />;
-            case 'settings':
-                return <SettingsTab {...commonProps} settingsData={settingsData} setSettingsData={setSettingsData} loading={loading} saveSectionData={saveSectionData} sidebarPersistent={sidebarPersistent} setSidebarPersistent={setSidebarPersistent} />;
-            case 'messages':
-                return <MessagesTab {...commonProps} messages={messages} setMessages={setMessages} />;
-            case 'experience':
-                return <ExperienceTab {...commonProps} />;
-            case 'projects':
-                return <ProjectsTab {...commonProps} />;
-            case 'blog':
-                return <BlogTab {...commonProps} />;
-            case 'users':
-                return <UsersTab {...commonProps} user={user} />;
-            case 'database':
-                return <DatabaseTab {...commonProps} setActiveTab={setActiveTab} />;
-            case 'audit':
-                return <AuditLogsTab {...commonProps} />;
-            case 'analytics':
-                return <AnalyticsTab {...commonProps} />;
-            default:
-                return <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} loading={loading} saveSectionData={saveSectionData} />;
+            case 'general': TabComponent = <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} loading={loading} saveSectionData={saveSectionData} />; break;
+            case 'profile': TabComponent = <ProfileTab {...commonProps} user={user} setUserDisplayName={setUserDisplayName} />; break;
+            case 'settings': TabComponent = <SettingsTab {...commonProps} settingsData={settingsData} setSettingsData={setSettingsData} loading={loading} saveSectionData={saveSectionData} sidebarPersistent={sidebarPersistent} setSidebarPersistent={setSidebarPersistent} />; break;
+            case 'messages': TabComponent = <MessagesTab {...commonProps} messages={messages} setMessages={setMessages} />; break;
+            case 'experience': TabComponent = <ExperienceTab {...commonProps} />; break;
+            case 'projects': TabComponent = <ProjectsTab {...commonProps} />; break;
+            case 'blog': TabComponent = <BlogTab {...commonProps} />; break;
+            case 'users': TabComponent = <UsersTab {...commonProps} user={user} />; break;
+            case 'database': TabComponent = <DatabaseTab {...commonProps} setActiveTab={setActiveTab} />; break;
+            case 'audit': TabComponent = <AuditLogsTab {...commonProps} />; break;
+            case 'analytics': TabComponent = <AnalyticsTab {...commonProps} />; break;
+            default: TabComponent = <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} loading={loading} saveSectionData={saveSectionData} />;
         }
+
+        return (
+            <Suspense fallback={
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem' }}>
+                    <div className={utilStyles.spinner} style={{ width: '24px', height: '24px' }} />
+                </div>
+            }>
+                {TabComponent}
+            </Suspense>
+        );
     };
 
     // ============================================================
@@ -584,46 +567,46 @@ const Admin = () => {
     // ============================================================
     if (isAuthLoading) {
         return (
-            <div className={styles.adminLayout} style={{ alignItems: 'center', justifyContent: 'center' }}>
-                <div className={styles.spinner} style={{ width: '32px', height: '32px', borderWidth: '3px', borderColor: 'rgba(100, 255, 218, 0.1)', borderTopColor: '#64ffda' }} />
+            <div className={layoutStyles.adminLayout} style={{ alignItems: 'center', justifyContent: 'center' }}>
+                <div className={utilStyles.spinner} style={{ width: '32px', height: '32px', borderWidth: '3px', borderColor: 'rgba(100, 255, 218, 0.1)', borderTopColor: '#64ffda' }} />
             </div>
         );
     }
 
     if (!user) {
         return (
-            <div className={styles.loginWrapper}>
+            <div className={loginStyles.loginWrapper}>
                 {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-                <div className={styles.loginCard}>
-                    <div className={styles.loginIcon}>
+                <div className={loginStyles.loginCard}>
+                    <div className={loginStyles.loginIcon}>
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
                         </svg>
                     </div>
-                    <h2 className={styles.loginTitle}>{isRegistering ? 'Create Account' : 'Admin Login'}</h2>
-                    <p className={styles.loginSubtitle}>{isRegistering ? 'Register a new admin account' : 'Sign in to manage your portfolio'}</p>
+                    <h2 className={loginStyles.loginTitle}>{isRegistering ? 'Create Account' : 'Admin Login'}</h2>
+                    <p className={loginStyles.loginSubtitle}>{isRegistering ? 'Register a new admin account' : 'Sign in to manage your portfolio'}</p>
 
-                    <form onSubmit={handleLogin} className={styles.loginForm}>
-                        <div className={styles.inputGroup}>
+                    <form onSubmit={handleLogin} className={loginStyles.loginForm}>
+                        <div className={loginStyles.inputGroup}>
                             <label>Email</label>
                             <input type="email" placeholder="admin@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
                         </div>
-                        <div className={styles.inputGroup}>
+                        <div className={loginStyles.inputGroup}>
                             <label>Password</label>
                             <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
                         </div>
-                        <button type="submit" className={styles.loginBtn} disabled={loading}>
+                        <button type="submit" className={loginStyles.loginBtn} disabled={loading}>
                             {loading ? (
-                                <span className={styles.btnLoading}><span className={styles.spinner} /> {isRegistering ? 'Creating...' : 'Signing in...'}</span>
+                                <span className={loginStyles.btnLoading}><span className={utilStyles.spinner} /> {isRegistering ? 'Creating...' : 'Signing in...'}</span>
                             ) : (isRegistering ? 'Create Account' : 'Sign In')}
                         </button>
                     </form>
 
-                    <div className={styles.loginFooter}>
-                        <button onClick={() => setIsRegistering(!isRegistering)} className={styles.linkBtn}>
+                    <div className={loginStyles.loginFooter}>
+                        <button onClick={() => setIsRegistering(!isRegistering)} className={loginStyles.linkBtn}>
                             {isRegistering ? '← Back to Login' : 'Need an account? Register'}
                         </button>
-                        <button onClick={() => navigate('/')} className={styles.linkBtn}>← Back to Site</button>
+                        <button onClick={() => navigate('/')} className={loginStyles.linkBtn}>← Back to Site</button>
                     </div>
                 </div>
             </div>
@@ -634,92 +617,26 @@ const Admin = () => {
     // Admin Dashboard
     // ============================================================
     return (
-        <div className={styles.adminLayout}>
+        <AdminLayout
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+            activeTab={activeTab}
+            tabLabels={tabLabels}
+            user={user}
+            userRole={userRole}
+            userDisplayName={userDisplayName}
+            theme={theme}
+            toggleTheme={toggleTheme}
+            handleTabClick={handleTabClick}
+            rolePermissions={rolePermissions}
+            navigate={navigate}
+            icons={icons}
+            unreadMessagesCount={unreadMessagesCount}
+            isTabAllowed={isTabAllowed}
+        >
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-            {/* Top Navigation Bar */}
-            <div className={styles.topNavBar}>
-                <div className={styles.topNavLeft}>
-                    <button className={styles.menuToggle} onClick={() => setSidebarOpen(!sidebarOpen)}>
-                        <span /><span /><span />
-                    </button>
-                    <span className={styles.brand}>Admin<span>.</span></span>
-                </div>
-
-                <div className={styles.headerRight}>
-                    <button onClick={() => navigate('/')} className={styles.viewSiteBtn}>
-                        <ExternalLink size={16} />
-                        <span className={styles.hideOnMobile}>View Live Site</span>
-                    </button>
-
-                    <div className={styles.topActions}>
-                        <button onClick={toggleTheme} className={styles.topActionBtn} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
-                            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                        </button>
-
-                        {(userRole === 'superadmin' || (userRole && rolePermissions[userRole]?.includes('settings'))) && (
-                            <button onClick={() => handleTabClick('settings')} className={`${styles.topActionBtn} ${activeTab === 'settings' ? styles.activeBarTab : ''}`} title="Settings">
-                                {icons['settings']}
-                            </button>
-                        )}
-
-                        <button onClick={() => handleTabClick('profile')} className={`${styles.topActionBtn} ${activeTab === 'profile' ? styles.activeBarTab : ''}`} title="My Profile">
-                            {icons['profile']}
-                        </button>
-
-                        <button onClick={() => AuthService.logout()} className={`${styles.topActionBtn} ${styles.logoutActionBtn}`} title="Logout">
-                            <LogOut size={18} />
-                        </button>
-                    </div>
-
-                    <div className={styles.headerUserInfo}>
-                        <div className={styles.headerAvatar}>{(userDisplayName || user.email)?.charAt(0).toUpperCase()}</div>
-                        <div className={styles.headerUserText}>
-                            <span className={styles.headerUserEmail} title={user.email}>{userDisplayName || user.email}</span>
-                            <span className={styles.headerUserRole}>{userRole || 'Loading...'}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Backdrop */}
-            {sidebarOpen && <div className={styles.backdrop} onClick={() => setSidebarOpen(false)} />}
-
-            {/* Sidebar */}
-            <aside className={`${styles.sidebar} ${!sidebarOpen ? styles.sidebarClosed : ''} ${sidebarOpen ? styles.sidebarOpenMobile : ''}`}>
-                <nav className={styles.sidebarNav}>
-                    {Object.keys(tabLabels).filter(tab => {
-                        if (tab === 'profile' || tab === 'settings') return false; // Handled in top bar
-                        return isTabAllowed(tab, userRole, rolePermissions);
-                    }).map(tab => (
-                        <button key={tab} className={activeTab === tab ? styles.active : ''} onClick={() => handleTabClick(tab)}>
-                            {icons[tab] || <FileText size={18} />}
-                            <span>{tabLabels[tab]}</span>
-                            {tab === 'messages' && unreadMessagesCount > 0 && (
-                                <span className={styles.badge} style={{ background: 'linear-gradient(135deg, #6C63FF, #8B83FF)', color: '#fff', boxShadow: '0 2px 8px rgba(108, 99, 255, 0.4)' }}>{unreadMessagesCount}</span>
-                            )}
-                        </button>
-                    ))}
-                </nav>
-            </aside>
-
-            {/* Main Content */}
-            <main className={`${styles.mainContent} ${!sidebarOpen ? styles.contentExpanded : ''}`}>
-                <div className={styles.contentHeader}>
-                    <div>
-                        <h1>{tabLabels[activeTab] || 'Dashboard'}</h1>
-                        <p className={styles.headerSubtitle}>
-                            {activeTab === 'general' ? 'Manage your portfolio primary content' : 
-                             activeTab === 'profile' ? 'Manage your personal profile and account settings' :
-                             activeTab === 'settings' ? 'Configure site-wide identity, visual aesthetics, and synchronization' :
-                             'Administrator Dashboard'}
-                        </p>
-                    </div>
-                </div>
-
-                {renderActiveTab()}
-            </main>
-        </div>
+            {renderActiveTab()}
+        </AdminLayout>
     );
 };
 

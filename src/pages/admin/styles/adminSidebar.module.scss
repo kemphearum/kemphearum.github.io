@@ -1,0 +1,111 @@
+@use 'sass:color';
+@use '../../../styles/variables' as *;
+
+.sidebar {
+    width: 260px;
+    height: calc(100vh - 56px);
+    position: fixed;
+    left: 0;
+    top: 56px;
+    background: var(--sidebar-bg, linear-gradient(180deg, var(--bg-surface-light) 0%, rgba(10, 10, 18, 0.95) 100%));
+    backdrop-filter: blur(25px);
+    border-right: 1px solid var(--divider);
+    display: flex;
+    flex-direction: column;
+    z-index: 200;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.05);
+    transform: translateX(0);
+
+    &.sidebarClosed {
+        transform: translateX(-100%);
+    }
+
+    @media (max-width: 900px) {
+        transform: translateX(-100%);
+
+        &.sidebarClosed {
+            transform: translateX(-100%);
+        }
+
+        &.sidebarOpenMobile {
+            transform: translateX(0);
+        }
+    }
+}
+
+.sidebarHeader {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--divider);
+}
+
+.brand {
+    font-family: var(--font-admin-brand) !important;
+    font-size: var(--font-size-admin-brand) !important;
+    font-weight: var(--font-weight-admin-brand) !important;
+    font-style: var(--font-style-admin-brand) !important;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+
+    span {
+        color: $primary-color;
+    }
+}
+
+.sidebarNav {
+    flex: 1;
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow-y: auto;
+
+    button {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        color: var(--text-secondary);
+        font-family: var(--font-admin-menu) !important;
+        font-size: var(--font-size-admin-menu) !important;
+        font-weight: var(--font-weight-admin-menu) !important;
+        font-style: var(--font-style-admin-menu) !important;
+        transition: all 0.25s ease;
+        position: relative;
+        background: transparent;
+        border: none;
+        width: 100%;
+        cursor: pointer;
+
+        &:hover {
+            color: var(--text-primary);
+            background: var(--card-hover, rgba(255, 255, 255, 0.05));
+        }
+
+        &.active {
+            color: var(--primary-color, $primary-color);
+            background: linear-gradient(90deg, rgba($primary-color, 0.1) 0%, transparent 100%);
+            font-weight: 600;
+            box-shadow: inset 3px 0 0 var(--primary-color, $primary-color);
+
+            svg {
+                color: var(--primary-color, $primary-color);
+                filter: drop-shadow(0 0 5px rgba($primary-color, 0.3));
+            }
+        }
+    }
+}
+
+.badge {
+    margin-left: auto;
+    background: $primary-color;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 50px;
+    min-width: 20px;
+    text-align: center;
+}

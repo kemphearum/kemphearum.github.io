@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { db, auth } from '../firebase';
+import { db, auth } from '../core/firebase';
 import { doc, setDoc, collection, writeBatch, increment as firestoreIncrement, onSnapshot, serverTimestamp, getDocs, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
-import { getTodayDateKey } from '../utils/dateUtils';
+import { getTodayDateKey } from '../utils/date/dateUtils';
 import { ActivityContext } from './ActivityContextValue';
 
 

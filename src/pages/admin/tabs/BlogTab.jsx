@@ -2,13 +2,19 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { Search, Eye, EyeOff, Edit2, Trash2, Star, ExternalLink, X, Bold, Italic, Link as LinkIcon, Code, Upload, Save, Plus, ArrowLeft, Settings2, FileText, Download, ChevronDown, Clock } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { sortData } from '../../../utils/sortData';
+import { sortData } from '../../../utils/data/sortData';
 import { icons } from '../components/constants';
 import ImageProcessingService from '../../../services/ImageProcessingService';
-import MarkdownRenderer from '../../../components/MarkdownRenderer';
+import MarkdownRenderer from '../../../components/common/MarkdownRenderer';
 import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
-import styles from '../../Admin.module.scss';
+import tableStyles from '../styles/adminTables.module.scss';
+import formStyles from '../styles/adminForms.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
+import modalStyles from '../styles/adminModals.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
+import tabStyles from '../styles/adminTabs.module.scss';
+import layoutStyles from '../styles/adminLayout.module.scss';
 import BlogService from '../../../services/BlogService';
 import ConfirmDialog from '../components/ConfirmDialog';
 import HistoryModal from '../components/HistoryModal';
@@ -19,7 +25,7 @@ import FormInput from '../components/FormInput';
 import FormMarkdownEditor from '../components/FormMarkdownEditor';
 import FormDropzone from '../components/FormDropzone';
 import BulkActionModal from '../components/BulkActionModal';
-import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
+import { jsonToCsv, csvToJson } from '../../../utils/data/csvUtils';
 
 const BlogTab = ({ userRole, showToast }) => {
     const [post, setPost] = useState({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false });
@@ -363,42 +369,42 @@ const BlogTab = ({ userRole, showToast }) => {
     const editingPost = !!post.id;
 
     return (
-        <div className={styles.section} style={{ paddingBottom: '4rem' }}>
+        <div className={layoutStyles.section} style={{ paddingBottom: '4rem' }}>
             {!showPostForm ? (
-                <div className={styles.listSection} style={{ marginTop: '0' }}>
-                    <div className={styles.listSectionHeader}>
-                        <h3 className={styles.listTitle}>Published Posts</h3>
+                <div className={cardStyles.listSection} style={{ marginTop: '0' }}>
+                    <div className={cardStyles.listSectionHeader}>
+                        <h3 className={cardStyles.listTitle}>Published Posts</h3>
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <button onClick={() => { setPost({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false }); setPostImage(null); setIsBlogPreviewMode(false); setShowPostForm(true); }} className={styles.addBtn}>
+                            <button onClick={() => { setPost({ id: null, title: '', slug: '', excerpt: '', content: '', coverImage: '', tags: '', visible: true, featured: false }); setPostImage(null); setIsBlogPreviewMode(false); setShowPostForm(true); }} className={cardStyles.addBtn}>
                                 <Plus size={18} /> Add New
                             </button>
-                            <div className={styles.dropdownWrapper}>
+                            <div className={tabStyles.dropdownWrapper}>
                                 <button
                                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                                    className={styles.secondaryBtn}
+                                    className={formStyles.secondaryBtn}
                                     style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                                 >
                                     <Settings2 size={16} /> Bulk Actions <ChevronDown size={14} style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
                                 </button>
                                 {dropdownOpen && (
                                     <>
-                                        <div className={styles.modalOverlay} style={{ background: 'rgba(0, 0, 0, 0.3)', backdropFilter: 'none', WebkitBackdropFilter: 'none', zIndex: 999 }} onClick={() => setDropdownOpen(false)} />
-                                        <div className={styles.dropdownMenu}>
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadCSVTemplate(); }}>
+                                        <div className={modalStyles.modalOverlay} style={{ background: 'rgba(0, 0, 0, 0.3)', backdropFilter: 'none', WebkitBackdropFilter: 'none', zIndex: 999 }} onClick={() => setDropdownOpen(false)} />
+                                        <div className={tabStyles.dropdownMenu}>
+                                            <button className={tabStyles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadCSVTemplate(); }}>
                                                 <FileText size={16} /> Download CSV Template
                                             </button>
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadTemplate(); }}>
+                                            <button className={tabStyles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadTemplate(); }}>
                                                 <FileText size={16} /> Download JSON Template
                                             </button>
-                                            <hr className={styles.dropdownDivider} />
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportCSV(); }}>
+                                            <hr className={tabStyles.dropdownDivider} />
+                                            <button className={tabStyles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportCSV(); }}>
                                                 <ExternalLink size={16} /> Export CSV
                                             </button>
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportJSON(); }}>
+                                            <button className={tabStyles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportJSON(); }}>
                                                 <ExternalLink size={16} /> Export JSON
                                             </button>
-                                            <hr className={styles.dropdownDivider} />
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); fileInputRef.current?.click(); }}>
+                                            <hr className={tabStyles.dropdownDivider} />
+                                            <button className={tabStyles.dropdownItem} onClick={() => { setDropdownOpen(false); fileInputRef.current?.click(); }}>
                                                 <Upload size={16} /> Import (JSON/CSV)
                                             </button>
                                         </div>
@@ -414,96 +420,96 @@ const BlogTab = ({ userRole, showToast }) => {
                             </div>
                         </div>
                     </div>
-                    <div className={styles.searchBox}>
-                        <Search size={16} className={styles.searchIcon} />
+                    <div className={formStyles.searchBox}>
+                        <Search size={16} className={formStyles.searchIcon} />
                         <input type="text" placeholder="Search by title or excerpt..." value={searchPosts} onChange={(e) => { setSearchPosts(e.target.value); setPostPage(1); }} />
-                        {searchPosts && <span className={styles.searchResultCount}>{filteredPosts.length} of {posts.length}</span>}
+                        {searchPosts && <span className={formStyles.searchResultCount}>{filteredPosts.length} of {posts.length}</span>}
                     </div>
                     {filteredPosts.length === 0 ? (
-                        <div className={styles.emptyState}>{searchPosts ? 'No matching posts found.' : 'No posts yet.'}</div>
+                        <div className={tableStyles.emptyState}>{searchPosts ? 'No matching posts found.' : 'No posts yet.'}</div>
                     ) : (
                         <>
-                            <div className={styles.tableHeaderRow}>
-                                <div className={styles.colThumbnail}></div>
-                                <div className={styles.colInfo}>
-                                    <div className={styles.colHeaderFlex}>
+                            <div className={tableStyles.tableHeaderRow}>
+                                <div className={tableStyles.colThumbnail}></div>
+                                <div className={tableStyles.colInfo}>
+                                    <div className={tableStyles.colHeaderFlex}>
                                         <SortableHeader label="Title" field="title" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
                                     </div>
                                 </div>
-                                <div className={styles.colDescription}>Description</div>
-                                <div className={styles.colTags}>
+                                <div className={tableStyles.colDescription}>Description</div>
+                                <div className={tableStyles.colTags}>
                                     <SortableHeader label="Tags" field="tags" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
                                 </div>
-                                <div className={styles.colReadTime}>
+                                <div className={tableStyles.colReadTime}>
                                     <SortableHeader label="Read" field="content" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
                                 </div>
-                                <div className={styles.colDate}>
+                                <div className={tableStyles.colDate}>
                                     <SortableHeader label="Date" field="createdAt" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
                                 </div>
-                                <div className={styles.colStatus}>
+                                <div className={tableStyles.colStatus}>
                                     <SortableHeader label="Status" field="visible" sortField={postSort.field} sortDirection={postSort.dir} onSort={handlePostSort} />
                                 </div>
-                                <div className={styles.colActions}>Actions</div>
+                                <div className={tableStyles.colActions}>Actions</div>
                             </div>
                             {paginatedPosts.map((p, index) => (
-                                <div key={p.id || `post-${index}`} className={`${styles.listItem} ${styles.clickableRow}`} onClick={() => setViewingPost(p)}>
-                                    <div className={styles.colThumbnail}>
-                                        <div className={styles.itemThumbnail}>
+                                <div key={p.id || `post-${index}`} className={`${tableStyles.listItem} ${tableStyles.clickableRow}`} onClick={() => setViewingPost(p)}>
+                                    <div className={tableStyles.colThumbnail}>
+                                        <div className={tableStyles.itemThumbnail}>
                                             {p.coverImage ? (
                                                 <img src={p.coverImage} alt={p.title} />
                                             ) : (
-                                                <div className={styles.placeholder}>
+                                                <div className={tableStyles.placeholder}>
                                                     <FileText size={20} />
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                    <div className={styles.colInfo}>
-                                        <div className={styles.itemMainInfo}>
-                                            <h4 className={styles.itemTitle}>{p.title}</h4>
+                                    <div className={tableStyles.colInfo}>
+                                        <div className={tableStyles.itemMainInfo}>
+                                            <h4 className={tableStyles.itemTitle}>{p.title}</h4>
                                         </div>
                                     </div>
-                                    <div className={styles.colDescription}>
-                                        <p className={styles.itemDescription}>{p.excerpt}</p>
+                                    <div className={tableStyles.colDescription}>
+                                        <p className={tableStyles.itemDescription}>{p.excerpt}</p>
                                     </div>
-                                    <div className={styles.colTags}>
-                                        <div className={styles.inlineTags}>
+                                    <div className={tableStyles.colTags}>
+                                        <div className={tableStyles.inlineTags}>
                                             {(Array.isArray(p.tags) ? p.tags : []).slice(0, 2).map((t, i) => (
-                                                <span key={i} className={styles.miniTag}>{t}</span>
+                                                <span key={i} className={tableStyles.miniTag}>{t}</span>
                                             ))}
-                                            {p.tags?.length > 2 && <span className={styles.moreTags}>+{p.tags.length - 2}</span>}
-                                            {(!p.tags || p.tags.length === 0) && <span className={styles.noData}>None</span>}
+                                            {p.tags?.length > 2 && <span className={tableStyles.moreTags}>+{p.tags.length - 2}</span>}
+                                            {(!p.tags || p.tags.length === 0) && <span className={tableStyles.noData}>None</span>}
                                         </div>
                                     </div>
-                                    <div className={styles.colReadTime}>
-                                        <span className={styles.readTimeText}>
+                                    <div className={tableStyles.colReadTime}>
+                                        <span className={tableStyles.readTimeText}>
                                             {Math.ceil((p.content?.split(/\s+/)?.length || 0) / 200)}m
                                         </span>
                                     </div>
-                                    <div className={styles.colDate}>
-                                        <span className={styles.dateText}>{p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
+                                    <div className={tableStyles.colDate}>
+                                        <span className={tableStyles.dateText}>{p.createdAt?.seconds ? new Date(p.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
                                     </div>
-                                    <div className={styles.colStatus}>
-                                        <span className={`${styles.statusBadge} ${p.visible ? styles.statusPublished : styles.statusDraft}`}>
+                                    <div className={tableStyles.colStatus}>
+                                        <span className={`${tableStyles.statusBadge} ${p.visible ? tableStyles.statusPublished : tableStyles.statusDraft}`}>
                                             {p.visible ? 'Published' : 'Unpublished'}
                                         </span>
                                     </div>
-                                    <div className={styles.colActions}>
-                                        <div className={styles.itemActions}>
-                                            <button onClick={(e) => { e.stopPropagation(); window.open(`/blog/${p.slug}`, '_blank'); }} title="View" className={styles.editBtn}><ExternalLink size={16} /></button>
+                                    <div className={tableStyles.colActions}>
+                                        <div className={tableStyles.itemActions}>
+                                            <button onClick={(e) => { e.stopPropagation(); window.open(`/blog/${p.slug}`, '_blank'); }} title="View" className={tableStyles.editBtn}><ExternalLink size={16} /></button>
                                             {userRole !== 'editor' && (
                                                 <>
-                                                    <button onClick={(e) => { e.stopPropagation(); toggleFeaturedPost(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={styles.editBtn}>
+                                                    <button onClick={(e) => { e.stopPropagation(); toggleFeaturedPost(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={tableStyles.editBtn}>
                                                         <Star size={16} fill={p.featured ? "currentColor" : "none"} style={{ color: p.featured ? '#FFD700' : 'inherit' }} />
                                                     </button>
-                                                    <button onClick={(e) => { e.stopPropagation(); toggleVisibility(p.id, p.visible); }} title={p.visible ? "Hide" : "Show"} className={styles.editBtn}>
+                                                    <button onClick={(e) => { e.stopPropagation(); toggleVisibility(p.id, p.visible); }} title={p.visible ? "Hide" : "Show"} className={tableStyles.editBtn}>
                                                         {p.visible ? <Eye size={16} /> : <EyeOff size={16} />}
                                                     </button>
                                                 </>
                                             )}
-                                            <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={styles.historyIconBtn} title="View Edit History"><History size={16} /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); setPost(p); setShowPostForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} title="Edit" className={styles.editBtn}><Edit2 size={16} /></button>
-                                            {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeletePost(p.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
+                                            <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={tableStyles.historyIconBtn} title="View Edit History"><History size={16} /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); setPost(p); setShowPostForm(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }} title="Edit" className={tableStyles.editBtn}><Edit2 size={16} /></button>
+                                            {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeletePost(p.id); }} className={tableStyles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
                                         </div>
                                     </div>
                                 </div>
@@ -513,8 +519,8 @@ const BlogTab = ({ userRole, showToast }) => {
                     )}
                 </div>
             ) : (
-                <div className={styles.card}>
-                    <div className={styles.cardHeader}>
+                <div className={cardStyles.card}>
+                    <div className={cardStyles.cardHeader}>
                         <h3>{post.id ? <Edit2 size={24} /> : <Plus size={24} />} {post.id ? 'Edit Post' : 'New Blog Post'}</h3>
                         <button
                             onClick={() => {
@@ -523,12 +529,12 @@ const BlogTab = ({ userRole, showToast }) => {
                                 setIsBlogPreviewMode(false);
                                 setShowPostForm(false);
                             }}
-                            className={styles.cancelBtn}
+                            className={formStyles.cancelBtn}
                         >
                             <ArrowLeft size={18} /> Cancel & Return
                         </button>
                     </div>
-                    <form onSubmit={handleSavePost} className={styles.form}>
+                    <form onSubmit={handleSavePost} className={formStyles.form}>
                         <FormRow>
                             <FormInput
                                 label="Post Title"
@@ -587,9 +593,9 @@ const BlogTab = ({ userRole, showToast }) => {
                             onClearExisting={() => setPost(prev => ({ ...prev, coverImage: '' }))}
                         />
 
-                        <div className={styles.formFooter}>
-                            <button type="submit" disabled={loading} className={styles.submitBtn}>
-                                {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
+                        <div className={formStyles.formFooter}>
+                            <button type="submit" disabled={loading} className={formStyles.submitBtn}>
+                                {loading ? <><span className={utilStyles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
                             </button>
                         </div>
                     </form>
@@ -612,32 +618,32 @@ const BlogTab = ({ userRole, showToast }) => {
                 bodyStyle={{ padding: 0 }}
                 footerStyle={{ padding: '1.25rem 2rem' }}
                 footerContent={
-                    <button onClick={() => setViewingPost(null)} className={styles.primaryBtn} style={{ margin: 0 }}>Close Preview</button>
+                    <button onClick={() => setViewingPost(null)} className={cardStyles.primaryBtn} style={{ margin: 0 }}>Close Preview</button>
                 }
             >
                 <div style={{ padding: '2rem' }}>
-                    <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                            <span className={styles.detailLabel}>Title</span>
-                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingPost?.title}</span>
+                    <div className={tableStyles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                        <div className={tableStyles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={tableStyles.detailLabel}>Title</span>
+                            <span className={tableStyles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingPost?.title}</span>
                         </div>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                            <span className={styles.detailLabel}>Excerpt</span>
-                            <span className={styles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingPost?.excerpt}</span>
+                        <div className={tableStyles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={tableStyles.detailLabel}>Excerpt</span>
+                            <span className={tableStyles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingPost?.excerpt}</span>
                         </div>
-                        <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Status</span>
-                            <span className={styles.detailValue} style={{ color: viewingPost?.visible ? '#10b981' : '#f59e0b', fontWeight: '600' }}>{viewingPost?.visible ? 'Published' : 'Draft Mode'}</span>
+                        <div className={tableStyles.detailItem}>
+                            <span className={tableStyles.detailLabel}>Status</span>
+                            <span className={tableStyles.detailValue} style={{ color: viewingPost?.visible ? '#10b981' : '#f59e0b', fontWeight: '600' }}>{viewingPost?.visible ? 'Published' : 'Draft Mode'}</span>
                         </div>
-                        <div className={styles.detailItem}>
-                            <span className={styles.detailLabel}>Published Date</span>
-                            <span className={styles.detailValue}>{viewingPost?.createdAt?.seconds ? new Date(viewingPost.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Pending publication'}</span>
+                        <div className={tableStyles.detailItem}>
+                            <span className={tableStyles.detailLabel}>Published Date</span>
+                            <span className={tableStyles.detailValue}>{viewingPost?.createdAt?.seconds ? new Date(viewingPost.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Pending publication'}</span>
                         </div>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                            <span className={styles.detailLabel}>Tags</span>
-                            <div className={styles.techTags} style={{ marginTop: '0.6rem' }}>
+                        <div className={tableStyles.detailItem} style={{ gridColumn: 'span 2' }}>
+                            <span className={tableStyles.detailLabel}>Tags</span>
+                            <div className={tableStyles.techTags} style={{ marginTop: '0.6rem' }}>
                                 {(Array.isArray(viewingPost?.tags) ? viewingPost.tags : (viewingPost?.tags ? viewingPost.tags.split(',') : [])).map((t, i) => t.trim() && (
-                                    <span key={`${t.trim()}-${i}`} className={styles.techTag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>{t.trim()}</span>
+                                    <span key={`${t.trim()}-${i}`} className={tableStyles.techTag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>{t.trim()}</span>
                                 ))}
                             </div>
                         </div>

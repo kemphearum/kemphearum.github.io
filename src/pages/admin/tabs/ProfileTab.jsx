@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Save } from 'lucide-react';
-import styles from '../../Admin.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
+import formStyles from '../styles/adminForms.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
+import styles from '../styles/adminCards.module.scss'; // Defaulting to cardStyles for general structure
 import UserService from '../../../services/UserService';
 import { useActivity } from '../../../hooks/useActivity';
 
@@ -25,21 +28,21 @@ const ProfileTab = ({ user, userId, userDisplayName, setUserDisplayName, showToa
     };
 
     return (
-        <div className={styles.card}>
-            <div className={styles.cardHeader}><h3>👤 Edit Profile</h3></div>
-            <form onSubmit={handleSaveProfile} className={styles.form}>
-                <div className={styles.inputGroup}>
+        <div className={cardStyles.card}>
+            <div className={cardStyles.cardHeader}><h3>👤 Edit Profile</h3></div>
+            <form onSubmit={handleSaveProfile} className={formStyles.form}>
+                <div className={formStyles.inputGroup}>
                     <label>Display Name</label>
                     <input type="text" placeholder="Kem Phearum" value={userDisplayName} onChange={(e) => setUserDisplayName(e.target.value)} />
-                    <span className={styles.hint}>This name will be displayed in the Admin sidebar instead of your email address.</span>
+                    <span className={formStyles.hint}>This name will be displayed in the Admin sidebar instead of your email address.</span>
                 </div>
-                <div className={styles.inputGroup}>
+                <div className={formStyles.inputGroup}>
                     <label>Email Address</label>
                     <input type="text" value={user.email} disabled style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)', opacity: 0.7 }} />
                 </div>
-                <div className={styles.formFooter}>
-                    <button type="submit" disabled={isSaving} className={styles.submitBtn}>
-                        {isSaving ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
+                <div className={formStyles.formFooter}>
+                    <button type="submit" disabled={isSaving} className={formStyles.submitBtn}>
+                        {isSaving ? <><span className={utilStyles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
                     </button>
                 </div>
             </form>

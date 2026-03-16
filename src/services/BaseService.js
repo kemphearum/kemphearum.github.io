@@ -1,4 +1,4 @@
-import { db, auth } from '../firebase';
+import { db, auth } from '../core/firebase';
 import { collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 
 export default class BaseService {
@@ -87,5 +87,20 @@ export default class BaseService {
         await deleteDoc(docRef);
         if (trackDelete) trackDelete(1, `Deleted ${this.collectionName}: ${id}`, { id });
         return true;
+    }
+
+    /**
+     * Standardized error handling for Firestore operations
+     */
+    handleServiceError(error, context) {
+        console.error(`Service Error [${this.collectionName}] - ${context}:`, error);
+        
+        const message = error.code === 'permission-denied' 
+            ? "You don't have permission to perform this action."
+            : error.code === 'unavailable'
+            ? "The service is temporarily unavailable. Check your connection."
+            : error.message || "An unexpected error occurred.";
+
+        return new Error(message);
     }
 }

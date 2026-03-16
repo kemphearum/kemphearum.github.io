@@ -16,6 +16,9 @@ export default defineConfig({
       "react-syntax-highlighter"
     ]
   },
+  optimizeDeps: {
+    exclude: ["axios"]
+  },
   test: {
     globals: true,
     environment: 'jsdom',

@@ -6,7 +6,7 @@ import ContentService from '../services/ContentService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Contact.module.scss';
 import { motion, AnimatePresence } from 'framer-motion';
-import MarkdownRenderer from './MarkdownRenderer';
+import MarkdownRenderer from '../components/common/MarkdownRenderer';
 
 const Contact = () => {
     const { trackEvent } = useAnalytics();

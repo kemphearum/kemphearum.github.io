@@ -1,5 +1,5 @@
 import BaseService from './BaseService';
-import { db } from '../firebase';
+import { db } from '../core/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 class ContentService extends BaseService {

@@ -1,4 +1,4 @@
-import { db } from '../firebase';
+import { db } from '../core/firebase';
 import { collection, getDocs, query, where, doc, updateDoc, writeBatch, setDoc, Timestamp, getDoc } from 'firebase/firestore';
 import SettingsService from './SettingsService';
 

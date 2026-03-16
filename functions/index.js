@@ -2,6 +2,44 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
+exports.setUserRole = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'You must be logged in.');
+    }
+
+    const { targetEmail, role } = data;
+    if (!targetEmail || !role) {
+        throw new functions.https.HttpsError('invalid-argument', 'Email and role are required.');
+    }
+
+    // Role hierarchy check
+    const isOwner = context.auth.token.email === 'kem.phearum@gmail.com';
+    const isTargetSelf = context.auth.token.email === targetEmail;
+    const isCallerSuperAdmin = context.auth.token.role === 'superadmin';
+
+    // Allow owner to bootstrap themselves or others, or existing superadmin to manage roles
+    if (!isCallerSuperAdmin && !isOwner) {
+        throw new functions.https.HttpsError('permission-denied', 'Insufficient permissions.');
+    }
+
+    try {
+        const user = await admin.auth().getUserByEmail(targetEmail);
+        await admin.auth().setCustomUserClaims(user.uid, { role });
+        
+        // Synch with Firestore for visibility
+        await admin.firestore().collection('users').doc(user.uid).set({
+            role: role,
+            email: targetEmail.toLowerCase()
+        }, { merge: true });
+
+        return { success: true, message: `Claim '${role}' assigned to ${targetEmail}` };
+    } catch (error) {
+        console.error("Set role error:", error);
+        throw new functions.https.HttpsError('internal', error.message);
+    }
+});
+
+
 // Existing toggleUserStatus function...
 exports.toggleUserStatus = functions.https.onCall(async (data, context) => {
     // ... existing implementation ...
@@ -12,10 +50,10 @@ exports.toggleUserStatus = functions.https.onCall(async (data, context) => {
         );
     }
 
-    if (context.auth.token.email !== 'kem.phearum@gmail.com') {
+    if (context.auth.token.role !== 'superadmin' && context.auth.token.email !== 'kem.phearum@gmail.com') {
         throw new functions.https.HttpsError(
             'permission-denied',
-            'Only the Super Admin can enable or disable user accounts.'
+            'Only the Super Admin can perform this action.'
         );
     }
 
@@ -53,11 +91,123 @@ exports.toggleUserStatus = functions.https.onCall(async (data, context) => {
     }
 });
 
+exports.triggerBuild = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'You must be logged in.');
+    }
+
+    // Role check: Admin or Superadmin
+    const role = context.auth.token.role;
+    const isAllowed = role === 'admin' || role === 'superadmin' || context.auth.token.email === 'kem.phearum@gmail.com';
+    
+    if (!isAllowed) {
+         throw new functions.https.HttpsError('permission-denied', 'Only authorized staff can trigger rebuilds.');
+    }
+
+    const githubToken = process.env.GITHUB_DISPATCH_TOKEN;
+    if (!githubToken) {
+        throw new functions.https.HttpsError('failed-precondition', 'GitHub token not configured on server.');
+    }
+
+    const { event_type = 'manual_rebuild' } = data;
+    const GITHUB_OWNER = 'kemphearum';
+    const GITHUB_REPO = 'kemphearum.github.io';
+    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/dispatches`;
+
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            body: JSON.stringify({ event_type }),
+            headers: {
+                'Authorization': `Bearer ${githubToken}`,
+                'Accept': 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28',
+                'Content-Type': 'application/json',
+                'User-Agent': 'Firebase-Functions'
+            }
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("GitHub API error:", errorText);
+            throw new functions.https.HttpsError('internal', `GitHub API error: ${res.statusText}`);
+        }
+
+        return { success: true, message: 'Rebuild triggered successfully.' };
+    } catch (error) {
+        console.error("Trigger build failed:", error);
+        throw new functions.https.HttpsError('internal', error.message || 'Failed to trigger build.');
+    }
+});
+
+exports.getBuildStatus = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'You must be logged in.');
+    }
+
+    const githubToken = process.env.GITHUB_DISPATCH_TOKEN;
+    if (!githubToken) {
+        throw new functions.https.HttpsError('failed-precondition', 'GitHub token not configured on server.');
+    }
+
+    // Role check: Admin or Superadmin
+    const role = context.auth.token.role;
+    if (role !== 'admin' && role !== 'superadmin' && context.auth.token.email !== 'kem.phearum@gmail.com') {
+        throw new functions.https.HttpsError('permission-denied', 'Unauthorized access to build status.');
+    }
+
+    const { runId, startTime } = data;
+    const GITHUB_OWNER = 'kemphearum';
+    const GITHUB_REPO = 'kemphearum.github.io';
+
+    try {
+        let url;
+        if (runId) {
+            url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs/${runId}`;
+        } else {
+            url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/runs?event=repository_dispatch&per_page=5`;
+        }
+
+        const res = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${githubToken}`,
+                'Accept': 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28',
+                'User-Agent': 'Firebase-Functions'
+            }
+        });
+
+        if (!res.ok) {
+            throw new functions.https.HttpsError('internal', `GitHub API error: ${res.statusText}`);
+        }
+
+        const runData = await res.json();
+        return { success: true, data: runData };
+    } catch (error) {
+        console.error("Get build status failed:", error);
+        throw new functions.https.HttpsError('internal', error.message || 'Failed to fetch build status.');
+    }
+});
+
 const BOT_USER_AGENTS = [
     'telegrambot', 'facebookexternalhit', 'twitterbot', 'linkedinbot',
     'slackbot', 'whatsapp', 'pinterest', 'googlebot', 'discordbot',
     'skypeuripreview', 'embedly', 'outbrain'
 ];
+
+const escapeHTML = (str) => {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, (m) => {
+        switch (m) {
+            case '&': return '&amp;';
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '"': return '&quot;';
+            case "'": return '&#039;';
+            default: return m;
+        }
+    });
+};
 
 exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
     try {
@@ -115,16 +265,16 @@ exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
             }
 
             const metaTags = `
-                <title>${title} | Kem Phearum</title>
-                <meta name="description" content="${description}" />
-                <meta property="og:title" content="${title} | Kem Phearum" />
-                <meta property="og:description" content="${description}" />
+                <title>${escapeHTML(title)} | Kem Phearum</title>
+                <meta name="description" content="${escapeHTML(description)}" />
+                <meta property="og:title" content="${escapeHTML(title)} | Kem Phearum" />
+                <meta property="og:description" content="${escapeHTML(description)}" />
                 <meta property="og:image" content="${imageUrl}" />
                 <meta property="og:type" content="article" />
                 <meta property="og:url" content="${fullUrl}" />
                 <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content="${title} | Kem Phearum" />
-                <meta name="twitter:description" content="${description}" />
+                <meta name="twitter:title" content="${escapeHTML(title)} | Kem Phearum" />
+                <meta name="twitter:description" content="${escapeHTML(description)}" />
                 <meta name="twitter:image" content="${imageUrl}" />
             `;
 

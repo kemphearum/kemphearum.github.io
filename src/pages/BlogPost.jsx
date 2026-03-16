@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useParams, Link, useLoaderData } from 'react-router';
 import BlogService from '../services/BlogService';
 import { useActivity } from '../hooks/useActivity';
-import MarkdownRenderer from '../components/MarkdownRenderer';
-import { calculateReadTime } from '../utils/helpers';
-import { generateMetaTags } from '../utils/SeoHelper';
+const MarkdownRenderer = lazy(() => import('../components/common/MarkdownRenderer'));
+import { calculateReadTime } from '../utils/data/helpers';
+import { generateMetaTags } from '../utils/seo/seoUtils';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -19,7 +19,7 @@ import Footer from '../components/Footer';
 import RelatedArticles from '../components/RelatedArticles';
 import TableOfContents from '../components/TableOfContents';
 import styles from './BlogPost.module.scss';
-import { db } from '../firebase';
+import { db } from '../core/firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 
 export async function loader({ params }) {
@@ -245,7 +245,9 @@ const BlogPost = () => {
                             <h1 className={styles.articleTitle}>{post.title}</h1>
 
                             <div className={styles.markdownBody}>
-                                <MarkdownRenderer content={post.content} />
+                                <Suspense fallback={<div className={styles.loadingContainer}><div className={styles.spinner}></div></div>}>
+                                    <MarkdownRenderer content={post.content} />
+                                </Suspense>
                             </div>
 
 

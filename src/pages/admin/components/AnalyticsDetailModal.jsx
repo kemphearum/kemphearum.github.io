@@ -1,7 +1,9 @@
 import React from 'react';
-import { TrendingUp, Globe, Monitor, FileText, MapPin, Share2, RefreshCw, Users, UserCheck, Calendar } from 'lucide-react';
+import { TrendingUp, Globe, Monitor, FileText, MapPin, Share2, RefreshCw, Users, UserCheck, Calendar, Activity } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import styles from '../../Admin.module.scss';
+import styles from '../styles/adminModals.module.scss';
+import tableStyles from '../styles/adminTables.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
 import BaseModal from './BaseModal';
 
 const parseBrowser = (ua) => {
@@ -79,8 +81,8 @@ const AnalyticsDetailModal = ({
                                 Retrieved {analyticsLogs.length} recent sessions
                             </span>
                         </div>
-                        <div className={styles.tableWrapper} style={{ borderRadius: '16px', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)' }}>
-                            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: '700px' }}>
+                        <div className={tableStyles.tableWrapper} style={{ borderRadius: '16px', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <table className={tableStyles.previewTable} style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: '700px' }}>
                                 <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
                                     <tr>
                                         <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>#</th>
@@ -150,16 +152,16 @@ const AnalyticsDetailModal = ({
 
                             return (
                                 <>
-                                    <div className={styles.analyticsGrid} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                                        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
+                                    <div className={cardStyles.analyticsGrid} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                                        <div className={cardStyles.statCard} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><UserCheck size={14} /> Total Returning</div>
                                             <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#7c4dff' }}>{totalReturning}</div>
                                         </div>
-                                        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
+                                        <div className={cardStyles.statCard} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><Users size={14} /> Unique Returnees</div>
                                             <div style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--primary-color)' }}>{uniqueReturning}</div>
                                         </div>
-                                        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
+                                        <div className={cardStyles.statCard} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><TrendingUp size={14} /> Avg. Visits / User</div>
                                             <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#ff6090' }}>{avgVisits}</div>
                                         </div>
@@ -181,8 +183,8 @@ const AnalyticsDetailModal = ({
                                     </div>
 
                                     <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem' }}><UserCheck size={18} /> Returning Visitor Frequency</h4>
-                                    <div className={styles.tableWrapper} style={{ borderRadius: '16px', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+                                    <div className={tableStyles.tableWrapper} style={{ borderRadius: '16px', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                        <table className={tableStyles.previewTable} style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
                                             <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
                                                 <tr>
                                                     <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>Visitor IP</th>
@@ -273,8 +275,8 @@ const AnalyticsDetailModal = ({
                                         </ResponsiveContainer>
                                     </div>
 
-                                    <div className={styles.tableWrapper} style={{ borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                                        <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+                                    <div className={tableStyles.tableWrapper} style={{ borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                                        <table className={tableStyles.previewTable} style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
                                             <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
                                                 <tr>
                                                     <th style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>

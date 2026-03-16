@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { analytics } from '../firebase';
+import { analytics } from '../core/firebase';
 import { logEvent } from 'firebase/analytics';
 import { AnalyticsService } from '../services/AnalyticsService';
 // Local reference to avoid some scope/minification issues
 const analyticsSvc = AnalyticsService;
-import { fetchGeoData } from '../utils/geoUtils';
-import { parseUserAgent, isReturningVisitor } from '../utils/uaUtils';
+import { fetchGeoData } from '../utils/browser/geoUtils';
+import { parseUserAgent, isReturningVisitor } from '../utils/browser/uaUtils';
 import { useActivity } from './useActivity';
 
 export const getSessionId = () => {

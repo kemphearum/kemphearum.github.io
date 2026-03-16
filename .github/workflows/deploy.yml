@@ -3,6 +3,18 @@ name: Deploy to GitHub Pages and Firebase
 on:
   push:
     branches: [main]
+  schedule:
+    # Runs every 6 hours to refresh static content (OG tags etc)
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    # Allows manual triggering from the GitHub Actions tab
+  repository_dispatch:
+    # Trigger from external events
+    types: [manual_rebuild]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

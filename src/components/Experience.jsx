@@ -4,7 +4,7 @@ import ExperienceService from '../services/ExperienceService';
 import styles from './Experience.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
-import MarkdownRenderer from './MarkdownRenderer';
+import MarkdownRenderer from './common/MarkdownRenderer';
 
 const Experience = () => {
     const { data: experiencesData, isLoading: loading } = useQuery({

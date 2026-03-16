@@ -21,6 +21,10 @@ export const queryClient = new QueryClient({
 
             // Disable refetching when reconnecting to the network for public data
             refetchOnReconnect: false,
+            // Centralized error handling
+            meta: {
+                errorMessage: 'Failed to sync with server. Please check your connection.',
+            },
         },
     },
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '../../Admin.module.scss';
+import styles from '../styles/adminCards.module.scss';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 const StatCard = ({

@@ -1,10 +1,14 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Eye as EyeIcon, Users, Globe, TrendingUp, Monitor, Smartphone, Tablet, MapPin, Share2, FileText, Calendar, RefreshCw, X, Download, Layout, Activity, Clock } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import { jsonToCsv } from '../../../utils/csvUtils';
+import { jsonToCsv } from '../../../utils/data/csvUtils';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery } from '@tanstack/react-query';
-import styles from '../../Admin.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
+import tableStyles from '../styles/adminTables.module.scss';
+import layoutStyles from '../styles/adminLayout.module.scss';
+import styles from '../styles/adminAnalytics.module.scss'; // New module for analytics-specific styles
 import AnalyticsService from '../../../services/AnalyticsService';
 import AnalyticsDetailModal from '../components/AnalyticsDetailModal';
 import SectionHeader from '../components/SectionHeader';
@@ -249,7 +253,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     if (analyticsLoading) {
         return (
             <div className={styles.analyticsLoading}>
-                <div className={styles.analyticsSpinner} />
+                <div className={utilStyles.spinner} style={{ width: '40px', height: '40px', marginBottom: '1.5rem' }} />
                 <span>Loading analytics data…</span>
             </div>
         );
@@ -310,7 +314,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                         onClick={handleRefreshAll}
                         disabled={analyticsFetching}
                     >
-                        <RefreshCw size={14} className={analyticsFetching ? styles.spin : ''} />
+                        <RefreshCw size={14} className={analyticsFetching ? utilStyles.spin : ''} />
                         Refresh
                     </button>
 
@@ -325,7 +329,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     );
 
     return (
-        <div className={styles.section}>
+        <div className={layoutStyles.section}>
             <SectionHeader
                 title="Analytics Dashboard"
                 description="Monitor visitor traffic, behavior, and geographical distribution."
@@ -403,7 +407,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                         </LineChart>
                     </ResponsiveContainer>
                 ) : (
-                    <div className={styles.emptyState}><p>No visit data available yet.</p></div>
+                    <div className={tableStyles.emptyState}><p>No visit data available yet.</p></div>
                 )}
             </ChartCard>
 
@@ -428,7 +432,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                                 {countryData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />{entry.name} ({entry.value})</li>))}
                             </ul>
                         </>
-                    ) : (<div className={styles.emptyState}><p>No country data.</p></div>)}
+                    ) : (<div className={tableStyles.emptyState}><p>No country data.</p></div>)}
                 </ChartCard>
 
                 <ChartCard
@@ -450,7 +454,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                                 {deviceData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 3) % CHART_COLORS.length] }} />{entry.name === 'Desktop' ? <><Monitor size={12} /> </> : entry.name === 'Mobile' ? <><Smartphone size={12} /> </> : entry.name === 'Tablet' ? <><Tablet size={12} /> </> : null}{entry.name} ({entry.value})</li>))}
                             </ul>
                         </>
-                    ) : (<div className={styles.emptyState}><p>No device data.</p></div>)}
+                    ) : (<div className={tableStyles.emptyState}><p>No device data.</p></div>)}
                 </ChartCard>
             </div>
 
@@ -473,7 +477,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
-                    ) : (<div className={styles.emptyState}><p>No city data.</p></div>)}
+                    ) : (<div className={tableStyles.emptyState}><p>No city data.</p></div>)}
                 </ChartCard>
 
                 <ChartCard
@@ -495,7 +499,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                                 {referrerData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 5) % CHART_COLORS.length] }} />{entry.name} ({entry.value})</li>))}
                             </ul>
                         </>
-                    ) : (<div className={styles.emptyState}><p>No referrer data.</p></div>)}
+                    ) : (<div className={tableStyles.emptyState}><p>No referrer data.</p></div>)}
                 </ChartCard>
             </div>
 
@@ -520,7 +524,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                                 {browserData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 6) % CHART_COLORS.length] }} />{entry.name} ({entry.value})</li>))}
                             </ul>
                         </>
-                    ) : (<div className={styles.emptyState}><p>No browser data.</p></div>)}
+                    ) : (<div className={tableStyles.emptyState}><p>No browser data.</p></div>)}
                 </ChartCard>
 
                 <ChartCard
@@ -542,7 +546,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                                 {osData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 2) % CHART_COLORS.length] }} />{entry.name} ({entry.value})</li>))}
                             </ul>
                         </>
-                    ) : (<div className={styles.emptyState}><p>No OS data.</p></div>)}
+                    ) : (<div className={tableStyles.emptyState}><p>No OS data.</p></div>)}
                 </ChartCard>
 
                 <ChartCard
@@ -565,7 +569,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                                 {retentionData.pie.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: i === 0 ? "#64ffda" : "#7c4dff" }} />{entry.name} ({entry.value})</li>))}
                             </ul>
                         </>
-                    ) : (<div className={styles.emptyState}><p>No retention data.</p></div>)}
+                    ) : (<div className={tableStyles.emptyState}><p>No retention data.</p></div>)}
                 </ChartCard>
             </div>
 
@@ -587,7 +591,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                             </Bar>
                         </BarChart>
                     </ResponsiveContainer>
-                ) : (<div className={styles.emptyState}><p>No page data.</p></div>)}
+                ) : (<div className={tableStyles.emptyState}><p>No page data.</p></div>)}
             </ChartCard>
 
             <AnalyticsDetailModal

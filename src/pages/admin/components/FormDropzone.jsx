@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, X, ImageIcon, Image as ImageIcon2, FolderPlus, Trash2, Eye, XCircle, CheckCircle2, Maximize2 } from 'lucide-react';
 import BaseModal from './BaseModal';
-import styles from '../../Admin.module.scss';
+import styles from '../styles/adminForms.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
 
 /**
  * FormDropzone component for file uploads with live preview.
@@ -13,6 +14,7 @@ const FormDropzone = ({
     onFileChange,
     currentImageUrl,
     onClearExisting,
+    isProcessing = false,
     accept = "image/*",
     placeholder = 'Upload Image',
     circular = false,
@@ -160,7 +162,12 @@ const FormDropzone = ({
                     className={styles.hiddenInput}
                 />
 
-                {hasData ? (
+                {isProcessing ? (
+                    <div style={{ padding: '2rem', textAlign: 'center' }}>
+                        <span className={utilStyles.spinner} style={{ margin: '0 auto 1rem' }} />
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Processing image...</p>
+                    </div>
+                ) : hasData ? (
                     <div 
                         className={`${styles.unifiedPreviewDropzone} ${isDragging ? styles.isDragging : ''} ${error ? styles.hasError : ''}`}
                         onDragEnter={handleDragEnter}

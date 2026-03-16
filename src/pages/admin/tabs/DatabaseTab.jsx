@@ -2,7 +2,12 @@ import React, { useState } from 'react';
 import { Database, RefreshCw, Download, Upload, Trash2, ShieldAlert, Shield, Server, X, FileText, Code, Mail, BarChart2, AlertTriangle, FileJson, Check, Users } from 'lucide-react';
 import { useActivity } from '../../../hooks/useActivity';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import styles from '../../Admin.module.scss';
+import utilStyles from '../styles/adminUtilities.module.scss';
+import cardStyles from '../styles/adminCards.module.scss';
+import tableStyles from '../styles/adminTables.module.scss';
+import formStyles from '../styles/adminForms.module.scss';
+import layoutStyles from '../styles/adminLayout.module.scss';
+import styles from '../styles/adminDatabase.module.scss'; // New module for database-specific styles
 import DatabaseService from '../../../services/DatabaseService';
 import BaseModal from '../components/BaseModal';
 import SectionHeader from '../components/SectionHeader';
@@ -126,13 +131,13 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
     const totalDocs = (dbHealth.posts || 0) + (dbHealth.projects || 0) + (dbHealth.experience || 0) + (dbHealth.content || 0) + (dbHealth.messages || 0) + (dbHealth.auditLogs || 0) + (dbHealth.users || 0) + (dbHealth.rolePermissions || 0) + (dbHealth.settings || 0) + (dbHealth.visits || 0) + (dbHealth.dailyUsage || 0);
 
     return (
-        <div className={styles.section} style={{ paddingBottom: '4rem' }}>
+        <div className={layoutStyles.section} style={{ paddingBottom: '4rem' }}>
             {/* Progress Alert */}
             {restoreProgress && (
                 <div className={styles.floatingProgress}>
                     <div className={styles.progressHeader}>
                         <div className={styles.progressTitle}>
-                            <RefreshCw size={18} className={styles.spin} />
+                            <RefreshCw size={18} className={utilStyles.spin} />
                             <span>Restoring Database...</span>
                         </div>
                         <span className={styles.progressPercent}>{restoreProgress.percentage}%</span>
@@ -151,8 +156,8 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                 description="Monitor Firebase health and manage your data backups."
                 icon={Database}
                 rightElement={
-                    <button onClick={() => refetchDbHealth()} className={styles.iconBtn} title="Refresh Database Health" style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)', color: 'var(--text-primary)', width: '36px', height: '36px', padding: 0 }}>
-                        <RefreshCw size={18} className={dbHealthLoading ? styles.spin : ''} style={{ color: 'var(--primary-color)' }} />
+                    <button onClick={() => refetchDbHealth()} className={cardStyles.iconBtn} title="Refresh Database Health" style={{ background: 'var(--card-bg)', border: '1px solid var(--divider)', color: 'var(--text-primary)', width: '36px', height: '36px', padding: 0 }}>
+                        <RefreshCw size={18} className={dbHealthLoading ? utilStyles.spin : ''} style={{ color: 'var(--primary-color)' }} />
                     </button>
                 }
             />
@@ -179,7 +184,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                 />
 
                 {/* Collection Counts Grid */}
-                <div className={styles.analyticsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+                <div className={cardStyles.analyticsGrid} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
                     <StatCard
                         icon={FileText}
                         value={dbHealthLoading ? '...' : (dbHealth.posts || 0)}
@@ -243,7 +248,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                             <h5 style={{ margin: '0 0 0.4rem 0', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Download size={18} /> Full JSON Backup</h5>
                             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Download all database collections in a single JSON file.</p>
                         </div>
-                        <button onClick={handleBackupDatabase} disabled={loading} className={styles.primaryBtn} style={{ margin: 0, background: '#10b981', color: '#fff', border: 'none', alignSelf: 'flex-start' }}>
+                        <button onClick={handleBackupDatabase} disabled={loading} className={cardStyles.primaryBtn} style={{ margin: 0, background: '#10b981', color: '#fff', border: 'none', alignSelf: 'flex-start' }}>
                             <Download size={16} /> Backup Database
                         </button>
                     </div>
@@ -256,7 +261,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                         </div>
                         <div style={{ display: 'flex', gap: '0.75rem' }}>
                             <input type="file" id="restore-upload" hidden accept=".json" onChange={(e) => { if (e.target.files?.[0]) { setRestoreFile(e.target.files[0]); setShowRestoreConfirm(true); } }} />
-                            <button onClick={() => document.getElementById('restore-upload').click()} disabled={loading} className={styles.primaryBtn} style={{ margin: 0, background: '#6366f1', color: '#fff', border: 'none' }}>
+                            <button onClick={() => document.getElementById('restore-upload').click()} disabled={loading} className={cardStyles.primaryBtn} style={{ margin: 0, background: '#6366f1', color: '#fff', border: 'none' }}>
                                 <Upload size={16} /> Select File
                             </button>
                         </div>
@@ -281,7 +286,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                                 ]}
                                 style={{ padding: '0.4rem 0.75rem', borderRadius: '8px', background: 'var(--card-bg)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', fontSize: '0.85rem', width: 'auto' }}
                             />
-                            <button onClick={() => setShowArchiveConfirm(true)} disabled={loading} className={styles.primaryBtn} style={{ margin: 0, background: '#ef4444', color: '#fff', border: 'none' }}>
+                            <button onClick={() => setShowArchiveConfirm(true)} disabled={loading} className={cardStyles.primaryBtn} style={{ margin: 0, background: '#ef4444', color: '#fff', border: 'none' }}>
                                 <ShieldAlert size={16} /> Archive Now
                             </button>
                         </div>
@@ -349,8 +354,8 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                 footerStyle={{ padding: '1.25rem 1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.8rem' }}
                 footerContent={
                     <>
-                        <button onClick={() => setShowArchiveConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>Cancel</button>
-                        <button onClick={() => handleArchiveData(archiveDays)} className={styles.deleteBtn} style={{ padding: '0.6rem 1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button onClick={() => setShowArchiveConfirm(false)} className={formStyles.cancelBtn} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>Cancel</button>
+                        <button onClick={() => handleArchiveData(archiveDays)} className={tableStyles.deleteBtn} style={{ padding: '0.6rem 1.5rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Trash2 size={16} /> Delete Forever
                         </button>
                     </>
@@ -391,8 +396,8 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab }) => {
                 footerStyle={{ padding: '1.25rem 1.75rem', display: 'flex', justifyContent: 'flex-end', gap: '0.8rem' }}
                 footerContent={
                     <>
-                        <button onClick={() => setShowRestoreConfirm(false)} className={styles.cancelBtn} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>Cancel</button>
-                        <button onClick={() => { setShowRestoreConfirm(false); processDatabaseRestore(restoreFile); }} className={styles.primaryBtn} style={{ padding: '0.6rem 1.75rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <button onClick={() => setShowRestoreConfirm(false)} className={formStyles.cancelBtn} style={{ padding: '0.6rem 1.25rem', margin: 0 }}>Cancel</button>
+                        <button onClick={() => { setShowRestoreConfirm(false); processDatabaseRestore(restoreFile); }} className={cardStyles.primaryBtn} style={{ padding: '0.6rem 1.75rem', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Upload size={18} /> Start Full Restore
                         </button>
                     </>
