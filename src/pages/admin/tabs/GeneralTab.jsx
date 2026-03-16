@@ -111,6 +111,8 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                         onFileChange={setHomeImage}
                         currentImageUrl={homeData.profileImageUrl}
                         onClearExisting={() => setHomeData({ ...homeData, profileImageUrl: '' })}
+                        circular={true}
+                        aspectRatio="1/1"
                     />
 
                     <div className={styles.formFooter}>

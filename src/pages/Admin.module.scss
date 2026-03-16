@@ -1721,12 +1721,17 @@
 }
 
 .fileInputGroup {
+    margin-bottom: 1.5rem;
+    
     label {
-        display: block;
-        font-size: 0.95rem;
-        font-weight: 600;
+        font-size: 0.82rem;
+        font-weight: 700;
         color: var(--text-secondary);
+        display: block;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
         margin-bottom: 0.5rem;
+        opacity: 0.85;
     }
 }
 
@@ -1778,10 +1783,16 @@
     &:hover {
         border-color: rgba(255, 255, 255, 0.2);
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
 
-        .unifiedControlPill {
-            opacity: 1;
-            transform: translate(-50%, 0);
+    // Circular variant specific styles
+    &[style*="border-radius: 50%"] {
+        border: 4px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 0 50px rgba($primary-color, 0.15);
+        
+        &:hover {
+            box-shadow: 0 0 70px rgba($primary-color, 0.25);
+            border-color: rgba($primary-color, 0.3);
         }
     }
 }
@@ -1802,7 +1813,7 @@
     position: absolute;
     bottom: 1.5rem;
     left: 50%;
-    transform: translate(-50%, 15px);
+    transform: translate(-50%, 0);
     display: flex;
     align-items: center;
     gap: 0.25rem;
@@ -1812,18 +1823,24 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 50px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    opacity: 0;
+    opacity: 1;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 10;
 
     &.circularPill {
         bottom: 50%;
-        transform: translate(-50%, 50%) scale(0.9);
+        transform: translate(-50%, 50%) !important;
         background: rgba(10, 10, 20, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 0.3rem;
 
         button {
-            padding: 0.6rem;
+            padding: 0.5rem !important;
             border-radius: 50%;
+            
+            span {
+                display: none;
+            }
         }
     }
 }
