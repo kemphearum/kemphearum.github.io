@@ -34,10 +34,14 @@ const ConfirmDialog = ({ confirmDialog, setConfirmDialog }) => {
             }
             footerContent={
                 <>
-                    <button onClick={handleClose} className={styles.cancelBtn}>
+                    <button onClick={handleClose} className={`${styles.cancelBtn} ${styles.modalActionBtn}`}>
                         Cancel
                     </button>
-                    <button onClick={() => { confirmDialog.onConfirm?.(); handleClose(); }} className={isDanger ? styles.deleteBtn : styles.primaryBtn}>
+                    <button 
+                        onClick={() => { confirmDialog.onConfirm?.(); handleClose(); }} 
+                        className={isDanger ? `${styles.deleteBtn} ${styles.modalActionBtn}` : `${styles.primaryBtn} ${styles.modalActionBtn}`}
+                        style={isDanger ? { background: '#ef4444', color: 'white', border: 'none' } : {}}
+                    >
                         {confirmDialog.confirmText}
                     </button>
                 </>

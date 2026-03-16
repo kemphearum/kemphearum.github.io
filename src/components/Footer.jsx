@@ -1,6 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import SettingsService from '../services/SettingsService';
+import { Github, Globe, Cloud, Activity, Terminal, Triangle, Flame } from 'lucide-react';
+import { motion } from 'framer-motion';
 import styles from './Footer.module.scss';
 
 const Footer = () => {
@@ -25,6 +27,17 @@ const Footer = () => {
 
     const mirrors = settings.mirrors || DEFAULT_MIRRORS;
 
+    const getMirrorIcon = (name, url) => {
+        const lowerName = name.toLowerCase();
+        const lowerUrl = url.toLowerCase();
+        
+        if (lowerName.includes('github') || lowerUrl.includes('github.io')) return <Github size={16} />;
+        if (lowerName.includes('vercel') || lowerUrl.includes('vercel.app')) return <Triangle size={14} style={{ transform: 'rotate(0deg)' }} />;
+        if (lowerName.includes('firebase') || lowerUrl.includes('web.app')) return <Flame size={16} />;
+        if (lowerName.includes('mirror')) return <Terminal size={16} />;
+        return <Globe size={16} />;
+    };
+
     return (
         <footer className={styles.footer}>
             <div className={styles.container}>
@@ -38,9 +51,20 @@ const Footer = () => {
                         <h5 className={styles.sectionTitle}>Site Mirrors</h5>
                         <div className={styles.mirrorsList}>
                             {mirrors.map((mirror, index) => (
-                                <a key={index} href={mirror.url} target="_blank" rel="noopener noreferrer" className={styles.mirrorLink}>
-                                    {mirror.name}
-                                </a>
+                                <motion.a 
+                                    key={index} 
+                                    href={mirror.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className={styles.mirrorLink}
+                                    whileHover={{ y: -3, scale: 1.02 }}
+                                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                                >
+                                    <span className={styles.mirrorIcon}>
+                                        {getMirrorIcon(mirror.name, mirror.url)}
+                                    </span>
+                                    <span className={styles.mirrorName}>{mirror.name}</span>
+                                </motion.a>
                             ))}
                         </div>
                     </div>

@@ -48,7 +48,7 @@ export function Layout({ children }) {
               <ThemeProvider>
                 <ActivityProvider>
                   {children}
-                  <Analytics />
+                  {typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname) && <Analytics />}
                 </ActivityProvider>
               </ThemeProvider>
             </QueryClientProvider>
