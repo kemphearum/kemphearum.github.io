@@ -43,16 +43,16 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <div className={styles.card}>
-                <div className={styles.cardHeader} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
-                    <div style={{ padding: '0.7rem', background: 'rgba(108, 99, 255, 0.08)', borderRadius: '10px', color: 'var(--primary-color)', display: 'flex' }}>
-                        <Home size={22} />
+                <div className={styles.cardHeader}>
+                    <div className={styles.iconWrapper}>
+                        <Home size={24} />
                     </div>
-                    <div style={{ flexGrow: 1 }}>
-                        <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>Home Section</h3>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>Configure the main hero content of your landing page.</p>
+                    <div className={styles.titleMeta}>
+                        <h3>Home Section</h3>
+                        <p>Configure the main hero content of your landing page.</p>
                     </div>
-                    <button onClick={() => setHistoryModal({ isOpen: true, recordId: 'home', title: 'Home Section' })} className={styles.historyBtn} title="View Edit History">
-                        <History size={16} /> History
+                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'home', title: 'Home Section' })} className={styles.historyBtn}>
+                        <History size={16} /> <span>History</span>
                     </button>
                 </div>
                 <form onSubmit={handleSaveHome} className={styles.form}>
@@ -109,6 +109,8 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                         hint="leave empty to keep current"
                         file={homeImage}
                         onFileChange={setHomeImage}
+                        currentImageUrl={homeData.profileImageUrl}
+                        onClearExisting={() => setHomeData({ ...homeData, profileImageUrl: '' })}
                     />
 
                     <div className={styles.formFooter}>
@@ -120,16 +122,16 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
             </div>
 
             <div className={styles.card}>
-                <div className={styles.cardHeader} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
-                    <div style={{ padding: '0.7rem', background: 'rgba(16, 185, 129, 0.08)', borderRadius: '10px', color: '#10b981', display: 'flex' }}>
-                        <User size={22} />
+                <div className={styles.cardHeader}>
+                    <div className={styles.iconWrapper}>
+                        <User size={24} />
                     </div>
-                    <div style={{ flexGrow: 1 }}>
-                        <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>About Section</h3>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>Update your short biography and technical skills.</p>
+                    <div className={styles.titleMeta}>
+                        <h3>About Section</h3>
+                        <p>Update your biography, professional summary, and key skills.</p>
                     </div>
-                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'about', title: 'About Section' })} className={styles.historyBtn} title="View Edit History">
-                        <History size={16} /> History
+                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'about', title: 'About Section' })} className={styles.historyBtn}>
+                        <History size={16} /> <span>History</span>
                     </button>
                 </div>
                 <form onSubmit={handleSaveAbout} className={styles.form}>
@@ -169,16 +171,16 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
             </div>
 
             <div className={styles.card}>
-                <div className={styles.cardHeader} style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1.5rem', marginBottom: '1.5rem' }}>
-                    <div style={{ padding: '0.7rem', background: 'rgba(239, 68, 68, 0.08)', borderRadius: '10px', color: '#ef4444', display: 'flex' }}>
-                        <Mail size={22} />
+                <div className={styles.cardHeader}>
+                    <div className={styles.iconWrapper}>
+                        <Mail size={24} />
                     </div>
-                    <div style={{ flexGrow: 1 }}>
-                        <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)' }}>Contact Section</h3>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>Manage the intro text displayed above your contact form.</p>
+                    <div className={styles.titleMeta}>
+                        <h3>Contact Section</h3>
+                        <p>Manage the intro text displayed above your contact form.</p>
                     </div>
-                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'contact', title: 'Contact Section' })} className={styles.historyBtn} title="View Edit History">
-                        <History size={16} /> History
+                    <button type="button" onClick={() => setHistoryModal({ isOpen: true, recordId: 'contact', title: 'Contact Section' })} className={styles.historyBtn}>
+                        <History size={16} /> <span>History</span>
                     </button>
                 </div>
                 <form onSubmit={handleSaveContact} className={styles.form}>

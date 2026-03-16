@@ -7,6 +7,7 @@ import { AnalyticsService } from '../services/AnalyticsService';
 const analyticsSvc = AnalyticsService;
 import { fetchGeoData } from '../utils/geoUtils';
 import { parseUserAgent, isReturningVisitor } from '../utils/uaUtils';
+import { useActivity } from './useActivity';
 
 export const getSessionId = () => {
     if (typeof window === 'undefined') return 'ssr-session';
@@ -37,6 +38,7 @@ export const getDeviceType = () => {
  */
 export const useAnalytics = () => {
     const location = useLocation();
+    const { trackWrite } = useActivity();
     const hasLogFired = useRef({});
     const startTimeRef = useRef(Date.now());
 
@@ -94,6 +96,11 @@ export const useAnalytics = () => {
                 };
 
                 const visitId = await analyticsSvc.logVisit(visitRecord);
+
+                // Track the write in the activity dashboard
+                if (trackWrite) {
+                    trackWrite(1, `Logged page visit: ${path}`, { device: visitRecord.device, country: visitRecord.country });
+                }
                 
                 // Store visit ID to update duration on cleanup
                 if (visitId) {

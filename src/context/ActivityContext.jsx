@@ -120,7 +120,7 @@ export const ActivityProvider = ({ children }) => {
                 batch.set(logRef, {
                     ...log,
                     time: serverTimestamp(),
-                    user: auth.currentUser?.email || 'Anonymous'
+                    user: log.user || auth.currentUser?.email || 'Anonymous'
                 });
             });
 
@@ -163,7 +163,12 @@ export const ActivityProvider = ({ children }) => {
         const validCount = Number.isFinite(count) ? count : 1;
         pendingRef.current.reads += validCount;
         if (label && shouldLogDetailedInfo('read')) {
-            pendingRef.current.logs.push({ type: 'read', label, count: validCount });
+            pendingRef.current.logs.push({ 
+                type: 'read', 
+                label, 
+                count: validCount,
+                user: auth.currentUser?.email || 'Anonymous'
+            });
         }
         queueFlush();
     }, [queueFlush, shouldLogDetailedInfo]);
@@ -172,7 +177,12 @@ export const ActivityProvider = ({ children }) => {
         const validCount = Number.isFinite(count) ? count : 1;
         pendingRef.current.writes += validCount;
         if (label && shouldLogDetailedInfo('write')) {
-            const logEntry = { type: 'write', label, count: validCount };
+            const logEntry = { 
+                type: 'write', 
+                label, 
+                count: validCount,
+                user: auth.currentUser?.email || 'Anonymous'
+            };
             if (details) logEntry.details = details;
             pendingRef.current.logs.push(logEntry);
         }
@@ -183,7 +193,12 @@ export const ActivityProvider = ({ children }) => {
         const validCount = Number.isFinite(count) ? count : 1;
         pendingRef.current.deletes += validCount;
         if (label && shouldLogDetailedInfo('delete')) {
-            const logEntry = { type: 'delete', label, count: validCount };
+            const logEntry = { 
+                type: 'delete', 
+                label, 
+                count: validCount,
+                user: auth.currentUser?.email || 'Anonymous'
+            };
             if (details) logEntry.details = details;
             pendingRef.current.logs.push(logEntry);
         }

@@ -705,12 +705,12 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                     <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--text-secondary)', opacity: 0.6, marginBottom: '-0.25rem' }}>Live Typography Preview</div>
 
                                     {/* 1. Header Preview Card */}
-                                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--divider)', borderRadius: '16px', overflow: 'hidden', transition: 'all 0.3s ease' }}>
-                                        <div style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--divider)', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div className={styles.livePreviewCard}>
+                                        <div className={styles.livePreviewTitleBar}>
                                             <span>SITE HEADER</span>
-                                            <span style={{ opacity: 0.5 }}>Desktop View</span>
+                                            <span style={{ opacity: 0.5 }}>Responsive Preview</span>
                                         </div>
-                                        <div style={{ padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div className={styles.livePreviewContent}>
                                             <div style={{
                                                 fontFamily: fontCSS[getFont('fontLogo')],
                                                 fontWeight: settingsData.fontLogoWeight || 700,
@@ -721,7 +721,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                             }}>
                                                 {settingsData.logoHighlight || 'KEM'}<span style={{ color: 'var(--primary-color)' }}>{settingsData.logoText || 'PHEARUM'}</span>
                                             </div>
-                                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                            <div className={styles.livePreviewNav}>
                                                 {['Home', 'Blog'].map(item => (
                                                     <span key={item} style={{
                                                         fontFamily: fontCSS[getFont('fontNav')],
@@ -743,9 +743,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                     </div>
 
                                     {/* 2. Content & Hero Preview Card */}
-                                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--divider)', borderRadius: '16px', overflow: 'hidden' }}>
-                                        <div style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--divider)', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-secondary)' }}>MAIN CONTENT & HERO</div>
-                                        <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div className={styles.livePreviewCard}>
+                                        <div className={styles.livePreviewTitleBar}>MAIN CONTENT & HERO</div>
+                                        <div className={styles.livePreviewHero}>
                                             <div style={{
                                                 fontFamily: fontCSS[getFont('fontDisplay')],
                                                 fontWeight: settingsData.fontDisplayWeight || 800,
@@ -770,7 +770,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                                 }}>Sub Heading — ចំណងជើងរង</div>
                                             </div>
 
-                                            <div style={{
+                                            <div className={styles.livePreviewBodyText} style={{
                                                 fontFamily: fontCSS[getFont('fontBody')],
                                                 fontWeight: settingsData.fontBodyWeight || 400,
                                                 fontStyle: settingsData.fontBodyItalic ? 'italic' : 'normal',
@@ -784,7 +784,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                                 </ul>
                                             </div>
 
-                                            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                            <div className={styles.livePreviewButtons}>
                                                 <span style={{
                                                     fontFamily: fontCSS[getFont('fontUI')],
                                                     fontWeight: settingsData.fontUIWeight || 600,
@@ -836,12 +836,12 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                     </div>
 
                                     {/* 3. Footer Preview Card */}
-                                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--divider)', borderRadius: '16px', overflow: 'hidden' }}>
-                                        <div style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--divider)', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-secondary)' }}>FOOTER PREVIEW (REAL LAYOUT)</div>
-                                        <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                                    <div className={styles.livePreviewCard}>
+                                        <div className={styles.livePreviewTitleBar}>FOOTER PREVIEW (REAL LAYOUT)</div>
+                                        <div className={styles.livePreviewFooter}>
+                                            <div className={styles.livePreviewFooterTop}>
                                                 {/* Brand Section */}
-                                                <div style={{ flex: 1, minWidth: '150px' }}>
+                                                <div className={styles.livePreviewFooterBrand}>
                                                     <div style={{
                                                         fontFamily: fontCSS[getFont('fontFooterBrand')],
                                                         fontSize: getFontSize('fontFooterBrandSize', '1.15rem'),
@@ -861,7 +861,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                                 </div>
 
                                                 {/* Mirrors Section */}
-                                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem', minWidth: '150px' }}>
+                                                <div className={styles.livePreviewFooterMirrors}>
                                                     <div style={{
                                                         fontFamily: fontCSS[getFont('fontFooterTitle')],
                                                         fontSize: getFontSize('fontFooterTitleSize', '0.6rem'),
@@ -888,7 +888,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                                 </div>
 
                                                 {/* Social Links Section */}
-                                                <div style={{ flex: 1, display: 'flex', gap: '0.6rem', justifyContent: 'flex-end', minWidth: '150px' }}>
+                                                <div className={styles.livePreviewFooterSocials}>
                                                     <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--glass-surface)', border: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                                             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
@@ -902,9 +902,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                                 </div>
                                             </div>
 
-                                            <div style={{ width: '100%', height: '1px', background: 'var(--divider)', opacity: 0.5, margin: '0.5rem 0' }}></div>
+                                            <div className={styles.livePreviewFooterDivider}></div>
 
-                                            <div style={{
+                                            <div className={`${styles.livePreviewFooterCopyright}`} style={{
                                                 fontFamily: fontCSS[getFont('fontFooterText')],
                                                 fontSize: getFontSize('fontFooterTextSize', '0.68rem'),
                                                 fontWeight: settingsData.fontFooterTextWeight || 400,
@@ -917,10 +917,10 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                     </div>
 
                                     {/* 4. Admin Navigation Preview Card */}
-                                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--divider)', borderRadius: '16px', overflow: 'hidden' }}>
-                                        <div style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--divider)', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-secondary)' }}>ADMIN NAVIGATION & BRANDING</div>
-                                        <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: '0.75rem 1rem', borderRadius: '10px', border: '1px solid var(--divider)' }}>
+                                    <div className={styles.livePreviewCard}>
+                                        <div className={styles.livePreviewTitleBar}>ADMIN NAVIGATION & BRANDING</div>
+                                        <div className={styles.livePreviewAdminNav}>
+                                            <div className={styles.livePreviewAdminHeader}>
                                                 <span style={{
                                                     fontFamily: fontCSS[getFont('fontAdminBrand')],
                                                     fontSize: getFontSize('fontAdminBrandSize', '1.1rem'),
@@ -944,9 +944,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                     </div>
 
                                     {/* 5. Admin Dashboard & Tabs Preview Card */}
-                                    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--divider)', borderRadius: '16px', overflow: 'hidden' }}>
-                                        <div style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--divider)', fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-secondary)' }}>ADMIN DASHBOARD & STATS</div>
-                                        <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    <div className={styles.livePreviewCard}>
+                                        <div className={styles.livePreviewTitleBar}>ADMIN DASHBOARD & STATS</div>
+                                        <div className={styles.livePreviewAdminContent}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                                 <div style={{
                                                     fontFamily: fontCSS[getFont('fontAdminTab')],
@@ -963,10 +963,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                             </div>
 
                                             {/* Stat Card Preview */}
-                                            <div style={{
-                                                background: 'var(--bg-card)', padding: '1rem', borderRadius: '12px', border: '1px solid var(--divider)',
-                                                display: 'flex', flexDirection: 'column', gap: '0.2rem', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                                            }}>
+                                            <div className={styles.livePreviewAdminStatCard}>
                                                 <div style={{
                                                     fontFamily: fontCSS[getFont('fontUI')], fontSize: '0.65rem', color: 'var(--text-secondary)', opacity: 0.7, letterSpacing: '0.5px'
                                                 }}>TOTAL PAGE VISITS</div>
@@ -1079,6 +1076,27 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                     </label>
                                     <p style={{ margin: '0.25rem 0 0 2rem', fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.7 }}>
                                         Show popup alerts in the top right for actions (saving, deleting, etc).
+                                    </p>
+                                </div>
+                                <div className={styles.inputGroup} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={sidebarPersistent}
+                                            onChange={(e) => setSidebarPersistent(e.target.checked)}
+                                            style={{
+                                                width: '18px',
+                                                height: '18px',
+                                                accentColor: 'var(--primary-color)',
+                                                cursor: 'pointer'
+                                            }}
+                                        />
+                                        <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600, letterSpacing: '0.2px' }}>
+                                            Persistent Admin Sidebar
+                                        </span>
+                                    </label>
+                                    <p style={{ margin: '0.25rem 0 0 2rem', fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.7 }}>
+                                        Keep the admin sidebar permanently expanded instead of collapsing it.
                                     </p>
                                 </div>
                             </div>

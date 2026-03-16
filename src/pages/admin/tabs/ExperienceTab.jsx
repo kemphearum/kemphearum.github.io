@@ -131,7 +131,7 @@ const ExperienceTab = ({ userRole, showToast }) => {
         const parseLegacyDate = (dateVal, isEnd = false) => {
             if (!dateVal) return '';
 
-            // 1. Handle Native Object Types (Firestore Timestamp, Date, etc.)
+            // Handle Native Object Types (Firestore Timestamp, Date, etc.)
             let d = null;
             if (typeof dateVal === 'object') {
                 if (dateVal.seconds) d = new Date(dateVal.seconds * 1000);
@@ -142,7 +142,15 @@ const ExperienceTab = ({ userRole, showToast }) => {
                 return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
             }
 
-            if (typeof dateVal !== 'string') return '';
+            // For string parsing, define a native date object for last-resort fallback
+            const nativeDate = new Date(dateVal);
+
+            if (typeof dateVal !== 'string') {
+                if (!isNaN(nativeDate.getTime())) {
+                    return `${nativeDate.getFullYear()}-${String(nativeDate.getMonth() + 1).padStart(2, '0')}`;
+                }
+                return '';
+            }
 
             // Handle ranges by taking either the first or last part
             if (dateVal.includes(' — ') || dateVal.includes(' - ')) {

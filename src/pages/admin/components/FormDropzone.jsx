@@ -14,7 +14,9 @@ const FormDropzone = ({
     currentImageUrl,
     onClearExisting,
     accept = "image/*",
-    placeholder = 'Upload Image'
+    placeholder = 'Upload Image',
+    circular = false,
+    aspectRatio = "16 / 6"
 }) => {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -166,17 +168,19 @@ const FormDropzone = ({
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
                         onClick={handleBrowseClick}
+                        style={circular ? { width: '200px', height: '200px', margin: '0 auto', aspectRatio: '1/1' } : { aspectRatio }}
                     >
-                        <div className={styles.premiumImageCard}>
+                        <div className={styles.premiumImageCard} style={circular ? { borderRadius: '50%', height: '100%', overflow: 'visible' } : {}}>
                             <img 
                                 src={previewUrl || currentImageUrl} 
                                 alt="Current" 
                                 className={styles.unifiedPreviewImg} 
+                                style={circular ? { borderRadius: '50%' } : {}}
                             />
                             
                             {/* Floating Control Pill */}
                             <div 
-                                className={styles.unifiedControlPill}
+                                className={`${styles.unifiedControlPill} ${circular ? styles.circularPill : ''}`}
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <button 
@@ -189,7 +193,7 @@ const FormDropzone = ({
                                     title="Preview Image"
                                 >
                                     <Maximize2 size={18} />
-                                    <span>Preview</span>
+                                    {!circular && <span>Preview</span>}
                                 </button>
                                 
                                 <div className={styles.pillDivider} />
@@ -201,32 +205,35 @@ const FormDropzone = ({
                                     title="Change Image"
                                 >
                                     <FolderPlus size={18} />
-                                    <span>Change</span>
+                                    {!circular && <span>Change</span>}
                                 </button>
                                 
-                                <div className={styles.pillDivider} />
-                                
-                                <button 
-                                    type="button"
-                                    className={`${styles.pillActionBtn} ${styles.danger}`}
-                                    onClick={handleRemove}
-                                    title="Clear Image"
-                                >
-                                    <Trash2 size={18} />
-                                    <span>Clear</span>
-                                </button>
+                                {onClearExisting && (
+                                    <>
+                                        <div className={styles.pillDivider} />
+                                        <button 
+                                            type="button"
+                                            className={`${styles.pillActionBtn} ${styles.danger}`}
+                                            onClick={handleRemove}
+                                            title="Clear Image"
+                                        >
+                                            <Trash2 size={18} />
+                                            {!circular && <span>Clear</span>}
+                                        </button>
+                                    </>
+                                )}
                             </div>
 
                             {/* Dynamic Status Badge */}
-                            <div className={`${styles.topBadge} ${isNewImage ? styles.newBadge : ''}`}>
+                            <div className={`${styles.topBadge} ${isNewImage ? styles.newBadge : ''} ${circular ? styles.circularBadge : ''}`}>
                                 {isNewImage ? (
                                     <>
-                                        <CheckCircle2 size={12} /> Ready to Upload
+                                        <CheckCircle2 size={12} /> {circular ? 'Ready' : 'Ready to Upload'}
                                         {file && <span className={styles.fileMetric}>({formatSize(file.size)})</span>}
                                     </>
                                 ) : (
                                     <>
-                                        <ImageIcon size={12} /> Currently Published
+                                        <ImageIcon size={12} /> {circular ? 'Active' : 'Currently Published'}
                                     </>
                                 )}
                             </div>
@@ -258,16 +265,17 @@ const FormDropzone = ({
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
                         onClick={handleBrowseClick}
+                        style={circular ? { width: '200px', height: '200px', margin: '0 auto', borderRadius: '50%' } : { aspectRatio }}
                     >
                         <div className={styles.fullDropzoneContent}>
                             <div className={styles.uploadIconCircle}>
-                                <Upload size={32} />
+                                <Upload size={circular ? 24 : 32} />
                             </div>
                             <div className={styles.fullUploadText}>
-                                <span className={styles.main}>{placeholder}</span>
-                                <span className={styles.sub}>Drag and drop your image here, or click to browse</span>
-                                <span className={styles.uploadRequirements}>
-                                    Max 1MB • Recommended: 1920x720 (16:6)
+                                <span className={styles.main} style={circular ? { fontSize: '0.9rem' } : {}}>{placeholder}</span>
+                                {!circular && <span className={styles.sub}>Drag and drop your image here, or click to browse</span>}
+                                <span className={styles.uploadRequirements} style={circular ? { fontSize: '0.7rem' } : {}}>
+                                    {circular ? 'Max 1MB' : 'Max 1MB • Recommended: 1920x720 (16:6)'}
                                 </span>
                             </div>
                         </div>
