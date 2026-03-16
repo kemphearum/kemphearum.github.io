@@ -441,48 +441,6 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         <input type="text" placeholder="Tutorial, Tech, Security..." value={settingsData.blogFilters || ''} onChange={(e) => setSettingsData({ ...settingsData, blogFilters: e.target.value })} />
                     </div>
                 </div>
-
-                {/* GitHub Integration Section */}
-                <div className={styles.sectionHeader} style={{ marginTop: '2.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
-                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>GitHub Integration</h4>
-                </div>
-                <div className={styles.formGrid}>
-                    <div className={styles.inputGroup} style={{ position: 'relative' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Key size={16} /> GitHub Personal Access Token
-                        </label>
-                        <div style={{ position: 'relative' }}>
-                            <input 
-                                type={showToken ? 'text' : 'password'} 
-                                placeholder="ghp_xxxxxxxxxxxx" 
-                                value={githubToken} 
-                                onChange={(e) => setGithubToken(e.target.value)}
-                                style={{ paddingRight: '40px' }}
-                            />
-                            <button 
-                                type="button" 
-                                onClick={() => setShowToken(!showToken)}
-                                style={{ 
-                                    position: 'absolute', 
-                                    right: '12px', 
-                                    top: '50%', 
-                                    transform: 'translateY(-50%)',
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--text-secondary)',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    padding: '4px'
-                                }}
-                            >
-                                {showToken ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                        </div>
-                        <span className={styles.hint}>Used for triggering site rebuilds. Stored locally in your browser.</span>
-                    </div>
-                </div>
                 </div>
         )}
 
@@ -1140,33 +1098,99 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                             <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Deployment & Refresh (No-Backend)</h4>
                         </div>
                         <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--input-border)', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                                <div style={{ background: 'rgba(108,99,255,0.1)', padding: '0.75rem', borderRadius: '12px', color: 'var(--primary-color)' }}>
-                                    <Monitor size={24} />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>GitHub Pages / Production Vercel</h4>
-                                    <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Trigger a manual rebuild and deployment of your site. This will push your current configuration to GitHub and trigger the configured CI/CD pipeline.</p>
-                                </div>
-                                <button type='button' disabled={rebuildStatus.state === 'loading'} onClick={handleTriggerRebuild} className={styles.submitBtn} style={{ height: '50px', padding: '0 2rem', background: rebuildStatus.state === 'error' ? 'linear-gradient(135deg, #ef4444, #f87171)' : 'linear-gradient(135deg, var(--primary-color), #8b80ff)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem', border: 'none', borderRadius: '12px', color: 'white', fontSize: '1rem', fontWeight: '600', cursor: rebuildStatus.state === 'loading' ? 'not-allowed' : 'pointer', transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)', opacity: rebuildStatus.state === 'loading' ? 0.7 : 1, whiteSpace: 'nowrap' }}>
-                                    {rebuildStatus.state === 'loading' ? <><RefreshCw size={18} className={styles.spinning} /><span>Syncing...</span></> : <><RefreshCw size={18} /><span>Rebuild</span></>}
-                                </button>
+                            <div style={{ flex: 1 }}>
+                                <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>Github Action</h4>
+                                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>Trigger a manual rebuild and deployment of your site. This will push your current configuration to GitHub and trigger the configured CI/CD pipeline.</p>
                             </div>
 
-                            {rebuildStatus.state !== 'idle' && (
-                                <div style={{ marginTop: '0.5rem', padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid var(--divider)' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                                        <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Status: <strong style={{ fontWeight: 700, color: rebuildStatus.state === 'success' ? '#48c78e' : rebuildStatus.state === 'error' ? '#f14668' : 'var(--primary-color)' }}>{rebuildStatus.state.toUpperCase()}</strong></span>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.7 }}>Last Updated: {rebuildStatus.lastChecked ? new Date(rebuildStatus.lastChecked).toLocaleTimeString() : 'Never'}</span>
+                            {/* GitHub Integration Section */}
+                            <div className={styles.sectionHeader} style={{ marginTop: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
+                                <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>GitHub Integration</h4>
+                            </div>
+                            <div className={styles.formGrid}>
+                                <div className={styles.inputGroup} style={{ position: 'relative' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Key size={16} /> GitHub Personal Access Token
+                                    </label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input 
+                                            type={showToken ? 'text' : 'password'} 
+                                            placeholder="ghp_xxxxxxxxxxxx" 
+                                            value={githubToken} 
+                                            onChange={(e) => setGithubToken(e.target.value)}
+                                            style={{ paddingRight: '40px' }}
+                                        />
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setShowToken(!showToken)}
+                                            style={{ 
+                                                position: 'absolute', 
+                                                right: '12px', 
+                                                top: '50%', 
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                color: 'var(--text-secondary)',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                padding: '4px'
+                                            }}
+                                        >
+                                            {showToken ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
                                     </div>
-                                    {rebuildStatus.message && <div style={{ padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)', borderLeft: '3px solid var(--primary-color)' }}>{rebuildStatus.message}</div>}
+                                    <span className={styles.hint}>Used for triggering site rebuilds. Stored locally in your browser.</span>
                                 </div>
-                            )}
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.5rem' }}>
+                                <button 
+                                    type='button' 
+                                    disabled={rebuildStatus.state === 'loading'} 
+                                    onClick={handleTriggerRebuild} 
+                                    className={styles.submitBtn} 
+                                    style={{ 
+                                        height: '50px', 
+                                        width: '100%',
+                                        maxWidth: '300px',
+                                        background: rebuildStatus.state === 'error' ? 'linear-gradient(135deg, #ef4444, #f87171)' : 'linear-gradient(135deg, var(--primary-color), #8b80ff)', 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        justifyContent: 'center', 
+                                        gap: '0.6rem', 
+                                        border: 'none', 
+                                        borderRadius: '12px', 
+                                        color: 'white', 
+                                        fontSize: '1rem', 
+                                        fontWeight: '600', 
+                                        cursor: rebuildStatus.state === 'loading' ? 'not-allowed' : 'pointer', 
+                                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
+                                        boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)', 
+                                        opacity: rebuildStatus.state === 'loading' ? 0.7 : 1, 
+                                        whiteSpace: 'nowrap',
+                                        alignSelf: 'flex-start'
+                                    }}
+                                >
+                                    {rebuildStatus.state === 'loading' ? <><RefreshCw size={18} className={styles.spinning} /><span>Syncing...</span></> : <><RefreshCw size={18} /><span>Trigger Manual Rebuild</span></>}
+                                </button>
+
+                                {rebuildStatus.state !== 'idle' && (
+                                    <div style={{ padding: '0.5rem 0 1rem 0', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid var(--divider)' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Status: <strong style={{ fontWeight: 700, color: rebuildStatus.state === 'success' ? '#48c78e' : rebuildStatus.state === 'error' ? '#f14668' : 'var(--primary-color)' }}>{rebuildStatus.state.toUpperCase()}</strong></span>
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.7 }}>Last Updated: {rebuildStatus.lastChecked ? new Date(rebuildStatus.lastChecked).toLocaleTimeString() : 'Never'}</span>
+                                        </div>
+                                        {rebuildStatus.message && <div style={{ padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)', borderLeft: '3px solid var(--primary-color)' }}>{rebuildStatus.message}</div>}
+                                    </div>
+                                )}
+                            </div>
 
                             <div style={{ padding: '1rem', background: 'rgba(255, 166, 0, 0.05)', borderRadius: '12px', border: '1px solid rgba(255, 166, 0, 0.1)', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                                 <AlertCircle size={18} style={{ color: '#ffa600', flexShrink: 0, marginTop: '2px' }} />
                                 <div style={{ fontSize: '0.85rem', color: 'rgba(255, 166, 0, 0.9)', lineHeight: '1.4' }}>
-                                    <strong>Note:</strong> Since we are using the <strong>No-Backend</strong> version, your GitHub token must be entered in Identity settings to trigger the build. This ensures 100% free hosting.
+                                    <strong>Note:</strong> Since we are using the <strong>No-Backend</strong> version, your GitHub token must be entered above to trigger the build. This ensures 100% free hosting.
                                 </div>
                             </div>
                         </div>
