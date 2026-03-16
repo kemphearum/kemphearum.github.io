@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import ContentService from '../services/ContentService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Hero.module.scss';
-// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import MarkdownRenderer from './MarkdownRenderer';
 
 const Hero = () => {
     const { trackEvent } = useAnalytics();
@@ -83,9 +83,9 @@ const Hero = () => {
                             <motion.h2 variants={itemVariants} className={styles.subtitle}>
                                 {content.subtitle}
                             </motion.h2>
-                            <motion.p variants={itemVariants} className={styles.description}>
-                                {content.description}
-                            </motion.p>
+                            <motion.div variants={itemVariants} className={styles.description}>
+                                <MarkdownRenderer content={content.description} />
+                            </motion.div>
                             <motion.div variants={itemVariants} className={styles.cta}>
                                 <a
                                     href={content.ctaLink || "#experience"}

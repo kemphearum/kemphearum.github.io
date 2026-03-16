@@ -1060,6 +1060,27 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                                         Background particles respond to mouse movement.
                                     </p>
                                 </div>
+                                <div className={styles.inputGroup} style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={settingsData.notificationsEnabled ?? true}
+                                            onChange={(e) => setSettingsData({ ...settingsData, notificationsEnabled: e.target.checked })}
+                                            style={{
+                                                width: '18px',
+                                                height: '18px',
+                                                accentColor: 'var(--primary-color)',
+                                                cursor: 'pointer'
+                                            }}
+                                        />
+                                        <span style={{ fontSize: '0.9rem', color: 'var(--text-primary)', fontWeight: 600, letterSpacing: '0.2px' }}>
+                                            Notification Alerts (Toasts)
+                                        </span>
+                                    </label>
+                                    <p style={{ margin: '0.25rem 0 0 2rem', fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.7 }}>
+                                        Show popup alerts in the top right for actions (saving, deleting, etc).
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     )}

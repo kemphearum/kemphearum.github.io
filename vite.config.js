@@ -22,7 +22,7 @@ export default defineConfig({
     setupFiles: './src/setupTests.js',
   },
   server: {
-    port: 3333,
+    port: 5173,
     host: '127.0.0.1'
   },
   build: {

@@ -57,8 +57,7 @@ const Footer = () => {
                                     target="_blank" 
                                     rel="noopener noreferrer" 
                                     className={styles.mirrorLink}
-                                    whileHover={{ y: -3, scale: 1.02 }}
-                                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
+
                                 >
                                     <span className={styles.mirrorIcon}>
                                         {getMirrorIcon(mirror.name, mirror.url)}

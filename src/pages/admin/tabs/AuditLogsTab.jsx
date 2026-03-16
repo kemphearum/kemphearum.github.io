@@ -224,6 +224,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
                                     document.body.appendChild(link);
                                     link.click();
                                     document.body.removeChild(link);
+                                    showToast(`Exported ${filteredAuditLogs.length} audit logs to CSV.`);
                                 }} className={styles.iconBtn} style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-primary)', fontSize: '0.85rem' }} title="Export as CSV">
                                     <Download size={14} /> Export
                                 </button>

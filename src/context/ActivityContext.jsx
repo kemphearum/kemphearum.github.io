@@ -36,10 +36,10 @@ export const ActivityProvider = ({ children }) => {
 
     // Listen to logging configuration rules
     useEffect(() => {
-        const settingsRef = doc(db, 'settings', 'admin');
+        const settingsRef = doc(db, 'settings', 'global');
         const unsubscribe = onSnapshot(settingsRef, (snap) => {
             if (snap.exists()) {
-                const data = snap.data();
+                const data = snap.data()?.audit || {};
                 setLoggingConfig({
                     logAll: data.logAll !== false,
                     logReads: data.logReads !== false,
@@ -120,7 +120,7 @@ export const ActivityProvider = ({ children }) => {
                 batch.set(logRef, {
                     ...log,
                     time: serverTimestamp(),
-                    user: user?.email || 'Anonymous'
+                    user: auth.currentUser?.email || 'Anonymous'
                 });
             });
 
@@ -137,7 +137,7 @@ export const ActivityProvider = ({ children }) => {
         } finally {
             isFlushing.current = false;
         }
-    }, [user]);
+    }, []);
 
     const queueFlush = useCallback(() => {
         if (activityFlushTimerRef.current) clearTimeout(activityFlushTimerRef.current);
@@ -148,7 +148,8 @@ export const ActivityProvider = ({ children }) => {
     const shouldLogDetailedInfo = useCallback((type) => {
         if (!loggingConfig.logAll) return false;
 
-        const isAnon = !user || user.email === undefined;
+        const currentUser = auth.currentUser;
+        const isAnon = !currentUser || !currentUser.email;
         if (isAnon && !loggingConfig.logAnonymous) return false;
 
         if (type === 'read' && !loggingConfig.logReads) return false;
@@ -156,7 +157,7 @@ export const ActivityProvider = ({ children }) => {
         if (type === 'delete' && !loggingConfig.logDeletes) return false;
 
         return true;
-    }, [loggingConfig, user]);
+    }, [loggingConfig]);
 
     const trackRead = useCallback((count = 1, label = '') => {
         const validCount = Number.isFinite(count) ? count : 1;

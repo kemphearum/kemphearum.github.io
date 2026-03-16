@@ -7,11 +7,17 @@ import ContentService from '../../../services/ContentService';
 import FormRow from '../components/FormRow';
 import FormInput from '../components/FormInput';
 import FormTextArea from '../components/FormTextArea';
+import FormMarkdownEditor from '../components/FormMarkdownEditor';
 import FormDropzone from '../components/FormDropzone';
 
 const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactData, setContactData, loading, saveSectionData }) => {
     const [homeImage, setHomeImage] = useState(null);
     const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
+    
+    // Preview states for Markdown editors
+    const [homePreview, setHomePreview] = useState(false);
+    const [aboutPreview, setAboutPreview] = useState(false);
+    const [contactPreview, setContactPreview] = useState(false);
 
     const handleSaveHome = async (e) => {
         e.preventDefault();
@@ -72,13 +78,15 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                         onChange={(e) => setHomeData({ ...homeData, subtitle: e.target.value })}
                     />
 
-                    <FormTextArea
+                    <FormMarkdownEditor
                         label="Description"
-                        icon={Edit3}
+                        id="home-description"
                         placeholder="Tell people about yourself..."
                         value={homeData.description}
                         onChange={(e) => setHomeData({ ...homeData, description: e.target.value })}
-                        rows="5"
+                        isPreviewMode={homePreview}
+                        onTogglePreview={() => setHomePreview(!homePreview)}
+                        rows="8"
                     />
 
                     <FormRow>
@@ -125,13 +133,15 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                     </button>
                 </div>
                 <form onSubmit={handleSaveAbout} className={styles.form}>
-                    <FormTextArea
+                    <FormMarkdownEditor
                         label="Bio"
-                        icon={Edit3}
+                        id="about-bio"
                         placeholder="Write your bio..."
                         value={aboutData.bio}
                         onChange={(e) => setAboutData({ ...aboutData, bio: e.target.value })}
-                        rows="8"
+                        isPreviewMode={aboutPreview}
+                        onTogglePreview={() => setAboutPreview(!aboutPreview)}
+                        rows="12"
                     />
 
                     <FormInput
@@ -172,13 +182,15 @@ const GeneralTab = ({ homeData, setHomeData, aboutData, setAboutData, contactDat
                     </button>
                 </div>
                 <form onSubmit={handleSaveContact} className={styles.form}>
-                    <FormTextArea
+                    <FormMarkdownEditor
                         label="Intro Text"
-                        icon={Edit3}
+                        id="contact-intro"
                         placeholder="The text shown above the contact form..."
                         value={contactData.introText}
                         onChange={(e) => setContactData({ ...contactData, introText: e.target.value })}
-                        rows="4"
+                        isPreviewMode={contactPreview}
+                        onTogglePreview={() => setContactPreview(!contactPreview)}
+                        rows="6"
                     />
                     <div className={styles.formFooter}>
                         <button type="submit" disabled={loading} className={styles.submitBtn}>

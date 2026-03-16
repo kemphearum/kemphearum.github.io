@@ -15,8 +15,11 @@ const FormInput = ({
     fullWidth = false,
     disabled = false,
     onClick,
+    isTextArea = false,
     ...props
 }) => {
+    const Component = isTextArea ? 'textarea' : 'input';
+    
     return (
         <div className={styles.inputGroup} style={fullWidth ? { gridColumn: 'span 2' } : {}}>
             {label && (
@@ -25,8 +28,8 @@ const FormInput = ({
                     {hint && <span className={styles.hint}> ({hint})</span>}
                 </label>
             )}
-            <input
-                type={type}
+            <Component
+                type={isTextArea ? undefined : type}
                 placeholder={placeholder}
                 value={value}
                 onChange={onChange}

@@ -5,8 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import ContentService from '../services/ContentService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Contact.module.scss';
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
+import MarkdownRenderer from './MarkdownRenderer';
 
 const Contact = () => {
     const { trackEvent } = useAnalytics();
@@ -74,15 +74,15 @@ const Contact = () => {
                     {loading ? (
                         <div className={styles.skeletonText} />
                     ) : (
-                        <motion.p
+                        <motion.div
                             className={styles.text}
                             initial={{ opacity: 0 }}
                             whileInView={{ opacity: 1 }}
                             transition={{ delay: 0.2 }}
                             viewport={{ once: true }}
                         >
-                            {contactContent.introText}
-                        </motion.p>
+                            <MarkdownRenderer content={contactContent.introText} />
+                        </motion.div>
                     )}
 
                     <motion.form

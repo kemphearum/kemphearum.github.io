@@ -142,21 +142,30 @@ const Admin = () => {
         return stored !== null ? JSON.parse(stored) : true;
     });
 
-    // Toast
-    const [toast, setToast] = useState(null);
-    const showToast = useCallback((message, type = 'success') => setToast({ message, type }), []);
-
     // Role Permissions
     const [rolePermissions, setRolePermissions] = useState({});
 
     // Messages for unread badge
     const [messages, setMessages] = useState([]);
 
+    // Toast
+    const [toast, setToast] = useState(null);
+
     // Content Data for simple tabs
     const [homeData, setHomeData] = useState({ greeting: '', name: '', subtitle: '', description: '', ctaText: '', ctaLink: '', profileImageUrl: '' });
     const [aboutData, setAboutData] = useState({ bio: '', skills: '' });
     const [contactData, setContactData] = useState({ introText: '' });
-    const [settingsData, setSettingsData] = useState({ logoHighlight: '', logoText: '', tagline: '', footerText: '', projectFilters: '', blogFilters: '', pageTitle: '', pageFaviconUrl: '' });
+    const [settingsData, setSettingsData] = useState({ 
+        logoHighlight: '', logoText: '', tagline: '', footerText: '', 
+        projectFilters: '', blogFilters: '', pageTitle: '', pageFaviconUrl: '',
+        notificationsEnabled: true
+    });
+
+    const showToast = useCallback((message, type = 'success') => {
+        if (settingsData.notificationsEnabled !== false) {
+            setToast({ message, type });
+        }
+    }, [settingsData.notificationsEnabled]);
 
     // Hooks
     const navigate = useNavigate();
@@ -276,8 +285,7 @@ const Admin = () => {
             const perms = await UserService.fetchRolePermissions(trackRead);
             setRolePermissions(perms);
         } catch (error) { console.error("Error fetching role permissions:", error); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [trackRead]);
 
     const fetchMessages = useCallback(async () => {
         try {
@@ -285,8 +293,7 @@ const Admin = () => {
             trackRead(msgs.length, 'Fetched inbox messages');
             setMessages(msgs);
         } catch (error) { console.error("Error fetching messages:", error); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [trackRead]);
 
     // ====== Migration Bridge ======
     useEffect(() => {
@@ -404,8 +411,7 @@ const Admin = () => {
                 }
             }
         } catch (error) { console.error(`Error fetching ${section}:`, error); }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [trackRead]);
 
     const saveSectionData = useCallback(async (section, data) => {
         setLoading(true);
@@ -422,7 +428,7 @@ const Admin = () => {
                     'fontMono', 'fontMonoWeight', 'fontMonoItalic', 'fontMonoSize',
                     'fontSize', 'adminFontOverride'
                 ];
-                const systemKeys = ['sidebarPersistent'];
+                const systemKeys = ['sidebarPersistent', 'notificationsEnabled'];
 
                 const typography = {};
                 const system = {};

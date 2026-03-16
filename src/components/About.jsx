@@ -2,8 +2,8 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ContentService from '../services/ContentService';
 import styles from './About.module.scss';
-// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import MarkdownRenderer from './MarkdownRenderer';
 
 const About = () => {
     const { data, isLoading: loading } = useQuery({
@@ -16,12 +16,7 @@ const About = () => {
         skills: []
     };
 
-    const renderBio = (text) => {
-        if (!text) return null;
-        return text.split('\n\n').map((paragraph, index) => (
-            <p key={index}>{paragraph}</p>
-        ));
-    };
+
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -68,7 +63,7 @@ const About = () => {
                             viewport={{ once: true }}
                         >
                             <div className={styles.bioText}>
-                                {renderBio(content.bio)}
+                                <MarkdownRenderer content={content.bio} />
                             </div>
                             <p className={styles.subtext}>Technologies & Skills</p>
                             <motion.div
