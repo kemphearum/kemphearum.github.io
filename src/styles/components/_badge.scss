@@ -1,0 +1,38 @@
+@use '../variables' as *;
+
+.ui-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+
+    &--default {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-secondary);
+    }
+
+    &--primary {
+        background: rgba($primary-color, 0.15);
+        color: $primary-color;
+    }
+
+    &--success {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+    }
+
+    &--warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+    }
+
+    &--error {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+    }
+}

@@ -159,16 +159,18 @@ export const ActivityProvider = ({ children }) => {
         return true;
     }, [loggingConfig]);
 
-    const trackRead = useCallback((count = 1, label = '') => {
+    const trackRead = useCallback((count = 1, label = '', details = null) => {
         const validCount = Number.isFinite(count) ? count : 1;
         pendingRef.current.reads += validCount;
         if (label && shouldLogDetailedInfo('read')) {
-            pendingRef.current.logs.push({ 
+            const logEntry = { 
                 type: 'read', 
                 label, 
                 count: validCount,
                 user: auth.currentUser?.email || 'Anonymous'
-            });
+            };
+            if (details) logEntry.details = details;
+            pendingRef.current.logs.push(logEntry);
         }
         queueFlush();
     }, [queueFlush, shouldLogDetailedInfo]);

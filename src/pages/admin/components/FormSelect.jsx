@@ -1,10 +1,9 @@
-import React from 'react';
+import { Select } from '../../../shared/components/ui';
 import styles from '../../Admin.module.scss';
+
 
 /**
  * FormSelect — standard dropdown matching the User Account Profile style.
- * When wrapped (default), inherits all styling from .inputGroup select.
- * When noWrapper, applies .standardSelect for standalone use.
  */
 const FormSelect = ({
     label,
@@ -20,23 +19,18 @@ const FormSelect = ({
     hint
 }) => {
     const selectElement = (
-        <select
+        <Select
             value={value}
             onChange={onChange}
             className={noWrapper ? styles.standardSelect : undefined}
             required={required}
+            options={options}
             style={{
-                width: '100%',
                 marginTop: (!noWrapper && label) ? '0.4rem' : '0',
                 ...style
             }}
-        >
-            {options.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                </option>
-            ))}
-        </select>
+            fullWidth={noWrapper || fullWidth}
+        />
     );
 
     if (noWrapper) return selectElement;
@@ -45,7 +39,7 @@ const FormSelect = ({
         <div
             className={styles.inputGroup}
             style={{
-                ...(fullWidth && window.innerWidth > 600 ? { gridColumn: 'span 2' } : {}),
+                ...(fullWidth && typeof window !== 'undefined' && window.innerWidth > 600 ? { gridColumn: 'span 2' } : {}),
                 ...containerStyle
             }}
         >

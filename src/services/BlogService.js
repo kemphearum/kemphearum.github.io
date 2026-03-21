@@ -1,6 +1,7 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 
 class BlogService extends BaseService {
     constructor() {
@@ -9,22 +10,22 @@ class BlogService extends BaseService {
 
     // Example of adding specific business logic and role checks
     async toggleVisibility(userRole, id, currentVisible, trackWrite) {
-        if (userRole !== 'superadmin' && userRole !== 'admin') {
-            throw new Error("Unauthorized to change visibility.");
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG, userRole)) {
+            throw new Error("Unauthorized action");
         }
         return this.update(id, { visible: !currentVisible }, trackWrite);
     }
 
     async toggleFeatured(userRole, id, currentFeatured, trackWrite) {
-        if (userRole !== 'superadmin' && userRole !== 'admin') {
-            throw new Error("Unauthorized to change featured status.");
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG, userRole)) {
+            throw new Error("Unauthorized action");
         }
         return this.update(id, { featured: !currentFeatured }, trackWrite);
     }
 
     async deletePost(userRole, id, trackDelete) {
-        if (userRole !== 'superadmin') {
-            throw new Error("Only Superadmins can delete posts.");
+        if (!isActionAllowed(ACTIONS.DELETE, MODULES.BLOG, userRole)) {
+            throw new Error("Unauthorized action");
         }
         return this.delete(id, (count, label) => {
             if (trackDelete) trackDelete(count, label, { id, action: 'deleted' });
@@ -42,7 +43,7 @@ class BlogService extends BaseService {
         let querySnapshot = await getDocs(q);
 
         if (trackRead) {
-            trackRead(querySnapshot.size, `Queried blog post by slug: ${slug}`);
+            trackRead(querySnapshot.size, `Queried blog post by slug: ${slug}`, { slug, count: querySnapshot.size });
         }
 
         if (!querySnapshot.empty) {
@@ -77,7 +78,7 @@ class BlogService extends BaseService {
         const querySnapshot = await getDocs(q);
 
         if (trackRead) {
-            trackRead(querySnapshot.size, 'Queried related blog posts');
+            trackRead(querySnapshot.size, 'Queried related blog posts', { tags, count: querySnapshot.size });
         }
 
         let allVisiblePosts = querySnapshot.docs
@@ -113,8 +114,9 @@ class BlogService extends BaseService {
      * Prepares blog post form data for saving to Firestore by formatting tags and slug.
      */
     async savePost(userRole, formData, trackWrite) {
-        if (userRole === 'pending') {
-            throw new Error("Not authorized to save posts.");
+        const action = formData.id ? ACTIONS.EDIT : ACTIONS.CREATE;
+        if (!isActionAllowed(action, MODULES.BLOG, userRole)) {
+            throw new Error("Unauthorized action");
         }
 
         const tagsArray = typeof formData.tags === 'string'

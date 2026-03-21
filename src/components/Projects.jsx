@@ -9,11 +9,17 @@ import { motion } from 'framer-motion';
 
 const Projects = () => {
     const { data: projectsData, isLoading: loadingProjects } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['projects'],
         queryFn: () => ProjectService.getAll("createdAt", "desc")
     });
 
     const { data: globalConfig } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['settings', 'global'],
         queryFn: () => SettingsService.fetchGlobalSettings()
     });

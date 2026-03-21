@@ -1,0 +1,13 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.tableSection {
+  background: var(--card-bg, #1a1b1e);
+  border: 1px solid var(--divider, #2c2e33);
+  border-radius: 8px;
+  overflow: hidden;
+}

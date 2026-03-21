@@ -8,6 +8,9 @@ import { Link } from 'react-router-dom';
 
 const FeaturedBlogs = () => {
     const { data: postsData, isLoading: loading } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['posts'],
         queryFn: () => BlogService.getAll("createdAt", "desc")
     });

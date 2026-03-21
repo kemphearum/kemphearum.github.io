@@ -10,9 +10,8 @@ import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
 import styles from '../../Admin.module.scss';
 import ProjectService from '../../../services/ProjectService';
-import ConfirmDialog from '../components/ConfirmDialog';
+import { Button, Badge, Dialog, Input, Dropdown } from '../../../shared/components/ui';
 import HistoryModal from '../components/HistoryModal';
-import BaseModal from '../components/BaseModal';
 import FormRow from '../components/FormRow';
 import FormInput from '../components/FormInput';
 import FormMarkdownEditor from '../components/FormMarkdownEditor';
@@ -43,6 +42,9 @@ const ProjectsTab = ({ userRole, showToast }) => {
     const queryClient = useQueryClient();
 
     const { data: projects = [], isLoading: projectsLoading } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['projects'],
         queryFn: async () => {
             const allProjects = await ProjectService.getAll("createdAt", "desc");
@@ -406,55 +408,47 @@ const ProjectsTab = ({ userRole, showToast }) => {
                     <div className={styles.listSectionHeader}>
                         <h3 className={styles.listTitle}>Existing Projects</h3>
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                            <button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setShowProjectForm(true); }} className={styles.addBtn}>
-                                <Plus size={18} /> Add New
-                            </button>
-                            <div className={styles.dropdownWrapper}>
-                                <button
-                                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                                    className={styles.secondaryBtn}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-                                >
-                                    <Settings2 size={16} /> Bulk Actions <ChevronDown size={14} style={{ transform: dropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                                </button>
-
-                                {dropdownOpen && (
-                                    <>
-                                        <div className={styles.modalOverlay} style={{ background: 'rgba(0, 0, 0, 0.3)', backdropFilter: 'none', WebkitBackdropFilter: 'none', zIndex: 999 }} onClick={() => setDropdownOpen(false)} />
-                                        <div className={styles.dropdownMenu}>
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadCSVTemplate(); }}>
-                                                <FileText size={16} /> Download CSV Template
-                                            </button>
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); downloadTemplate(); }}>
-                                                <FileText size={16} /> Download JSON Template
-                                            </button>
-                                            <hr className={styles.dropdownDivider} />
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportCSV(); }}>
-                                                <ExternalLink size={16} /> Export CSV
-                                            </button>
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); handleExportJSON(); }}>
-                                                <ExternalLink size={16} /> Export JSON
-                                            </button>
-                                            <hr className={styles.dropdownDivider} />
-                                            <button className={styles.dropdownItem} onClick={() => { setDropdownOpen(false); fileInputRef.current?.click(); }}>
-                                                <Upload size={16} /> Import (JSON/CSV)
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    accept=".json,.csv"
-                                    onChange={handleImportJSON}
-                                    style={{ display: 'none' }}
-                                />
-                            </div>
+                            <Button onClick={() => { setEditingProject(null); setProject({ title: '', description: '', techStack: '', githubUrl: '', liveUrl: '', slug: '', content: '' }); setProjectImage(null); setShowProjectForm(true); }}>
+                                <Plus size={18} /> Add New Project
+                            </Button>
+                            <Dropdown>
+                                <Dropdown.Trigger asChild>
+                                    <Button variant="secondary">
+                                        <Settings2 size={16} /> Bulk Actions <ChevronDown size={14} />
+                                    </Button>
+                                </Dropdown.Trigger>
+                                <Dropdown.Content>
+                                    <Dropdown.Item onClick={downloadCSVTemplate}>
+                                        <FileText size={16} /> Download CSV Template
+                                    </Dropdown.Item>
+                                    <Dropdown.Item onClick={downloadTemplate}>
+                                        <FileText size={16} /> Download JSON Template
+                                    </Dropdown.Item>
+                                    <Dropdown.Separator />
+                                    <Dropdown.Item onClick={handleExportCSV}>
+                                        <ExternalLink size={16} /> Export CSV
+                                    </Dropdown.Item>
+                                    <Dropdown.Item onClick={handleExportJSON}>
+                                        <ExternalLink size={16} /> Export JSON
+                                    </Dropdown.Item>
+                                    <Dropdown.Separator />
+                                    <Dropdown.Item onClick={() => fileInputRef.current?.click()}>
+                                        <Upload size={16} /> Import (JSON/CSV)
+                                    </Dropdown.Item>
+                                </Dropdown.Content>
+                            </Dropdown>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                accept=".json,.csv"
+                                onChange={handleImportJSON}
+                                style={{ display: 'none' }}
+                            />
                         </div>
                     </div>
                     <div className={styles.searchBox}>
                         <Search size={16} className={styles.searchIcon} />
-                        <input type="text" placeholder="Search by title or technology..." value={searchProjects} onChange={(e) => { setSearchProjects(e.target.value); setProjPage(1); }} />
+                        <Input type="text" placeholder="Search by title or technology..." value={searchProjects} onChange={(e) => { setSearchProjects(e.target.value); setProjPage(1); }} />
                         {searchProjects && <span className={styles.searchResultCount}>{filteredProjects.length} of {projects.length}</span>}
                     </div>
                     {filteredProjects.length === 0 ? (
@@ -523,20 +517,20 @@ const ProjectsTab = ({ userRole, showToast }) => {
                                     </div>
                                     <div className={styles.colActions}>
                                         <div className={styles.itemActions}>
-                                            {p.slug && <button onClick={(e) => { e.stopPropagation(); window.open(`/projects/${p.slug}`, '_blank'); }} title="View Detail" className={styles.editBtn}><ExternalLink size={16} /></button>}
+                                            {p.slug && <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); window.open(`/projects/${p.slug}`, '_blank'); }} title="View Detail"><ExternalLink size={16} /></Button>}
                                             {userRole !== 'editor' && (
                                                 <>
-                                                    <button onClick={(e) => { e.stopPropagation(); toggleFeatured(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"} className={styles.editBtn}>
+                                                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); toggleFeatured(p.id, p.featured); }} title={p.featured ? "Unfeature" : "Feature"}>
                                                         <Star size={16} fill={p.featured ? "currentColor" : "none"} style={{ color: p.featured ? '#FFD700' : 'inherit' }} />
-                                                    </button>
-                                                    <button onClick={(e) => { e.stopPropagation(); toggleVisibility(p.id, p.visible !== false); }} title={p.visible !== false ? "Hide" : "Show"} className={styles.editBtn}>
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); toggleVisibility(p.id, p.visible !== false); }} title={p.visible !== false ? "Hide" : "Show"}>
                                                         {p.visible !== false ? <Eye size={16} /> : <EyeOff size={16} />}
-                                                    </button>
+                                                    </Button>
                                                 </>
                                             )}
-                                            <button onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} className={styles.historyIconBtn} title="View Edit History"><History size={16} /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleEditClick(p); }} className={styles.editBtn} title="Edit"><Edit2 size={16} /></button>
-                                            {userRole !== 'editor' && <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }} className={styles.deleteBtn} title="Delete"><Trash2 size={16} /></button>}
+                                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: p.id, title: p.title }); }} title="View Edit History"><History size={16} /></Button>
+                                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleEditClick(p); }} title="Edit"><Edit2 size={16} /></Button>
+                                            {userRole !== 'editor' && <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteProject(p.id); }} title="Delete"><Trash2 size={16} /></Button>}
                                         </div>
                                     </div>
                                 </div>
@@ -649,62 +643,75 @@ const ProjectsTab = ({ userRole, showToast }) => {
             )}
 
             {/* Project Details Modal */}
-            {/* Project Details Modal */}
-            <BaseModal
-                isOpen={!!viewingProject}
-                onClose={() => setViewingProject(null)}
-                zIndex={1200}
-                maxWidth="720px"
-                contentStyle={{ borderRadius: '20px' }}
-                headerStyle={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}
-                headerContent={
-                    <h3 style={{ margin: 0, fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {icons.projects || '🗂️'} Project Details
-                    </h3>
-                }
-                bodyStyle={{ padding: 0 }}
-                footerStyle={{ padding: '1.25rem 2rem' }}
-                footerContent={
-                    <button onClick={() => setViewingProject(null)} className={styles.primaryBtn} style={{ margin: 0 }}>Close</button>
-                }
-            >
-                <div style={{ padding: '2rem' }}>
-                    <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                            <span className={styles.detailLabel}>Title</span>
-                            <span className={styles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingProject?.title}</span>
-                        </div>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                            <span className={styles.detailLabel}>Description</span>
-                            <span className={styles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingProject?.description}</span>
-                        </div>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
-                            <span className={styles.detailLabel}>Tech Stack</span>
-                            <div className={styles.techTags} style={{ marginTop: '0.6rem' }}>
-                                {(Array.isArray(viewingProject?.techStack) ? viewingProject.techStack : []).map((t, i) => (
-                                    <span key={`preview-tag-${t}-${i}`} className={styles.techTag} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', padding: '0.3rem 0.8rem', fontSize: '0.75rem' }}>{t}</span>
-                                ))}
-                            </div>
-                        </div>
-                        <div className={styles.detailItem} style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'row', gap: '1.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
-                            {viewingProject?.liveUrl && <a href={viewingProject.liveUrl} target="_blank" rel="noopener noreferrer" className={styles.primaryBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem' }}><ExternalLink size={16} /> Live Demo</a>}
-                            {viewingProject?.githubUrl && <a href={viewingProject.githubUrl} target="_blank" rel="noopener noreferrer" className={styles.editBtn} style={{ margin: 0, textDecoration: 'none', padding: '0.6rem 1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><LinkIcon size={16} /> GitHub Repository</a>}
-                        </div>
-                    </div>
-                    <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
-                        <MarkdownRenderer content={viewingProject?.content || '*No extended content...*'} />
-                    </div>
-                </div>
-            </BaseModal>
+            <Dialog open={!!viewingProject} onOpenChange={() => setViewingProject(null)}>
+                <Dialog.Content maxWidth="720px">
+                    <Dialog.Header>
+                        <Dialog.Title style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {icons.projects || '🗂️'} Project Details
+                        </Dialog.Title>
+                        <Dialog.Close />
+                    </Dialog.Header>
+                    <Dialog.Body style={{ padding: '2rem' }}>
+                        {viewingProject && (
+                            <>
+                                <div className={styles.detailGrid} style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                                    <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                        <span className={styles.detailLabel}>Title</span>
+                                        <span className={styles.detailValue} style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary-color)' }}>{viewingProject.title}</span>
+                                    </div>
+                                    <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                        <span className={styles.detailLabel}>Description</span>
+                                        <span className={styles.detailValue} style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>{viewingProject.description}</span>
+                                    </div>
+                                    <div className={styles.detailItem} style={{ gridColumn: 'span 2' }}>
+                                        <span className={styles.detailLabel}>Tech Stack</span>
+                                        <div className={styles.techTags} style={{ marginTop: '0.6rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                            {(Array.isArray(viewingProject.techStack) ? viewingProject.techStack : []).map((t, i) => (
+                                                <Badge key={`preview-tag-${t}-${i}`} variant="default">{t}</Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className={styles.detailItem} style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'row', gap: '1.5rem', alignItems: 'center', marginTop: '0.5rem' }}>
+                                        {viewingProject.liveUrl && <Button onClick={() => window.open(viewingProject.liveUrl, '_blank')} style={{ textDecoration: 'none' }}><ExternalLink size={16} /> Live Demo</Button>}
+                                        {viewingProject.githubUrl && <Button variant="secondary" onClick={() => window.open(viewingProject.githubUrl, '_blank')} style={{ textDecoration: 'none' }}><LinkIcon size={16} /> GitHub Repository</Button>}
+                                    </div>
+                                </div>
+                                <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
+                                    <MarkdownRenderer content={viewingProject.content || '*No extended content...*'} />
+                                </div>
+                            </>
+                        )}
+                    </Dialog.Body>
+                    <Dialog.Footer>
+                        <Button onClick={() => setViewingProject(null)}>Close</Button>
+                    </Dialog.Footer>
+                </Dialog.Content>
+            </Dialog>
 
 
             {/* Confirm Dialog */}
-            {confirmDialog.isOpen && (
-                <ConfirmDialog
-                    confirmDialog={confirmDialog}
-                    setConfirmDialog={setConfirmDialog}
-                />
-            )}
+            <Dialog open={confirmDialog.isOpen} onOpenChange={(open) => !open && setConfirmDialog(prev => ({ ...prev, isOpen: false }))}>
+                <Dialog.Content maxWidth="440px">
+                    <Dialog.Header>
+                        <Dialog.Title style={{ color: confirmDialog.type === 'danger' ? '#ef4444' : '#f97316', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {confirmDialog.type === 'danger' ? <Trash2 size={20} /> : <Star size={20} />} {confirmDialog.title}
+                        </Dialog.Title>
+                        <Dialog.Close />
+                    </Dialog.Header>
+                    <Dialog.Body style={{ color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                        {confirmDialog.message}
+                    </Dialog.Body>
+                    <Dialog.Footer>
+                        <Button variant="ghost" onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}>Cancel</Button>
+                        <Button 
+                            variant={confirmDialog.type === 'danger' ? 'danger' : 'primary'}
+                            onClick={() => { confirmDialog.onConfirm?.(); setConfirmDialog(prev => ({ ...prev, isOpen: false })); }}
+                        >
+                            {confirmDialog.confirmText}
+                        </Button>
+                    </Dialog.Footer>
+                </Dialog.Content>
+            </Dialog>
 
             <HistoryModal
                 isOpen={historyModal.isOpen}

@@ -20,11 +20,43 @@ const AnalyticsDetailModal = ({
     analyticsLogsLoading,
     analyticsLogs = [],
     analyticsLogsTotal,
-    quotaExceeded = false
+    quotaExceeded = false,
+    page = 1,
+    onPageChange,
+    pageSize = 50
 }) => {
     if (!analyticsDetail) return null;
 
     const onClose = () => setAnalyticsDetail(null);
+
+    const totalPages = Math.ceil(analyticsLogsTotal / pageSize);
+
+    const Pagination = () => {
+        if (totalPages <= 1) return null;
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                <button 
+                    onClick={() => onPageChange(page - 1)} 
+                    disabled={page === 1}
+                    className={styles.secondaryBtn}
+                    style={{ margin: 0, padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                >
+                    Previous
+                </button>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    Page {page} of {totalPages}
+                </span>
+                <button 
+                    onClick={() => onPageChange(page + 1)} 
+                    disabled={page === totalPages}
+                    className={styles.secondaryBtn}
+                    style={{ margin: 0, padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                >
+                    Next
+                </button>
+            </div>
+        );
+    };
 
     return (
         <BaseModal
@@ -114,13 +146,7 @@ const AnalyticsDetailModal = ({
                                 </tbody>
                             </table>
                         </div>
-                        {analyticsLogsTotal > analyticsLogs.length && (
-                            <div style={{ padding: '2rem', textAlign: 'center' }}>
-                                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-                                    Showing the most recent {analyticsLogs.length} of {analyticsLogsTotal} sessions.
-                                </p>
-                            </div>
-                        )}
+                        <Pagination />
                     </div>
                 ) : analyticsDetail === 'retention' ? (
                     <div style={{ padding: '1.5rem' }}>
@@ -307,6 +333,7 @@ const AnalyticsDetailModal = ({
                                             </tbody>
                                         </table>
                                     </div>
+                                    <Pagination />
                                 </div>
                             );
                         })()}

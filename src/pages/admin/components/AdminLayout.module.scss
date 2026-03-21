@@ -1,0 +1,51 @@
+@use '../../../styles/variables' as *;
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+    background: transparent; // Allow AnimatedBackground to show through
+    color: var(--text-primary);
+    overflow-x: hidden;
+    position: relative;
+}
+
+.mainContent {
+    flex: 1;
+    margin-left: 260px;
+    margin-top: 56px; // For the fixed header
+    padding: 2.5rem 2.5rem 2rem;
+    max-width: 100%;
+    min-width: 0;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    &--collapsed {
+        margin-left: 70px;
+    }
+
+    @media (max-width: 768px) {
+        margin-left: 0 !important;
+        padding: 2rem 1.25rem 2rem;
+    }
+}
+
+.contentHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--divider);
+
+    h1 {
+        font-family: var(--font-admin-tab) !important;
+        font-size: var(--font-size-admin-tab) !important;
+        font-weight: var(--font-weight-admin-tab) !important;
+        margin: 0 0 0.4rem;
+    }
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}

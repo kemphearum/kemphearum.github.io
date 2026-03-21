@@ -65,6 +65,9 @@ const BlogPost = () => {
     const { trackRead } = useActivity();
 
     const { data: post, isLoading: loading, isError } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['post', slug],
         queryFn: async () => {
             const postData = await BlogService.fetchPostBySlug(slug, trackRead);

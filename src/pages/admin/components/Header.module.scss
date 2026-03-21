@@ -1,0 +1,237 @@
+@use '../../../styles/variables' as *;
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0 1.5rem;
+    background: var(--topnav-bg, rgba(10, 10, 18, 0.7));
+    backdrop-filter: blur(25px);
+    border-bottom: 1px solid var(--divider);
+    height: 56px;
+    z-index: 300;
+}
+
+.left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.5rem;
+}
+
+.center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    @media (max-width: 768px) {
+        display: none; // hide search on mobile for cleaner look, or just shrink it
+    }
+}
+
+.right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1.5rem;
+
+    @media (max-width: 768px) {
+        gap: 0.75rem;
+    }
+}
+
+.menuToggle {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    cursor: pointer;
+    background: none;
+    border: none;
+
+    span {
+        display: block;
+        width: 20px;
+        height: 2px;
+        background: var(--text-primary);
+        border-radius: 2px;
+        transition: all 0.3s ease;
+    }
+}
+
+.brand {
+    font-family: var(--font-admin-brand) !important;
+    font-size: var(--font-size-admin-brand) !important;
+    font-weight: var(--font-weight-admin-brand) !important;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+
+    span {
+        color: $primary-color;
+    }
+}
+
+.searchInputWrapper {
+    display: flex;
+    align-items: center;
+    background: var(--card-bg);
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    padding: 0.4rem 0.75rem;
+    width: 100%;
+    max-width: 300px;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+
+    &:hover, &:focus-within {
+        border-color: rgba($primary-color, 0.5);
+        background: var(--glass-surface);
+    }
+
+    svg {
+        color: var(--text-secondary);
+        width: 14px;
+        height: 14px;
+    }
+
+    input {
+        background: none;
+        border: none;
+        color: var(--text-primary);
+        font-size: 0.85rem;
+        outline: none;
+        width: 100%;
+
+        &::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+    }
+}
+
+.topActions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-right: 1.5rem;
+    border-right: 1px solid var(--divider);
+
+    @media (max-width: 768px) {
+        padding-right: 0.75rem;
+        gap: 0.25rem;
+    }
+}
+
+.actionBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: var(--card-bg);
+        color: $primary-color;
+        border-color: var(--divider);
+    }
+
+    &--active {
+        background: rgba($primary-color, 0.1);
+        color: $primary-color;
+        border-color: rgba($primary-color, 0.3);
+    }
+}
+
+.logoutBtn {
+    &:hover {
+        background: rgba(255, 107, 107, 0.1);
+        color: #ff6b6b;
+        border-color: rgba(255, 107, 107, 0.3);
+    }
+}
+
+.viewSiteBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border: 1px solid var(--divider);
+    background: var(--card-bg);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+
+    &:hover {
+        color: $primary-color;
+        border-color: rgba($primary-color, 0.3);
+        background: rgba($primary-color, 0.06);
+    }
+
+    @media (max-width: 768px) {
+        span { display: none; }
+        padding: 0.6rem;
+    }
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, $primary-color, $primary-light);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.userText {
+    display: flex;
+    flex-direction: column;
+
+    @media (max-width: 768px) {
+        display: none;
+    }
+}
+
+.email {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.role {
+    font-size: 0.75rem;
+    color: $primary-color;
+    text-transform: capitalize;
+    font-weight: 600;
+}

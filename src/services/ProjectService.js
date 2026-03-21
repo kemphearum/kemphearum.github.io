@@ -1,6 +1,7 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
 import { serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
+import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 
 class ProjectService extends BaseService {
     constructor() {
@@ -12,22 +13,22 @@ class ProjectService extends BaseService {
     }
 
     async toggleVisibility(userRole, id, currentVisible, trackWrite) {
-        if (userRole === 'pending') {
-            throw new Error("Not authorized to toggle visibility.");
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS, userRole)) {
+            throw new Error("Unauthorized action");
         }
         return this.update(id, { visible: !currentVisible }, trackWrite);
     }
 
     async toggleFeatured(userRole, id, currentFeatured, trackWrite) {
-        if (userRole === 'pending' || userRole === 'editor') {
-            throw new Error("Not authorized to toggle featured status.");
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS, userRole)) {
+            throw new Error("Unauthorized action");
         }
         return this.update(id, { featured: !currentFeatured }, trackWrite);
     }
 
     async deleteProject(userRole, id, trackDelete) {
-        if (userRole === 'pending' || userRole === 'editor') {
-            throw new Error("Not authorized to delete projects.");
+        if (!isActionAllowed(ACTIONS.DELETE, MODULES.PROJECTS, userRole)) {
+            throw new Error("Unauthorized action");
         }
         return this.delete(id, (count, label) => {
             if (trackDelete) trackDelete(count, label, { id, action: 'deleted' });
@@ -38,8 +39,9 @@ class ProjectService extends BaseService {
      * Prepares project form data for saving to Firestore by formatting techStack and slug.
      */
     async saveProject(userRole, formData, imageUrl, trackWrite) {
-        if (userRole === 'pending') {
-            throw new Error("Not authorized to save projects.");
+        const action = formData.id ? ACTIONS.EDIT : ACTIONS.CREATE;
+        if (!isActionAllowed(action, MODULES.PROJECTS, userRole)) {
+            throw new Error("Unauthorized action");
         }
 
         const techArray = formData.techStack

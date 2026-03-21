@@ -1,0 +1,91 @@
+@use '../variables' as *;
+
+.ui-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    animation: ui-fade-in 0.2s ease-out;
+}
+
+.ui-dialog-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    max-width: 500px;
+    max-height: 85vh;
+    background: var(--bg-card, #0f172a);
+    border: 1px solid var(--border-color, #1e293b);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    z-index: 1001;
+    overflow-y: auto;
+    animation: ui-scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+
+    &:focus { outline: none; }
+}
+
+.ui-dialog-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color, #1e293b);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ui-dialog-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.ui-dialog-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+.ui-dialog-body {
+    padding: 1.5rem;
+    flex: 1;
+}
+
+.ui-dialog-footer {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid var(--border-color, #1e293b);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.ui-dialog-close {
+    color: var(--text-secondary);
+    padding: 0.4rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+    }
+}
+
+@keyframes ui-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes ui-scale-in {
+    from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}

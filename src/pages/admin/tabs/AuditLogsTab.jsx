@@ -78,6 +78,9 @@ const AuditLogsTab = ({ userRole, showToast }) => {
 
     // Fetch audit logs
     const { data: auditLogsList = [], isLoading: auditLogsLoading } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['auditLogs', userRole],
         queryFn: async () => {
             if (userRole !== 'superadmin') return [];

@@ -1,114 +1,157 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Eye as EyeIcon, Users, Globe, TrendingUp, Monitor, Smartphone, Tablet, MapPin, Share2, FileText, Calendar, RefreshCw, X, Download, Layout, Activity, Clock } from 'lucide-react';
-import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { 
+    Eye as EyeIcon, 
+    Users, 
+    Globe, 
+    TrendingUp, 
+    Monitor, 
+    Smartphone, 
+    Tablet, 
+    MapPin, 
+    Share2, 
+    FileText, 
+    Activity, 
+    Clock,
+    RefreshCw
+} from 'lucide-react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+
 import { jsonToCsv } from '../../../utils/csvUtils';
 import { useActivity } from '../../../hooks/useActivity';
-import { useQuery } from '@tanstack/react-query';
-import styles from '../../Admin.module.scss';
+import { useAsyncAction } from '../../../hooks/useAsyncAction';
 import AnalyticsService from '../../../services/AnalyticsService';
-import AnalyticsDetailModal from '../components/AnalyticsDetailModal';
+
+// UI Components
 import SectionHeader from '../components/SectionHeader';
 import StatCard from '../components/StatCard';
-import ChartCard from '../components/ChartCard';
-
-const CHART_COLORS = ['#64ffda', '#7c4dff', '#ff6090', '#ffab40', '#69f0ae', '#40c4ff', '#ea80fc', '#ffd740', '#b388ff', '#84ffff'];
+import AnalyticsDetailModal from '../components/AnalyticsDetailModal';
+import AnalyticsFilterBar from '../components/AnalyticsFilterBar';
+import AnalyticsChart from '../components/AnalyticsChart';
+import LoadingOverlay from '../../../shared/components/ui/loading-overlay/LoadingOverlay';
+import EmptyState from '../../../shared/components/ui/empty-state/EmptyState';
 
 const AnalyticsTab = ({ userRole, showToast }) => {
     const { trackRead } = useActivity();
+    
+    // 1. FILTER STATE
     const [analyticsRange, setAnalyticsRange] = useState(() => {
         const end = new Date();
         const start = new Date();
-        // Default to today
-        return { start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0], preset: 'today' };
+        // Default to last 7 days for better initial view
+        start.setDate(end.getDate() - 7);
+        return { 
+            start: start.toISOString().split('T')[0], 
+            end: end.toISOString().split('T')[0], 
+            preset: '7d' 
+        };
     });
+
     const [analyticsDetail, setAnalyticsDetail] = useState(null);
-    const [analyticsLogs, setAnalyticsLogs] = useState([]);
-    const [analyticsLogsLoading, setAnalyticsLogsLoading] = useState(false);
-    const [analyticsLogsTotal, setAnalyticsLogsTotal] = useState(0);
+    const [detailPage, setDetailPage] = useState(1);
+    const detailLimit = 50;
     const [quotaExceeded, setQuotaExceeded] = useState(false);
 
+    // 2. DATA FETCHING (STANDARD REACT QUERY)
     const {
-        data: visits = [],
+        data: analyticsData = { current: [], previous: [] },
         isLoading: analyticsLoading,
         isFetching: analyticsFetching,
         refetch: refetchAnalytics,
         dataUpdatedAt
     } = useQuery({
-        queryKey: ['analytics', analyticsRange.start, analyticsRange.end],
+        staleTime: 60000,
+        gcTime: 300000,
+        refetchOnWindowFocus: false,
+        placeholderData: keepPreviousData,
+        queryKey: ['analytics', { range: analyticsRange }],
         queryFn: async () => {
             setQuotaExceeded(false);
             try {
-                return await AnalyticsService.fetchAnalytics(userRole, analyticsRange, trackRead);
+                // Fetch current range
+                const current = await AnalyticsService.fetchAnalytics(userRole, analyticsRange, trackRead);
+                
+                // Fetch previous range for trends (only if a preset is selected and not 'all')
+                let previous = [];
+                if (analyticsRange.preset && analyticsRange.preset !== 'all' && analyticsRange.preset !== 'today') {
+                    const prevRange = calculatePreviousRange(analyticsRange);
+                    previous = await AnalyticsService.fetchAnalytics(userRole, prevRange, false);
+                } else if (analyticsRange.preset === 'today') {
+                    // For today, compare with yesterday
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const yStr = yesterday.toISOString().split('T')[0];
+                    previous = await AnalyticsService.fetchAnalytics(userRole, { start: yStr, end: yStr }, false);
+                }
+
+                return { current, previous };
             } catch (error) {
                 if (error.message === 'QUOTA_EXCEEDED') {
                     setQuotaExceeded(true);
-                    return [];
+                    return { current: [], previous: [] };
                 }
                 throw error;
             }
         },
         enabled: (userRole === 'superadmin' || userRole === 'admin'),
-        retry: (failureCount, error) => error.message !== 'QUOTA_EXCEEDED' && failureCount < 3
+        retry: (failureCount, error) => error.message !== 'QUOTA_EXCEEDED' && failureCount < 2
     });
 
-    const handleAnalyticsDetail = useCallback(async (type) => {
+    const visits = analyticsData.current;
+    const prevVisits = analyticsData.previous;
+
+    // 2b. FETCH PAGINATED DETAILS
+    const { 
+        data: detailsResult = { logs: [], total: 0 }, 
+        isLoading: detailsLoading,
+        isFetching: detailsFetching
+    } = useQuery({
+        placeholderData: keepPreviousData,
+        queryKey: ['analytics', 'details', analyticsDetail, analyticsRange, detailPage],
+        queryFn: async () => {
+            return await AnalyticsService.fetchAnalyticsDetails(
+                userRole, 
+                analyticsRange, 
+                analyticsDetail, 
+                { page: detailPage, limit: detailLimit },
+                trackRead
+            );
+        },
+        enabled: !!analyticsDetail && (userRole === 'superadmin' || userRole === 'admin'),
+        staleTime: 60000
+    });
+
+    const analyticsLogs = detailsResult.logs;
+    const analyticsLogsTotal = detailsResult.total;
+    const analyticsLogsLoading = detailsLoading || detailsFetching;
+
+    // Helper: Calculate previous date range
+    function calculatePreviousRange(currentRange) {
+        const start = new Date(currentRange.start);
+        const end = new Date(currentRange.end);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+        const prevEnd = new Date(start);
+        prevEnd.setDate(prevEnd.getDate() - 1);
+        const prevStart = new Date(prevEnd);
+        prevStart.setDate(prevStart.getDate() - diffDays + 1);
+
+        return {
+            start: prevStart.toISOString().split('T')[0],
+            end: prevEnd.toISOString().split('T')[0]
+        };
+    }
+
+    // 3. ACTIONS
+    const handleAnalyticsDetail = useCallback((type) => {
         setAnalyticsDetail(type);
-        setAnalyticsLogsLoading(true);
-        setAnalyticsLogs([]);
-        setAnalyticsLogsTotal(0);
-
-        // Optimization: If we already have visits data loaded for this range, reuse it
-        if (visits && visits.length > 0) {
-            setAnalyticsLogs(visits);
-            setAnalyticsLogsTotal(visits.length);
-            setAnalyticsLogsLoading(false);
-            return;
-        }
-
-        try {
-            const result = await AnalyticsService.fetchAnalyticsDetails(userRole, analyticsRange, type, 200, trackRead);
-            if (result.quotaExceeded) {
-                setQuotaExceeded(true);
-                showToast("Firestore quota exceeded. Showing partial data.", "warning");
-            }
-            setAnalyticsLogsTotal(result.total);
-            setAnalyticsLogs(result.logs);
-        } catch (error) { 
-            console.error("Error fetching analytics details:", error); 
-            showToast("Failed to load details.", "error"); 
-        } finally { 
-            setAnalyticsLogsLoading(false); 
-        }
-    }, [userRole, analyticsRange, showToast, visits, trackRead]);
-
-    const handleRefreshAll = useCallback(async () => {
-        try {
-            await refetchAnalytics();
-            if (analyticsDetail) {
-                await handleAnalyticsDetail(analyticsDetail);
-            }
-            showToast('Analytics data refreshed!', 'success');
-        } catch (error) {
-            console.error("Refresh Error:", error);
-            showToast('Failed to refresh analytics.', 'error');
-        }
-    }, [refetchAnalytics, analyticsDetail, handleAnalyticsDetail, showToast]);
-
-    const handleAnalyticsPreset = useCallback((preset) => {
-        const end = new Date();
-        const start = new Date();
-        switch (preset) {
-            case 'today': 
-                // Both start and end are today (already set)
-                break;
-            case '7d': start.setDate(end.getDate() - 7); break;
-            case '30d': start.setDate(end.getDate() - 30); break;
-            case '90d': start.setDate(end.getDate() - 90); break;
-            case 'all': start.setFullYear(2020); break;
-            default: start.setDate(end.getDate() - 30);
-        }
-        setAnalyticsRange({ start: start.toISOString().split('T')[0], end: end.toISOString().split('T')[0], preset });
+        setDetailPage(1);
     }, []);
+
+    const handleRefreshAll = useCallback(() => {
+        refetchAnalytics();
+        showToast('Analytics data refreshed!', 'success');
+    }, [refetchAnalytics, showToast]);
 
     const handleExportCsv = useCallback(() => {
         if (!visits || !visits.length) {
@@ -136,14 +179,14 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         const link = document.createElement('a');
         link.setAttribute('href', url);
         link.setAttribute('download', `portfolio_analytics_${analyticsRange.start}_to_${analyticsRange.end}.csv`);
-        link.style.visibility = 'hidden';
+        link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         showToast('Analytics exported to CSV', 'success');
     }, [visits, analyticsRange, showToast]);
 
-    // Derived data
+    // 4. DERIVED DATA & TRENDS
     const dailyVisits = useMemo(() => {
         const map = {};
         visits.forEach(v => {
@@ -194,27 +237,8 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
     const retentionData = useMemo(() => {
         let n = 0, r = 0;
-        const dailyRetention = {};
-        
-        visits.forEach(v => {
-            const date = v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toISOString().split('T')[0] : v.date;
-            if (date) {
-                if (!dailyRetention[date]) dailyRetention[date] = { date, new: 0, returning: 0 };
-                if (v.isReturning) {
-                    r++;
-                    dailyRetention[date].returning++;
-                } else {
-                    n++;
-                    dailyRetention[date].new++;
-                }
-            }
-        });
-
-        const trends = Object.values(dailyRetention).sort((a, b) => a.date.localeCompare(b.date));
-        return {
-            pie: [{ name: 'New', value: n }, { name: 'Returning', value: r }],
-            trends
-        };
+        visits.forEach(v => { if (v.isReturning) r++; else n++; });
+        return [{ name: 'New', value: n }, { name: 'Returning', value: r }];
     }, [visits]);
 
     const topPages = useMemo(() => {
@@ -224,371 +248,253 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     }, [visits]);
 
     const summaryStats = useMemo(() => {
-        const uniqueIPs = new Set(visits.map(v => v.ip).filter(Boolean));
-        const topCountry = countryData[0]?.name || '-';
-        const topPage = topPages[0]?.path || '-';
-        
-        // Engagement Calculations
-        const totalDuration = visits.reduce((acc, v) => acc + (v.duration || 0), 0);
-        const avgDuration = visits.length ? Math.round(totalDuration / visits.length) : 0;
-        
-        // Bounce Rate (one-page sessions with < 10s duration) - Approximation
-        const bounces = visits.filter(v => (v.duration || 0) < 10).length;
-        const bounceRate = visits.length ? Math.round((bounces / visits.length) * 100) : 0;
-
-        return { 
-            total: visits.length, 
-            unique: uniqueIPs.size, 
-            topCountry, 
-            topPage,
-            avgDuration: `${Math.floor(avgDuration / 60)}m ${avgDuration % 60}s`,
-            bounceRate: `${bounceRate}%`
-        };
-    }, [visits, countryData, topPages]);
-
-    if (analyticsLoading) {
-        return (
-            <div className={styles.analyticsLoading}>
-                <div className={styles.analyticsSpinner} />
-                <span>Loading analytics data…</span>
-            </div>
-        );
-    }
-
-    const dateFilter = (
-        <div className={styles.dateFilterBar}>
-            <div className={styles.datePresets}>
-                {[
-                    { label: 'Today', value: 'today' },
-                    { label: '7D', value: '7d' }, 
-                    { label: '30D', value: '30d' }, 
-                    { label: '90D', value: '90d' }, 
-                    { label: 'All', value: 'all' }
-                ].map(p => (
-                    <button 
-                        key={p.value} 
-                        className={`${styles.presetBtn} ${analyticsRange.preset === p.value ? styles.presetActive : ''}`} 
-                        onClick={() => handleAnalyticsPreset(p.value)}
-                    >
-                        {p.label}
-                    </button>
-                ))}
-            </div>
+        const calculateStats = (data) => {
+            const uniqueIPs = new Set(data.map(v => v.ip).filter(Boolean));
+            const totalDuration = data.reduce((acc, v) => acc + (v.duration || 0), 0);
+            const avgDuration = data.length ? Math.round(totalDuration / data.length) : 0;
+            const bounces = data.filter(v => (v.duration || 0) < 10).length;
+            const bounceRate = data.length ? Math.round((bounces / data.length) * 100) : 0;
             
-            <div className={styles.dateInputs}>
-                <div className={styles.dateRangeGroup}>
-                    <Calendar size={14} className={styles.inputIcon} />
-                    <input 
-                        type="date" 
-                        value={analyticsRange.start} 
-                        onChange={(e) => setAnalyticsRange(prev => ({ ...prev, start: e.target.value, preset: '' }))} 
-                        className={styles.dateInput} 
-                        onClick={(e) => e.target.showPicker?.()} 
-                    />
-                    <span className={styles.dateSeparator}>to</span>
-                    <input 
-                        type="date" 
-                        value={analyticsRange.end} 
-                        onChange={(e) => setAnalyticsRange(prev => ({ ...prev, end: e.target.value, preset: '' }))} 
-                        className={styles.dateInput} 
-                        onClick={(e) => e.target.showPicker?.()} 
-                    />
-                </div>
+            return {
+                total: data.length,
+                unique: uniqueIPs.size,
+                avgDuration,
+                bounceRate
+            };
+        };
 
-                <div className={styles.actionGroup}>
-                    <button 
-                        className={styles.exportBtn} 
-                        onClick={handleExportCsv}
-                        title="Export to CSV"
-                    >
-                        <Download size={14} />
-                        Export
-                    </button>
-                    
-                    <button
-                        className={styles.refreshBtn}
-                        onClick={handleRefreshAll}
-                        disabled={analyticsFetching}
-                    >
-                        <RefreshCw size={14} className={analyticsFetching ? styles.spin : ''} />
-                        Refresh
-                    </button>
+        const current = calculateStats(visits);
+        const previous = calculateStats(prevVisits);
 
-                    {dataUpdatedAt && (
-                        <span className={styles.lastUpdated}>
-                            Updated: {new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
+        const calculateTrend = (curr, prev) => {
+            if (!prev) return { type: 'neutral', value: '0%' };
+            const diff = curr - prev;
+            const percent = prev === 0 ? (curr > 0 ? 100 : 0) : Math.round((diff / prev) * 100);
+            return {
+                type: percent > 0 ? 'up' : percent < 0 ? 'down' : 'neutral',
+                value: `${Math.abs(percent)}%`
+            };
+        };
 
+        // For bounce rate, "down" is positive
+        const bounceTrend = calculateTrend(current.bounceRate, previous.bounceRate);
+        if (bounceTrend.type === 'up') bounceTrend.type = 'down'; // Visually red if bounce rate increases
+        else if (bounceTrend.type === 'down') bounceTrend.type = 'up'; // visually green if bounce rate decreases
+
+        return {
+            total: {
+                value: current.total.toLocaleString(),
+                trend: calculateTrend(current.total, previous.total),
+                subtitle: `vs prev. ${analyticsRange.preset || 'period'}`
+            },
+            unique: {
+                value: current.unique.toLocaleString(),
+                trend: calculateTrend(current.unique, previous.unique),
+                subtitle: `vs prev. ${analyticsRange.preset || 'period'}`
+            },
+            duration: {
+                value: `${Math.floor(current.avgDuration / 60)}m ${current.avgDuration % 60}s`,
+                trend: calculateTrend(current.avgDuration, previous.avgDuration),
+                subtitle: `vs prev. ${analyticsRange.preset || 'period'}`
+            },
+            bounce: {
+                value: `${current.bounceRate}%`,
+                trend: bounceTrend,
+                subtitle: `vs prev. ${analyticsRange.preset || 'period'}`
+            }
+        };
+    }, [visits, prevVisits, analyticsRange.preset]);
+
+    // 5. RENDER
     return (
-        <div className={styles.section}>
+        <div className="ui-analytics-container">
+            <LoadingOverlay 
+                active={analyticsLoading && !visits.length} 
+                message="Loading analytics..." 
+            />
+            
             <SectionHeader
                 title="Analytics Dashboard"
                 description="Monitor visitor traffic, behavior, and geographical distribution."
                 icon={TrendingUp}
-                rightElement={dateFilter}
+                rightElement={
+                    <AnalyticsFilterBar 
+                        range={analyticsRange}
+                        onRangeChange={setAnalyticsRange}
+                        onRefresh={handleRefreshAll}
+                        onExport={handleExportCsv}
+                        isLoading={analyticsFetching}
+                        lastUpdated={dataUpdatedAt}
+                    />
+                }
             />
 
             {quotaExceeded && (
-                <div style={{ 
-                    background: 'rgba(255, 171, 64, 0.1)', 
-                    border: '1px solid rgba(255, 171, 64, 0.3)', 
-                    borderRadius: '12px', 
-                    padding: '1rem 1.5rem', 
-                    marginBottom: '2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    color: '#ffab40'
-                }}>
+                <div className="ui-alert ui-alert-warning" style={{ marginBottom: '2rem' }}>
                     <Activity size={20} />
                     <div>
-                        <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Firestore Quota Exceeded</strong>
-                        <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.9 }}>
-                            The daily free tier limit for Firestore has been reached. Some analytics data may be missing until the quota resets (usually at midnight PST).
-                        </p>
+                        <strong>Firestore Quota Exceeded</strong>
+                        <p>The daily free tier limit has been reached. Some data may be missing.</p>
                     </div>
                 </div>
             )}
 
-            {/* Stat Summary Grid */}
-            <div className={styles.analyticsGrid} style={{ marginBottom: '2.5rem' }}>
-                <StatCard
-                    icon={EyeIcon}
-                    value={summaryStats.total.toLocaleString()}
-                    label="Page Views"
-                    color="#64ffda"
+            {!analyticsLoading && visits.length === 0 && !quotaExceeded && (
+                <EmptyState 
+                    icon={TrendingUp}
+                    title="No Analytics Data"
+                    description="No data available for the selected range. Try a different date range."
                 />
-                <StatCard
-                    icon={Users}
-                    value={summaryStats.unique.toLocaleString()}
-                    label="Unique Visitors"
-                    color="#7c4dff"
-                />
-                <StatCard
-                    icon={Clock}
-                    value={summaryStats.avgDuration}
-                    label="Avg. Session"
-                    color="#ff6090"
-                />
-                <StatCard
-                    icon={Activity}
-                    value={summaryStats.bounceRate}
-                    label="Bounce Rate"
-                    color="#ffab40"
-                />
-            </div>
+            )}
 
-            {/* Visits Over Time */}
-            <ChartCard
-                title={`Visits Over Time ${analyticsRange.preset === '7d' ? '(Last 7 Days)' : analyticsRange.preset === '30d' ? '(Last 30 Days)' : analyticsRange.preset === '90d' ? '(Last 90 Days)' : analyticsRange.preset === 'all' ? '(All Time)' : `(${analyticsRange.start} — ${analyticsRange.end})`}`}
-                icon={TrendingUp}
-                onViewDetails={() => handleAnalyticsDetail('visits')}
-                isLoading={analyticsLoading || analyticsFetching}
-            >
-                {dailyVisits.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={320}>
-                        <LineChart data={dailyVisits} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                            <XAxis dataKey="date" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickFormatter={(v) => { const d = new Date(v + 'T00:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }} />
-                            <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
-                            <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} />
-                            <Line type="monotone" dataKey="visits" stroke="#64ffda" strokeWidth={2} dot={false} name="Page Views" />
-                            <Line type="monotone" dataKey="unique" stroke="#7c4dff" strokeWidth={2} dot={false} name="Unique Visitors" />
-                            <Legend wrapperStyle={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }} />
-                        </LineChart>
-                    </ResponsiveContainer>
-                ) : (
-                    <div className={styles.emptyState}><p>No visit data available yet.</p></div>
-                )}
-            </ChartCard>
+            {(visits.length > 0 || analyticsFetching) && (
+                <>
+                    <div className="ui-analytics-grid">
+                        <StatCard
+                            icon={EyeIcon}
+                            value={summaryStats.total.value}
+                            label="Page Views"
+                            color="#64ffda"
+                            trend={summaryStats.total.trend.type}
+                            trendValue={summaryStats.total.trend.value}
+                            description={summaryStats.total.subtitle}
+                        />
+                        <StatCard
+                            icon={Users}
+                            value={summaryStats.unique.value}
+                            label="Unique Visitors"
+                            color="#7c4dff"
+                            trend={summaryStats.unique.trend.type}
+                            trendValue={summaryStats.unique.trend.value}
+                            description={summaryStats.unique.subtitle}
+                        />
+                        <StatCard
+                            icon={Clock}
+                            value={summaryStats.duration.value}
+                            label="Avg. Session"
+                            color="#ff6090"
+                            trend={summaryStats.duration.trend.type}
+                            trendValue={summaryStats.duration.trend.value}
+                            description={summaryStats.duration.subtitle}
+                        />
+                        <StatCard
+                            icon={Activity}
+                            value={summaryStats.bounce.value}
+                            label="Bounce Rate"
+                            color="#ffab40"
+                            trend={summaryStats.bounce.trend.type}
+                            trendValue={summaryStats.bounce.trend.value}
+                            description={summaryStats.bounce.subtitle}
+                        />
+                    </div>
 
-            {/* Geographical and Device Distribution */}
-            <div className={styles.chartRow}>
-                <ChartCard
-                    title="Visitors by Country"
-                    icon={Globe}
-                    onViewDetails={() => handleAnalyticsDetail('countries')}
-                >
-                    {countryData.length > 0 ? (
-                        <>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie data={countryData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
-                                        {countryData.map((entry, i) => <Cell key={`country-${entry.name || i}`} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <ul className={styles.legendList}>
-                                {countryData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />{entry.name} ({entry.value})</li>))}
-                            </ul>
-                        </>
-                    ) : (<div className={styles.emptyState}><p>No country data.</p></div>)}
-                </ChartCard>
+                    <AnalyticsChart
+                        title="Visits Over Time"
+                        icon={TrendingUp}
+                        type="line"
+                        data={dailyVisits}
+                        xKey="date"
+                        yKey={['visits', 'unique']}
+                        colors={['#64ffda', '#7c4dff']}
+                        height={320}
+                        onViewDetails={() => handleAnalyticsDetail('visits')}
+                        isLoading={analyticsFetching}
+                    />
 
-                <ChartCard
-                    title="Device Breakdown"
-                    icon={Monitor}
-                    onViewDetails={() => handleAnalyticsDetail('devices')}
-                >
-                    {deviceData.length > 0 ? (
-                        <>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie data={deviceData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
-                                        {deviceData.map((entry, i) => <Cell key={`device-${entry.name || i}`} fill={CHART_COLORS[(i + 3) % CHART_COLORS.length]} />)}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <ul className={styles.legendList}>
-                                {deviceData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 3) % CHART_COLORS.length] }} />{entry.name === 'Desktop' ? <><Monitor size={12} /> </> : entry.name === 'Mobile' ? <><Smartphone size={12} /> </> : entry.name === 'Tablet' ? <><Tablet size={12} /> </> : null}{entry.name} ({entry.value})</li>))}
-                            </ul>
-                        </>
-                    ) : (<div className={styles.emptyState}><p>No device data.</p></div>)}
-                </ChartCard>
-            </div>
+                    <div className="ui-analytics-row ui-grid-2">
+                        <AnalyticsChart
+                            title="Visitors by Country"
+                            icon={Globe}
+                            type="pie"
+                            data={countryData}
+                            xKey="name"
+                            yKey="value"
+                            height={250}
+                            onViewDetails={() => handleAnalyticsDetail('countries')}
+                        />
+                        <AnalyticsChart
+                            title="Device Breakdown"
+                            icon={Monitor}
+                            type="pie"
+                            data={deviceData}
+                            xKey="name"
+                            yKey="value"
+                            height={250}
+                            onViewDetails={() => handleAnalyticsDetail('devices')}
+                        />
+                    </div>
 
-            {/* City and Traffic Sources */}
-            <div className={styles.chartRow}>
-                <ChartCard
-                    title="Top Cities"
-                    icon={MapPin}
-                    onViewDetails={() => handleAnalyticsDetail('cities')}
-                >
-                    {cityData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={250}>
-                            <BarChart data={cityData.slice(0, 6)} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
-                                <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
-                                <YAxis dataKey="name" type="category" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} width={140} />
-                                <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                <Bar dataKey="value" name="Visits" radius={[0, 6, 6, 0]}>
-                                    {cityData.slice(0, 6).map((entry, i) => <Cell key={`city-${entry.name || i}`} fill={CHART_COLORS[(i + 2) % CHART_COLORS.length]} />)}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    ) : (<div className={styles.emptyState}><p>No city data.</p></div>)}
-                </ChartCard>
+                    <div className="ui-analytics-row ui-grid-2">
+                        <AnalyticsChart
+                            title="Top Cities"
+                            icon={MapPin}
+                            type="bar"
+                            data={cityData.slice(0, 6)}
+                            xKey="name"
+                            yKey="value"
+                            height={250}
+                            onViewDetails={() => handleAnalyticsDetail('cities')}
+                        />
+                        <AnalyticsChart
+                            title="Traffic Sources"
+                            icon={Share2}
+                            type="pie"
+                            data={referrerData}
+                            xKey="name"
+                            yKey="value"
+                            height={250}
+                            onViewDetails={() => handleAnalyticsDetail('referrers')}
+                        />
+                    </div>
 
-                <ChartCard
-                    title="Traffic Sources"
-                    icon={Share2}
-                    onViewDetails={() => handleAnalyticsDetail('referrers')}
-                >
-                    {referrerData.length > 0 ? (
-                        <>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie data={referrerData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
-                                        {referrerData.map((entry, i) => <Cell key={`ref-${entry.name || i}`} fill={CHART_COLORS[(i + 5) % CHART_COLORS.length]} />)}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <ul className={styles.legendList}>
-                                {referrerData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 5) % CHART_COLORS.length] }} />{entry.name} ({entry.value})</li>))}
-                            </ul>
-                        </>
-                    ) : (<div className={styles.emptyState}><p>No referrer data.</p></div>)}
-                </ChartCard>
-            </div>
+                    <div className="ui-analytics-row ui-grid-auto">
+                        <AnalyticsChart
+                            title="Top Browsers"
+                            icon={FileText}
+                            type="pie"
+                            data={browserData}
+                            xKey="name"
+                            yKey="value"
+                            height={250}
+                            onViewDetails={() => handleAnalyticsDetail('browsers')}
+                        />
+                        <AnalyticsChart
+                            title="Operating Systems"
+                            icon={Monitor}
+                            type="pie"
+                            data={osData}
+                            xKey="name"
+                            yKey="value"
+                            height={250}
+                            onViewDetails={() => handleAnalyticsDetail('os')}
+                        />
+                         <AnalyticsChart
+                            title="Visitor Retention"
+                            icon={Users}
+                            type="pie"
+                            data={retentionData}
+                            xKey="name"
+                            yKey="value"
+                            height={250}
+                            onViewDetails={() => handleAnalyticsDetail('retention')}
+                            colors={['#64ffda', '#7c4dff']}
+                        />
+                    </div>
 
-            {/* Browsers, OS & Retention Row */}
-            <div className={styles.chartRow}>
-                <ChartCard
-                    title="Top Browsers"
-                    icon={Layout}
-                    onViewDetails={() => handleAnalyticsDetail('browsers')}
-                >
-                    {browserData.length > 0 ? (
-                        <>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie data={browserData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
-                                        {browserData.map((entry, i) => <Cell key={`br-${entry.name || i}`} fill={CHART_COLORS[(i + 6) % CHART_COLORS.length]} />)}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <ul className={styles.legendList}>
-                                {browserData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 6) % CHART_COLORS.length] }} />{entry.name} ({entry.value})</li>))}
-                            </ul>
-                        </>
-                    ) : (<div className={styles.emptyState}><p>No browser data.</p></div>)}
-                </ChartCard>
-
-                <ChartCard
-                    title="Operating Systems"
-                    icon={Monitor}
-                    onViewDetails={() => handleAnalyticsDetail('os')}
-                >
-                    {osData.length > 0 ? (
-                        <>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie data={osData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
-                                        {osData.map((entry, i) => <Cell key={`os-${entry.name || i}`} fill={CHART_COLORS[(i + 2) % CHART_COLORS.length]} />)}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <ul className={styles.legendList}>
-                                {osData.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: CHART_COLORS[(i + 2) % CHART_COLORS.length] }} />{entry.name} ({entry.value})</li>))}
-                            </ul>
-                        </>
-                    ) : (<div className={styles.emptyState}><p>No OS data.</p></div>)}
-                </ChartCard>
-
-                <ChartCard
-                    title="Visitor Retention"
-                    icon={Users}
-                    onViewDetails={() => handleAnalyticsDetail('retention')}
-                >
-                    {retentionData.pie.length > 0 ? (
-                        <>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie data={retentionData.pie} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3} dataKey="value" nameKey="name">
-                                        <Cell fill="#64ffda" />
-                                        <Cell fill="#7c4dff" />
-                                    </Pie>
-                                    <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <ul className={styles.legendList}>
-                                {retentionData.pie.map((entry, i) => (<li key={entry.name} className={styles.legendItem}><span className={styles.legendDot} style={{ background: i === 0 ? "#64ffda" : "#7c4dff" }} />{entry.name} ({entry.value})</li>))}
-                            </ul>
-                        </>
-                    ) : (<div className={styles.emptyState}><p>No retention data.</p></div>)}
-                </ChartCard>
-            </div>
-
-            {/* Top Pages */}
-            <ChartCard
-                title="Top Visited Pages"
-                icon={FileText}
-                onViewDetails={() => handleAnalyticsDetail('pages')}
-            >
-                {topPages.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={Math.max(200, topPages.length * 40)}>
-                        <BarChart data={topPages} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
-                            <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
-                            <YAxis dataKey="path" type="category" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} width={120} />
-                            <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} />
-                            <Bar dataKey="count" name="Page Views" radius={[0, 6, 6, 0]}>
-                                {topPages.map((entry, i) => <Cell key={`page-${entry.name || i}`} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                ) : (<div className={styles.emptyState}><p>No page data.</p></div>)}
-            </ChartCard>
+                    <div className="ui-analytics-row">
+                        <AnalyticsChart
+                            title="Top Visited Pages"
+                            icon={FileText}
+                            type="bar"
+                            data={topPages}
+                            xKey="path"
+                            yKey="count"
+                            height={Math.max(200, topPages.length * 40)}
+                            onViewDetails={() => handleAnalyticsDetail('pages')}
+                        />
+                    </div>
+                </>
+            )}
 
             <AnalyticsDetailModal
                 analyticsDetail={analyticsDetail}
@@ -597,6 +503,9 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 analyticsLogs={analyticsLogs}
                 analyticsLogsTotal={analyticsLogsTotal}
                 quotaExceeded={quotaExceeded}
+                page={detailPage}
+                onPageChange={setDetailPage}
+                pageSize={detailLimit}
             />
         </div>
     );

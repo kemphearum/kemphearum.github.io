@@ -1,0 +1,188 @@
+@use '../../../styles/variables' as *;
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 56px;
+    height: calc(100vh - 56px);
+    background: var(--sidebar-bg, linear-gradient(180deg, var(--bg-surface-light) 0%, rgba(10, 10, 18, 0.8) 100%));
+    backdrop-filter: blur(25px);
+    border-right: 1px solid var(--divider);
+    display: flex;
+    flex-direction: column;
+    width: 260px;
+    z-index: 200; // Above layout, below header
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+
+    &--collapsed {
+        width: 70px;
+        
+        .sectionTitle {
+            opacity: 0;
+            margin: 0;
+            height: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .navItem {
+            padding: 0.75rem 0;
+            justify-content: center;
+
+            span {
+                opacity: 0;
+                width: 0;
+                display: none;
+            }
+
+            .badge {
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                padding: 0.15rem;
+                min-width: 16px;
+                height: 16px;
+                font-size: 0.55rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+    }
+
+    &--mobileClosed {
+        @media (max-width: 768px) {
+            transform: translateX(-100%);
+        }
+    }
+
+    &--mobileOpen {
+        @media (max-width: 768px) {
+            transform: translateX(0);
+            width: 260px;
+            z-index: 1001; // Above overlay
+        }
+    }
+}
+
+.nav {
+    flex: 1;
+    padding: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    gap: 1.5rem;
+
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: var(--divider);
+        border-radius: 4px;
+    }
+}
+
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0 0.8rem;
+}
+
+.sectionTitle {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0 1rem;
+    margin-bottom: 0.2rem;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    background: transparent;
+    border: none;
+    border-left: 3px solid transparent;
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+    white-space: nowrap;
+
+    svg {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+        transition: all 0.2s ease;
+    }
+
+    span {
+        flex: 1;
+        transition: opacity 0.2s ease;
+    }
+
+    &:hover {
+        color: var(--text-primary);
+        background: var(--glass-surface);
+    }
+
+    &--active {
+        color: $primary-color;
+        background: linear-gradient(90deg, rgba($primary-color, 0.1) 0%, transparent 100%);
+        font-weight: 600;
+        border-left: 3px solid $primary-color;
+        border-radius: 0 8px 8px 0; // Flat on the left edge
+
+        svg {
+            color: $primary-color;
+            filter: drop-shadow(0 0 4px rgba($primary-color, 0.3));
+        }
+    }
+}
+
+.badge {
+    background: linear-gradient(135deg, #6C63FF, #8B83FF);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 50px;
+    min-width: 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(108, 99, 255, 0.4);
+    transition: all 0.2s ease;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+
+    &--visible {
+        @media (max-width: 768px) {
+            display: block;
+            opacity: 1;
+        }
+    }
+}

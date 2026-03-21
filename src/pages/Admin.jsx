@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import UserService from '../services/UserService';
 import MessageService from '../services/MessageService';
 import ContentService from '../services/ContentService';
@@ -11,6 +11,7 @@ import { getTodayDateKey } from '../utils/dateUtils';
 import { fetchGeoData } from '../utils/geoUtils';
 import { useTheme } from '../context/ThemeContext';
 import { useActivity } from '../hooks/useActivity';
+import { useAsyncAction } from '../hooks/useAsyncAction';
 import { getSessionId, getDeviceType } from '../hooks/useAnalytics';
 import { useQueryClient } from '@tanstack/react-query';
 import SettingsService from '../services/SettingsService';
@@ -18,60 +19,27 @@ import AuthService from '../services/AuthService';
 import AuditLogService from '../services/AuditLogService';
 import { doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import AdminLayout from './admin/components/AdminLayout';
+import { Spinner } from '../shared/components/ui';
+import AnimatedBackground from '../components/AnimatedBackground';
+import { isActionAllowed, ACTIONS } from '../utils/permissions';
 
 // Tab components
-import GeneralTab from './admin/tabs/GeneralTab';
-import ProfileTab from './admin/tabs/ProfileTab';
-import SettingsTab from './admin/tabs/SettingsTab';
-import MessagesTab from './admin/tabs/MessagesTab';
-import ExperienceTab from './admin/tabs/ExperienceTab';
-import UsersTab from './admin/tabs/UsersTab';
-import ProjectsTab from './admin/tabs/ProjectsTab';
-import BlogTab from './admin/tabs/BlogTab';
-import DatabaseTab from './admin/tabs/DatabaseTab';
-import AuditLogsTab from './admin/tabs/AuditLogsTab';
-import AnalyticsTab from './admin/tabs/AnalyticsTab';
+const GeneralTab = lazy(() => import('./admin/tabs/GeneralTab'));
+const ProfileTab = lazy(() => import('./admin/tabs/ProfileTab'));
+const SettingsTab = lazy(() => import('./admin/tabs/SettingsTab'));
+const MessagesTab = lazy(() => import('./admin/tabs/MessagesTab'));
+const ExperienceTab = lazy(() => import('./admin/experience/ExperienceTab'));
+const UsersTab = lazy(() => import('./admin/users/UsersTab'));
+const ProjectsTab = lazy(() => import('./admin/projects/ProjectsTab'));
+const BlogTab = lazy(() => import('./admin/blog/BlogTab'));
+const DatabaseTab = lazy(() => import('./admin/database/DatabaseTab'));
+const AuditLogsTab = lazy(() => import('./admin/audit/AuditLogsTab'));
+const AnalyticsTab = lazy(() => import('./admin/tabs/AnalyticsTab'));
 
 // ============================================================
-// Icons
+// Icons removed - now handled in modular components
 // ============================================================
-const icons = {
-    analytics: <BarChart2 size={18} />,
-    experience: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-        </svg>
-    ),
-    projects: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-        </svg>
-    ),
-    general: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
-        </svg>
-    ),
-    settings: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-        </svg>
-    ),
-    messages: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        </svg>
-    ),
-    blog: <FileText size={18} />,
-    database: <Database size={18} />,
-    profile: <User size={18} />,
-    audit: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-        </svg>
-    )
-};
-
 const tabLabels = {
     general: 'General Content',
     experience: 'Experience',
@@ -106,10 +74,10 @@ const Toast = ({ message, type, onClose }) => {
     };
 
     return (
-        <div className={`${styles.toast} ${styles[type]} `}>
+        <div className={`ui-toast ui-${type}`}>
             <span style={{ fontWeight: 'bold' }}>{getIcon()}</span>
             <p>{message}</p>
-            <button onClick={onClose} className={styles.toastClose}>×</button>
+            <button onClick={onClose} className="ui-toastClose">×</button>
         </div>
     );
 };
@@ -127,7 +95,7 @@ const Admin = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isRegistering, setIsRegistering] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const { loading, execute } = useAsyncAction();
     const queryClient = useQueryClient();
 
     // Tab & Sidebar State
@@ -257,13 +225,14 @@ const Admin = () => {
         if (role === 'superadmin') return true;
         if (tab === 'profile') return true; // Always allowed
         
-        // Block restricted system tabs for everyone else
-        if (['users', 'database', 'audit'].includes(tab)) return false;
+        // Base block
+        if (!isActionAllowed(ACTIONS.VIEW, tab, role, permissions)) return false;
 
-        // Check explicit permissions
+        // Extra protections layer (legacy behavior maintenance)
+        if (['users', 'database', 'audit'].includes(tab) && role !== 'superadmin' && role !== 'admin') return false;
+        
         if (permissions?.[role]?.includes(tab)) return true;
         
-        // Role defaults
         if (role === 'admin') return true;
         if (role === 'editor') {
             return ['general', 'experience', 'projects', 'blog', 'messages'].includes(tab);
@@ -289,10 +258,11 @@ const Admin = () => {
 
     const fetchMessages = useCallback(async () => {
         try {
-            const msgs = await MessageService.getAll('createdAt', 'desc');
-            trackRead(msgs.length, 'Fetched inbox messages');
-            setMessages(msgs);
-        } catch (error) { console.error("Error fetching messages:", error); }
+            const count = await MessageService.getUnreadCount();
+            trackRead(1, 'Fetched inbox unread count');
+            // Store dummy objects to keep unreadMessagesCount calculation working for the badge
+            setMessages(new Array(count).fill({ isRead: false }));
+        } catch (error) { console.error("Error fetching message count:", error); }
     }, [trackRead]);
 
     // ====== Migration Bridge ======
@@ -380,6 +350,14 @@ const Admin = () => {
         }
     }, [userRole, queryClient]);
 
+    // ============================================================
+    // Action Control Logic
+    // ============================================================
+    // isActionAllowed was handled here previously, now managed by utils/permissions.js
+    const checkActionAllowed = useCallback((action, moduleName) => {
+        return isActionAllowed(action, moduleName, userRole, rolePermissions);
+    }, [userRole, rolePermissions]);
+
     // ====== Content Data Management ======
     const fetchSectionData = useCallback(async (section) => {
         try {
@@ -414,8 +392,11 @@ const Admin = () => {
     }, [trackRead]);
 
     const saveSectionData = useCallback(async (section, data) => {
-        setLoading(true);
-        try {
+        if (!checkActionAllowed(ACTIONS.EDIT, section)) {
+            return showToast("You do not have permission to perform this action.", "error");
+        }
+
+        await execute(async () => {
             if (section === 'settings') {
                 const typographyKeys = [
                     'fontDisplay', 'fontDisplayWeight', 'fontDisplayItalic', 'fontDisplaySize',
@@ -441,19 +422,17 @@ const Admin = () => {
                 });
 
                 await SettingsService.updateGlobalSettings({ site, typography, system }, trackWrite);
-                showToast(`Settings saved!`);
                 queryClient.invalidateQueries({ queryKey: ['settings', 'global'] });
             } else {
                 await ContentService.saveSection(section, data, trackWrite);
-                showToast(`${section.charAt(0).toUpperCase() + section.slice(1)} saved!`);
                 queryClient.invalidateQueries({ queryKey: ['content', section] });
             }
-        } catch (error) {
-            console.error(`Error saving ${section}:`, error);
-            const errMsg = error.message?.includes('quota') ? 'Storage quota exceeded.' : (error.message || 'Unknown error');
-            showToast(`Failed to save ${section}: ${errMsg}`, 'error');
-        } finally { setLoading(false); }
-    }, [showToast, trackWrite, queryClient]);
+        }, {
+            showToast,
+            successMessage: section === 'settings' ? 'Settings saved!' : `${section.charAt(0).toUpperCase() + section.slice(1)} saved!`,
+            errorMessage: `Failed to save ${section}.`
+        });
+    }, [showToast, trackWrite, queryClient, execute, checkActionAllowed]);
 
     useEffect(() => {
         if (user && userRole) {
@@ -475,15 +454,11 @@ const Admin = () => {
     // ====== Handlers ======
     const handleTabClick = (tab) => {
         setActiveTab(tab);
-        if (!sidebarPersistent || window.innerWidth <= 900) {
-            setSidebarOpen(false);
-        }
     };
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        try {
+        await execute(async () => {
             let authUser;
             if (isRegistering) {
                 const credential = await AuthService.register(email, password);
@@ -496,14 +471,12 @@ const Admin = () => {
                     await UserService.createUserDoc({ email, role: 'pending', isActive: true }, authUser.uid);
                     trackWrite(1, 'Created user record');
                 }
-                showToast('Account created! You are now logged in.');
             } else {
                 const credential = await AuthService.login(email, password);
                 authUser = credential.user;
                 
                 let userDoc = await UserService.fetchUserById(authUser.uid);
                 
-                // Manual migration check (redundant but safe)
                 if (!userDoc) {
                     userDoc = await UserService.fetchUserByEmail(email);
                     if (userDoc) {
@@ -520,7 +493,6 @@ const Admin = () => {
                 }
             }
 
-            // Audit Trail
             try {
                 let currentIp = 'Unknown';
                 let locData = { country: 'Unknown', city: 'Unknown' };
@@ -528,7 +500,6 @@ const Admin = () => {
                 currentIp = geoData.ip;
                 locData.country = geoData.country_name;
                 locData.city = geoData.city;
-
 
                 await AuditLogService.addAuditLog({
                     email,
@@ -540,16 +511,17 @@ const Admin = () => {
                     sessionId: getSessionId()
                 }, trackWrite);
             } catch (auditError) { console.error("Failed to write audit log:", auditError); }
-        } catch (error) {
-            showToast((isRegistering ? "Registration Failed: " : "Login Failed: ") + error.message, 'error');
-        } finally { setLoading(false); }
+        }, {
+            showToast,
+            successMessage: isRegistering ? 'Account created! You are now logged in.' : undefined
+        });
     };
 
     // ============================================================
     // Tab Renderer
     // ============================================================
     const renderActiveTab = () => {
-        const commonProps = { userRole, showToast, userId, userDisplayName };
+        const commonProps = { userRole, showToast, userId, userDisplayName, isActionAllowed: checkActionAllowed };
 
         switch (activeTab) {
             case 'general':
@@ -559,7 +531,7 @@ const Admin = () => {
             case 'settings':
                 return <SettingsTab {...commonProps} settingsData={settingsData} setSettingsData={setSettingsData} loading={loading} saveSectionData={saveSectionData} sidebarPersistent={sidebarPersistent} setSidebarPersistent={setSidebarPersistent} />;
             case 'messages':
-                return <MessagesTab {...commonProps} messages={messages} setMessages={setMessages} />;
+                return <MessagesTab {...commonProps} onMessagesChange={fetchMessages} />;
             case 'experience':
                 return <ExperienceTab {...commonProps} />;
             case 'projects':
@@ -584,8 +556,9 @@ const Admin = () => {
     // ============================================================
     if (isAuthLoading) {
         return (
-            <div className={styles.adminLayout} style={{ alignItems: 'center', justifyContent: 'center' }}>
-                <div className={styles.spinner} style={{ width: '32px', height: '32px', borderWidth: '3px', borderColor: 'rgba(100, 255, 218, 0.1)', borderTopColor: '#64ffda' }} />
+            <div className={styles.loginWrapper}>
+                <AnimatedBackground variant="aurora" density={30} speed={20} />
+                <Spinner size="xl" />
             </div>
         );
     }
@@ -593,6 +566,13 @@ const Admin = () => {
     if (!user) {
         return (
             <div className={styles.loginWrapper}>
+                <AnimatedBackground 
+                    variant={settingsData.bgStyle || 'aurora'}
+                    density={settingsData.bgDensity ?? 30}
+                    speed={settingsData.bgSpeed ?? 20}
+                    glowOpacity={settingsData.bgGlowOpacity ?? 40}
+                    interactive={settingsData.bgInteractive ?? true}
+                />
                 {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
                 <div className={styles.loginCard}>
                     <div className={styles.loginIcon}>
@@ -604,17 +584,17 @@ const Admin = () => {
                     <p className={styles.loginSubtitle}>{isRegistering ? 'Register a new admin account' : 'Sign in to manage your portfolio'}</p>
 
                     <form onSubmit={handleLogin} className={styles.loginForm}>
-                        <div className={styles.inputGroup}>
+                        <div className="ui-formGroup">
                             <label>Email</label>
                             <input type="email" placeholder="admin@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
                         </div>
-                        <div className={styles.inputGroup}>
+                        <div className="ui-formGroup">
                             <label>Password</label>
                             <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
                         </div>
                         <button type="submit" className={styles.loginBtn} disabled={loading}>
                             {loading ? (
-                                <span className={styles.btnLoading}><span className={styles.spinner} /> {isRegistering ? 'Creating...' : 'Signing in...'}</span>
+                                <span className={styles.btnLoading}><span className="ui-spinner" /> {isRegistering ? 'Creating...' : 'Signing in...'}</span>
                             ) : (isRegistering ? 'Create Account' : 'Sign In')}
                         </button>
                     </form>
@@ -634,92 +614,32 @@ const Admin = () => {
     // Admin Dashboard
     // ============================================================
     return (
-        <div className={styles.adminLayout}>
+        <AdminLayout
+            currentRoute={activeTab}
+            onNavigate={handleTabClick}
+            user={user}
+            userRole={userRole}
+            userDisplayName={userDisplayName}
+            theme={theme}
+            toggleTheme={toggleTheme}
+            onLogout={() => AuthService.logout()}
+            rolePermissions={rolePermissions}
+            isTabAllowed={isTabAllowed}
+            unreadMessagesCount={unreadMessagesCount}
+            title={tabLabels[activeTab] || 'Dashboard'}
+            subtitle={
+                activeTab === 'general' ? 'Manage your portfolio primary content' : 
+                activeTab === 'profile' ? 'Manage your personal profile and account settings' :
+                activeTab === 'settings' ? 'Configure site-wide identity, visual aesthetics, and synchronization' :
+                'Administrator Dashboard'
+            }
+            settingsData={settingsData}
+        >
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-            {/* Top Navigation Bar */}
-            <div className={styles.topNavBar}>
-                <div className={styles.topNavLeft}>
-                    <button className={styles.menuToggle} onClick={() => setSidebarOpen(!sidebarOpen)}>
-                        <span /><span /><span />
-                    </button>
-                    <span className={styles.brand}>Admin<span>.</span></span>
-                </div>
-
-                <div className={styles.headerRight}>
-                    <button onClick={() => navigate('/')} className={styles.viewSiteBtn}>
-                        <ExternalLink size={16} />
-                        <span className={styles.hideOnMobile}>View Live Site</span>
-                    </button>
-
-                    <div className={styles.topActions}>
-                        <button onClick={toggleTheme} className={styles.topActionBtn} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
-                            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                        </button>
-
-                        {(userRole === 'superadmin' || (userRole && rolePermissions[userRole]?.includes('settings'))) && (
-                            <button onClick={() => handleTabClick('settings')} className={`${styles.topActionBtn} ${activeTab === 'settings' ? styles.activeBarTab : ''}`} title="Settings">
-                                {icons['settings']}
-                            </button>
-                        )}
-
-                        <button onClick={() => handleTabClick('profile')} className={`${styles.topActionBtn} ${activeTab === 'profile' ? styles.activeBarTab : ''}`} title="My Profile">
-                            {icons['profile']}
-                        </button>
-
-                        <button onClick={() => AuthService.logout()} className={`${styles.topActionBtn} ${styles.logoutActionBtn}`} title="Logout">
-                            <LogOut size={18} />
-                        </button>
-                    </div>
-
-                    <div className={styles.headerUserInfo}>
-                        <div className={styles.headerAvatar}>{(userDisplayName || user.email)?.charAt(0).toUpperCase()}</div>
-                        <div className={styles.headerUserText}>
-                            <span className={styles.headerUserEmail} title={user.email}>{userDisplayName || user.email}</span>
-                            <span className={styles.headerUserRole}>{userRole || 'Loading...'}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Backdrop */}
-            {sidebarOpen && <div className={styles.backdrop} onClick={() => setSidebarOpen(false)} />}
-
-            {/* Sidebar */}
-            <aside className={`${styles.sidebar} ${!sidebarOpen ? styles.sidebarClosed : ''} ${sidebarOpen ? styles.sidebarOpenMobile : ''}`}>
-                <nav className={styles.sidebarNav}>
-                    {Object.keys(tabLabels).filter(tab => {
-                        if (tab === 'profile' || tab === 'settings') return false; // Handled in top bar
-                        return isTabAllowed(tab, userRole, rolePermissions);
-                    }).map(tab => (
-                        <button key={tab} className={activeTab === tab ? styles.active : ''} onClick={() => handleTabClick(tab)}>
-                            {icons[tab] || <FileText size={18} />}
-                            <span>{tabLabels[tab]}</span>
-                            {tab === 'messages' && unreadMessagesCount > 0 && (
-                                <span className={styles.badge} style={{ background: 'linear-gradient(135deg, #6C63FF, #8B83FF)', color: '#fff', boxShadow: '0 2px 8px rgba(108, 99, 255, 0.4)' }}>{unreadMessagesCount}</span>
-                            )}
-                        </button>
-                    ))}
-                </nav>
-            </aside>
-
-            {/* Main Content */}
-            <main className={`${styles.mainContent} ${!sidebarOpen ? styles.contentExpanded : ''}`}>
-                <div className={styles.contentHeader}>
-                    <div>
-                        <h1>{tabLabels[activeTab] || 'Dashboard'}</h1>
-                        <p className={styles.headerSubtitle}>
-                            {activeTab === 'general' ? 'Manage your portfolio primary content' : 
-                             activeTab === 'profile' ? 'Manage your personal profile and account settings' :
-                             activeTab === 'settings' ? 'Configure site-wide identity, visual aesthetics, and synchronization' :
-                             'Administrator Dashboard'}
-                        </p>
-                    </div>
-                </div>
-
+            <Suspense fallback={<div style={{display: 'flex', justifyContent: 'center', padding: '4rem'}}><Spinner size="xl" /></div>}>
                 {renderActiveTab()}
-            </main>
-        </div>
+            </Suspense>
+        </AdminLayout>
     );
 };
 

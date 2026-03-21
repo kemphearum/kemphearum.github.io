@@ -1,5 +1,6 @@
 import BaseService from './BaseService';
 import { serverTimestamp } from 'firebase/firestore';
+import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 
 class ExperienceService extends BaseService {
     constructor() {
@@ -7,15 +8,15 @@ class ExperienceService extends BaseService {
     }
 
     async toggleVisibility(userRole, id, currentVisible, trackWrite) {
-        if (userRole === 'pending') {
-            throw new Error("Not authorized to toggle visibility.");
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.EXPERIENCE, userRole)) {
+            throw new Error("Unauthorized action");
         }
         return this.update(id, { visible: !currentVisible }, trackWrite);
     }
 
     async deleteExperience(userRole, id, trackDelete) {
-        if (userRole === 'pending' || userRole === 'editor') {
-            throw new Error("Not authorized to delete experience records.");
+        if (!isActionAllowed(ACTIONS.DELETE, MODULES.EXPERIENCE, userRole)) {
+            throw new Error("Unauthorized action");
         }
         return this.delete(id, (count, label) => {
             if (trackDelete) trackDelete(count, label, { id, action: 'deleted' });
@@ -27,8 +28,9 @@ class ExperienceService extends BaseService {
      * Replaces direct object manipulation in the UI component.
      */
     async saveExperience(userRole, formData, trackWrite) {
-        if (userRole === 'pending') {
-            throw new Error("Not authorized to save experience records.");
+        const action = formData.id ? ACTIONS.EDIT : ACTIONS.CREATE;
+        if (!isActionAllowed(action, MODULES.EXPERIENCE, userRole)) {
+            throw new Error("Unauthorized action");
         }
 
         const formatMonthYear = (yyyyMm) => {

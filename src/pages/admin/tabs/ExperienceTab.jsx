@@ -9,9 +9,8 @@ import SortableHeader from '../components/SortableHeader';
 import Pagination from '../components/Pagination';
 import styles from '../../Admin.module.scss';
 import ExperienceService from '../../../services/ExperienceService';
-import ConfirmDialog from '../components/ConfirmDialog';
+import { Button, Badge, Dialog, Input } from '../../../shared/components/ui';
 import HistoryModal from '../components/HistoryModal';
-import BaseModal from '../components/BaseModal';
 import FormRow from '../components/FormRow';
 import FormInput from '../components/FormInput';
 import FormMarkdownEditor from '../components/FormMarkdownEditor';
@@ -33,6 +32,9 @@ const ExperienceTab = ({ userRole, showToast }) => {
     const queryClient = useQueryClient();
 
     const { data: experiences = [], isLoading: expLoading } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['experience'],
         queryFn: async () => {
             const allExperience = await ExperienceService.getAll("createdAt", "desc");
@@ -255,18 +257,18 @@ const ExperienceTab = ({ userRole, showToast }) => {
                 <div className={styles.listSection}>
                     <div className={styles.listSectionHeader}>
                         <h3 className={styles.listTitle}>Existing Experience</h3>
-                        <button onClick={() => {
+                        <Button onClick={() => {
                             setEditingExperience(null);
                             setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false });
                             setIsExpPreviewMode(false);
                             setShowExperienceForm(true);
-                        }} className={styles.addBtn}>
-                            <Plus size={18} /> Add New
-                        </button>
+                        }}>
+                            <Plus size={18} /> Add New Experience
+                        </Button>
                     </div>
                     <div className={styles.searchBox}>
                         <Search size={16} className={styles.searchIcon} />
-                        <input type="text" placeholder="Search by role or company..." value={searchExperience} onChange={(e) => { setSearchExperience(e.target.value); setExpPage(1); }} />
+                        <Input type="text" placeholder="Search by role or company..." value={searchExperience} onChange={(e) => { setSearchExperience(e.target.value); setExpPage(1); }} />
                         {searchExperience && <span className={styles.searchResultCount}>{filteredExperiences.length} of {experiences.length}</span>}
                     </div>
                     {filteredExperiences.length === 0 ? (
@@ -285,18 +287,18 @@ const ExperienceTab = ({ userRole, showToast }) => {
                                         <p className={styles.listMeta}>{exp.company} • <em>{exp.period}</em></p>
                                     </div>
                                     <div className={styles.listItemActions}>
-                                        <button className={`${styles.visibilityBtn} ${exp.visible === false ? styles.off : ''}`} onClick={(e) => { e.stopPropagation(); toggleVisibility(exp.id, exp.visible !== false); }} title={exp.visible === false ? 'Show on homepage' : 'Hide from homepage'}>
+                                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); toggleVisibility(exp.id, exp.visible !== false); }} title={exp.visible === false ? 'Show on homepage' : 'Hide from homepage'}>
                                             {exp.visible === false ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </button>
-                                        <button className={styles.historyIconBtn} onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: exp.id, title: `${exp.role} at ${exp.company}` }); }} title="View Edit History">
+                                        </Button>
+                                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setHistoryModal({ isOpen: true, recordId: exp.id, title: `${exp.role} at ${exp.company}` }); }} title="View Edit History">
                                             <History size={16} />
-                                        </button>
-                                        <button className={styles.editBtn} onClick={(e) => { e.stopPropagation(); handleEditExperienceClick(exp); }} title="Edit">
+                                        </Button>
+                                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleEditExperienceClick(exp); }} title="Edit">
                                             <Edit2 size={16} />
-                                        </button>
-                                        <button className={styles.deleteBtn} onClick={(e) => { e.stopPropagation(); handleDeleteExperience(exp.id); }} title="Delete">
+                                        </Button>
+                                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteExperience(exp.id); }} title="Delete" style={{ color: '#ef4444' }}>
                                             <Trash2 size={16} />
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             ))}
@@ -308,9 +310,9 @@ const ExperienceTab = ({ userRole, showToast }) => {
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
                         <h3>{editingExperience ? <Edit2 size={24} /> : <Plus size={24} />} {editingExperience ? 'Edit Experience' : 'Add New Experience'}</h3>
-                        <button onClick={() => { setEditingExperience(null); setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false }); setShowExperienceForm(false); }} className={styles.cancelBtn} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Button variant="ghost" onClick={() => { setEditingExperience(null); setExperience({ company: '', role: '', period: '', description: '', startDate: '', endDate: '', isPresent: false }); setShowExperienceForm(false); }}>
                             <ArrowLeft size={18} /> Cancel & Return
-                        </button>
+                        </Button>
                     </div>
                     <form onSubmit={handleSaveExperience} className={styles.form}>
                         <FormRow>
@@ -364,52 +366,75 @@ const ExperienceTab = ({ userRole, showToast }) => {
                         />
 
                         <div className={styles.formFooter}>
-                            <button type="submit" disabled={loading} className={styles.submitBtn}>
-                                {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save</>}
-                            </button>
+                            <Button type="submit" disabled={loading}>
+                                {loading ? <><span className={styles.spinner} /> Saving...</> : <><Save size={18} /> Save Experience</>}
+                            </Button>
                         </div>
                     </form>
                 </div>
             )}
 
             {/* Experience Details Modal */}
-            <BaseModal
-                isOpen={!!viewingExperience}
-                onClose={() => setViewingExperience(null)}
-                zIndex={1200}
-                maxWidth="650px"
-                contentStyle={{ borderRadius: '20px' }}
-                headerStyle={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1.5rem 2rem' }}
-                headerContent={
-                    <h3 style={{ margin: 0, fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        {icons.experience || '👔'} Experience Details
-                    </h3>
-                }
-                bodyStyle={{ padding: 0 }}
-                footerStyle={{ padding: '1.25rem 2rem' }}
-                footerContent={
-                    <button onClick={() => setViewingExperience(null)} className={styles.primaryBtn} style={{ margin: 0 }}>Close</button>
-                }
-            >
-                <div style={{ padding: '2rem' }}>
-                    <div className={styles.detailGrid} style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
-                        <div className={styles.detailItem} style={{ flex: '1 1 200px' }}><span className={styles.detailLabel}>Company</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary-color)', wordBreak: 'break-word' }}>{viewingExperience?.company}</span></div>
-                        <div className={styles.detailItem} style={{ flex: '1 1 200px' }}><span className={styles.detailLabel}>Role</span><span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', wordBreak: 'break-word' }}>{viewingExperience?.role}</span></div>
-                        <div className={styles.detailItem} style={{ flex: '1 1 100%' }}><span className={styles.detailLabel}>Period</span><span className={styles.detailValue} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem 1rem', borderRadius: '8px', display: 'inline-block', marginTop: '0.4rem' }}>{viewingExperience?.period}</span></div>
-                    </div>
-                    <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
-                        <MarkdownRenderer content={viewingExperience?.description || ''} />
-                    </div>
-                </div>
-            </BaseModal>
+            <Dialog open={!!viewingExperience} onOpenChange={() => setViewingExperience(null)}>
+                <Dialog.Content maxWidth="650px">
+                    <Dialog.Header style={{ background: 'rgba(255, 255, 255, 0.02)' }}>
+                        <Dialog.Title style={{ margin: 0, fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {icons.experience || '👔'} Experience Details
+                        </Dialog.Title>
+                        <Dialog.Close />
+                    </Dialog.Header>
+                    <Dialog.Body style={{ padding: 0 }}>
+                        {viewingExperience && (
+                            <div style={{ padding: '2rem' }}>
+                                <div className={styles.detailGrid} style={{ marginBottom: '2rem', display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
+                                    <div className={styles.detailItem} style={{ flex: '1 1 200px' }}>
+                                        <span className={styles.detailLabel}>Company</span>
+                                        <span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary-color)', wordBreak: 'break-word' }}>{viewingExperience.company}</span>
+                                    </div>
+                                    <div className={styles.detailItem} style={{ flex: '1 1 200px' }}>
+                                        <span className={styles.detailLabel}>Role</span>
+                                        <span className={styles.detailValue} style={{ fontSize: '1.1rem', fontWeight: '700', wordBreak: 'break-word' }}>{viewingExperience.role}</span>
+                                    </div>
+                                    <div className={styles.detailItem} style={{ flex: '1 1 100%' }}>
+                                        <span className={styles.detailLabel}>Period</span>
+                                        <span className={styles.detailValue} style={{ background: 'rgba(255,255,255,0.03)', padding: '0.5rem 1rem', borderRadius: '8px', display: 'inline-block', marginTop: '0.4rem' }}>{viewingExperience.period}</span>
+                                    </div>
+                                </div>
+                                <div style={{ background: 'rgba(255,255,255,0.015)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.1)' }}>
+                                    <MarkdownRenderer content={viewingExperience.description || ''} />
+                                </div>
+                            </div>
+                        )}
+                    </Dialog.Body>
+                    <Dialog.Footer style={{ padding: '1.25rem 2rem' }}>
+                        <Button onClick={() => setViewingExperience(null)}>Close</Button>
+                    </Dialog.Footer>
+                </Dialog.Content>
+            </Dialog>
 
             {/* Confirm Dialog */}
-            {confirmDialog.isOpen && (
-                <ConfirmDialog
-                    confirmDialog={confirmDialog}
-                    setConfirmDialog={setConfirmDialog}
-                />
-            )}
+            <Dialog open={confirmDialog.isOpen} onOpenChange={(open) => !open && setConfirmDialog(prev => ({ ...prev, isOpen: false }))}>
+                <Dialog.Content maxWidth="440px">
+                    <Dialog.Header>
+                        <Dialog.Title style={{ color: confirmDialog.type === 'danger' ? '#ef4444' : '#f97316', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {confirmDialog.type === 'danger' ? <Trash2 size={20} /> : <Save size={20} />} {confirmDialog.title}
+                        </Dialog.Title>
+                        <Dialog.Close />
+                    </Dialog.Header>
+                    <Dialog.Body style={{ color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                        {confirmDialog.message}
+                    </Dialog.Body>
+                    <Dialog.Footer>
+                        <Button variant="ghost" onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}>Cancel</Button>
+                        <Button 
+                            variant={confirmDialog.type === 'danger' ? 'danger' : 'primary'}
+                            onClick={() => { confirmDialog.onConfirm?.(); setConfirmDialog(prev => ({ ...prev, isOpen: false })); }}
+                        >
+                            {confirmDialog.confirmText}
+                        </Button>
+                    </Dialog.Footer>
+                </Dialog.Content>
+            </Dialog>
 
             <HistoryModal
                 isOpen={historyModal.isOpen}

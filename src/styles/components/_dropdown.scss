@@ -1,0 +1,54 @@
+@use '../variables' as *;
+
+.ui-dropdown-content {
+    min-width: 160px;
+    background: var(--bg-card, #0f172a);
+    border: 1px solid var(--border-color, #1e293b);
+    border-radius: 10px;
+    padding: 0.4rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 1002;
+    animation: ui-slide-up 0.15s ease-out;
+}
+
+.ui-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.15s ease;
+
+    &:hover, &[data-highlighted] {
+        background: rgba($primary-color, 0.1);
+        color: $primary-color;
+    }
+
+    &--danger {
+        color: #ef4444;
+        &:hover, &[data-highlighted] {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+    }
+
+    svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.ui-dropdown-separator {
+    height: 1px;
+    background: var(--border-color, #1e293b);
+    margin: 0.4rem;
+}
+
+@keyframes ui-slide-up {
+    from { opacity: 0; transform: translateY(4px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}

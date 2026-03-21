@@ -13,7 +13,9 @@ const AnimatedBackground = ({
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
+        if (!canvas && variant !== 'aurora') return;
+        
+        const ctx = canvas ? canvas.getContext('2d') : null;
         let animationFrameId;
         let particles = [];
 
@@ -25,6 +27,7 @@ const AnimatedBackground = ({
         const maxVelocity = (speed / 50) * 0.5;
 
         const resize = () => {
+            if (!canvas) return;
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             initParticles();
@@ -132,6 +135,8 @@ const AnimatedBackground = ({
             // Check light mode state directly from the document HTML attribute
             const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
             const connectColor = '108, 99, 255'; // Keep primary brand color
+            if (!ctx) return;
+
             // Use darker opacities for light mode since the background is white
             const mouseLineOpacityMultiplier = isLightMode ? 0.7 : 0.4;
             const particleLineOpacityMultiplier = isLightMode ? 0.3 : 0.15;
@@ -174,9 +179,9 @@ const AnimatedBackground = ({
         };
 
         const animate = () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (variant !== 'aurora') {
+            if (variant !== 'aurora' && ctx) {
                 for (let i = 0; i < particles.length; i++) {
                     particles[i].update();
                     particles[i].draw();

@@ -1,0 +1,268 @@
+@use '../variables' as *;
+
+@mixin custom-scrollbar {
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    }
+}
+
+// SECTION HEADER
+.ui-sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    gap: 1.5rem;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+.ui-headerInfo {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+}
+
+.ui-headerIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba($primary-color, 0.2);
+    color: $primary-color;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ui-headerTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.4rem 0;
+    color: var(--text-primary);
+}
+
+.ui-headerDescription {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+// USAGE BAR
+.ui-usageContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+}
+
+.ui-usageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.9rem;
+    gap: 1rem;
+}
+
+.ui-usageLabel {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.ui-usageStats {
+    font-weight: 700;
+}
+
+.ui-usageTrack {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.ui-usageFill {
+    height: 100%;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.ui-usageHint {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    opacity: 0.8;
+}
+
+// LIST ITEMS
+.ui-listItem {
+    @include glass;
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+
+    &:hover {
+        transform: translateX(4px);
+        border-color: rgba($primary-color, 0.25);
+        background: var(--card-hover);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.ui-empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    @include glass;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    min-height: 300px;
+    animation: ui-fade-in 0.4s ease-out;
+
+    .ui-empty-state-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.03);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-tertiary, #64748b);
+        margin-bottom: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+
+        svg {
+            width: 32px;
+            height: 32px;
+            opacity: 0.7;
+        }
+    }
+
+    .ui-empty-state-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .ui-empty-state-description {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        margin: 0;
+        max-width: 400px;
+        line-height: 1.6;
+    }
+
+    .ui-empty-state-action {
+        margin-top: 1rem;
+    }
+}
+
+// MANAGEMENT GRID & CARDS
+.ui-managementGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+
+    @media (max-width: 500px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ui-actionCard {
+    background: rgba(var(--primary-rgb), 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+        transform: translateY(-8px) scale(1.02);
+        background: rgba($primary-color, 0.05);
+        border-color: rgba($primary-color, 0.3);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    }
+}
+
+.ui-importArea {
+    background: linear-gradient(135deg, rgba($primary-color, 0.05), rgba($primary-color, 0.02));
+    border: 2px dashed rgba($primary-color, 0.2);
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+
+    &:hover {
+        border-color: rgba($primary-color, 0.4);
+        background: rgba($primary-color, 0.06);
+    }
+}
+
+.ui-tableWrapper {
+    @include custom-scrollbar;
+    border: 1px solid var(--input-border, var(--divider));
+    border-radius: 12px;
+    background: var(--input-bg, rgba(0, 0, 0, 0.15));
+    overflow-y: auto;
+    position: relative;
+}
+
+.ui-previewTable {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+
+    th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 1.25rem 1rem;
+        background: var(--bg-surface-light);
+        border-bottom: 2px solid var(--divider);
+        text-align: left;
+        font-size: 0.85rem;
+    }
+
+    td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--divider);
+        background: var(--card-bg);
+    }
+}

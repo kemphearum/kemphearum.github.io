@@ -10,14 +10,19 @@ const StatCard = ({
     trend,
     trendValue,
     onClick,
-    description
+    description,
+    className = '',
+    style = {},
+    ...props
 }) => {
     const isPositive = trend === 'up';
 
     return (
         <div
-            className={`${styles.statCard} ${onClick ? styles.clickableStat : ''}`}
+            className={`${styles.statCard} ${onClick ? styles.clickableStat : ''} ${className}`}
             onClick={onClick}
+            style={style}
+            {...props}
         >
             <div className={styles.statIcon} style={{ background: `${color}15`, color: color }}>
                 {Icon && <Icon size={20} />}

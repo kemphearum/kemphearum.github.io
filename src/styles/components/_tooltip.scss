@@ -1,0 +1,17 @@
+@use '../variables' as *;
+
+.ui-tooltip-content {
+    background: #1e293b;
+    color: var(--text-primary);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1003;
+    animation: ui-fade-in 0.15s ease-out;
+
+    .ui-tooltip-arrow {
+        fill: #1e293b;
+    }
+}

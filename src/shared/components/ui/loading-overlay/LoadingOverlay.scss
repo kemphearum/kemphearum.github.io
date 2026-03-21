@@ -1,0 +1,9 @@
+// LoadingOverlay.scss is handled by the global .ui-loading-overlay class in _analytics.scss
+// But if we want it self-contained for future reuse, we can put it here or just rely on the global class.
+// Given the user's request for .ui-loading-overlay in analytics.scss, I'll keep it there.
+// However, I'll create an empty file here or a minimal one if needed to avoid import errors.
+
+.ui-loading-overlay {
+    background: rgba(var(--bg-color-rgb), 0.25);
+    backdrop-filter: blur(4px);
+}

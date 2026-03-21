@@ -11,20 +11,23 @@ export default class BaseService {
         this.useHistory = useHistory;
     }
 
-    async getAll(sortBy = null, sortDirection = 'desc') {
+    async getAll(sortBy = null, sortDirection = 'desc', trackRead = null) {
         let q = this.collectionRef;
         if (sortBy) {
             q = query(this.collectionRef, orderBy(sortBy, sortDirection));
         }
         const snapshot = await getDocs(q);
+        if (trackRead) trackRead(snapshot.size, `Fetched ${this.collectionName} list`, { sortBy, sortDirection, count: snapshot.size });
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 
-    async getById(id) {
+    async getById(id, trackRead = null) {
         const docRef = doc(db, this.collectionName, id);
         const snapshot = await getDoc(docRef);
         if (snapshot.exists()) {
-            return { id: snapshot.id, ...snapshot.data() };
+            const data = { id: snapshot.id, ...snapshot.data() };
+            if (trackRead) trackRead(1, `Fetched ${this.collectionName} by ID: ${id}`, { id });
+            return data;
         }
         return null;
     }

@@ -1,6 +1,10 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
-import { collection, getDocs, query, orderBy, limit as firestoreLimit, collectionGroup, addDoc, serverTimestamp } from 'firebase/firestore';
+import { 
+    collection, getDocs, query, orderBy, limit as firestoreLimit, 
+    collectionGroup, addDoc, serverTimestamp, where, getCountFromServer,
+    startAfter 
+} from 'firebase/firestore';
 
 class AuditLogService extends BaseService {
     constructor() {
@@ -53,76 +57,114 @@ class AuditLogService extends BaseService {
     }
 
     /**
-     * Fetch detailed activity logs based on operation type and date range
-     * @param {string} activityDateRange - 'today', '7d', '30d', or 'all'
-     * @param {string} operationType - 'read', 'write', or 'delete'
-     * @param {string} currentDateKey - The date string for 'today' (YYYY-MM-DD)
-     * @returns {Promise<Array>}
+     * Fetch detailed activity logs based on operation type and date range using cursor pagination
+     * @param {Object} params - { activityDateRange, operationType, currentDateKey, lastDoc, limit, search }
+     * @returns {Promise<{data: Array, lastDoc: any, hasMore: boolean}>}
      */
-    async fetchActivityDetails(activityDateRange, operationType, currentDateKey) {
+    async fetchActivityDetails({ activityDateRange, operationType, currentDateKey, lastDoc = null, limit = 50, search = '' }) {
         let logs = [];
 
-        if (activityDateRange === 'today') {
-            const q = query(collection(db, 'dailyUsage', currentDateKey, 'logs'), orderBy('time', 'desc'), firestoreLimit(1500));
-            const snap = await getDocs(q);
-            logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        } else {
-            // To avoid Collection Group index requirements, we fetch from individual days for 7/30d
-            const daysToFetch = activityDateRange === '7d' ? 7 : (activityDateRange === '30d' ? 30 : 0);
-
-            if (daysToFetch > 0) {
-                // Get a larger batch of days and sort locally to get the most recent ones
-                const qDays = query(collection(db, 'dailyUsage'), firestoreLimit(365));
-                const daysSnap = await getDocs(qDays);
-
-                // Sort descending by ID (date string like "2024-03-04") and take the most recent ones
-                const sortedDays = [...daysSnap.docs]
-                    .sort((a, b) => b.id.localeCompare(a.id))
-                    .slice(0, daysToFetch);
-
-                // Fetch logs for each day in parallel
-                const logPromises = sortedDays.map(async (dayDoc) => {
-                    const qLogs = query(collection(db, 'dailyUsage', dayDoc.id, 'logs'), orderBy('time', 'desc'), firestoreLimit(500));
-                    const lSnap = await getDocs(qLogs);
-                    return lSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                });
-
-                const logResults = await Promise.all(logPromises);
-                logs = logResults.flat();
-                // Sort combined logs by time
-                logs.sort((a, b) => (b.time?.seconds || 0) - (a.time?.seconds || 0));
+        try {
+            let baseQuery;
+            if (activityDateRange === 'today') {
+                const logsRef = collection(db, 'dailyUsage', currentDateKey, 'logs');
+                baseQuery = query(logsRef, where('type', '==', operationType));
             } else {
-                // For "All Time", we catch the index error specifically
-                try {
-                    const q = query(collectionGroup(db, 'logs'), orderBy('time', 'desc'), firestoreLimit(1500));
-                    const snap = await getDocs(q);
-                    logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                } catch (cgErr) {
-                    if (cgErr.code === 'failed-precondition') {
-                        throw new Error("Historical cross-day logs require a Firestore Index. Please check the browser console for the setup link.");
-                    }
-                    throw cgErr;
+                baseQuery = query(collectionGroup(db, 'logs'), where('type', '==', operationType));
+                if (activityDateRange !== 'all') {
+                    const days = activityDateRange === '7d' ? 7 : (activityDateRange === '30d' ? 30 : 365);
+                    const cutoff = new Date();
+                    cutoff.setDate(cutoff.getDate() - days);
+                    baseQuery = query(baseQuery, where('time', '>=', cutoff));
                 }
             }
-        }
 
-        // Finally filter by operation type
-        const filteredLogs = logs.filter(log => log.type === operationType);
-        return filteredLogs.slice(0, 500);
+            // Prepare paginated query
+            let constraints = [orderBy('time', 'desc'), firestoreLimit(limit + 1)]; // Fetch limit + 1 to check hasMore
+            if (lastDoc) {
+                constraints.push(startAfter(lastDoc));
+            }
+
+            const q = query(baseQuery, ...constraints);
+            const snap = await getDocs(q);
+            
+            const docs = snap.docs;
+            const hasMore = docs.length > limit;
+            const resultDocs = hasMore ? docs.slice(0, limit) : docs;
+            
+            logs = resultDocs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const lastVisible = resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null;
+
+            // Client-side search within the fetched chunk
+            if (search) {
+                const lower = search.toLowerCase();
+                logs = logs.filter(l => 
+                    (l.label && l.label.toLowerCase().includes(lower)) || 
+                    (l.user && l.user.toLowerCase().includes(lower))
+                );
+            }
+
+            return {
+                data: logs,
+                lastDoc: lastVisible,
+                hasMore
+            };
+        } catch (error) {
+            console.error("Error in fetchActivityDetails:", error);
+            if (error.code === 'failed-precondition') {
+                throw new Error("This query requires a Firestore Index. Check console for link.");
+            }
+            throw error;
+        }
     }
 
     /**
-     * Fetch security audit logs (logins, role changes, etc.)
-     * @param {string} userRole 
-     * @param {Function} trackRead 
-     * @returns {Promise<Array>}
+     * Fetch security audit logs using cursor pagination
+     * @param {Object} params - { userRole, trackRead, lastDoc, limit, search, dateRange }
+     * @returns {Promise<{data: Array, lastDoc: any, hasMore: boolean}>}
      */
-    async fetchSecurityAuditTrail(userRole, trackRead) {
-        if (userRole !== 'superadmin') return [];
-        const q = query(collection(db, 'auditLogs'), orderBy('timestamp', 'desc'), firestoreLimit(100));
-        const querySnapshot = await getDocs(q);
-        if (trackRead) trackRead(querySnapshot.size, 'Fetched audit logs list');
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    async fetchSecurityAuditTrail({ userRole, trackRead, lastDoc = null, limit = 10, search = '', dateRange = 'all' }) {
+        if (userRole !== 'superadmin') return { data: [], lastDoc: null, hasMore: false };
+        
+        try {
+            const baseRef = collection(db, this.collectionName);
+            let constraints = [];
+
+            if (dateRange !== 'all') {
+                const now = new Date();
+                let cutoff = new Date();
+                if (dateRange === 'today') cutoff.setHours(0, 0, 0, 0);
+                else if (dateRange === '7d') cutoff.setDate(now.getDate() - 7);
+                else if (dateRange === '30d') cutoff.setDate(now.getDate() - 30);
+                constraints.push(where('timestamp', '>=', cutoff));
+            }
+
+            let queryConstraints = [...constraints, orderBy('timestamp', 'desc'), firestoreLimit(limit + 1)];
+            if (lastDoc) {
+                queryConstraints.push(startAfter(lastDoc));
+            }
+
+            const q = query(baseRef, ...queryConstraints);
+            const querySnapshot = await getDocs(q);
+            
+            const docs = querySnapshot.docs;
+            const hasMore = docs.length > limit;
+            const resultDocs = hasMore ? docs.slice(0, limit) : docs;
+            
+            const data = resultDocs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const lastVisible = resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null;
+
+            if (trackRead) trackRead(querySnapshot.size, 'Fetched audit logs list', { count: querySnapshot.size });
+            
+            return {
+                data,
+                lastDoc: lastVisible,
+                hasMore
+            };
+        } catch (error) {
+            console.error("Error in fetchSecurityAuditTrail:", error);
+            throw error;
+        }
     }
 }
 

@@ -14,6 +14,9 @@ const Contact = () => {
     const [status, setStatus] = useState(null);
 
     const { data, isLoading: loading } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['content', 'contact'],
         queryFn: () => ContentService.fetchSection('contact')
     });

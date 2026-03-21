@@ -1,6 +1,7 @@
 import { db } from '../firebase';
 import { collection, getDocs, query, where, doc, updateDoc, writeBatch, setDoc, Timestamp, getDoc } from 'firebase/firestore';
 import SettingsService from './SettingsService';
+import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 
 class DatabaseService {
     static SOFT_DOC_LIMIT = 50000;
@@ -36,8 +37,8 @@ class DatabaseService {
     }
 
     static async updateAuditSettings(userRole, key, value, currentSettings, trackWrite) {
-        if (userRole !== 'superadmin') {
-            throw new Error("Only Superadmins can configure audit settings.");
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.DATABASE, userRole)) {
+            throw new Error("Unauthorized action");
         }
 
         let newSettings = { [key]: value };
@@ -62,8 +63,8 @@ class DatabaseService {
     }
 
     static async backup(userRole, trackRead) {
-        if (userRole !== 'superadmin') {
-            throw new Error("Only Superadmins can perform backups.");
+        if (!isActionAllowed(ACTIONS.DATABASE_ACTIONS, MODULES.DATABASE, userRole)) {
+            throw new Error("Unauthorized action");
         }
 
         const collectionsToExport = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'visits', 'dailyUsage'];
@@ -137,8 +138,8 @@ class DatabaseService {
     }
 
     static async archive(userRole, daysOld, trackRead, trackDelete) {
-        if (userRole !== 'superadmin') {
-            throw new Error("Only Superadmins can perform archives.");
+        if (!isActionAllowed(ACTIONS.DELETE, MODULES.DATABASE, userRole)) {
+            throw new Error("Unauthorized action");
         }
 
         const cutoffDate = new Date();
@@ -193,8 +194,8 @@ class DatabaseService {
     }
 
     static async restore(userRole, jsonContent, trackWrite, onProgress) {
-        if (userRole !== 'superadmin') {
-            throw new Error("Only Superadmins can restore.");
+        if (!isActionAllowed(ACTIONS.DATABASE_ACTIONS, MODULES.DATABASE, userRole)) {
+            throw new Error("Unauthorized action");
         }
 
         const restoreTimestamps = (obj) => {

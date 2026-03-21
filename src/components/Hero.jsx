@@ -10,6 +10,9 @@ const Hero = () => {
     const { trackEvent } = useAnalytics();
 
     const { data, isLoading: loading } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['content', 'home'],
         queryFn: () => ContentService.fetchSection('home')
     });

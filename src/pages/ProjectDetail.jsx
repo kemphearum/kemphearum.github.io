@@ -64,6 +64,9 @@ const ProjectDetail = () => {
     const { trackRead } = useActivity();
 
     const { data: project, isLoading: loading, isError } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['project', slug],
         queryFn: async () => {
             const projectData = await ProjectService.fetchProjectBySlug(slug);

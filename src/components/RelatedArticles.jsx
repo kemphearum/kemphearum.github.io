@@ -8,6 +8,9 @@ import styles from './RelatedArticles.module.scss'; // Reuse blog card styles wh
 
 const RelatedArticles = ({ currentPostId, tags }) => {
     const { data: relatedPostsData, isLoading: loading } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['relatedPosts', currentPostId, tags],
         queryFn: () => BlogService.fetchRelatedPosts(currentPostId, tags, null),
         enabled: !!currentPostId

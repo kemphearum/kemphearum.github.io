@@ -1,73 +1,75 @@
 import BaseService from './BaseService';
 import { db, auth } from '../firebase';
-import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, orderBy, query, updateDoc, where, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, orderBy, query, updateDoc, where, serverTimestamp, limit as firestoreLimit, startAfter } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 
 class UserService extends BaseService {
     constructor() {
         super('users');
     }
 
-    async fetchUsers(userRole, trackRead, trackDelete) {
-        if (userRole !== 'superadmin') return [];
+    async fetchUsers({ userRole, trackRead, lastDoc = null, limit = 20, search = '' }) {
+        if (userRole !== 'superadmin') return { data: [], lastDoc: null, hasMore: false };
 
-        const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-        if (trackRead) trackRead(querySnapshot.size, 'Fetched users list for management');
+        try {
+            const baseRef = collection(db, "users");
+            let constraints = [orderBy("createdAt", "desc"), firestoreLimit(limit + 1)];
 
-        const uniqueUsers = new Map();
-        const docsToDelete = [];
-        querySnapshot.docs.forEach(docSnap => {
-            const data = docSnap.data();
-            const email = data.email?.toLowerCase();
-            if (!email) return;
-            if (uniqueUsers.has(email)) {
-                const existing = uniqueUsers.get(email);
-                const roles = { 'superadmin': 4, 'admin': 3, 'editor': 2, 'pending': 1 };
-                const existingScore = roles[existing.data.role] || 0;
-                const newScore = roles[data.role] || 0;
-                if (newScore > existingScore) {
-                    docsToDelete.push(existing.id);
-                    uniqueUsers.set(email, { id: docSnap.id, data });
-                } else {
-                    docsToDelete.push(docSnap.id);
-                }
-            } else {
-                uniqueUsers.set(email, { id: docSnap.id, data });
+            if (lastDoc) {
+                constraints.push(startAfter(lastDoc));
             }
-        });
 
-        if (docsToDelete.length > 0) {
-            Promise.all(docsToDelete.map(id => {
-                if (trackDelete) trackDelete(1, 'Cleaned duplicate user');
-                return deleteDoc(doc(db, "users", id));
-            })).catch(console.error);
+            const q = query(baseRef, ...constraints);
+            const querySnapshot = await getDocs(q);
+            
+            const docs = querySnapshot.docs;
+            const hasMore = docs.length > limit;
+            const resultDocs = hasMore ? docs.slice(0, limit) : docs;
+
+            if (trackRead) trackRead(querySnapshot.size, 'Fetched users list for management', { count: querySnapshot.size });
+
+            let data = resultDocs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const lastVisible = resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null;
+
+            // Simple client-side search for now as users is rarely huge, but standardizing the interface
+            if (search) {
+                const lower = search.toLowerCase();
+                data = data.filter(u => 
+                    (u.email && u.email.toLowerCase().includes(lower)) || 
+                    (u.displayName && u.displayName.toLowerCase().includes(lower))
+                );
+            }
+
+            return {
+                data,
+                lastDoc: lastVisible,
+                hasMore
+            };
+        } catch (error) {
+            console.error("Error in fetchUsers:", error);
+            throw error;
         }
-
-        let finalList = Array.from(uniqueUsers.values()).map(u => ({ id: u.id, ...u.data }));
-        finalList = finalList.filter(u => u.isActive !== false);
-        finalList.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-        return finalList;
     }
 
     async updateRole(userRole, userId, newRole, trackWrite) {
-        if (userRole !== 'superadmin') throw new Error("Only Superadmins can modify users.");
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
         return this.update(userId, { role: newRole }, trackWrite);
     }
 
     async removeUser(userRole, userId, trackDelete) {
-        if (userRole !== 'superadmin') throw new Error("Only Superadmins can remove users.");
+        if (!isActionAllowed(ACTIONS.DELETE, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
         // We use updateDoc to logically disable them
         await this.update(userId, { isActive: false }, trackDelete);
     }
 
     async sendPasswordReset(userRole, email) {
-        if (userRole !== 'superadmin') throw new Error("Only Superadmins can reset passwords.");
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
         return sendPasswordResetEmail(auth, email);
     }
 
     async createUser(userRole, email, password, role, trackRead) {
-        if (userRole !== 'superadmin') throw new Error("Only Superadmins can create users.");
+        if (!isActionAllowed(ACTIONS.CREATE, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
 
         const emailLower = email.toLowerCase().trim();
         const existingQ = query(collection(db, "users"), where("email", "==", emailLower));

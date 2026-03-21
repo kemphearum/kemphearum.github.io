@@ -1,0 +1,43 @@
+@use '../variables' as *;
+
+.ui-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: var(--input-bg, rgba(0, 0, 0, 0.2));
+    border: 1px solid var(--border-color, #1e293b);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    outline: none;
+
+    &::placeholder {
+        color: var(--text-secondary);
+        opacity: 0.5;
+    }
+
+    &:hover {
+        border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    &:focus {
+        border-color: $primary-color;
+        background: var(--input-focus-bg, rgba(0, 0, 0, 0.3));
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    &--sm {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    &--lg {
+        padding: 1rem 1.25rem;
+        font-size: 1rem;
+    }
+}

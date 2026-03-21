@@ -30,11 +30,17 @@ import styles from './Blog.module.scss'; // We need to create this
 
 const Blog = () => {
     const { data: postsData, isLoading: loadingPosts } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['posts'],
         queryFn: () => BlogService.getAll("createdAt", "desc")
     });
 
     const { data: globalConfig } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['settings', 'global'],
         queryFn: () => SettingsService.fetchGlobalSettings()
     });

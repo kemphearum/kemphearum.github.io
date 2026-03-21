@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { X, Clock, History, AlertCircle, ChevronDown, ChevronRight, PlusCircle, MinusCircle, Edit3 } from 'lucide-react';
+import { Clock, History, AlertCircle, ChevronDown, ChevronRight, PlusCircle, MinusCircle, Edit3 } from 'lucide-react';
 import styles from '../../Admin.module.scss';
 import { useQuery } from '@tanstack/react-query';
 import { diffWordsWithSpace } from 'diff';
-import BaseModal from './BaseModal';
+import { Button, Dialog, Spinner } from '../../../shared/components/ui';
 
 const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
     const [expandedLogId, setExpandedLogId] = useState(null);
 
     const { data: history = [], isLoading, error } = useQuery({
-        queryKey: ['history', service.collectionName, recordId],
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+        queryKey: ['history', service?.collectionName, recordId],
         queryFn: () => service.getHistory(recordId),
         enabled: isOpen && !!recordId && !!service
     });
@@ -123,130 +126,105 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
     };
 
     return (
-        <BaseModal
-            isOpen={isOpen}
-            onClose={onClose}
-            zIndex={9999}
-            maxWidth="800px"
-            bodyStyle={{ padding: 0 }}
-            headerContent={
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
-                        <History size={18} />
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <Dialog.Content maxWidth="800px">
+                <Dialog.Header>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(56, 189, 248, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
+                            <History size={18} />
+                        </div>
+                        <div>
+                            <Dialog.Title>Edit History</Dialog.Title>
+                            <Dialog.Description>
+                                {title || 'Record Timeline'}
+                            </Dialog.Description>
+                        </div>
                     </div>
-                    <div>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Edit History</h2>
-                        <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                            {title || 'Record Timeline'}
-                        </p>
-                    </div>
-                </div>
-            }
-            footerContent={
-                <button
-                    onClick={onClose}
-                    style={{
-                        padding: '0.5rem 1.25rem',
-                        borderRadius: '8px',
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        color: 'var(--text-secondary)',
-                        background: 'transparent',
-                        border: '1px solid var(--divider)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                    }}
-                    onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
-                        e.currentTarget.style.color = '#ef4444';
-                        e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-                    }}
-                    onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-secondary)';
-                        e.currentTarget.style.borderColor = 'var(--divider)';
-                    }}
-                >
-                    Close
-                </button>
-            }
-        >
-            {isLoading ? (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
-                    <div className={styles.spinner}></div>
-                </div>
-            ) : error ? (
-                <div className={styles.emptyState} style={{ padding: '3rem 2rem', textAlign: 'center' }}>
-                    <AlertCircle size={40} style={{ margin: '0 auto 1rem', color: '#ef4444' }} />
-                    <h3 style={{ margin: '0 0 0.5rem 0', color: '#ef4444' }}>Error loading history</h3>
-                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{error.message || 'An unknown error occurred.'}</p>
-                </div>
-            ) : history.length === 0 ? (
-                <div className={styles.emptyState} style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
-                    <Clock size={48} style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }} />
-                    <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>No History Recorded</h3>
-                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>This record was likely created before history tracking was enabled.</p>
-                </div>
-            ) : (
-                <div className={styles.historyTimeline}>
-                    <div style={{ position: 'relative' }}>
-                        {/* Timeline line */}
-                        <div style={{ position: 'absolute', left: '23px', top: '15px', bottom: '0', width: '2px', background: 'var(--primary-color)', opacity: 0.25 }}></div>
+                    <Dialog.Close />
+                </Dialog.Header>
 
-                        {enhancedHistory.map((entry, index) => {
-                            const actionColor = entry.action === 'created' ? 'var(--success-color, #10b981)' : entry.action === 'deleted' ? 'var(--error-color, #ef4444)' : 'var(--primary-color, #3b82f6)';
-                            const isExpanded = expandedLogId === entry.id;
+                <Dialog.Body style={{ padding: '1.5rem', maxHeight: '70vh', overflowY: 'auto' }}>
+                    {isLoading ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
+                            <Spinner size="lg" />
+                        </div>
+                    ) : error ? (
+                        <div className={styles.emptyState} style={{ padding: '3rem 2rem', textAlign: 'center' }}>
+                            <AlertCircle size={40} style={{ margin: '0 auto 1rem', color: '#ef4444' }} />
+                            <h3 style={{ margin: '0 0 0.5rem 0', color: '#ef4444' }}>Error loading history</h3>
+                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{error.message || 'An unknown error occurred.'}</p>
+                        </div>
+                    ) : history.length === 0 ? (
+                        <div className={styles.emptyState} style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
+                            <Clock size={48} style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }} />
+                            <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>No History Recorded</h3>
+                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>This record was likely created before history tracking was enabled.</p>
+                        </div>
+                    ) : (
+                        <div className={styles.historyTimeline}>
+                            <div style={{ position: 'relative' }}>
+                                {/* Timeline line */}
+                                <div style={{ position: 'absolute', left: '23px', top: '15px', bottom: '0', width: '2px', background: 'var(--primary-color)', opacity: 0.25 }}></div>
 
-                            return (
-                                <div key={entry.id || index} style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', position: 'relative' }}>
-                                    {/* dot */}
-                                    <div style={{ width: '48px', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
-                                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: actionColor, zIndex: 2, marginTop: '8.5px' }}></div>
-                                    </div>
+                                {enhancedHistory.map((entry, index) => {
+                                    const actionColor = entry.action === 'created' ? 'var(--success-color, #10b981)' : entry.action === 'deleted' ? 'var(--error-color, #ef4444)' : 'var(--primary-color, #3b82f6)';
+                                    const isExpanded = expandedLogId === entry.id;
 
-                                    <div style={{ flexGrow: 1, background: isExpanded ? 'var(--card-bg)' : 'transparent', border: isExpanded ? '1px solid rgba(108, 99, 255, 0.2)' : '1px solid transparent', borderRadius: '8px', overflow: 'hidden', transition: 'all 0.2s ease' }}>
-                                        <div
-                                            style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', background: 'transparent' }}
-                                            onClick={() => setExpandedLogId(isExpanded ? null : entry.id)}
-                                        >
-                                            <div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
-                                                    <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: actionColor }}>
-                                                        {entry.action}
-                                                    </span>
-                                                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                                        by <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{entry.user || 'Unknown'}</span>
-                                                    </span>
-                                                </div>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem', fontFamily: 'monospace' }}>
-                                                    <Clock size={14} style={{ opacity: 0.8 }} />
-                                                    {entry.timestamp?.seconds ? new Date(entry.timestamp.seconds * 1000).toLocaleString() : 'Just now'}
-                                                </div>
+                                    return (
+                                        <div key={entry.id || index} style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', position: 'relative' }}>
+                                            {/* dot */}
+                                            <div style={{ width: '48px', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: actionColor, zIndex: 2, marginTop: '8.5px' }}></div>
                                             </div>
-                                            <div style={{ color: 'var(--text-secondary)', opacity: 0.8 }}>
-                                                {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+
+                                            <div style={{ flexGrow: 1, background: isExpanded ? 'var(--card-bg)' : 'transparent', border: isExpanded ? '1px solid rgba(108, 99, 255, 0.2)' : '1px solid transparent', borderRadius: '8px', overflow: 'hidden', transition: 'all 0.2s ease' }}>
+                                                <div
+                                                    style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', background: 'transparent' }}
+                                                    onClick={() => setExpandedLogId(isExpanded ? null : entry.id)}
+                                                >
+                                                    <div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                                                            <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: actionColor }}>
+                                                                {entry.action}
+                                                            </span>
+                                                            <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                                                by <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{entry.user || 'Unknown'}</span>
+                                                            </span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem', fontFamily: 'monospace' }}>
+                                                            <Clock size={14} style={{ opacity: 0.8 }} />
+                                                            {entry.timestamp?.seconds ? new Date(entry.timestamp.seconds * 1000).toLocaleString() : 'Just now'}
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ color: 'var(--text-secondary)', opacity: 0.8 }}>
+                                                        {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                                    </div>
+                                                </div>
+
+                                                {isExpanded && (
+                                                    <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(108, 99, 255, 0.15)', background: 'var(--bg-color)' }}>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                            <Edit3 size={14} /> {entry.action === 'created' ? 'Initial Payload' : 'Changes Made'}
+                                                        </div>
+                                                        <div>
+                                                            {renderDiffs(entry.action, entry.diffs, entry.dataPayload)}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-
-                                        {isExpanded && (
-                                            <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(108, 99, 255, 0.15)', background: 'var(--bg-color)' }}>
-                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    <Edit3 size={14} /> {entry.action === 'created' ? 'Initial Payload' : 'Changes Made'}
-                                                </div>
-                                                <div>
-                                                    {renderDiffs(entry.action, entry.diffs, entry.dataPayload)}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-        </BaseModal>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </Dialog.Body>
+                <Dialog.Footer>
+                    <Button variant="ghost" onClick={onClose}>Close</Button>
+                </Dialog.Footer>
+            </Dialog.Content>
+        </Dialog>
     );
 };
 
-export default HistoryModal;
+export default React.memo(HistoryModal);

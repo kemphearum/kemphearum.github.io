@@ -9,6 +9,9 @@ import styles from './RelatedProjects.module.scss';
 
 const RelatedProjects = ({ currentProjectId, techStack }) => {
     const { data: relatedProjectsData, isLoading: loading } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
         queryKey: ['relatedProjects', currentProjectId, techStack],
         queryFn: () => ProjectService.fetchRelatedProjects(currentProjectId, techStack, null),
         enabled: !!currentProjectId

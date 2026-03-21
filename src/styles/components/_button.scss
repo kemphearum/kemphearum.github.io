@@ -1,0 +1,121 @@
+@use '../variables' as *;
+
+.ui-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
+    border: 1px solid transparent;
+    gap: 0.5rem;
+    white-space: nowrap;
+    user-select: none;
+    outline: none;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $primary-color;
+        outline-offset: 2px;
+    }
+
+    .ui-spinner {
+        margin-right: -0.25rem; // Adjust for better visual balance when prepended
+    }
+
+    // Sizes
+    &--sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+    }
+
+    &--md {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.85rem;
+    }
+
+    &--lg {
+        padding: 0.8rem 1.6rem;
+        font-size: 1rem;
+    }
+
+    // Variants
+    &--primary {
+        background: $primary-color;
+        color: white;
+        border-color: $primary-color;
+
+        &:hover:not(:disabled) {
+            background: $primary-light;
+            border-color: $primary-light;
+        }
+
+        &:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+    }
+
+    &--secondary {
+        background: rgba($primary-color, 0.1);
+        color: $primary-color;
+        border-color: rgba($primary-color, 0.2);
+
+        &:hover:not(:disabled) {
+            background: rgba($primary-color, 0.15);
+            border-color: rgba($primary-color, 0.3);
+        }
+        
+        &:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+    }
+
+    &--ghost {
+        background: transparent;
+        color: var(--text-secondary);
+
+        &:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        &:active:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08);
+        }
+    }
+
+    &--danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.2);
+
+        &:hover:not(:disabled) {
+            background: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
+
+        &:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+    }
+}
+
+.ui-btn-icon-only {
+    width: 42px !important;
+    height: 42px !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    flex-shrink: 0 !important;
+
+    &.ui-button--sm {
+        width: 32px !important;
+        height: 32px !important;
+    }
+}

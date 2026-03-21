@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from '../../Admin.module.scss';
+import { Input, TextArea } from '../../../shared/components/ui';
 
 /**
  * FormInput component for standard input fields.
@@ -18,8 +19,6 @@ const FormInput = ({
     isTextArea = false,
     ...props
 }) => {
-    const Component = isTextArea ? 'textarea' : 'input';
-    
     return (
         <div className={styles.inputGroup} style={fullWidth ? { gridColumn: 'span 2' } : {}}>
             {label && (
@@ -28,16 +27,28 @@ const FormInput = ({
                     {hint && <span className={styles.hint}> ({hint})</span>}
                 </label>
             )}
-            <Component
-                type={isTextArea ? undefined : type}
-                placeholder={placeholder}
-                value={value}
-                onChange={onChange}
-                required={required}
-                disabled={disabled}
-                onClick={onClick}
-                {...props}
-            />
+            {isTextArea ? (
+                <TextArea
+                    placeholder={placeholder}
+                    value={value}
+                    onChange={onChange}
+                    required={required}
+                    disabled={disabled}
+                    onClick={onClick}
+                    {...props}
+                />
+            ) : (
+                <Input
+                    type={type}
+                    placeholder={placeholder}
+                    value={value}
+                    onChange={onChange}
+                    required={required}
+                    disabled={disabled}
+                    onClick={onClick}
+                    {...props}
+                />
+            )}
         </div>
     );
 };
