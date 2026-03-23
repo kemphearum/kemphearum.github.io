@@ -13,6 +13,9 @@ const UsersTable = ({
   onDelete,
   loading,
   page,
+  hasMore,
+  isFirstPage,
+  onNext,
   onPrevious,
   onPageChange,
   paginationVariant = 'cursor'

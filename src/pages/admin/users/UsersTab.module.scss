@@ -183,3 +183,52 @@
         color: var(--primary-color);
     }
 }
+
+// User Detail Dialog Extra Layouts
+.dialogTitle { display: flex; align-items: center; gap: 0.5rem; }
+.primaryIcon { color: var(--primary-color); }
+.detailFull { flex: 1 1 100%; }
+.detailHalf { flex: 1 1 200px; }
+.detailThird { flex: 1 1 180px; }
+.detailValueLarge { font-size: 1.15rem; font-weight: bold; word-break: break-all; }
+.emptyLabel { color: var(--text-secondary); font-style: italic; opacity: 0.6; }
+.statusContainer { display: flex; align-items: center; gap: 0.5rem; }
+.statusDisabled { color: var(--danger-color, #ef4444); font-weight: bold; }
+.statusActive { color: var(--success-color, #10b981); font-weight: bold; }
+.roleSelectContainer { margin-top: 0.4rem; }
+.roleBadgeContainer { margin-top: 0.6rem; }
+.roleSelect { font-size: 0.85rem; width: 100%; }
+.dateValue { font-size: 0.9rem; }
+.monoId {
+    font-family: monospace; font-size: 0.8rem; color: var(--text-secondary);
+    background: rgba(255,255,255,0.03); padding: 0.4rem 0.8rem; border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.05); display: block; word-break: break-all;
+}
+.historySection { margin-top: 2rem; }
+.historyTitle {
+    display: flex; align-items: center; gap: 0.5rem; font-size: 1rem;
+    color: var(--text-primary); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding-bottom: 0.5rem;
+}
+.historyLoading { padding: 1.5rem; text-align: center; color: var(--text-secondary); }
+.emptyHistory {
+    padding: 1.5rem; text-align: center; border: 1px dashed rgba(255,255,255,0.1);
+    border-radius: 12px; color: var(--text-secondary); font-size: 0.85rem;
+}
+.historyActionText { font-size: 0.85rem; margin-bottom: 0.25rem; }
+.historyArrow { font-size: 0.8rem; color: var(--text-tertiary); }
+.historyUser { font-size: 0.75rem; color: var(--text-tertiary); }
+.historyUserName { color: var(--text-secondary); }
+.footerActionsContainer { display: flex; flex-wrap: wrap; gap: 1rem; width: 100%; justify-content: space-between; }
+.footerActionsRight { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+
+// Role Permissions Panel Layouts
+.rolePanelContainer { margin-top: 2.5rem; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 2rem; }
+.rolePanelHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.rolePanelTitle { font-size: 1.25rem; margin-bottom: 0.25rem; font-weight: 600; }
+.rolePanelDesc { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
+.roleSaveBtn { margin-top: 1rem; }
+
+// Forms
+.dialogFormContainer { display: flex; flex-direction: column; gap: 0.5rem; }
+

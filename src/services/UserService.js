@@ -12,44 +12,15 @@ class UserService extends BaseService {
     async fetchUsers({ userRole, trackRead, lastDoc = null, limit = 20, search = '' }) {
         if (userRole !== 'superadmin') return { data: [], lastDoc: null, hasMore: false };
 
-        try {
-            const baseRef = collection(db, "users");
-            let constraints = [orderBy("createdAt", "desc"), firestoreLimit(limit + 1)];
-
-            if (lastDoc) {
-                constraints.push(startAfter(lastDoc));
-            }
-
-            const q = query(baseRef, ...constraints);
-            const querySnapshot = await getDocs(q);
-            
-            const docs = querySnapshot.docs;
-            const hasMore = docs.length > limit;
-            const resultDocs = hasMore ? docs.slice(0, limit) : docs;
-
-            if (trackRead) trackRead(querySnapshot.size, 'Fetched users list for management', { count: querySnapshot.size });
-
-            let data = resultDocs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const lastVisible = resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null;
-
-            // Simple client-side search for now as users is rarely huge, but standardizing the interface
-            if (search) {
-                const lower = search.toLowerCase();
-                data = data.filter(u => 
-                    (u.email && u.email.toLowerCase().includes(lower)) || 
-                    (u.displayName && u.displayName.toLowerCase().includes(lower))
-                );
-            }
-
-            return {
-                data,
-                lastDoc: lastVisible,
-                hasMore
-            };
-        } catch (error) {
-            console.error("Error in fetchUsers:", error);
-            throw error;
-        }
+        return this.fetchPaginated({
+            lastDoc,
+            limit,
+            search,
+            searchField: 'email',
+            sortBy: 'createdAt',
+            sortDirection: 'desc',
+            trackRead
+        });
     }
 
     async updateRole(userRole, userId, newRole, trackWrite) {

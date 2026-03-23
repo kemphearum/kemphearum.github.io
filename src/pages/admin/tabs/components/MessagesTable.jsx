@@ -12,6 +12,9 @@ const MessagesTable = ({
   page = 1,
   selection,
   totalItems,
+  hasMore,
+  isFirstPage,
+  onNext,
   onPrevious,
   onPageChange,
   paginationVariant = 'cursor'

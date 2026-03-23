@@ -7,6 +7,7 @@ import BlogToolbar from './components/BlogToolbar';
 import BlogFormDialog from './components/BlogFormDialog';
 import BlogTable from './components/BlogTable';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
+import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import styles from './BlogTab.module.scss';
 
 const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
@@ -15,7 +16,10 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
-  const [page, setPage] = useState(1);
+  
+  // Cursor pagination hook
+  const pagination = useCursorPagination(10, [searchQuery]);
+
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
     showToast,
     successMessage: selectedPost ? 'Post updated successfully' : 'Post created successfully',
@@ -34,28 +38,30 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   // Reset page on search
   const handleSearch = (val) => {
     setSearchQuery(val);
-    setPage(1);
   };
 
   // Queries
-  const { data: posts = [], isLoading } = useQuery({
+  const { data: postsResult = { data: [], lastDoc: null, hasMore: false }, isLoading } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['posts'],
+    queryKey: ['posts', searchQuery, pagination.cursor],
     queryFn: async () => {
-      const data = await BlogService.getAll("createdAt", "desc");
-      trackRead(data.length, 'Fetched blog posts');
-      return data;
+      const result = await BlogService.fetchPaginated({
+        lastDoc: pagination.cursor,
+        limit: 10,
+        search: searchQuery,
+        searchField: 'title', // Firestore prefix search on title
+        sortBy: "createdAt",
+        sortDirection: "desc",
+        trackRead
+      });
+      pagination.updateAfterFetch(result.lastDoc, result.hasMore);
+      return result;
     }
   });
 
-  // Filtered Data
-  const filteredPosts = useMemo(() => {
-    if (!searchQuery) return posts;
-    const lower = searchQuery.toLowerCase();
-    return posts.filter(p => p.title?.toLowerCase().includes(lower));
-  }, [posts, searchQuery]);
+  const posts = postsResult.data;
 
   // Handlers
   // Permission Booleans
@@ -134,15 +140,17 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
       <div className="ui-table-section" style={{ position: 'relative' }}>
           <BlogTable
-            posts={filteredPosts}
+            posts={posts}
             onEdit={handleEdit}
             onDelete={handleDelete}
             canEdit={canEdit}
             canDelete={canDelete}
             loading={isLoading}
-            pageSize={10}
-            page={page}
-            onPageChange={setPage}
+            page={pagination.page}
+            hasMore={pagination.hasMore}
+            isFirstPage={pagination.isFirstPage}
+            onNext={() => pagination.fetchNext(postsResult.lastDoc)}
+            onPrevious={pagination.fetchPrevious}
           />
       </div>
 

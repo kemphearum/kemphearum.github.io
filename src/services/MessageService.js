@@ -7,6 +7,14 @@ class MessageService extends BaseService {
         super('messages', false);
     }
 
+    async create(data, trackWrite) {
+        const processedData = {
+            ...data,
+            senderEmail: data.email?.toLowerCase() || data.senderEmail?.toLowerCase() || ''
+        };
+        return super.create(processedData, trackWrite);
+    }
+
     async toggleReadStatus(userRole, id, currentStatus, trackWrite) {
         if (userRole === 'pending') {
             throw new Error("Not authorized to update message status.");
@@ -74,42 +82,14 @@ class MessageService extends BaseService {
      * @returns {Promise<{data: Array, lastDoc: any, hasMore: boolean}>}
      */
     async fetchMessagesPaginated({ lastDoc = null, limit = 20, search = '' }) {
-        try {
-            let baseRef = collection(db, this.collectionName);
-            let constraints = [orderBy('createdAt', 'desc'), firestoreLimit(limit + 1)];
-
-            if (lastDoc) {
-                constraints.push(startAfter(lastDoc));
-            }
-
-            const q = query(baseRef, ...constraints);
-            const snap = await getDocs(q);
-            
-            const docs = snap.docs;
-            const hasMore = docs.length > limit;
-            const resultDocs = hasMore ? docs.slice(0, limit) : docs;
-            
-            let data = resultDocs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const lastVisible = resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null;
-
-            if (search) {
-                const lower = search.toLowerCase();
-                data = data.filter(m => 
-                    (m.senderName && m.senderName.toLowerCase().includes(lower)) || 
-                    (m.senderEmail && m.senderEmail.toLowerCase().includes(lower)) ||
-                    (m.subject && m.subject.toLowerCase().includes(lower))
-                );
-            }
-
-            return {
-                data,
-                lastDoc: lastVisible,
-                hasMore
-            };
-        } catch (error) {
-            console.error("Error in fetchMessagesPaginated:", error);
-            throw error;
-        }
+        return this.fetchPaginated({
+            lastDoc,
+            limit,
+            search,
+            searchField: 'senderEmail',
+            sortBy: 'createdAt',
+            sortDirection: 'desc'
+        });
     }
 }
 

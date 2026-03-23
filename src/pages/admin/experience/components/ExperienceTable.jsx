@@ -10,9 +10,13 @@ const ExperienceTable = ({
   canEdit = true,
   canDelete = true,
   loading = false,
-  pageSize = 10,
   page = 1,
-  onPageChange
+  hasMore = false,
+  isFirstPage = true,
+  onNext,
+  onPrevious,
+  onPageChange,
+  paginationVariant = 'cursor'
 }) => {
   const columns = [
     { 
@@ -81,8 +85,13 @@ const ExperienceTable = ({
       columns={columns}
       keyField="id"
       loading={loading}
-      pageSize={pageSize}
+      manualPagination={true}
+      paginationVariant={paginationVariant}
       page={page}
+      hasMore={hasMore}
+      isFirstPage={isFirstPage}
+      onNext={onNext}
+      onPrevious={onPrevious}
       onPageChange={onPageChange}
       emptyState={{
         icon: Briefcase,

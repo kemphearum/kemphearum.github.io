@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import EmptyState from '../empty-state/EmptyState';
 import Spinner from '../spinner/Spinner';
@@ -38,6 +38,14 @@ const DataTable = ({
   paginationVariant = 'numbers' // 'numbers', 'simple', or 'cursor'
 }) => {
   const [sortConfig, setSortConfig] = useState(initialSort);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    handleResize(); // Init
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // 1. Pagination Mode Detection
   // Strictly isolate modes: Cursor (Remote) vs Page (Local/Manual)
@@ -125,9 +133,66 @@ const DataTable = ({
         </div>
       )}
 
-      <table className="ui-table">
-        <thead>
-          <tr>
+      {isMobile ? (
+        <div className="ui-table-mobile-cards">
+          {(paginatedData.length === 0 && !loading) ? (
+            <EmptyState 
+              title={emptyState?.title || "No data available"}
+              description={emptyState?.description || "There are no records to display at the moment."}
+              icon={emptyState?.icon}
+              action={emptyState?.action}
+            />
+          ) : (
+            paginatedData.map((row, rowIdx) => {
+              const isSelected = selection?.selectedIds.includes(row[keyField]);
+              return (
+                <div 
+                  key={row[keyField] || rowIdx} 
+                  className={`ui-table-card ${rowClassName ? rowClassName(row) : ''} ${onRowClick ? 'ui-table-card--clickable' : ''} ${isSelected ? 'ui-table-card--selected' : ''}`}
+                  onClick={() => onRowClick && onRowClick(row)}
+                >
+                  {selection && (
+                    <div className="ui-table-card-row" onClick={(e) => e.stopPropagation()}>
+                      <span className="ui-table-card-label">Select</span>
+                      <input 
+                        type="checkbox" 
+                        checked={isSelected}
+                        onChange={() => selection.onSelect(row[keyField])}
+                        className="ui-checkbox"
+                      />
+                    </div>
+                  )}
+                  {columns.map((col, colIdx) => {
+                    const value = row[col.key];
+                    let displayValue = value ?? '-';
+
+                    if (typeof value === 'object' && value !== null && !React.isValidElement(value)) {
+                      if (value.seconds) {
+                        displayValue = new Date(value.seconds * 1000).toLocaleDateString();
+                      } else {
+                        displayValue = JSON.stringify(value);
+                      }
+                    }
+
+                    const isPrimary = colIdx === 0;
+                    const isActions = col.key === 'actions' || (!col.key && col.header === '');
+
+                    return (
+                      <div key={`${row[keyField] || rowIdx}-${col.key || colIdx}`} className={`ui-table-card-row ${isPrimary ? 'ui-table-card-primary' : ''} ${isActions ? 'ui-table-card-actions' : ''}`}>
+                        {!isPrimary && !isActions && <span className="ui-table-card-label">{col.header}</span>}
+                        <span className="ui-table-card-value">{col.render ? col.render(row) : displayValue}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })
+          )}
+        </div>
+      ) : (
+        <table className="ui-table">
+          <thead>
+            <tr>
             {selection && (
               <th className="ui-table-selection-header" style={{ width: '40px' }}>
                 <input 
@@ -209,6 +274,7 @@ const DataTable = ({
           )}
         </tbody>
       </table>
+      )}
 
       {/* Pagination Controls */}
       {(totalPages > 1 || isCursorMode) && (

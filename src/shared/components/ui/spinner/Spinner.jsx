@@ -1,6 +1,5 @@
 import React from 'react';
 import styles from './Spinner.module.scss';
-import { clsx } from 'clsx'; // Check if clsx or similar is available; if not, use string template
 
 const Spinner = React.forwardRef(({ 
     className = '', 

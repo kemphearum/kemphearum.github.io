@@ -8,6 +8,7 @@ import ExperienceTable from './components/ExperienceTable';
 import ExperienceFormDialog from './components/ExperienceFormDialog';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
 import { Button } from '../../../shared/components/ui';
+import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import styles from './ExperienceTab.module.scss';
 
 const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
@@ -15,7 +16,9 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const [deletingItem, setDeletingItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(1);
+  
+  // Cursor pagination hook
+  const pagination = useCursorPagination(10, [searchQuery]);
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
     showToast,
@@ -33,27 +36,27 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const { trackRead, trackWrite, trackDelete } = useActivity();
 
   // Fetch data
-  const { data: experiences = [], isLoading } = useQuery({
+  const { data: experiencesResult = { data: [], lastDoc: null, hasMore: false }, isLoading } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['experience'],
+    queryKey: ['experience', searchQuery, pagination.cursor],
     queryFn: async () => {
-      const data = await ExperienceService.getAll("createdAt", "desc");
-      trackRead(data.length, 'experience');
-      return data;
+      const result = await ExperienceService.fetchPaginated({
+        lastDoc: pagination.cursor,
+        limit: 10,
+        search: searchQuery,
+        searchField: 'company', // Firestore prefix search on company
+        sortBy: "createdAt",
+        sortDirection: "desc",
+        trackRead
+      });
+      pagination.updateAfterFetch(result.lastDoc, result.hasMore);
+      return result;
     }
   });
 
-  // Filter data
-  const filteredExperiences = useMemo(() => {
-    if (!searchQuery) return experiences;
-    const lower = searchQuery.toLowerCase();
-    return experiences.filter(exp => 
-      exp.role?.toLowerCase().includes(lower) || 
-      exp.company?.toLowerCase().includes(lower)
-    );
-  }, [experiences, searchQuery]);
+  const experiences = experiencesResult.data;
 
   // Robust date parser for legacy formats (yyyy-mm)
   const parseLegacyDate = (dateVal, isEnd = false) => {
@@ -188,15 +191,17 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
       
       <div className={styles.tableSection}>
         <ExperienceTable
-          experiences={filteredExperiences}
+          experiences={experiences}
           onEdit={handleEdit}
           onDelete={handleDelete}
           canEdit={canEdit}
           canDelete={canDelete}
           loading={isLoading}
-          pageSize={10}
-          page={page}
-          onPageChange={setPage}
+          page={pagination.page}
+          hasMore={pagination.hasMore}
+          isFirstPage={pagination.isFirstPage}
+          onNext={() => pagination.fetchNext(experiencesResult.lastDoc)}
+          onPrevious={pagination.fetchPrevious}
         />
       </div>
 

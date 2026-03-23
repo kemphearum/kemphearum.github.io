@@ -30,11 +30,11 @@ const RolePermissionsPanel = ({ rolePermissions, onSave }) => {
   };
 
   return (
-    <div style={{ marginTop: '2.5rem', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+    <div className={styles.rolePanelContainer}>
+      <div className={styles.rolePanelHeader}>
         <div>
-          <h3 style={{ fontSize: '1.25rem', marginBottom: '0.25rem', fontWeight: '600' }}>Role Permissions</h3>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+          <h3 className={styles.rolePanelTitle}>Role Permissions</h3>
+          <p className={styles.rolePanelDesc}>
             Control which sidebar tabs each role can access.
           </p>
         </div>
@@ -73,7 +73,7 @@ const RolePermissionsPanel = ({ rolePermissions, onSave }) => {
                 onClick={() => onSave(role, editingRolePerms[role] || [])}
                 variant="ghost" 
                 size="sm"
-                style={{ marginTop: '1rem' }}
+                className={styles.roleSaveBtn}
               >
                 Save {role} permissions
               </Button>

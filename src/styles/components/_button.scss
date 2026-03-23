@@ -14,10 +14,11 @@
     user-select: none;
     outline: none;
 
-    &:disabled {
+    &:disabled, &[aria-disabled="true"] {
         opacity: 0.5;
         cursor: not-allowed;
         pointer-events: none;
+        filter: grayscale(0.5); // Add visual clarity to disabled state
     }
 
     &:focus-visible {
@@ -33,16 +34,19 @@
     &--sm {
         padding: 0.4rem 0.8rem;
         font-size: 0.75rem;
+        min-height: 36px;
     }
 
     &--md {
         padding: 0.6rem 1.2rem;
         font-size: 0.85rem;
+        min-height: 44px; // Touch friendly target
     }
 
     &--lg {
         padding: 0.8rem 1.6rem;
         font-size: 1rem;
+        min-height: 52px; // Touch friendly target
     }
 
     // Variants
@@ -108,8 +112,8 @@
 }
 
 .ui-btn-icon-only {
-    width: 42px !important;
-    height: 42px !important;
+    width: 44px !important; // Touch-friendly
+    height: 44px !important; // Touch-friendly
     padding: 0 !important;
     gap: 0 !important;
     flex-shrink: 0 !important;

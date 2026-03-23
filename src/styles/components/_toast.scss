@@ -16,10 +16,12 @@
     backdrop-filter: blur(20px);
     max-width: 400px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    pointer-events: none; // Non-blocking UI
 
     p {
         margin: 0;
         flex: 1;
+        pointer-events: auto;
     }
 
     &.ui-success {
@@ -33,9 +35,16 @@
         border: 1px solid rgba(231, 76, 60, 0.25);
         color: #e74c3c;
     }
+
+    &.ui-warning {
+        background: rgba(243, 156, 18, 0.15);
+        border: 1px solid rgba(243, 156, 18, 0.25);
+        color: #f39c12;
+    }
 }
 
 .ui-toastClose {
+    pointer-events: auto;
     font-size: 1.2rem;
     color: inherit;
     opacity: 0.5;

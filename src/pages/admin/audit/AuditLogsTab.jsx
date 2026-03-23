@@ -87,7 +87,8 @@ const AuditLogsTab = ({ userRole, showToast }) => {
         currentDateKey,
         lastDoc: activityPagination.cursor,
         limit: 15,
-        search: debouncedActivitySearch
+        search: debouncedActivitySearch,
+        filters: activityFilters
       });
       activityPagination.updateAfterFetch(result.lastDoc, result.hasMore);
       return result;

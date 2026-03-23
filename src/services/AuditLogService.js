@@ -61,22 +61,48 @@ class AuditLogService extends BaseService {
      * @param {Object} params - { activityDateRange, operationType, currentDateKey, lastDoc, limit, search }
      * @returns {Promise<{data: Array, lastDoc: any, hasMore: boolean}>}
      */
-    async fetchActivityDetails({ activityDateRange, operationType, currentDateKey, lastDoc = null, limit = 50, search = '' }) {
+    async fetchActivityDetails({ activityDateRange, operationType, currentDateKey, lastDoc = null, limit = 50, search = '', filters = {} }) {
         let logs = [];
 
         try {
             let baseQuery;
             if (activityDateRange === 'today') {
                 const logsRef = collection(db, 'dailyUsage', currentDateKey, 'logs');
-                baseQuery = query(logsRef, where('type', '==', operationType));
+                baseQuery = query(logsRef);
             } else {
-                baseQuery = query(collectionGroup(db, 'logs'), where('type', '==', operationType));
+                baseQuery = query(collectionGroup(db, 'logs'));
                 if (activityDateRange !== 'all') {
                     const days = activityDateRange === '7d' ? 7 : (activityDateRange === '30d' ? 30 : 365);
                     const cutoff = new Date();
                     cutoff.setDate(cutoff.getDate() - days);
                     baseQuery = query(baseQuery, where('time', '>=', cutoff));
                 }
+            }
+
+            // Apply Operation Type filter
+            if (operationType && operationType !== 'all') {
+                baseQuery = query(baseQuery, where('type', '==', operationType));
+            }
+
+            // Apply Module filter
+            if (filters.module && filters.module !== 'all') {
+                baseQuery = query(baseQuery, where('details.module', '==', filters.module));
+            }
+
+            // Apply Action filter
+            if (filters.action && filters.action !== 'all') {
+                baseQuery = query(baseQuery, where('action', '==', filters.action));
+            }
+
+            // Implement Prefix Search (on label field)
+            if (search) {
+                // Note: Firestore prefix search is case-sensitive unless using a lowercase field.
+                // For now, we use the original field.
+                baseQuery = query(
+                    baseQuery, 
+                    where('label', '>=', search),
+                    where('label', '<=', search + '\uf8ff')
+                );
             }
 
             // Prepare paginated query
@@ -94,15 +120,6 @@ class AuditLogService extends BaseService {
             
             logs = resultDocs.map(doc => ({ id: doc.id, ...doc.data() }));
             const lastVisible = resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null;
-
-            // Client-side search within the fetched chunk
-            if (search) {
-                const lower = search.toLowerCase();
-                logs = logs.filter(l => 
-                    (l.label && l.label.toLowerCase().includes(lower)) || 
-                    (l.user && l.user.toLowerCase().includes(lower))
-                );
-            }
 
             return {
                 data: logs,
@@ -128,7 +145,7 @@ class AuditLogService extends BaseService {
         
         try {
             const baseRef = collection(db, this.collectionName);
-            let constraints = [];
+            let baseQuery = query(baseRef);
 
             if (dateRange !== 'all') {
                 const now = new Date();
@@ -136,15 +153,24 @@ class AuditLogService extends BaseService {
                 if (dateRange === 'today') cutoff.setHours(0, 0, 0, 0);
                 else if (dateRange === '7d') cutoff.setDate(now.getDate() - 7);
                 else if (dateRange === '30d') cutoff.setDate(now.getDate() - 30);
-                constraints.push(where('timestamp', '>=', cutoff));
+                baseQuery = query(baseQuery, where('timestamp', '>=', cutoff));
             }
 
-            let queryConstraints = [...constraints, orderBy('timestamp', 'desc'), firestoreLimit(limit + 1)];
+            // Implement Prefix Search (on email field)
+            if (search) {
+                baseQuery = query(
+                    baseQuery,
+                    where('email', '>=', search),
+                    where('email', '<=', search + '\uf8ff')
+                );
+            }
+
+            let queryConstraints = [orderBy('timestamp', 'desc'), firestoreLimit(limit + 1)];
             if (lastDoc) {
                 queryConstraints.push(startAfter(lastDoc));
             }
 
-            const q = query(baseRef, ...queryConstraints);
+            const q = query(baseQuery, ...queryConstraints);
             const querySnapshot = await getDocs(q);
             
             const docs = querySnapshot.docs;
@@ -163,6 +189,9 @@ class AuditLogService extends BaseService {
             };
         } catch (error) {
             console.error("Error in fetchSecurityAuditTrail:", error);
+            if (error.code === 'failed-precondition') {
+                throw new Error("This query requires a Firestore Index. Check console for link.");
+            }
             throw error;
         }
     }

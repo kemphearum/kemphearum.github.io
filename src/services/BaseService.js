@@ -1,5 +1,8 @@
 import { db, auth } from '../firebase';
-import { collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { 
+    collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, 
+    query, orderBy, serverTimestamp, where, limit as firestoreLimit, startAfter 
+} from 'firebase/firestore';
 
 export default class BaseService {
     constructor(collectionName, useHistory = true) {
@@ -19,6 +22,63 @@ export default class BaseService {
         const snapshot = await getDocs(q);
         if (trackRead) trackRead(snapshot.size, `Fetched ${this.collectionName} list`, { sortBy, sortDirection, count: snapshot.size });
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    /**
+     * Generic cursor-based pagination with optional prefix search.
+     * @param {Object} options 
+     */
+    async fetchPaginated({ 
+        lastDoc = null, 
+        limit = 10, 
+        search = '', 
+        searchField = null, 
+        sortBy = 'createdAt', 
+        sortDirection = 'desc', 
+        trackRead = null 
+    }) {
+        try {
+            let baseQuery = query(this.collectionRef);
+
+            if (search && searchField) {
+                // Server-side prefix search (Firestore friendly)
+                const searchLower = search.toLowerCase();
+                baseQuery = query(
+                    baseQuery,
+                    where(searchField, '>=', searchLower),
+                    where(searchField, '<=', searchLower + '\uf8ff')
+                );
+            }
+
+            let constraints = [orderBy(sortBy, sortDirection), firestoreLimit(limit + 1)];
+
+            if (lastDoc) {
+                constraints.push(startAfter(lastDoc));
+            }
+
+            const q = query(baseQuery, ...constraints);
+            const querySnapshot = await getDocs(q);
+            
+            const docs = querySnapshot.docs;
+            const hasMore = docs.length > limit;
+            const resultDocs = hasMore ? docs.slice(0, limit) : docs;
+
+            if (trackRead) {
+                trackRead(querySnapshot.size, `Fetched paginated ${this.collectionName}`, { count: querySnapshot.size });
+            }
+
+            const data = resultDocs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const lastVisible = resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null;
+
+            return {
+                data,
+                lastDoc: lastVisible,
+                hasMore
+            };
+        } catch (error) {
+            console.error(`Error in fetchPaginated for ${this.collectionName}:`, error);
+            throw error;
+        }
     }
 
     async getById(id, trackRead = null) {
