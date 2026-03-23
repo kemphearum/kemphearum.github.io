@@ -138,21 +138,19 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         canCreate={canCreate}
       />
 
-      <div className="ui-table-section" style={{ position: 'relative' }}>
-          <BlogTable
-            posts={posts}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            canEdit={canEdit}
-            canDelete={canDelete}
-            loading={isLoading}
-            page={pagination.page}
-            hasMore={pagination.hasMore}
-            isFirstPage={pagination.isFirstPage}
-            onNext={() => pagination.fetchNext(postsResult.lastDoc)}
-            onPrevious={pagination.fetchPrevious}
-          />
-      </div>
+      <BlogTable
+        posts={posts}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        canEdit={canEdit}
+        canDelete={canDelete}
+        loading={isLoading}
+        page={pagination.page}
+        hasMore={pagination.hasMore}
+        isFirstPage={pagination.isFirstPage}
+        onNext={() => pagination.fetchNext(postsResult.lastDoc)}
+        onPrevious={pagination.fetchPrevious}
+      />
 
       {/* Dialogs */}
       <BlogFormDialog

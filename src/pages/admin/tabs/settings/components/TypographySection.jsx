@@ -25,8 +25,8 @@ const TypographySection = ({
     return (
         <form onSubmit={onSave} className={tabStyles.tabContentFadeIn}>
             <div className="ui-card">
-                <div className={tabStyles.sectionHeader} style={{ marginTop: 0, marginBottom: '1.5rem', borderBottom: '1px solid var(--input-border)', paddingBottom: '0.5rem' }}>
-                    <h4 style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Typography & Appearance</h4>
+                <div className={tabStyles.sectionHeader}>
+                    <h4>Typography & Appearance</h4>
                 </div>
                 <div className={tabStyles.typographyHeader}>
                     <div className={tabStyles.sectionTitle}>
@@ -40,17 +40,7 @@ const TypographySection = ({
                             value={size}
                             onChange={(e) => setSettingsData({ ...settingsData, fontSize: e.target.value })}
                             options={sizeOptions}
-                            containerStyle={{
-                                background: 'rgba(255,255,255,0.02)',
-                                padding: '0.75rem 1.25rem',
-                                borderRadius: '12px',
-                                border: '1px solid var(--divider)',
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                gap: '1rem',
-                                minWidth: 'fit-content'
-                            }}
-                            style={{ marginTop: 0, width: '160px', padding: '0.55rem 0.85rem' }}
+                            className={tabStyles.baseSizeSelect}
                         />
                         <div className={tabStyles.buttonGroupMobileStack}>
                             {!metadata && (
@@ -134,49 +124,45 @@ const TypographySection = ({
                                 style={{ width: '100%' }}
                             />
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <div style={{ flex: 1.5 }}>
-                                    <FormSelect
-                                        value={settingsData[cat.weightField] || cat.defaultWeight}
-                                        onChange={(e) => setSettingsData({ ...settingsData, [cat.weightField]: e.target.value })}
-                                        options={weightOptions}
-                                        noWrapper
-                                        style={{ width: '100%', padding: '0.4rem' }}
-                                    />
-                                </div>
-                                <div
-                                    onClick={() => setSettingsData({ ...settingsData, [cat.italicField]: !settingsData[cat.italicField] })}
-                                    className={`${tabStyles.italicToggle} ${settingsData[cat.italicField] ? tabStyles.active : ''}`}
-                                >
-                                    <span style={{ fontStyle: 'italic', fontWeight: 'bold' }}>I</span>
-                                    Italic
+                            <div className={tabStyles.inputGroup}>
+                                <div className={tabStyles.mirrorInfo} style={{ border: 'none' }}>
+                                    <div style={{ flex: 1.5 }}>
+                                        <FormSelect
+                                            value={settingsData[cat.weightField] || cat.defaultWeight}
+                                            onChange={(e) => setSettingsData({ ...settingsData, [cat.weightField]: e.target.value })}
+                                            options={weightOptions}
+                                            noWrapper
+                                        />
+                                    </div>
+                                    <div
+                                        onClick={() => setSettingsData({ ...settingsData, [cat.italicField]: !settingsData[cat.italicField] })}
+                                        className={`${tabStyles.italicToggle} ${settingsData[cat.italicField] ? tabStyles.active : ''}`}
+                                    >
+                                        <span className={tabStyles.italicIcon}>I</span>
+                                        Italic
+                                    </div>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', minWidth: '28px' }}>Size</span>
-                                <div className={tabStyles.sizeStepper} style={{ flex: 1 }}>
-                                    <Button type="button" size="sm" variant="ghost" onClick={() => handleSizeAdjust(cat.sizeField, settingsData[cat.sizeField] || cat.defaultSize, false)}>
-                                        <Minus size={14} />
-                                    </Button>
-                                    <input
-                                        type="text"
-                                        placeholder={cat.defaultSize}
-                                        value={settingsData[cat.sizeField] || ''}
-                                        onChange={(e) => setSettingsData({ ...settingsData, [cat.sizeField]: e.target.value })}
-                                        title="Font Size (e.g. 1.2rem, 18px)"
-                                        style={{
-                                            background: 'transparent',
-                                            border: 'none',
-                                            color: 'inherit',
-                                            width: '100%',
-                                            textAlign: 'center',
-                                            fontSize: '0.875rem'
-                                        }}
-                                    />
-                                    <Button type="button" size="sm" variant="ghost" onClick={() => handleSizeAdjust(cat.sizeField, settingsData[cat.sizeField] || cat.defaultSize, true)}>
-                                        <Plus size={14} />
-                                    </Button>
+                            <div className={tabStyles.inputGroup}>
+                                <div className={tabStyles.mirrorInfo} style={{ border: 'none' }}>
+                                    <span className={tabStyles.hint}>Size</span>
+                                    <div className={tabStyles.sizeStepper}>
+                                        <Button type="button" size="sm" variant="ghost" onClick={() => handleSizeAdjust(cat.sizeField, settingsData[cat.sizeField] || cat.defaultSize, false)}>
+                                            <Minus size={14} />
+                                        </Button>
+                                        <input
+                                            type="text"
+                                            placeholder={cat.defaultSize}
+                                            value={settingsData[cat.sizeField] || ''}
+                                            onChange={(e) => setSettingsData({ ...settingsData, [cat.sizeField]: e.target.value })}
+                                            title="Font Size (e.g. 1.2rem, 18px)"
+                                            className={tabStyles.stepperInput}
+                                        />
+                                        <Button type="button" size="sm" variant="ghost" onClick={() => handleSizeAdjust(cat.sizeField, settingsData[cat.sizeField] || cat.defaultSize, true)}>
+                                            <Plus size={14} />
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -200,7 +186,7 @@ const TypographySection = ({
                 <div className={tabStyles.livePreviewCard}>
                     <div className={tabStyles.livePreviewTitleBar}>
                         <span>SITE HEADER</span>
-                        <span style={{ opacity: 0.5 }}>Responsive Preview</span>
+                        <span className={tabStyles.hint}>Responsive Preview</span>
                     </div>
                     <div className={tabStyles.livePreviewContent}>
                         <div className={tabStyles.livePreviewLogo} style={{
@@ -209,7 +195,7 @@ const TypographySection = ({
                             fontStyle: settingsData.fontLogoItalic ? 'italic' : 'normal',
                             fontSize: getFontSize('fontLogoSize', '1.25rem')
                         }}>
-                            {settingsData.logoHighlight || 'KEM'}<span style={{ color: 'var(--primary-color)' }}>{settingsData.logoText || 'PHEARUM'}</span>
+                            {settingsData.logoHighlight || 'KEM'}<span>{settingsData.logoText || 'PHEARUM'}</span>
                         </div>
                         <div className={tabStyles.livePreviewNav}>
                             {['Home', 'Blog'].map(item => (
@@ -260,10 +246,9 @@ const TypographySection = ({
                             fontFamily: fontCSS[getFont('fontBody')],
                             fontWeight: settingsData.fontBodyWeight || 400,
                             fontStyle: settingsData.fontBodyItalic ? 'italic' : 'normal',
-                            fontSize: getFontSize('fontBodySize', '0.9rem'), color: 'var(--text-secondary)', lineHeight: 1.7,
-                            maxWidth: '90%'
+                            fontSize: getFontSize('fontBodySize', '0.9rem')
                         }}>
-                            This is a sample paragraph to preview the body text font. The <span style={{ color: 'var(--primary-color)', textDecoration: 'underline' }}>quick brown fox</span> jumps over the lazy dog.
+                            This is a sample paragraph to preview the body text font. The <u>quick brown fox</u> jumps over the lazy dog.
                             <ul className={tabStyles.livePreviewList}>
                                 <li>High performance architecture</li>
                                 <li>Modern typography system</li>
@@ -296,12 +281,10 @@ const TypographySection = ({
                             fontFamily: fontCSS[getFont('fontMono')],
                             fontSize: getFontSize('fontMonoSize', '0.8rem'),
                             fontWeight: settingsData.fontMonoWeight || 400,
-                            fontStyle: settingsData.fontMonoItalic ? 'italic' : 'normal',
-                            color: '#a0a0b0',
-                            lineHeight: 1.5
+                            fontStyle: settingsData.fontMonoItalic ? 'italic' : 'normal'
                         }}>
-                            <span style={{ color: '#6C63FF' }}>function</span> <span style={{ color: '#FF6584' }}>init</span>() &#123;<br />
-                            &nbsp;&nbsp;<span style={{ color: '#48c78e' }}>// Initializing site...</span><br />
+                            <span className={tabStyles.codeKeyword}>function</span> <span className={tabStyles.codeFunction}>init</span>() &#123;<br />
+                            &nbsp;&nbsp;<span className={tabStyles.codeComment}>// Initializing site...</span><br />
                             &#125;
                         </div>
                     </div>
@@ -318,7 +301,7 @@ const TypographySection = ({
                                     fontSize: getFontSize('fontFooterBrandSize', '1.15rem'),
                                     fontWeight: settingsData.fontFooterBrandWeight || 700,
                                     fontStyle: settingsData.fontFooterBrandItalic ? 'italic' : 'normal'
-                                }}>{settingsData.logoHighlight || 'KEM'}<span style={{ color: 'var(--primary-color)' }}>{settingsData.logoText || 'PHEARUM'}</span></div>
+                                }}>{settingsData.logoHighlight || 'KEM'}<span>{settingsData.logoText || 'PHEARUM'}</span></div>
                                 <div className={tabStyles.livePreviewFooterTagline} style={{
                                     fontFamily: fontCSS[getFont('fontFooterTagline')],
                                     fontSize: getFontSize('fontFooterTaglineSize', '0.75rem'),
@@ -379,7 +362,7 @@ const TypographySection = ({
                                 fontSize: getFontSize('fontAdminBrandSize', '1.1rem'),
                                 fontWeight: settingsData.fontAdminBrandWeight || 700,
                                 fontStyle: settingsData.fontAdminBrandItalic ? 'italic' : 'normal'
-                            }}>Admin<span style={{ color: 'var(--primary-color)' }}>.</span></span>
+                            }}>Admin<span>.</span></span>
                             <div className={tabStyles.livePreviewAdminSettingsIcon}>⚙️</div>
                         </div>
                         <div className={tabStyles.livePreviewAdminSidebarItem} style={{
@@ -425,7 +408,7 @@ const TypographySection = ({
                     </div>
                 </div>
 
-            <div className={tabStyles.formFooter} style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
+            <div className={tabStyles.formFooter}>
                 <Button
                     type="submit"
                     isLoading={loading}

@@ -165,29 +165,27 @@ const AuditLogsTable = ({
   const columns = view === 'security' ? securityColumns : activityColumns;
 
   return (
-    <div className={styles.tableSection}>
-      <DataTable
-        data={data}
-        columns={columns}
-        pageSize={15}
-        page={page}
-        loading={loading}
-        onRowClick={onRowClick}
-        totalItems={totalItems}
-        manualPagination={true}
-        paginationVariant={paginationVariant}
-        onPageChange={onPageChange}
-        hasMore={hasMore}
-        isFirstPage={isFirstPage}
-        onNext={onNext}
-        onPrevious={onPrevious}
-        emptyState={{
-          icon: view === 'security' ? Shield : Activity,
-          title: `No ${view === 'security' ? 'Security' : 'Activity'} Logs Found`,
-          description: "There are currently no recorded events."
-        }}
-      />
-    </div>
+    <DataTable
+      data={data}
+      columns={columns}
+      pageSize={15}
+      page={page}
+      loading={loading}
+      onRowClick={onRowClick}
+      totalItems={totalItems}
+      manualPagination={true}
+      paginationVariant={paginationVariant}
+      onPageChange={onPageChange}
+      hasMore={hasMore}
+      isFirstPage={isFirstPage}
+      onNext={onNext}
+      onPrevious={onPrevious}
+      emptyState={{
+        icon: view === 'security' ? Shield : Activity,
+        title: `No ${view === 'security' ? 'Security' : 'Activity'} Logs Found`,
+        description: "There are currently no recorded events."
+      }}
+    />
   );
 };
 

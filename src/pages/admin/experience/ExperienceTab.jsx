@@ -189,21 +189,19 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         canCreate={canCreate}
       />
       
-      <div className={styles.tableSection}>
-        <ExperienceTable
-          experiences={experiences}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          canEdit={canEdit}
-          canDelete={canDelete}
-          loading={isLoading}
-          page={pagination.page}
-          hasMore={pagination.hasMore}
-          isFirstPage={pagination.isFirstPage}
-          onNext={() => pagination.fetchNext(experiencesResult.lastDoc)}
-          onPrevious={pagination.fetchPrevious}
-        />
-      </div>
+      <ExperienceTable
+        experiences={experiences}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        canEdit={canEdit}
+        canDelete={canDelete}
+        loading={isLoading}
+        page={pagination.page}
+        hasMore={pagination.hasMore}
+        isFirstPage={pagination.isFirstPage}
+        onNext={() => pagination.fetchNext(experiencesResult.lastDoc)}
+        onPrevious={pagination.fetchPrevious}
+      />
 
       <ExperienceFormDialog 
         open={isFormOpen}

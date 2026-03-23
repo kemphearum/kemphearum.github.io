@@ -143,21 +143,19 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         canCreate={canCreate}
       />
       
-      <div className={styles.tableSection}>
-        <ProjectsTable
-          projects={projects}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          canEdit={canEdit}
-          canDelete={canDelete}
-          loading={isLoading}
-          page={pagination.page}
-          hasMore={pagination.hasMore}
-          isFirstPage={pagination.isFirstPage}
-          onNext={() => pagination.fetchNext(projectsResult.lastDoc)}
-          onPrevious={pagination.fetchPrevious}
-        />
-      </div>
+      <ProjectsTable
+        projects={projects}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        canEdit={canEdit}
+        canDelete={canDelete}
+        loading={isLoading}
+        page={pagination.page}
+        hasMore={pagination.hasMore}
+        isFirstPage={pagination.isFirstPage}
+        onNext={() => pagination.fetchNext(projectsResult.lastDoc)}
+        onPrevious={pagination.fetchPrevious}
+      />
 
       <ProjectsFormDialog 
         open={isFormOpen}

@@ -47,20 +47,6 @@
   min-width: 280px;
 }
 
-.tableSection {
-  background: var(--glass-surface);
-  border: 1px solid var(--divider);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  margin-top: 1rem;
-
-  &:hover {
-    border-color: rgba($primary-color, 0.2);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-  }
-}
 
 .tableHeaderSection {
   margin-bottom: 1.5rem;
