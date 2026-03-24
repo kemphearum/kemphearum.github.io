@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Navbar.module.scss';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import SettingsService from '../services/SettingsService';
 import { useTheme } from '../context/ThemeContext';
+import { normalizeSectionTarget, scrollToSectionWithOffset } from '../utils/sectionNavigation';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [activeSection, setActiveSection] = useState('home');
     const location = useLocation();
+    const navigate = useNavigate();
     const isHome = location.pathname === '/';
     const currentHash = (location.hash || '').replace('#', '');
     const { theme, toggleTheme } = useTheme();
     const sectionIds = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
+    const sectionNavItems = new Set(['home', 'about', 'experience', 'projects', 'contact']);
 
     const { data: globalConfig } = useQuery({
     staleTime: 60000,
@@ -101,17 +104,32 @@ const Navbar = () => {
     }, [isOpen]);
 
     const scrollToSection = (id) => {
+        const targetId = normalizeSectionTarget(id);
         setIsOpen(false);
-        if (!isHome) return;
-        const element = document.getElementById(id);
-        if (element) {
-            const headerOffset = 70;
-            const elementPosition = element.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.scrollY - headerOffset;
-            window.scrollTo({ top: offsetPosition, behavior: "smooth" });
-            const nextUrl = id === 'home' ? '/' : `/#${id}`;
-            window.history.replaceState(null, '', nextUrl);
+
+        if (!isHome) {
+            if (targetId === 'home') {
+                navigate('/');
+            } else {
+                navigate(`/#${targetId}`);
+            }
+            return;
         }
+
+        const scrolledTo = scrollToSectionWithOffset(targetId, {
+            headerOffset: 70,
+            behavior: 'smooth'
+        });
+
+        if (scrolledTo) {
+            setActiveSection(scrolledTo);
+            const nextUrl = scrolledTo === 'home' ? '/' : `/#${scrolledTo}`;
+            window.history.replaceState(null, '', nextUrl);
+            return;
+        }
+
+        const nextUrl = targetId === 'home' ? '/' : `/#${targetId}`;
+        window.location.assign(nextUrl);
     };
 
     const navItems = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
@@ -122,7 +140,7 @@ const Navbar = () => {
         }
         if (item === 'projects') {
             if (isHome) return activeSection === 'projects';
-            return location.pathname === '/projects' || location.pathname.startsWith('/projects/');
+            return currentHash === 'projects' || location.pathname === '/projects' || location.pathname.startsWith('/projects/');
         }
         if (location.pathname !== '/') {
             return currentHash === item;
@@ -156,9 +174,9 @@ const Navbar = () => {
                             const active = isItemActive(item);
                             return (
                             <li key={item}>
-                                {item === 'blog' || item === 'projects' ? (
+                                {item === 'blog' ? (
                                     <Link
-                                        to={`/${item}`}
+                                        to="/blog"
                                         onClick={() => setIsOpen(false)}
                                         className={active ? styles.activeNav : ''}
                                         aria-current={active ? 'page' : undefined}
@@ -166,8 +184,9 @@ const Navbar = () => {
                                         {item.charAt(0).toUpperCase() + item.slice(1)}
                                     </Link>
                                 ) : (
-                                    isHome ? (
+                                    sectionNavItems.has(item) && isHome ? (
                                         <button
+                                            type="button"
                                             onClick={() => scrollToSection(item)}
                                             className={active ? styles.activeNav : ''}
                                             aria-current={active ? 'page' : undefined}
@@ -176,7 +195,7 @@ const Navbar = () => {
                                         </button>
                                     ) : (
                                         <Link
-                                            to={`/#${item}`}
+                                            to={item === 'home' ? '/' : `/#${item}`}
                                             onClick={() => setIsOpen(false)}
                                             className={active ? styles.activeNav : ''}
                                             aria-current={active ? 'page' : undefined}

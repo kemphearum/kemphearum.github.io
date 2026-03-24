@@ -9,6 +9,7 @@ import Contact from '@/sections/Contact';
 import Footer from '@/sections/Footer';
 import Experience from '@/sections/Experience';
 import SettingsService from '../../src/services/SettingsService';
+import { normalizeSectionTarget, scrollToSectionWithOffset as scrollToSectionOffset } from '../utils/sectionNavigation';
 
 export async function loader() {
   try {
@@ -37,25 +38,28 @@ export default function Home() {
   // Track scroll position to save the active section
   useEffect(() => {
     let timeout;
-    const hashAliases = {
-      'featured-blogs': 'blog'
-    };
-    const resolveSectionId = (id) => hashAliases[id] || id;
+    let stopPendingScroll = null;
     const sections = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
 
-    const scrollToSectionWithOffset = (sectionId, behavior = 'smooth') => {
-      const targetId = resolveSectionId(sectionId);
+    const scrollToSectionWithRetry = (sectionId, behavior = 'smooth') => {
+      const targetId = normalizeSectionTarget(sectionId);
+      let attempts = 0;
+      const maxAttempts = 35;
       const checkElement = setInterval(() => {
-        const el = document.getElementById(targetId);
-        if (el && el.getBoundingClientRect().height > 50) {
-          const headerOffset = 70;
-          const elementPosition = el.getBoundingClientRect().top;
-          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-          window.scrollTo({ top: offsetPosition, behavior });
-          clearInterval(checkElement);
+        const scrolled = scrollToSectionOffset(targetId, {
+          headerOffset: 70,
+          behavior: attempts === 0 ? behavior : 'auto'
+        });
+        attempts += 1;
+
+        // Keep retrying briefly even after first success to avoid scroll restoration overriding hash navigation.
+        if (attempts >= maxAttempts && !scrolled) {
+          window.location.assign(targetId === 'home' ? '/' : `/#${targetId}`);
         }
+        if (attempts >= maxAttempts) clearInterval(checkElement);
       }, 100);
-      setTimeout(() => clearInterval(checkElement), 3000);
+
+      return () => clearInterval(checkElement);
     };
 
     const handleScroll = () => {
@@ -81,7 +85,8 @@ export default function Home() {
     const scrollToHash = () => {
       const hash = window.location.hash.substring(1);
       if (hash) {
-        scrollToSectionWithOffset(hash, 'smooth');
+        stopPendingScroll?.();
+        stopPendingScroll = scrollToSectionWithRetry(hash, 'auto');
       }
     };
     window.addEventListener('hashchange', scrollToHash);
@@ -97,7 +102,8 @@ export default function Home() {
     } else if (isReload) {
       const savedSection = sessionStorage.getItem('activeHomeSection');
       if (savedSection && savedSection !== 'home') {
-        scrollToSectionWithOffset(savedSection, 'auto');
+        stopPendingScroll?.();
+        stopPendingScroll = scrollToSectionWithRetry(savedSection, 'auto');
       }
     } else {
       // If not a reload, check for hash and scroll to it
@@ -108,6 +114,7 @@ export default function Home() {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('hashchange', scrollToHash);
       clearTimeout(timeout);
+      stopPendingScroll?.();
     };
   }, []);
 

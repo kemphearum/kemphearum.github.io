@@ -2,7 +2,12 @@
 
 .section {
     padding: 6rem 0;
-    background-color: $surface-color;
+    background:
+        linear-gradient(180deg,
+            rgba($primary-color, 0.045) 0%,
+            rgba($primary-color, 0.022) 38%,
+            rgba($primary-color, 0.01) 70%,
+            rgba($primary-color, 0) 100%);
     scroll-margin-top: $nav-height;
     position: relative;
 
@@ -15,7 +20,7 @@
         transform: translateX(-50%);
         width: 600px;
         height: 400px;
-        background: radial-gradient(ellipse, rgba($primary-color, 0.04), transparent 70%);
+        background: radial-gradient(ellipse, rgba($primary-color, 0.07), transparent 70%);
         pointer-events: none;
     }
 

@@ -5,9 +5,29 @@ import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Hero.module.scss';
 import { motion } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
+import { isLikelySectionTarget, normalizeSectionTarget, scrollToSectionWithOffset } from '../utils/sectionNavigation';
 
 const Hero = () => {
     const { trackEvent } = useAnalytics();
+
+    const handleSectionLinkClick = (event, rawTarget) => {
+        if (!isLikelySectionTarget(rawTarget)) return;
+
+        event.preventDefault();
+        const targetId = normalizeSectionTarget(rawTarget);
+        const scrolledTo = scrollToSectionWithOffset(targetId, {
+            headerOffset: 70,
+            behavior: 'smooth'
+        });
+        const nextUrl = targetId === 'home' ? '/' : `/#${targetId}`;
+
+        if (scrolledTo) {
+            window.history.replaceState(null, '', nextUrl);
+            return;
+        }
+
+        window.location.assign(nextUrl);
+    };
 
     const { data, isLoading: loading } = useQuery({
     staleTime: 60000,
@@ -95,17 +115,7 @@ const Hero = () => {
                                     className={styles.ctaButton}
                                     onClick={(e) => {
                                         trackEvent('hero_cta_clicked', { link: content.ctaLink || "#experience" });
-                                        const link = content.ctaLink || "#experience";
-                                        if (link.startsWith('#')) {
-                                            e.preventDefault();
-                                            const element = document.querySelector(link);
-                                            if (element) {
-                                                const headerOffset = 70;
-                                                const elementPosition = element.getBoundingClientRect().top;
-                                                const offsetPosition = elementPosition + window.scrollY - headerOffset;
-                                                window.scrollTo({ top: offsetPosition, behavior: "smooth" });
-                                            }
-                                        }
+                                        handleSectionLinkClick(e, content.ctaLink || '#experience');
                                     }}
                                 >
                                     {content.ctaText}
@@ -115,15 +125,7 @@ const Hero = () => {
                                 </a>
                                 <a href="#contact" className={styles.ctaSecondary} onClick={(e) => {
                                     trackEvent('hero_contact_clicked');
-                                    e.preventDefault();
-                                    const el = document.querySelector('#contact');
-                                    if (el) {
-                                        const headerOffset = 70;
-                                        const elementPosition = el.getBoundingClientRect().top;
-                                        const offsetPosition = elementPosition + window.scrollY - headerOffset;
-                                        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                                        window.history.replaceState(null, '', '/#contact');
-                                    }
+                                    handleSectionLinkClick(e, '#contact');
                                 }}>
                                     Get in Touch
                                 </a>

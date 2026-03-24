@@ -94,19 +94,19 @@ html {
 
 [data-theme="light"] {
     --bg-color: #eef3fb;
-    --bg-surface: #f4f8ff;
-    --bg-surface-light: #ffffff;
+    --bg-surface: rgba(244, 248, 255, 0.72);
+    --bg-surface-light: rgba(255, 255, 255, 0.62);
     --text-primary: #10213d;
     --text-secondary: #4e6386;
-    --glass-surface: #ffffff;
-    --glass-backdrop-filter: none;
+    --glass-surface: rgba(255, 255, 255, 0.56);
+    --glass-backdrop-filter: blur(12px);
     --glass-border: rgba(47, 109, 246, 0.16);
     --glass-shadow: 0 18px 40px rgba(26, 52, 95, 0.11), 0 2px 8px rgba(16, 33, 61, 0.06);
     --neon-glow: 0 0 12px rgba(47, 109, 246, 0.16);
-    --card-bg: #ffffff;
+    --card-bg: rgba(255, 255, 255, 0.64);
     --card-bg-rgb: 255, 255, 255;
     --primary-color-rgb: 47, 109, 246;
-    --card-hover: #eef4ff;
+    --card-hover: rgba(238, 244, 255, 0.82);
     --input-bg: #f6f9ff;
     --input-focus-bg: #ffffff;
     --input-border: rgba(47, 109, 246, 0.24);
