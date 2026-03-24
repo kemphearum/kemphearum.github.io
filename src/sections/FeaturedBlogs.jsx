@@ -43,7 +43,7 @@ const FeaturedBlogs = () => {
     featuredList = featuredList.slice(0, 3);
 
     return (
-        <section id="featured-blogs" className={styles.postsSection} style={{ paddingTop: '6rem', paddingBottom: '6rem' }}>
+        <section id="blog" className={styles.postsSection} style={{ paddingTop: '6rem', paddingBottom: '6rem' }}>
             <div className={styles.container}>
                 <motion.h2
                     className="section-title"

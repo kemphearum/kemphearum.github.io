@@ -37,10 +37,30 @@ export default function Home() {
   // Track scroll position to save the active section
   useEffect(() => {
     let timeout;
+    const hashAliases = {
+      'featured-blogs': 'blog'
+    };
+    const resolveSectionId = (id) => hashAliases[id] || id;
+    const sections = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
+
+    const scrollToSectionWithOffset = (sectionId, behavior = 'smooth') => {
+      const targetId = resolveSectionId(sectionId);
+      const checkElement = setInterval(() => {
+        const el = document.getElementById(targetId);
+        if (el && el.getBoundingClientRect().height > 50) {
+          const headerOffset = 70;
+          const elementPosition = el.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          window.scrollTo({ top: offsetPosition, behavior });
+          clearInterval(checkElement);
+        }
+      }, 100);
+      setTimeout(() => clearInterval(checkElement), 3000);
+    };
+
     const handleScroll = () => {
       clearTimeout(timeout);
       timeout = setTimeout(() => {
-        const sections = ['home', 'about', 'experience', 'projects', 'featured-blogs', 'contact'];
         for (const id of sections) {
           const el = document.getElementById(id);
           if (el) {
@@ -61,42 +81,23 @@ export default function Home() {
     const scrollToHash = () => {
       const hash = window.location.hash.substring(1);
       if (hash) {
-        const checkElement = setInterval(() => {
-          const el = document.getElementById(hash);
-          if (el && el.getBoundingClientRect().height > 50) {
-            const headerOffset = 70;
-            const elementPosition = el.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-            clearInterval(checkElement);
-          }
-        }, 100);
-        setTimeout(() => clearInterval(checkElement), 3000);
+        scrollToSectionWithOffset(hash, 'smooth');
       }
     };
+    window.addEventListener('hashchange', scrollToHash);
 
     // Check if we need to restore scroll position or scroll to hash
     const isReload = window.performance &&
       window.performance.getEntriesByType("navigation").length > 0 &&
       window.performance.getEntriesByType("navigation")[0].type === "reload";
 
-    if (isReload) {
+    if (window.location.hash) {
+      // Hash navigation always takes priority over saved scroll state
+      scrollToHash();
+    } else if (isReload) {
       const savedSection = sessionStorage.getItem('activeHomeSection');
       if (savedSection && savedSection !== 'home') {
-        const scrollInterval = setInterval(() => {
-          const el = document.getElementById(savedSection);
-          if (el && el.getBoundingClientRect().height > 50) {
-            const headerOffset = 70;
-            const elementPosition = el.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-            window.scrollTo({ top: offsetPosition, behavior: 'auto' });
-
-            if (window.scrollY > 50) {
-              clearInterval(scrollInterval);
-            }
-          }
-        }, 100);
-        setTimeout(() => clearInterval(scrollInterval), 3000);
+        scrollToSectionWithOffset(savedSection, 'auto');
       }
     } else {
       // If not a reload, check for hash and scroll to it
@@ -105,6 +106,7 @@ export default function Home() {
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('hashchange', scrollToHash);
       clearTimeout(timeout);
     };
   }, []);
