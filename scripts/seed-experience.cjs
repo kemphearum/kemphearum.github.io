@@ -1,13 +1,6 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('../sa-source.json');
+const { admin, initDb, seedById, truncateMissing } = require('./seed-utils.cjs');
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
-}
-
-const db = admin.firestore();
+const db = initDb();
 
 const experiences = [
     {
@@ -148,19 +141,31 @@ const experiences = [
 
 async function seedExperience() {
     console.log("Starting experience seeding process...");
-    for (const exp of experiences) {
-        const { slug, ...data } = exp;
-        await db.collection('experience').doc(slug).set({
-            ...data,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-        console.log(`Successfully seeded experience: ${slug}`);
+    
+    const idsToKeep = experiences.map((exp) => exp.slug);
+    const deletedCount = await truncateMissing(db, 'experience', idsToKeep);
+    if (deletedCount > 0) {
+        console.log(`Pruned ${deletedCount} orphaned experience records.`);
     }
+
+    await seedById(db, 'experience', experiences, {
+        merge: false,
+        idSelector: (exp) => exp.slug,
+        transform: (exp) => {
+            const { slug, ...data } = exp;
+            return {
+                ...data,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            };
+        },
+        onItem: (_, slug) => console.log(`Successfully seeded experience: ${slug}`)
+    });
     console.log("Experience seeding completed.");
-    process.exit(0);
 }
 
-seedExperience().catch(err => {
-    console.error(err);
-    process.exit(1);
-});
+seedExperience()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error('Experience seeding failed:', error.message || error);
+        process.exit(1);
+    });

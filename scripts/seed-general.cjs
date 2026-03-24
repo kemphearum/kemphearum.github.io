@@ -1,13 +1,6 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('../sa-source.json');
+const { admin, initDb } = require('./seed-utils.cjs');
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
-}
-
-const db = admin.firestore();
+const db = initDb();
 
 const homeData = {
     greeting: { en: "Hello, I'm", km: "សួស្តី ខ្ញុំគឺ" },
@@ -42,21 +35,19 @@ const contactData = {
 
 async function seedGeneral() {
     console.log("Starting general content (home, about, contact) seeding process...");
-
-    await db.collection('content').doc('home').set(homeData, { merge: true });
-    console.log("Successfully seeded 'home' content");
-
-    await db.collection('content').doc('about').set(aboutData, { merge: true });
-    console.log("Successfully seeded 'about' content");
-
-    await db.collection('content').doc('contact').set(contactData, { merge: true });
-    console.log("Successfully seeded 'contact' content");
+    await Promise.all([
+        db.collection('content').doc('home').set(homeData, { merge: true }),
+        db.collection('content').doc('about').set(aboutData, { merge: true }),
+        db.collection('content').doc('contact').set(contactData, { merge: true })
+    ]);
+    console.log("Successfully seeded 'home', 'about', and 'contact' content");
 
     console.log("General content seeding completed.");
-    process.exit(0);
 }
 
-seedGeneral().catch(err => {
-    console.error(err);
-    process.exit(1);
-});
+seedGeneral()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error('General content seeding failed:', error.message || error);
+        process.exit(1);
+    });

@@ -1,13 +1,6 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('../sa-source.json');
+const { initDb } = require('./seed-utils.cjs');
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
-}
-
-const db = admin.firestore();
+const db = initDb();
 
 async function fetchExperience() {
     console.log("Fetching all experience records...");
@@ -17,12 +10,19 @@ async function fetchExperience() {
     snapshot.forEach(doc => {
         experiences.push({ id: doc.id, ...doc.data() });
     });
-    
+    experiences.sort((a, b) => {
+        if (Number.isFinite(a.order) && Number.isFinite(b.order)) {
+            return a.order - b.order;
+        }
+        return String(a.id).localeCompare(String(b.id));
+    });
+
     console.log(JSON.stringify(experiences, null, 2));
-    process.exit(0);
 }
 
-fetchExperience().catch(err => {
-    console.error(err);
-    process.exit(1);
-});
+fetchExperience()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error('Fetch experience failed:', error.message || error);
+        process.exit(1);
+    });

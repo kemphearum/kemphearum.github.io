@@ -1,13 +1,6 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('../sa-source.json');
+const { admin, initDb } = require('./seed-utils.cjs');
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
-}
-
-const db = admin.firestore();
+const db = initDb();
 
 const settingsGlobal = {
     site: {
@@ -52,18 +45,18 @@ const typographyMetadata = {
 
 async function seedSettings() {
     console.log("Starting settings seeding process...");
-    
-    await db.collection('settings').doc('global').set(settingsGlobal, { merge: true });
-    console.log("Successfully seeded 'settings/global' content");
-
-    await db.collection('settings').doc('metadata').set({ typography: typographyMetadata }, { merge: true });
-    console.log("Successfully seeded 'settings/metadata' (typography) content");
+    await Promise.all([
+        db.collection('settings').doc('global').set(settingsGlobal, { merge: true }),
+        db.collection('settings').doc('metadata').set({ typography: typographyMetadata }, { merge: true })
+    ]);
+    console.log("Successfully seeded 'settings/global' and 'settings/metadata' content");
 
     console.log("Settings seeding completed.");
-    process.exit(0);
 }
 
-seedSettings().catch(err => {
-    console.error(err);
-    process.exit(1);
-});
+seedSettings()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error('Settings seeding failed:', error.message || error);
+        process.exit(1);
+    });

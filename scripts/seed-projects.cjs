@@ -1,14 +1,6 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('../sa-source.json');
+const { admin, initDb, seedById, truncateMissing } = require('./seed-utils.cjs');
 
-// Initialize Firebase Admin
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
-}
-
-const db = admin.firestore();
+const db = initDb();
 
 const projects = [
     {
@@ -116,17 +108,22 @@ const projects = [
 async function seedProjects() {
     console.log('Starting projects seeding process...');
 
-    for (const project of projects) {
-        try {
-            await db.collection('projects').doc(project.slug).set(project);
-            console.log(`Successfully seeded project: ${project.title.en}`);
-        } catch (error) {
-            console.error(`Failed to seed project: ${project.title.en}`, error);
-        }
+    const idsToKeep = projects.map((p) => p.slug);
+    const deletedCount = await truncateMissing(db, 'projects', idsToKeep);
+    if (deletedCount > 0) {
+        console.log(`Pruned ${deletedCount} orphaned projects.`);
     }
 
+    await seedById(db, 'projects', projects, {
+        merge: false,
+        idSelector: (project) => project.slug,
+        onItem: (project) => console.log(`Successfully seeded project: ${project.title.en}`)
+    });
     console.log('Projects seeding process completed.');
-    process.exit(0);
 }
-
-seedProjects();
+seedProjects()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error('Projects seeding failed:', error.message || error);
+        process.exit(1);
+    });

@@ -1,15 +1,8 @@
-const { execSync } = require('child_process');
-const admin = require('firebase-admin');
-const serviceAccount = require('../sa-source.json');
+const { spawnSync } = require('child_process');
 const path = require('path');
+const { initDb } = require('./seed-utils.cjs');
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
-}
-
-const db = admin.firestore();
+const db = initDb();
 
 const COLLECTIONS = [
     'posts',
@@ -17,7 +10,7 @@ const COLLECTIONS = [
     'experience',
     'content',
     'messages',
-    // 'settings', <-- Excluded to preserve audit/role/system settings
+    // Intentionally preserve settings and roles/users by default.
     'auditLogs',
     'visits',
     'dailyUsage'
@@ -32,57 +25,98 @@ const SEED_SCRIPTS = [
     'seed-messages.cjs'
 ];
 
-async function deleteCollection(collectionPath, batchSize = 500) {
-    const collectionRef = db.collection(collectionPath);
-    const snapshot = await collectionRef.orderBy('__name__').limit(batchSize).get();
+async function deleteDocumentRecursive(docRef) {
+    const subcollections = await docRef.listCollections();
+    for (const sub of subcollections) {
+        await deleteCollectionRecursive(sub);
+    }
+    await docRef.delete();
+}
 
-    if (snapshot.size === 0) return;
+async function deleteCollectionRecursive(collectionRef, batchSize = 100) {
+    while (true) {
+        const snapshot = await collectionRef.orderBy('__name__').limit(batchSize).get();
+        if (snapshot.empty) break;
 
-    const batch = db.batch();
-    snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-    await batch.commit();
+        for (const docSnap of snapshot.docs) {
+            await deleteDocumentRecursive(docSnap.ref);
+        }
+    }
+}
 
-    await deleteCollection(collectionPath, batchSize);
+async function truncateCollectionByName(collectionName) {
+    const collectionRef = db.collection(collectionName);
+    await deleteCollectionRecursive(collectionRef);
+}
+
+function runChildScript(scriptName) {
+    const scriptPath = path.join(__dirname, scriptName);
+    const result = spawnSync(process.execPath, [scriptPath], {
+        stdio: 'inherit',
+        shell: false
+    });
+
+    if (result.error) {
+        throw result.error;
+    }
+
+    if (result.status !== 0) {
+        throw new Error(`${scriptName} exited with code ${result.status}`);
+    }
 }
 
 async function runSeedAll() {
-    console.log("====================================================");
-    console.log("🚀 MASTER SEED: BURN & REBUILD");
-    console.log("====================================================");
-    
-    // STEP 1: TRUNCATE
-    console.log("\n🛑 PHASE 1: TRUNCATING COLLECTIONS...");
+    console.log('====================================================');
+    console.log('MASTER SEED: CLEAN + REBUILD');
+    console.log('====================================================');
+
+    console.log('\n[1/2] Truncating selected collections...');
+    const truncateErrors = [];
+
     for (const collectionName of COLLECTIONS) {
-        process.stdout.write(`   Truncating ${collectionName}... `);
+        process.stdout.write(`   - ${collectionName}: `);
         try {
-            await deleteCollection(collectionName);
-            console.log("✅");
+            await truncateCollectionByName(collectionName);
+            console.log('OK');
         } catch (error) {
-            console.log("❌");
-            console.error(`      Error: ${error.message}`);
+            console.log('FAILED');
+            truncateErrors.push({ collectionName, error });
+            console.error(`     ${error.message}`);
         }
     }
 
-    // STEP 2: SEED
-    console.log("\n🌱 PHASE 2: SEEDING NEW DATA...");
+    if (truncateErrors.length) {
+        throw new Error(`Truncate failed for ${truncateErrors.length} collection(s).`);
+    }
+
+    console.log('\n[2/2] Running seed scripts...');
+    const seedErrors = [];
+
     for (const scriptName of SEED_SCRIPTS) {
-        console.log(`\n--- Running ${scriptName} ---`);
+        console.log(`\n--- ${scriptName} ---`);
         try {
-            // We use inherit to see the output of the sub-scripts
-            execSync(`node scripts/${scriptName}`, { stdio: 'inherit' });
-            console.log(`✅ ${scriptName} completed.`);
+            runChildScript(scriptName);
+            console.log(`OK: ${scriptName}`);
         } catch (error) {
-            console.error(`❌ ${scriptName} failed.`);
+            seedErrors.push({ scriptName, error });
+            console.error(`FAILED: ${scriptName}`);
+            console.error(`  ${error.message}`);
         }
     }
 
-    console.log("\n====================================================");
-    console.log("🎉 MASTER SEED COMPLETED SUCCESSFULLY!");
-    console.log("====================================================");
-    process.exit(0);
+    if (seedErrors.length) {
+        throw new Error(`Seeding failed for ${seedErrors.length} script(s).`);
+    }
+
+    console.log('\n====================================================');
+    console.log('MASTER SEED COMPLETED');
+    console.log('====================================================');
 }
 
-runSeedAll().catch(err => {
-    console.error(err);
-    process.exit(1);
-});
+runSeedAll()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error('\nMASTER SEED FAILED');
+        console.error(error.message || error);
+        process.exit(1);
+    });

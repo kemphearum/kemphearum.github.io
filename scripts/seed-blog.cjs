@@ -1,14 +1,6 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('../sa-source.json');
+const { admin, initDb, seedById, truncateMissing } = require('./seed-utils.cjs');
 
-// Initialize Firebase Admin
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
-}
-
-const db = admin.firestore();
+const db = initDb();
 
 const posts = [
     {
@@ -86,17 +78,22 @@ const posts = [
 async function seedBlog() {
     console.log('Starting blog posts seeding process...');
 
-    for (const post of posts) {
-        try {
-            await db.collection('posts').doc(post.slug).set(post);
-            console.log(`Successfully seeded post: ${post.title.en}`);
-        } catch (error) {
-            console.error(`Failed to seed post: ${post.title.en}`, error);
-        }
+    const idsToKeep = posts.map((p) => p.slug);
+    const deletedCount = await truncateMissing(db, 'posts', idsToKeep);
+    if (deletedCount > 0) {
+        console.log(`Pruned ${deletedCount} orphaned blog posts.`);
     }
 
+    await seedById(db, 'posts', posts, {
+        merge: false,
+        idSelector: (post) => post.slug,
+        onItem: (post) => console.log(`Successfully seeded post: ${post.title.en}`)
+    });
     console.log('Blog posts seeding process completed.');
-    process.exit(0);
 }
-
-seedBlog();
+seedBlog()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error('Blog seeding failed:', error.message || error);
+        process.exit(1);
+    });

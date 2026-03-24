@@ -1,29 +1,25 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('../sa-source.json');
+const { initDb } = require('./seed-utils.cjs');
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
-}
-
-const db = admin.firestore();
+const db = initDb();
 
 async function checkGeneralContent() {
     console.log("Checking general content...");
-    const home = await db.collection('content').doc('home').get();
-    const about = await db.collection('content').doc('about').get();
-    const contact = await db.collection('content').doc('contact').get();
-    const settings = await db.collection('settings').doc('global').get();
+    const [home, about, contact, settings] = await Promise.all([
+        db.collection('content').doc('home').get(),
+        db.collection('content').doc('about').get(),
+        db.collection('content').doc('contact').get(),
+        db.collection('settings').doc('global').get()
+    ]);
 
     console.log("HOME:", JSON.stringify(home.data(), null, 2));
     console.log("ABOUT:", JSON.stringify(about.data(), null, 2));
     console.log("CONTACT:", JSON.stringify(contact.data(), null, 2));
     console.log("SETTINGS:", JSON.stringify(settings.data()?.site, null, 2));
-    process.exit(0);
 }
 
-checkGeneralContent().catch(err => {
-    console.error(err);
-    process.exit(1);
-});
+checkGeneralContent()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error('General content check failed:', error.message || error);
+        process.exit(1);
+    });

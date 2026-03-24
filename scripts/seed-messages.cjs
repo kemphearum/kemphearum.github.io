@@ -1,13 +1,6 @@
-const admin = require('firebase-admin');
-const serviceAccount = require('../sa-source.json');
+const { admin, initDb, seedById } = require('./seed-utils.cjs');
 
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
-}
-
-const db = admin.firestore();
+const db = initDb();
 
 const messages = [
     {
@@ -49,17 +42,28 @@ const messages = [
 
 async function seedMessages() {
     console.log("Starting messages seeding process...");
-    
-    for (let i = 0; i < messages.length; i++) {
-        await db.collection('messages').add(messages[i]);
-        console.log(`Successfully seeded message ${i + 1}`);
-    }
+    await seedById(db, 'messages', messages, {
+        merge: false,
+        idSelector: (message, index) => {
+            const emailPart = String(message.email || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            return emailPart ? `${emailPart}-${index + 1}` : `message-${index + 1}`;
+        },
+        transform: (message) => {
+            const payload = { ...message, updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+            if (payload.createdAt instanceof Date) {
+                payload.createdAt = admin.firestore.Timestamp.fromDate(payload.createdAt);
+            }
+            return payload;
+        },
+        onItem: (_, id, index) => console.log(`Successfully seeded message ${index + 1} (${id})`)
+    });
 
     console.log("Messages seeding completed.");
-    process.exit(0);
 }
 
-seedMessages().catch(err => {
-    console.error(err);
-    process.exit(1);
-});
+seedMessages()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error('Messages seeding failed:', error.message || error);
+        process.exit(1);
+    });
