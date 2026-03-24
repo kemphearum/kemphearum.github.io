@@ -1,11 +1,27 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
-import { collection, getDocs, query, where, doc, writeBatch, setDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, writeBatch, setDoc, Timestamp, getDoc, limit as firestoreLimit } from 'firebase/firestore';
 import SettingsService from './SettingsService';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 
 class DatabaseService {
     static SOFT_DOC_LIMIT = 50000;
+    static HEALTH_COLLECTIONS = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'visits', 'dailyUsage'];
+
+    static safeTrackRead(trackRead, count, label) {
+        if (!trackRead) return;
+        try {
+            trackRead(count, label);
+        } catch (trackingError) {
+            // Tracking must never break core database operations.
+            console.warn('[DatabaseService] Activity tracking failed during health check:', trackingError);
+        }
+    }
+
+    static async countCollectionManual(collectionName) {
+        const snapshot = await getDocs(collection(db, collectionName));
+        return snapshot.size;
+    }
 
     /**
      * Get health status of all collections.
@@ -13,17 +29,40 @@ class DatabaseService {
      * @returns {Promise<Record<string, number>>}
      */
     static async getHealth(trackRead) {
-        const collections = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'analytics', 'visits', 'dailyUsage'];
         const counts = {};
         const failures = {};
         const { getCountFromServer } = await import('firebase/firestore');
 
-        for (const col of collections) {
+        for (const col of DatabaseService.HEALTH_COLLECTIONS) {
             try {
-                const q = collection(db, col);
-                const snapshot = await getCountFromServer(q);
-                const count = snapshot.data().count;
-                if (trackRead) trackRead(1, `Counted ${col} for health (optimized)`);
+                const colRef = collection(db, col);
+                let count = 0;
+                let method = 'aggregate';
+
+                try {
+                    const aggregateSnapshot = await getCountFromServer(colRef);
+                    count = aggregateSnapshot.data().count;
+                } catch {
+                    // Aggregate queries may fail on some rule/config combinations.
+                    // Fall back to full scan count so Database tab remains useful.
+                    method = 'manual';
+                    count = await DatabaseService.countCollectionManual(col);
+                    DatabaseService.safeTrackRead(trackRead, count, `Counted ${col} for health (manual fallback)`);
+                    counts[col] = count;
+                    continue;
+                }
+
+                // Defensive fallback: if aggregate says 0, validate with a 1-doc probe.
+                // This prevents misleading all-zero dashboards when aggregate behavior is inconsistent.
+                if (count === 0) {
+                    const probeSnapshot = await getDocs(query(colRef, firestoreLimit(1)));
+                    if (!probeSnapshot.empty) {
+                        method = 'manual';
+                        count = await DatabaseService.countCollectionManual(col);
+                    }
+                }
+
+                DatabaseService.safeTrackRead(trackRead, 1, `Counted ${col} for health (${method})`);
                 counts[col] = count;
             } catch (err) {
                 console.error(`Error counting ${col}:`, err);

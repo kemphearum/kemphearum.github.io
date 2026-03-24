@@ -56,7 +56,8 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     const queryClient = useQueryClient();
 
     // Queries
-    const defaults = { posts: 0, projects: 0, experience: 0, content: 0, messages: 0, auditLogs: 0, users: 0, rolePermissions: 0, settings: 0, visits: 0, dailyUsage: 0 };
+    const healthKeys = DatabaseService.HEALTH_COLLECTIONS;
+    const defaults = Object.fromEntries(healthKeys.map((key) => [key, 0]));
     const { data: dbHealth = { ...defaults }, isLoading: dbHealthLoading, refetch: refetchDbHealth } = useQuery({
         queryKey: ['database', 'health'],
         queryFn: async () => {
@@ -91,7 +92,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                     showToast(error?.message || 'Failed to load database health.', 'error');
                 }
 
-                return { ...defaults };
+                return { ...defaults, lastUpdated: new Date() };
             }
         },
         refetchInterval: 300000,
@@ -224,7 +225,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     };
 
     // Adjusted totalDocs calculation to be safer
-    const calculatedTotal = (dbHealth.posts || 0) + (dbHealth.projects || 0) + (dbHealth.experience || 0) + (dbHealth.content || 0) + (dbHealth.messages || 0) + (dbHealth.auditLogs || 0) + (dbHealth.users || 0) + (dbHealth.rolePermissions || 0) + (dbHealth.settings || 0) + (dbHealth.visits || 0) + (dbHealth.dailyUsage || 0);
+    const calculatedTotal = healthKeys.reduce((sum, key) => sum + (Number(dbHealth[key]) || 0), 0);
 
     return (
         <div className="admin-tab-container">

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
@@ -82,9 +82,10 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
 
     if (typeof dateVal !== 'string') return '';
 
-    // Handle ranges
-    if (dateVal.includes(' â€” ') || dateVal.includes(' - ')) {
-        const rangeParts = dateVal.split(/[â€”\-]/).map(p => p.trim());
+    // Handle ranges using hyphen, en dash, or em dash delimiters.
+    const rangeSeparatorPattern = /\s*(?:-|\u2013|\u2014)\s*/;
+    if (rangeSeparatorPattern.test(dateVal)) {
+        const rangeParts = dateVal.split(rangeSeparatorPattern).map(p => p.trim()).filter(Boolean);
         dateVal = isEnd ? rangeParts[rangeParts.length - 1] : rangeParts[0];
         if (isEnd && dateVal.toLowerCase() === 'present') return '';
     }

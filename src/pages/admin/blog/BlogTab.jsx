@@ -14,6 +14,7 @@ import HistoryModal from '../components/HistoryModal';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
 import { slugify } from '../../../domain/shared/slugify';
+import ImageProcessingService from '../../../services/ImageProcessingService';
 
 const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   // State
@@ -97,7 +98,10 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     if (!isActionAllowed('edit', 'blog')) {
       return showToast("You do not have permission to perform this action.", "error");
     }
-    setSelectedPost(post);
+    setSelectedPost({
+      ...post,
+      tags: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || '')
+    });
     setIsFormOpen(true);
   };
 
@@ -263,8 +267,14 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     }
     
     await executeForm(async () => {
+      let coverImage = selectedPost?.coverImage || '';
+      if (formData.image instanceof File) {
+        coverImage = await ImageProcessingService.compress(formData.image);
+      }
+
+      const { image: _image, ...rest } = formData;
       const action = selectedPost ? 'updated' : 'created';
-      await BlogService.savePost(userRole, { ...formData, id: selectedPost?.id }, (count, label) => 
+      await BlogService.savePost(userRole, { ...rest, coverImage, id: selectedPost?.id }, (count, label) => 
         trackWrite(count, label, {
           action,
           module: 'blog',

@@ -6,11 +6,12 @@ import { slugify } from '../shared/slugify';
  * @returns {Object} Normalized data
  */
 export const normalizeProject = (data) => {
-    const techStack = data.techStack
+    const rawTechStack = data.techStack
         ? (typeof data.techStack === 'string'
             ? data.techStack.split(',').map(t => t.trim()).filter(t => t)
             : data.techStack)
         : [];
+    const techStack = [...new Set(rawTechStack)];
 
     return {
         title: (data.title || 'Untitled Project').trim(),
@@ -18,7 +19,7 @@ export const normalizeProject = (data) => {
         techStack,
         githubUrl: (data.githubUrl || '').trim(),
         liveUrl: (data.liveUrl || '').trim(),
-        slug: data.slug || slugify(data.title || 'untitled'),
+        slug: slugify((data.slug || data.title || 'untitled').trim()),
         content: (data.content || '').trim(),
         visible: data.visible !== false,
         featured: !!data.featured,

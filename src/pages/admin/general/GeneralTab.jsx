@@ -26,22 +26,35 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
             imageUrl = await ImageProcessingService.compress(data.image);
         }
         // Remove the file object before saving to Firestore
-        const { image, ...rest } = data;
-        await saveSectionData('home', { ...rest, profileImageUrl: imageUrl });
+        const { image: _image, ...rest } = data;
+        await saveSectionData('home', {
+            ...rest,
+            greeting: (rest.greeting || '').trim(),
+            name: (rest.name || '').trim(),
+            subtitle: (rest.subtitle || '').trim(),
+            description: (rest.description || '').trim(),
+            ctaText: (rest.ctaText || '').trim(),
+            ctaLink: (rest.ctaLink || '').trim(),
+            profileImageUrl: imageUrl
+        });
     };
 
     const handleSaveAbout = async (data) => {
         const skillsArray = data.skills.split(',').map(s => s.trim()).filter(s => s);
-        await saveSectionData('about', { bio: data.bio, skills: skillsArray });
+        await saveSectionData('about', { bio: (data.bio || '').trim(), skills: skillsArray });
     };
 
     const handleSaveContact = async (data) => {
-        await saveSectionData('contact', data);
+        await saveSectionData('contact', { introText: (data.introText || '').trim() });
     };
 
     const handleOpenHistory = (recordId, title) => {
         setHistoryModal({ isOpen: true, recordId, title });
     };
+
+    const homeFormKey = `home:${homeData.greeting || ''}:${homeData.name || ''}:${homeData.subtitle || ''}:${homeData.description || ''}:${homeData.ctaText || ''}:${homeData.ctaLink || ''}:${homeData.profileImageUrl || ''}`;
+    const aboutFormKey = `about:${aboutData.bio || ''}:${Array.isArray(aboutData.skills) ? aboutData.skills.join(',') : (aboutData.skills || '')}`;
+    const contactFormKey = `contact:${contactData.introText || ''}`;
 
     return (
         <div className={tabStyles.tabContentFadeIn}>
@@ -61,6 +74,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                 <Tabs.Content value="home">
                     <Form 
                         onSubmit={handleSaveHome}
+                        key={homeFormKey}
                         defaultValues={{
                             greeting: homeData.greeting || '',
                             name: homeData.name || '',
@@ -84,6 +98,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                 <Tabs.Content value="about">
                     <Form 
                         onSubmit={handleSaveAbout}
+                        key={aboutFormKey}
                         defaultValues={{
                             bio: aboutData.bio || '',
                             skills: Array.isArray(aboutData.skills) ? aboutData.skills.join(', ') : (aboutData.skills || '')
@@ -101,6 +116,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                 <Tabs.Content value="contact">
                     <Form 
                         onSubmit={handleSaveContact}
+                        key={contactFormKey}
                         defaultValues={{
                             introText: contactData.introText || ''
                         }}

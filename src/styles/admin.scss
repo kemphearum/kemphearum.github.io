@@ -5,3 +5,141 @@
 // Most UI primitives and design tokens are in src/styles/components/
 
 /* Admin shared global styles */
+
+.ui-loginWrapper {
+    min-height: 100dvh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 2.5vw, 2.5rem);
+    position: relative;
+    z-index: 1;
+}
+
+.ui-loginCard {
+    width: min(480px, 100%);
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    background: linear-gradient(
+        165deg,
+        rgba(20, 20, 36, 0.92) 0%,
+        rgba(12, 12, 24, 0.96) 100%
+    );
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: clamp(1.2rem, 2.2vw, 2rem);
+    position: relative;
+    overflow: hidden;
+    z-index: 2;
+}
+
+.ui-loginCard::before {
+    content: '';
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba($primary-color, 0.22) 0%, rgba($primary-color, 0) 68%);
+    top: -140px;
+    right: -110px;
+    pointer-events: none;
+}
+
+.ui-loginIcon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $primary-color;
+    background: rgba($primary-color, 0.14);
+    border: 1px solid rgba($primary-color, 0.35);
+    margin-bottom: 1rem;
+    box-shadow: 0 8px 18px rgba($primary-color, 0.2);
+}
+
+.ui-loginTitle {
+    margin: 0;
+    font-size: clamp(1.5rem, 2vw, 1.9rem);
+    line-height: 1.2;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.ui-loginSubtitle {
+    margin: 0.45rem 0 1.25rem;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+}
+
+.ui-loginForm {
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+}
+
+.ui-loginBtn {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 0.78rem 1rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, $primary-color 0%, color.adjust($primary-color, $lightness: 8%) 100%);
+    box-shadow: 0 10px 22px rgba($primary-color, 0.35);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba($primary-color, 0.4);
+    }
+
+    &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+}
+
+.ui-btnLoading {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.ui-loginFooter {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+}
+
+.ui-linkBtn {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: color 0.2s ease;
+
+    &:hover {
+        color: var(--primary-color);
+    }
+}
+
+@media (max-width: 520px) {
+    .ui-loginCard {
+        padding: 1rem;
+        border-radius: 16px;
+    }
+
+    .ui-loginFooter {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.55rem;
+    }
+}

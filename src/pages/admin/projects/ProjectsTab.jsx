@@ -13,6 +13,7 @@ import { Button } from '@/shared/components/ui';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
 import { slugify } from '../../../domain/shared/slugify';
+import ImageProcessingService from '../../../services/ImageProcessingService';
 
 const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const [editingItem, setEditingItem] = useState(null);
@@ -133,11 +134,17 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     }
     
     await executeForm(async () => {
+      let imageUrl = editingItem?.imageUrl || '';
+      if (formData.image instanceof File) {
+        imageUrl = await ImageProcessingService.compress(formData.image);
+      }
+
+      const { image: _image, ...rest } = formData;
       const action = editingItem ? 'updated' : 'created';
       await ProjectService.saveProject(userRole, {
-        ...formData,
+        ...rest,
         id: editingItem?.id || null
-      }, undefined, (count, label) => 
+      }, imageUrl, (count, label) => 
         trackWrite(count, label, {
           action,
           module: 'projects',

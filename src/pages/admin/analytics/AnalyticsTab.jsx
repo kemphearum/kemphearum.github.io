@@ -18,7 +18,6 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 import { jsonToCsv } from '../../../utils/csvUtils';
 import { useActivity } from '../../../hooks/useActivity';
-import { useAsyncAction } from '../../../hooks/useAsyncAction';
 import BaseService from '../../../services/BaseService';
 import AnalyticsService from '../../../services/AnalyticsService';
 
@@ -51,6 +50,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     const [detailPage, setDetailPage] = useState(1);
     const detailLimit = 50;
     const [quotaExceeded, setQuotaExceeded] = useState(false);
+    const shouldFetchDetailLogs = analyticsDetail === 'visits';
 
     // 2. DATA FETCHING (STANDARD REACT QUERY)
     const {
@@ -128,13 +128,15 @@ const AnalyticsTab = ({ userRole, showToast }) => {
             }
             return result.data;
         },
-        enabled: !!analyticsDetail && (userRole === 'superadmin' || userRole === 'admin'),
+        enabled: shouldFetchDetailLogs && !!analyticsDetail && (userRole === 'superadmin' || userRole === 'admin'),
         staleTime: 60000
     });
 
-    const analyticsLogs = detailsResult.data;
-    const analyticsLogsTotal = detailsResult.meta?.total || 0;
-    const analyticsLogsLoading = detailsLoading || detailsFetching;
+    const analyticsLogs = shouldFetchDetailLogs ? detailsResult.data : visits;
+    const analyticsLogsTotal = shouldFetchDetailLogs
+        ? (detailsResult.meta?.total || detailsResult.data?.length || 0)
+        : visits.length;
+    const analyticsLogsLoading = shouldFetchDetailLogs ? (detailsLoading || detailsFetching) : analyticsFetching;
 
     // Helper: Calculate previous date range
     function calculatePreviousRange(currentRange) {
@@ -208,7 +210,9 @@ const AnalyticsTab = ({ userRole, showToast }) => {
             map[date].visits++;
             if (v.ip && !map[date]._ips.has(v.ip)) { map[date]._ips.add(v.ip); map[date].unique++; }
         });
-        return Object.values(map).sort((a, b) => a.date.localeCompare(b.date)).map(({ _ips, ...rest }) => rest);
+        return Object.values(map)
+            .sort((a, b) => a.date.localeCompare(b.date))
+            .map((entry) => ({ date: entry.date, visits: entry.visits, unique: entry.unique }));
     }, [visits]);
 
     const countryData = useMemo(() => {
@@ -518,6 +522,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 page={detailPage}
                 onPageChange={setDetailPage}
                 pageSize={detailLimit}
+                enablePagination={shouldFetchDetailLogs}
             />
         </div>
     );

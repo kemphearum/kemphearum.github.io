@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { TrendingUp, Globe, Monitor, FileText, MapPin, Share2, RefreshCw, Users, UserCheck, Calendar, Activity } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { Dialog, Button } from '@/shared/components/ui';
@@ -22,7 +22,8 @@ const AnalyticsDetailModal = ({
     quotaExceeded = false,
     page = 1,
     onPageChange,
-    pageSize = 50
+    pageSize = 50,
+    enablePagination = false
 }) => {
     if (!analyticsDetail) return null;
 
@@ -30,8 +31,8 @@ const AnalyticsDetailModal = ({
 
     const totalPages = Math.ceil(analyticsLogsTotal / pageSize);
 
-    const Pagination = () => {
-        if (totalPages <= 1) return null;
+    const renderPagination = () => {
+        if (!enablePagination || totalPages <= 1) return null;
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', padding: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <button 
@@ -135,7 +136,7 @@ const AnalyticsDetailModal = ({
                                         </tbody>
                                     </table>
                                 </div>
-                                <Pagination />
+                                {renderPagination()}
                             </div>
                         ) : analyticsDetail === 'retention' ? (
                             <div style={{ padding: '1.5rem' }}>
@@ -207,7 +208,7 @@ const AnalyticsDetailModal = ({
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        {frequentVisitors.length > 0 ? frequentVisitors.slice(0, 50).map((pv, idx) => (
+                                                        {frequentVisitors.length > 0 ? frequentVisitors.slice(0, 50).map((pv) => (
                                                             <tr key={pv.ip} style={{ transition: 'background 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                                                 <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', fontFamily: 'monospace', fontSize: '0.85rem' }}>{pv.ip}</td>
                                                                 <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.85rem' }}>
@@ -322,7 +323,7 @@ const AnalyticsDetailModal = ({
                                                     </tbody>
                                                 </table>
                                             </div>
-                                            <Pagination />
+                                            {renderPagination()}
                                         </div>
                                     );
                                 })()}

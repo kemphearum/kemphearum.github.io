@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Dialog, EmptyState, Tabs } from '@/shared/components/ui';
@@ -29,13 +29,13 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     onSuccess: () => setIsFormOpen(false)
   });
 
-  const { loading: roleLoading, execute: executeRoleChange } = useAsyncAction({
+  const { loading: _roleLoading, execute: executeRoleChange } = useAsyncAction({
     showToast,
     errorMessage: 'Failed to update role.',
     invalidateKeys: [['users']]
   });
 
-  const { loading: resetLoading, execute: executeResetPassword } = useAsyncAction({
+  const { loading: _resetLoading, execute: executeResetPassword } = useAsyncAction({
     showToast,
     errorMessage: 'Failed to send reset email.'
   });
@@ -46,13 +46,13 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     invalidateKeys: [['users']]
   });
 
-  const { loading: permissionsLoading, execute: executePermissions } = useAsyncAction({
+  const { loading: _permissionsLoading, execute: executePermissions } = useAsyncAction({
     showToast,
     errorMessage: 'Failed to save permissions.',
     invalidateKeys: [['rolePermissions']]
   });
 
-  const { trackRead, trackWrite, trackDelete } = useActivity();
+  const { trackRead, trackWrite } = useActivity();
 
   // cursor pagination hook
   const pagination = useCursorPagination(10, [searchQuery]);
@@ -115,9 +115,14 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     if (!isActionAllowed('create', 'users')) {
       return showToast("You do not have permission to perform this action.", "error");
     }
+
+    const normalizedEmail = (data.email || '').trim().toLowerCase();
+    if (!normalizedEmail) {
+      return showToast("Email is required.", "error");
+    }
     
     await executeCreate(async () => {
-      await UserService.createUser(userRole, data.email, data.password, data.role, trackRead);
+      await UserService.createUser(userRole, normalizedEmail, data.password, data.role, trackRead);
       pagination.reset();
     });
   };

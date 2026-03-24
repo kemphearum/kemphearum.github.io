@@ -6,8 +6,22 @@ import FormField from '../../components/FormField';
 import FormInput from '../../components/FormInput';
 import FormSelect from '../../components/FormSelect';
 import FormDropzone from '../../components/FormDropzone';
+import FormMarkdownEditor from '../../components/FormMarkdownEditor';
 
 const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loading }) => {
+  const defaultValues = {
+    title: initialData?.title || '',
+    description: initialData?.description || '',
+    content: initialData?.content || '',
+    techStack: Array.isArray(initialData?.techStack) ? initialData.techStack.join(', ') : (initialData?.techStack || ''),
+    githubUrl: initialData?.githubUrl || '',
+    liveUrl: initialData?.liveUrl || '',
+    slug: initialData?.slug || '',
+    image: null,
+    visible: initialData?.visible ?? true,
+    featured: initialData?.featured ?? false
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <Dialog.Content maxWidth="600px">
@@ -18,17 +32,7 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
         
         <Form 
           onSubmit={onSubmit} 
-          defaultValues={{
-            title: '',
-            description: '',
-            techStack: '',
-            githubUrl: '',
-            liveUrl: '',
-            image: null,
-            visible: true,
-            featured: false,
-            ...initialData
-          }}
+          defaultValues={defaultValues}
           key={open ? 'open' : 'closed'}
         >
           <Dialog.Body>
@@ -76,16 +80,42 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
               </FormField>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <FormField label="GitHub URL" name="githubUrl">
+                <FormField
+                  label="GitHub URL"
+                  name="githubUrl"
+                  validation={{
+                    validate: (value) => !value || /^https?:\/\/.+/i.test(value) || 'Enter a valid URL (http/https)'
+                  }}
+                >
                   <FormInput type="url" placeholder="https://github.com/..." />
                 </FormField>
-                <FormField label="Live Demo URL" name="liveUrl">
+                <FormField
+                  label="Live Demo URL"
+                  name="liveUrl"
+                  validation={{
+                    validate: (value) => !value || /^https?:\/\/.+/i.test(value) || 'Enter a valid URL (http/https)'
+                  }}
+                >
                   <FormInput type="url" placeholder="https://..." />
                 </FormField>
               </div>
 
+              <FormField label="Custom Slug (Optional)" name="slug">
+                <FormInput placeholder="e.g. portfolio-website" />
+              </FormField>
+
+              <FormField label="Project Content (Markdown)" name="content">
+                <FormMarkdownEditor rows={8} placeholder="Detailed case study, architecture, lessons learned..." />
+              </FormField>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <FormField label="Visibility" name="visible">
+                <FormField
+                  label="Visibility"
+                  name="visible"
+                  validation={{
+                    setValueAs: (value) => value === true || value === 'true'
+                  }}
+                >
                   <FormSelect 
                     options={[
                       { label: 'Published', value: true },
@@ -93,7 +123,13 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                     ]}
                   />
                 </FormField>
-                <FormField label="Featured" name="featured">
+                <FormField
+                  label="Featured"
+                  name="featured"
+                  validation={{
+                    setValueAs: (value) => value === true || value === 'true'
+                  }}
+                >
                   <FormSelect 
                     options={[
                       { label: 'Normal', value: false },

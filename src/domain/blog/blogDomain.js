@@ -6,13 +6,14 @@ import { slugify } from '../shared/slugify';
  * @returns {Object} Normalized data
  */
 export const normalizePost = (data) => {
-    const tags = typeof data.tags === 'string'
+    const rawTags = typeof data.tags === 'string'
         ? data.tags.split(',').map(t => t.trim()).filter(t => t)
         : (Array.isArray(data.tags) ? data.tags : []);
+    const tags = [...new Set(rawTags)];
 
     return {
         title: (data.title || 'Untitled Post').trim(),
-        slug: data.slug || slugify(data.title || 'untitled'),
+        slug: slugify((data.slug || data.title || 'untitled').trim()),
         excerpt: (data.excerpt || '').trim(),
         content: (data.content || '').trim(),
         tags,

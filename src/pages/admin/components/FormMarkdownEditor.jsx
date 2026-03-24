@@ -1,22 +1,42 @@
 import React from 'react';
 import { Bold, Italic, Link as LinkIcon, Code, Eye, Edit2 } from 'lucide-react';
 import MarkdownRenderer from '@/sections/MarkdownRenderer';
+import { useFormContext } from 'react-hook-form';
 
 /**
  * FormMarkdownEditor component with toolbar actions and preview capability.
  */
 const FormMarkdownEditor = ({
-    label,
     value,
     onChange,
+    name,
     id = "markdown-editor",
     rows = 10,
     isPreviewMode = false,
     onTogglePreview = () => { },
     placeholder = "Write in Markdown...",
     required = false,
-    fullWidth = true
+    fullWidth = true,
+    ...props
 }) => {
+    const formContext = useFormContext();
+    const watchedValue = formContext && name ? formContext.watch(name) : undefined;
+    const currentValue = watchedValue ?? value ?? '';
+
+    const emitChange = (nextValue) => {
+        if (onChange) {
+            onChange({
+                target: {
+                    name,
+                    value: nextValue
+                }
+            });
+        }
+
+        if (formContext && name) {
+            formContext.setValue(name, nextValue, { shouldDirty: true, shouldTouch: true });
+        }
+    };
 
     const insertMarkdown = (syntax) => {
         const textarea = document.getElementById(id);
@@ -24,7 +44,7 @@ const FormMarkdownEditor = ({
 
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
-        const text = value || '';
+        const text = currentValue;
         const selectedText = text.substring(start, end);
         let newText;
 
@@ -45,7 +65,7 @@ const FormMarkdownEditor = ({
                 return;
         }
 
-        onChange({ target: { value: newText } });
+        emitChange(newText);
         setTimeout(() => {
             textarea.focus();
             // Optional: set selection back
@@ -72,17 +92,18 @@ const FormMarkdownEditor = ({
 
             {isPreviewMode ? (
                 <div className="ui-previewBox">
-                    <MarkdownRenderer content={value || '*Nothing to preview...*'} />
+                    <MarkdownRenderer content={currentValue || '*Nothing to preview...*'} />
                 </div>
             ) : (
                 <textarea
                     id={id}
                     placeholder={placeholder}
-                    value={value}
-                    onChange={onChange}
+                    value={currentValue}
+                    onChange={(event) => emitChange(event.target.value)}
                     rows={rows}
                     required={required}
                     style={{ fontFamily: 'monospace' }}
+                    {...props}
                 />
             )}
         </div>

@@ -9,6 +9,7 @@ import FormSelect from '../../components/FormSelect';
 const ExperienceFormFields = () => {
   const { watch } = useFormContext();
   const isPresent = watch('isPresent');
+  const startDate = watch('startDate');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
@@ -47,7 +48,18 @@ const ExperienceFormFields = () => {
               <span>Present</span>
             </label>
           </div>
-          <FormField name="endDate" label="" noError validation={{ required: !isPresent ? 'End date is required' : false }}>
+          <FormField
+            name="endDate"
+            label=""
+            noError
+            validation={{
+              required: !isPresent ? 'End date is required' : false,
+              validate: (value) => {
+                if (isPresent || !value || !startDate) return true;
+                return value >= startDate || 'End date must be the same or after start date';
+              }
+            }}
+          >
             <FormInput type="month" disabled={isPresent} />
           </FormField>
         </div>
@@ -61,7 +73,13 @@ const ExperienceFormFields = () => {
         <FormInput isTextArea rows="5" placeholder="Describe your responsibilities and achievements..." />
       </FormField>
 
-      <FormField label="Visibility" name="visible">
+      <FormField
+        label="Visibility"
+        name="visible"
+        validation={{
+          setValueAs: (value) => value === true || value === 'true'
+        }}
+      >
         <FormSelect 
           options={[
             { label: 'Visible on Homepage', value: true },

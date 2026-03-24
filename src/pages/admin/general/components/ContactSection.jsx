@@ -1,6 +1,5 @@
 import React from 'react';
 import { Mail, Save, History } from 'lucide-react';
-import { useFormContext } from 'react-hook-form';
 import { Button } from '../../../../shared/components/ui';
 import FormField from '../../components/FormField';
 import FormMarkdownEditor from '../../components/FormMarkdownEditor';

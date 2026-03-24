@@ -63,13 +63,24 @@ class AnalyticsService extends BaseService {
             where("timestamp", "<=", endDate)
         );
 
-        const totalSnap = await getCountFromServer(baseQuery);
-        const totalCount = totalSnap.data().count;
+        let totalCount = 0;
+        try {
+            const totalSnap = await getCountFromServer(baseQuery);
+            totalCount = totalSnap.data().count;
+        } catch (countError) {
+            // Some environments/rules may reject count() while normal reads still work.
+            // Continue with paged reads and derive a best-effort total below.
+            console.warn('[Analytics] count() failed in fetchAnalyticsDetails, falling back to page-size total.', countError);
+        }
 
         const q = query(baseQuery, orderBy("timestamp", "desc"), firestoreLimit(page * limit));
         const querySnapshot = await getDocs(q);
 
         const logs = querySnapshot.docs.slice((page - 1) * limit).map(doc => ({ id: doc.id, ...doc.data() }));
+        if (totalCount === 0 && logs.length > 0) {
+            // Fallback when count query is unavailable; keeps detail modal functional.
+            totalCount = (page - 1) * limit + logs.length;
+        }
 
         if (trackRead) {
             trackRead(querySnapshot.size, `Fetched details for ${type} (page ${page})`);

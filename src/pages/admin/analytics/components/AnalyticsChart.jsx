@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { 
     ResponsiveContainer, 
     LineChart, 
@@ -137,10 +137,9 @@ const AnalyticsChart = ({
                 );
 
             case 'line':
-            default:
+            default: {
                 // For multi-line, yKey can be an array
                 const yKeys = Array.isArray(yKey) ? yKey : [yKey];
-                
                 return (
                     <ResponsiveContainer width="100%" height={height}>
                         <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -196,6 +195,7 @@ const AnalyticsChart = ({
                         </LineChart>
                     </ResponsiveContainer>
                 );
+            }
         }
     };
 

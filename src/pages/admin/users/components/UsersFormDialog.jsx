@@ -3,6 +3,7 @@ import { UserPlus } from 'lucide-react';
 import { Dialog, Button, Input } from '../../../../shared/components/ui';
 import Form from '../../components/Form';
 import FormField from '../../components/FormField';
+import FormSelect from '../../components/FormSelect';
 
 const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading }) => {
   return (
@@ -14,8 +15,8 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading }) => {
           </Dialog.Title>
           <Dialog.Close />
         </Dialog.Header>
-        
-        <Form 
+
+        <Form
           onSubmit={onSubmit}
           defaultValues={{
             email: '',
@@ -29,7 +30,13 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading }) => {
               <FormField
                 label="Email Address"
                 name="email"
-                validation={{ required: 'Email is required' }}
+                validation={{
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                    message: 'Enter a valid email address'
+                  }
+                }}
               >
                 <Input type="email" placeholder="user@example.com" />
               </FormField>
@@ -37,7 +44,7 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading }) => {
               <FormField
                 label="Temporary Password"
                 name="password"
-                validation={{ 
+                validation={{
                   required: 'Password is required',
                   minLength: { value: 6, message: 'Password must be at least 6 characters' }
                 }}
@@ -48,16 +55,19 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading }) => {
               <FormField
                 label="Initial Role"
                 name="role"
+                validation={{ required: 'Role is required' }}
               >
-                <select className="ui-input ui-role-select">
-                  <option value="pending">⏳ Pending Verification</option>
-                  <option value="editor">✍️ Content Editor</option>
-                  <option value="admin">🛡️ System Admin</option>
-                </select>
+                <FormSelect
+                  options={[
+                    { label: 'Pending Verification', value: 'pending' },
+                    { label: 'Content Editor', value: 'editor' },
+                    { label: 'System Admin', value: 'admin' }
+                  ]}
+                />
               </FormField>
             </div>
           </Dialog.Body>
-          
+
           <Dialog.Footer>
             <Button variant="ghost" onClick={() => onOpenChange(false)} type="button">
               Cancel

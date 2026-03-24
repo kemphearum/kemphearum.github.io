@@ -7,6 +7,42 @@ class ContentService extends BaseService {
         super('content');
     }
 
+    normalizeSectionData(sectionName, data) {
+        if (!data || typeof data !== 'object') return data;
+
+        if (sectionName === 'home') {
+            return {
+                ...data,
+                greeting: data.greeting || '',
+                name: data.name || '',
+                subtitle: data.subtitle || '',
+                description: data.description || data.heroDescription || data.introText || '',
+                ctaText: data.ctaText || data.buttonText || '',
+                ctaLink: data.ctaLink || data.buttonLink || '',
+                profileImageUrl: data.profileImageUrl || data.imageUrl || ''
+            };
+        }
+
+        if (sectionName === 'about') {
+            return {
+                ...data,
+                bio: data.bio || data.about || data.aboutText || data.description || '',
+                skills: Array.isArray(data.skills)
+                    ? data.skills
+                    : (typeof data.skills === 'string' ? data.skills.split(',').map((s) => s.trim()).filter(Boolean) : [])
+            };
+        }
+
+        if (sectionName === 'contact') {
+            return {
+                ...data,
+                introText: data.introText || data.introduction || data.description || data.text || ''
+            };
+        }
+
+        return data;
+    }
+
     /**
      * Fetch a specific content section document (e.g. 'home', 'settings')
      * @param {string} sectionName 
@@ -21,7 +57,8 @@ class ContentService extends BaseService {
             trackRead(1, `Fetched ${sectionName} content`);
         }
 
-        return docSnap.exists() ? docSnap.data() : null;
+        if (!docSnap.exists()) return null;
+        return this.normalizeSectionData(sectionName, docSnap.data());
     }
 
     /**

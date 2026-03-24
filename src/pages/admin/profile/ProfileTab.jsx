@@ -12,16 +12,27 @@ const ProfileTab = ({ user, userId, userDisplayName, setUserDisplayName, showToa
         e.preventDefault();
         if (!userId) return;
 
+        const normalizedName = (userDisplayName || '').trim();
+        if (normalizedName === (user?.displayName || '').trim()) {
+            showToast('No profile changes to save.', 'info');
+            return;
+        }
+
         setIsSaving(true);
-        const { error } = await BaseService.safe(() => UserService.updateProfile(userId, userDisplayName, trackWrite));
-        if (error) showToast(error, 'error');
-        else showToast('Profile saved!');
+        const { error } = await BaseService.safe(() => UserService.updateProfile(userId, normalizedName, trackWrite));
+
+        if (error) {
+            showToast(error, 'error');
+        } else {
+            setUserDisplayName(normalizedName);
+            showToast('Profile saved!');
+        }
         setIsSaving(false);
     };
 
     return (
         <div className="ui-card">
-            <div className="ui-cardHeader"><h3>👤 Edit Profile</h3></div>
+            <div className="ui-cardHeader"><h3>Edit Profile</h3></div>
             <form onSubmit={handleSaveProfile}>
                 <div className="ui-formGroup">
                     <label>Display Name</label>
