@@ -309,6 +309,11 @@ h6 {
     margin-bottom: 1rem;
 }
 
+// Section Scroll Alignment (sticky header offset)
+#home, #about, #experience, #projects, #blog, #contact {
+    scroll-margin-top: 85px;
+}
+
 .container {
     @include container;
 }
@@ -396,7 +401,7 @@ h6 {
     }
 }
 
-// Admin font override â€” keeps admin panel in Inter when enabled
+// Admin font override — keeps admin panel in Inter when enabled
 :root[data-admin-font="inter"] {
 
     [class*="Admin_"],

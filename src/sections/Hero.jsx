@@ -1,38 +1,42 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link, useNavigate } from 'react-router';
 import ContentService from '../services/ContentService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Hero.module.scss';
 import { motion } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
-import { isLikelySectionTarget, normalizeSectionTarget, scrollToSectionWithOffset } from '../utils/sectionNavigation';
+import { normalizeSectionTarget } from '../utils/sectionNavigation';
+import { Download, Send } from 'lucide-react';
 
 const Hero = () => {
     const { trackEvent } = useAnalytics();
+    const navigate = useNavigate();
 
-    const handleSectionLinkClick = (event, rawTarget) => {
-        if (!isLikelySectionTarget(rawTarget)) return;
+    const handleSectionLinkClick = (e, target) => {
+        const targetId = normalizeSectionTarget(target);
+        const element = document.getElementById(targetId);
 
-        event.preventDefault();
-        const targetId = normalizeSectionTarget(rawTarget);
-        const scrolledTo = scrollToSectionWithOffset(targetId, {
-            headerOffset: 70,
-            behavior: 'smooth'
-        });
-        const nextUrl = targetId === 'home' ? '/' : `/#${targetId}`;
-
-        if (scrolledTo) {
+        if (element) {
+            if (e) e.preventDefault();
+            element.scrollIntoView({ behavior: 'smooth' });
+            const nextUrl = targetId === 'home' ? '/' : `/#${targetId}`;
             window.history.replaceState(null, '', nextUrl);
             return;
         }
 
-        window.location.assign(nextUrl);
+        // Element not found (likely on another page)
+        if (e && !target.startsWith('/')) {
+            e.preventDefault();
+            const nextUrl = targetId === 'home' ? '/' : `/#${targetId}`;
+            navigate(nextUrl);
+        }
     };
 
     const { data, isLoading: loading } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
+        staleTime: 60000,
+        gcTime: 300000,
+        refetchOnWindowFocus: false,
         queryKey: ['content', 'home'],
         queryFn: () => ContentService.fetchSection('home')
     });
@@ -62,12 +66,11 @@ const Hero = () => {
 
     return (
         <section id="home" className={styles.hero}>
-            {/* Animated background particles */}
             <div className={styles.particles}>
                 {[...Array(6)].map((_, i) => (
                     <div key={i} className={styles.particle} style={{
                         '--delay': `${i * 2}s`,
-                        '--x': `${10 + (i % 4) * 20}%`, // Narrower range (10-70%) to prevent edge overflow
+                        '--x': `${10 + (i % 4) * 20}%`,
                         '--y': `${10 + (i % 3) * 30}%`,
                         '--size': `${60 + i * 30}px`
                     }} />
@@ -82,7 +85,6 @@ const Hero = () => {
             >
                 <motion.div
                     className={styles.content}
-                    key={loading ? 'loading' : 'content'}
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
@@ -93,7 +95,6 @@ const Hero = () => {
                             <div className={styles.skeletonLine} style={{ width: '320px', height: '48px' }} />
                             <div className={styles.skeletonLine} style={{ width: '280px', height: '36px' }} />
                             <div className={styles.skeletonLine} style={{ width: '100%', height: '60px' }} />
-                            <div className={styles.skeletonLine} style={{ width: '180px', height: '50px', borderRadius: '12px' }} />
                         </div>
                     ) : (
                         <>
@@ -110,25 +111,28 @@ const Hero = () => {
                                 <MarkdownRenderer content={content.description} />
                             </motion.div>
                             <motion.div variants={itemVariants} className={styles.cta}>
-                                <a
-                                    href={content.ctaLink || "#experience"}
-                                    className={styles.ctaButton}
+                                <Link 
+                                    to={content.ctaLink || "/#experience"}
                                     onClick={(e) => {
                                         trackEvent('hero_cta_clicked', { link: content.ctaLink || "#experience" });
                                         handleSectionLinkClick(e, content.ctaLink || '#experience');
                                     }}
+                                    className={styles.ctaButton}
                                 >
-                                    {content.ctaText}
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M5 12h14M12 5l7 7-7 7" />
-                                    </svg>
-                                </a>
-                                <a href="#contact" className={styles.ctaSecondary} onClick={(e) => {
-                                    trackEvent('hero_contact_clicked');
-                                    handleSectionLinkClick(e, '#contact');
-                                }}>
-                                    Get in Touch
-                                </a>
+                                    {content.ctaText || 'Get My CV'}
+                                    <Download size={18} />
+                                </Link>
+                                <Link 
+                                    to="/#contact"
+                                    onClick={(e) => {
+                                        trackEvent('hero_contact_clicked');
+                                        handleSectionLinkClick(e, '#contact');
+                                    }}
+                                    className={styles.ctaSecondary}
+                                >
+                                    Get In Touch
+                                    <Send size={18} />
+                                </Link>
                             </motion.div>
                         </>
                     )}
@@ -147,20 +151,9 @@ const Hero = () => {
                         )}
                         <div className={styles.imageRing} />
                     </div>
-                    {/* Status badge */}
-                    <motion.div
-                        className={styles.statusBadge}
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 1.2, type: 'spring', bounce: 0.5 }}
-                    >
-                        <span className={styles.statusDot} />
-                        Available for work
-                    </motion.div>
                 </motion.div>
             </motion.div>
 
-            {/* Scroll indicator */}
             <motion.div
                 className={styles.scrollIndicator}
                 initial={{ opacity: 0 }}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import BlogService from '../services/BlogService';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';

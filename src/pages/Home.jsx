@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router';
 import Navbar from '@/sections/Navbar';
 import Hero from '@/sections/Hero';
 import About from '@/sections/About';
@@ -35,32 +36,41 @@ export function meta({ data }) {
 }
 
 export default function Home() {
+  const location = useLocation();
+  const pendingScrollStopRef = useRef(null);
+
+  const queueSectionScroll = useCallback((sectionId, behavior = 'smooth') => {
+    const targetId = normalizeSectionTarget(sectionId);
+    let attempts = 0;
+    const maxAttempts = 35;
+    
+    // Safety: ensure body isn't locked if we are trying to scroll
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = '';
+    }
+
+    const checkElement = setInterval(() => {
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: attempts === 0 ? behavior : 'auto' });
+        clearInterval(checkElement);
+        return;
+      }
+      
+      attempts += 1;
+      if (attempts >= maxAttempts) {
+        clearInterval(checkElement);
+        window.location.assign(targetId === 'home' ? '/' : `/#${targetId}`);
+      }
+    }, 100);
+
+    return () => clearInterval(checkElement);
+  }, []);
+
   // Track scroll position to save the active section
   useEffect(() => {
     let timeout;
-    let stopPendingScroll = null;
     const sections = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
-
-    const scrollToSectionWithRetry = (sectionId, behavior = 'smooth') => {
-      const targetId = normalizeSectionTarget(sectionId);
-      let attempts = 0;
-      const maxAttempts = 35;
-      const checkElement = setInterval(() => {
-        const scrolled = scrollToSectionOffset(targetId, {
-          headerOffset: 70,
-          behavior: attempts === 0 ? behavior : 'auto'
-        });
-        attempts += 1;
-
-        // Keep retrying briefly even after first success to avoid scroll restoration overriding hash navigation.
-        if (attempts >= maxAttempts && !scrolled) {
-          window.location.assign(targetId === 'home' ? '/' : `/#${targetId}`);
-        }
-        if (attempts >= maxAttempts) clearInterval(checkElement);
-      }, 100);
-
-      return () => clearInterval(checkElement);
-    };
 
     const handleScroll = () => {
       clearTimeout(timeout);
@@ -80,43 +90,36 @@ export default function Home() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // Handle hash scrolling on initial mount or when hash changes
-    const scrollToHash = () => {
-      const hash = window.location.hash.substring(1);
-      if (hash) {
-        stopPendingScroll?.();
-        stopPendingScroll = scrollToSectionWithRetry(hash, 'auto');
-      }
-    };
-    window.addEventListener('hashchange', scrollToHash);
 
     // Check if we need to restore scroll position or scroll to hash
     const isReload = window.performance &&
       window.performance.getEntriesByType("navigation").length > 0 &&
       window.performance.getEntriesByType("navigation")[0].type === "reload";
 
-    if (window.location.hash) {
-      // Hash navigation always takes priority over saved scroll state
-      scrollToHash();
-    } else if (isReload) {
+    if (!window.location.hash && isReload) {
       const savedSection = sessionStorage.getItem('activeHomeSection');
       if (savedSection && savedSection !== 'home') {
-        stopPendingScroll?.();
-        stopPendingScroll = scrollToSectionWithRetry(savedSection, 'auto');
+        pendingScrollStopRef.current?.();
+        pendingScrollStopRef.current = queueSectionScroll(savedSection, 'auto');
       }
-    } else {
-      // If not a reload, check for hash and scroll to it
-      scrollToHash();
     }
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('hashchange', scrollToHash);
       clearTimeout(timeout);
-      stopPendingScroll?.();
+      pendingScrollStopRef.current?.();
     };
-  }, []);
+  }, [queueSectionScroll]);
+
+  useEffect(() => {
+    const hash = (location.hash || '').replace(/^#/, '');
+    if (!hash) return;
+
+    pendingScrollStopRef.current?.();
+    pendingScrollStopRef.current = queueSectionScroll(hash, 'auto');
+  }, [location.pathname, location.hash, queueSectionScroll]);
+
+  useEffect(() => () => pendingScrollStopRef.current?.(), []);
 
   return (
     <>

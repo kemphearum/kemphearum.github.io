@@ -4,7 +4,7 @@ import BlogService from '../services/BlogService';
 import styles from '../pages/Blog.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 const FeaturedBlogs = () => {
     const { data: postsData, isLoading: loading } = useQuery({

@@ -5,7 +5,7 @@ import ProjectCard from './ProjectCard';
 import styles from './Projects.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 const FeaturedProjects = () => {
     const { data: projectsData, isLoading: loading } = useQuery({

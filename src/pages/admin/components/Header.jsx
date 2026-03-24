@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import styles from './Header.module.scss';
 import { LogOut, Sun, Moon, ExternalLink, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router';
 
 const Header = ({ 
     onToggleSidebar, 

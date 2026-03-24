@@ -23,7 +23,7 @@ import BlogService from '../services/BlogService';
 import SettingsService from '../services/SettingsService';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import Navbar from '@/sections/Navbar';
 import Footer from '@/sections/Footer';
 import styles from './Blog.module.scss';

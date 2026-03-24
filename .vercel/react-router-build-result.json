@@ -17,6 +17,7 @@
       "blog": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "blog-post": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/sitemap[.]xml": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "section-redirect": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "not-found": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
     },
     "routes": {
@@ -85,6 +86,15 @@
         "parentId": "root",
         "file": "app/routes/sitemap[.]xml.jsx",
         "path": "sitemap.xml",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "section-redirect": {
+        "id": "section-redirect",
+        "parentId": "root",
+        "file": "app/routes/section-redirect.jsx",
+        "path": ":section",
         "config": {
           "runtime": "nodejs"
         }
@@ -161,6 +171,12 @@
         "file": "routes/sitemap[.]xml.jsx",
         "path": "sitemap.xml"
       },
+      "section-redirect": {
+        "id": "section-redirect",
+        "parentId": "root",
+        "file": "routes/section-redirect.jsx",
+        "path": ":section"
+      },
       "not-found": {
         "id": "not-found",
         "parentId": "root",
@@ -213,6 +229,11 @@
           {
             "file": "routes/sitemap[.]xml.jsx",
             "path": "sitemap.xml"
+          },
+          {
+            "file": "routes/section-redirect.jsx",
+            "path": ":section",
+            "id": "section-redirect"
           },
           {
             "file": "routes/$.jsx",

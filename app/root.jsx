@@ -7,6 +7,7 @@ import {
   useLoaderData,
   isRouteErrorResponse,
   useRouteError,
+  useLocation,
 } from "react-router";
 import MaintenancePage from '@/sections/MaintenancePage';
 import ComponentErrorBoundary from '@/sections/ErrorBoundary';
@@ -53,11 +54,17 @@ export function Layout({ children }) {
               </ThemeProvider>
             </QueryClientProvider>
           </ComponentErrorBoundary>
-        <ScrollRestoration />
+        <ConditionalScrollRestoration />
         <Scripts />
       </body>
     </html>
   );
+}
+
+function ConditionalScrollRestoration() {
+  const location = useLocation();
+  if (location.hash) return null;
+  return <ScrollRestoration />;
 }
 
 function SettingsApplier({ children, initialSettings }) {
@@ -206,14 +213,25 @@ export function ErrorBoundary() {
 
 export default function App() {
   const loaderData = useLoaderData();
+  const location = useLocation();
 
   useEffect(() => {
-    // Redirect hash-based URLs from the old HashRouter to new clean URLs
+    // Redirect hash-based URLs from the old HashRouter (e.g., #/projects) to new clean URLs
+    // But don't redirect section hashes (e.g., #about or /#about)
     if (typeof window !== 'undefined' && window.location.hash.startsWith('#/')) {
-      const cleanPath = window.location.hash.replace(/^#\//, '/');
-      window.location.replace(cleanPath);
+      const hashContent = window.location.hash.slice(2).split('?')[0]; // Remove '#/' and query
+      const SECTIONS = ['about', 'experience', 'projects', 'blog', 'contact', 'home'];
+      
+      // If it looks like a section name, don't redirect it to a path
+      if (SECTIONS.includes(hashContent.toLowerCase())) return;
+
+      // If it looks like a route path
+      if (hashContent) {
+        const cleanPath = '/' + hashContent;
+        window.location.replace(cleanPath);
+      }
     }
-  }, []);
+  }, [location.pathname, location.hash]);
 
   return (
     <SettingsApplier initialSettings={loaderData}>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './Navbar.module.scss';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import SettingsService from '../services/SettingsService';
 import { useTheme } from '../context/ThemeContext';
@@ -16,7 +16,14 @@ const Navbar = () => {
     const currentHash = (location.hash || '').replace('#', '');
     const { theme, toggleTheme } = useTheme();
     const sectionIds = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
-    const sectionNavItems = new Set(['home', 'about', 'experience', 'projects', 'contact']);
+    const navItems = [
+        { key: 'home', type: 'section' },
+        { key: 'about', type: 'section' },
+        { key: 'experience', type: 'section' },
+        { key: 'projects', type: 'route', to: '/projects' },
+        { key: 'blog', type: 'route', to: '/blog' },
+        { key: 'contact', type: 'section' }
+    ];
 
     const { data: globalConfig } = useQuery({
     staleTime: 60000,
@@ -105,47 +112,44 @@ const Navbar = () => {
 
     const scrollToSection = (id) => {
         const targetId = normalizeSectionTarget(id);
-        setIsOpen(false);
-
-        if (!isHome) {
-            if (targetId === 'home') {
-                navigate('/');
-            } else {
-                navigate(`/#${targetId}`);
-            }
-            return;
+        
+        // Close menu first
+        if (isOpen) {
+            setIsOpen(false);
+            // Small delay to allow body overflow to be restored by the useEffect
+            setTimeout(() => performScroll(targetId), 50);
+        } else {
+            performScroll(targetId);
         }
-
-        const scrolledTo = scrollToSectionWithOffset(targetId, {
-            headerOffset: 70,
-            behavior: 'smooth'
-        });
-
-        if (scrolledTo) {
-            setActiveSection(scrolledTo);
-            const nextUrl = scrolledTo === 'home' ? '/' : `/#${scrolledTo}`;
-            window.history.replaceState(null, '', nextUrl);
-            return;
-        }
-
-        const nextUrl = targetId === 'home' ? '/' : `/#${targetId}`;
-        window.location.assign(nextUrl);
     };
 
-    const navItems = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
+    const performScroll = (targetId) => {
+        if (!isHome) {
+            navigate(`/#${targetId}`);
+            return;
+        }
+
+        const element = document.getElementById(targetId);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+            setActiveSection(targetId);
+            const nextUrl = targetId === 'home' ? '/' : `/#${targetId}`;
+            window.history.replaceState(null, '', nextUrl);
+        }
+    };
+
     const isItemActive = (item) => {
-        if (item === 'blog') {
+        if (item.key === 'blog') {
             if (isHome) return activeSection === 'blog';
             return location.pathname === '/blog' || location.pathname.startsWith('/blog/');
         }
-        if (item === 'projects') {
-            if (isHome) return activeSection === 'projects';
-            return currentHash === 'projects' || location.pathname === '/projects' || location.pathname.startsWith('/projects/');
+        if (item.key === 'projects') {
+            return location.pathname === '/projects' || location.pathname.startsWith('/projects/');
         }
         if (location.pathname !== '/') {
-            return currentHash === item;
+            return currentHash === item.key;
         }
-        return activeSection === item;
+        return activeSection === item.key;
     };
 
     return (
@@ -173,36 +177,25 @@ const Navbar = () => {
                         {navItems.map((item) => {
                             const active = isItemActive(item);
                             return (
-                            <li key={item}>
-                                {item === 'blog' ? (
+                            <li key={item.key}>
+                                {item.type === 'route' ? (
                                     <Link
-                                        to="/blog"
+                                        to={item.to}
                                         onClick={() => setIsOpen(false)}
                                         className={active ? styles.activeNav : ''}
                                         aria-current={active ? 'page' : undefined}
                                     >
-                                        {item.charAt(0).toUpperCase() + item.slice(1)}
+                                        {item.key.charAt(0).toUpperCase() + item.key.slice(1)}
                                     </Link>
                                 ) : (
-                                    sectionNavItems.has(item) && isHome ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => scrollToSection(item)}
-                                            className={active ? styles.activeNav : ''}
-                                            aria-current={active ? 'page' : undefined}
-                                        >
-                                            {item.charAt(0).toUpperCase() + item.slice(1)}
-                                        </button>
-                                    ) : (
-                                        <Link
-                                            to={item === 'home' ? '/' : `/#${item}`}
-                                            onClick={() => setIsOpen(false)}
-                                            className={active ? styles.activeNav : ''}
-                                            aria-current={active ? 'page' : undefined}
-                                        >
-                                            {item.charAt(0).toUpperCase() + item.slice(1)}
-                                        </Link>
-                                    )
+                                    <button
+                                        type="button"
+                                        onClick={() => scrollToSection(item.key)}
+                                        className={active ? styles.activeNav : ''}
+                                        aria-current={active ? 'page' : undefined}
+                                    >
+                                        {item.key.charAt(0).toUpperCase() + item.key.slice(1)}
+                                    </button>
                                 )}
                             </li>
                         )})}

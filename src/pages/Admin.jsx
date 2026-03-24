@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from
 import UserService from '../services/UserService';
 import MessageService from '../services/MessageService';
 import ContentService from '../services/ContentService';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, Link, Outlet, useNavigate } from 'react-router';
 import { AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { fetchGeoData } from '../utils/geoUtils';
 import { useTheme } from '../context/ThemeContext';
