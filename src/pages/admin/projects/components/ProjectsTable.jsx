@@ -3,6 +3,7 @@ import { Layout, Plus, History } from 'lucide-react';
 import { Badge, Button } from '@/shared/components/ui';
 import DataTable from '@/shared/components/ui/data-table/DataTable';
 import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableHelpers';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 /**
  * ProjectsTable Component
@@ -31,6 +32,8 @@ const ProjectsTable = ({
   paginationVariant = 'cursor',
   selection = null
 }) => {
+  const { language } = useTranslation();
+  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
   const formatProjectDate = (value) => {
     if (!value?.seconds) return { day: '-', time: '' };
 
@@ -50,7 +53,7 @@ const ProjectsTable = ({
 
   const getDescription = (text = '') => {
     const normalized = String(text).replace(/\s+/g, ' ').trim();
-    if (!normalized) return 'No short description added yet.';
+    if (!normalized) return tr('No short description added yet.', 'មិនទាន់មានការពិពណ៌នាខ្លីនៅឡើយទេ។');
     return normalized.length > 96 ? `${normalized.slice(0, 96)}...` : normalized;
   };
 
@@ -65,7 +68,7 @@ const ProjectsTable = ({
   const columns = [
     {
       key: 'title',
-      header: 'Title',
+      header: tr('Title', 'ចំណងជើង'),
       sortable: true,
       className: 'ui-table-cell--title',
       render: (row) => {
@@ -73,7 +76,7 @@ const ProjectsTable = ({
 
         return (
           <div className="ui-blog-tableTitle">
-            <div className="ui-blog-tableTitle__main">{row.title || 'Untitled project'}</div>
+            <div className="ui-blog-tableTitle__main">{row.title || tr('Untitled project', 'គម្រោងគ្មានចំណងជើង')}</div>
             <div className="ui-blog-tableTitle__meta">
               <span>/{row.slug || row.id}</span>
               <span>{getDescription(row.description)}</span>
@@ -91,25 +94,29 @@ const ProjectsTable = ({
     },
     {
       key: 'visible',
-      header: 'Status',
+      header: tr('Status', 'ស្ថានភាព'),
       sortable: true,
       render: (row) => (
         <div className="ui-blog-statusCell">
           <div className="ui-blog-statusCell__badges">
             <Badge variant={row.visible !== false ? 'success' : 'warning'}>
-              {row.visible !== false ? 'Live' : 'Hidden'}
+              {row.visible !== false ? tr('Live', 'បង្ហាញ') : tr('Hidden', 'លាក់')}
             </Badge>
-            {row.featured && <Badge variant="primary">Featured</Badge>}
+            {row.featured && <Badge variant="primary">{tr('Featured', 'ពិសេស')}</Badge>}
           </div>
           <span className="ui-blog-statusCell__note">
-            {row.liveUrl ? 'Demo linked' : row.githubUrl ? 'Repository linked' : 'No public links yet'}
+            {row.liveUrl
+              ? tr('Demo linked', 'មានតំណសាកល្បង')
+              : row.githubUrl
+                ? tr('Repository linked', 'មានតំណ Repository')
+                : tr('No public links yet', 'មិនទាន់មានតំណសាធារណៈ')}
           </span>
         </div>
       )
     },
     {
       key: 'createdAt',
-      header: 'Date',
+      header: tr('Date', 'កាលបរិច្ឆេទ'),
       sortable: true,
       render: (row) => {
         const formatted = formatProjectDate(row.createdAt);
@@ -123,7 +130,7 @@ const ProjectsTable = ({
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: tr('Actions', 'សកម្មភាព'),
       className: 'ui-table-cell--actions',
       render: (row) => renderAdminActions({
         row,
@@ -139,7 +146,7 @@ const ProjectsTable = ({
             variant="ghost"
             size="sm"
             onClick={() => onViewHistory(row)}
-            title="View History"
+            title={tr('View History', 'មើលប្រវត្តិ')}
           >
             <History size={16} />
           </Button>
@@ -169,10 +176,10 @@ const ProjectsTable = ({
       selection={selection}
       emptyState={{
         icon: Layout,
-        title: "No Projects Yet",
-        description: "Start with a featured case study, import an existing portfolio export, or add the next project you want to showcase.",
+        title: tr('No Projects Yet', 'មិនទាន់មានគម្រោង'),
+        description: tr('Start with a featured case study, import an existing portfolio export, or add the next project you want to showcase.', 'ចាប់ផ្តើមដោយករណីសិក្សា នាំចូលទិន្នន័យដែលមានស្រាប់ ឬបន្ថែមគម្រោងបន្ទាប់ដែលអ្នកចង់បង្ហាញ។'),
         action: canCreate ? {
-          label: 'Create first project',
+          label: tr('Create first project', 'បង្កើតគម្រោងដំបូង'),
           onClick: onCreate,
           icon: Plus
         } : null

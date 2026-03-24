@@ -2,6 +2,7 @@ import React from 'react';
 import { Clock, User, Globe, Hash, Layout, FileText, Briefcase, Users, Monitor, Smartphone, Tablet, Shield, Activity } from 'lucide-react';
 import DataTable from '../../../../shared/components/ui/data-table/DataTable';
 import styles from '../AuditLogsTab.module.scss';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const AuditLogsTable = ({ 
   data, 
@@ -19,6 +20,9 @@ const AuditLogsTable = ({
   paginationVariant = 'cursor',
   onPageChange
 }) => {
+  const { language } = useTranslation();
+  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+
   const getDeviceIcon = (device) => {
     const d = device?.toLowerCase() || '';
     if (d.includes('phone') || d.includes('mobile')) return <Smartphone size={14} />;
@@ -45,10 +49,48 @@ const AuditLogsTable = ({
     return 'neutral';
   };
 
+  const localizeAction = (value) => {
+    const key = String(value || '').toLowerCase();
+    const map = {
+      read: tr('Read', 'អាន'),
+      write: tr('Write', 'សរសេរ'),
+      created: tr('Created', 'បានបង្កើត'),
+      create: tr('Created', 'បានបង្កើត'),
+      updated: tr('Updated', 'បានកែប្រែ'),
+      update: tr('Updated', 'បានកែប្រែ'),
+      deleted: tr('Deleted', 'បានលុប'),
+      delete: tr('Deleted', 'បានលុប'),
+      enabled: tr('Enabled', 'បានបើក'),
+      disabled: tr('Disabled', 'បានបិទ'),
+      success: tr('Success', 'ជោគជ័យ'),
+      failure: tr('Failure', 'បរាជ័យ')
+    };
+    return map[key] || value || tr('Unknown', 'មិនស្គាល់');
+  };
+
+  const localizeModule = (value) => {
+    const key = String(value || '').toLowerCase();
+    const map = {
+      blog: tr('Blog', 'ប្លុក'),
+      projects: tr('Projects', 'គម្រោង'),
+      experience: tr('Experience', 'បទពិសោធន៍'),
+      users: tr('Users', 'អ្នកប្រើ')
+    };
+    return map[key] || value || '-';
+  };
+
+  const localizeDevice = (value) => {
+    const key = String(value || '').toLowerCase();
+    if (key.includes('phone') || key.includes('mobile')) return tr('Mobile', 'ទូរស័ព្ទ');
+    if (key.includes('tablet') || key.includes('ipad')) return tr('Tablet', 'ថេប្លេត');
+    if (!key) return tr('Desktop', 'កុំព្យូទ័រ');
+    return value;
+  };
+
   const formatTimestamp = (ts) => {
     if (!ts) return '-';
     const date = ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts);
-    return date.toLocaleString('en-US', {
+    return date.toLocaleString(language === 'km' ? 'km-KH' : 'en-US', {
       month: 'numeric',
       day: 'numeric',
       year: 'numeric',
@@ -62,20 +104,20 @@ const AuditLogsTable = ({
   const activityColumns = [
     {
       key: 'action',
-      header: 'Action',
+      header: tr('Action', 'សកម្មភាព'),
       sortable: true,
       render: (row) => {
         const action = row.details?.action || row.type || 'read';
         return (
           <span className={`${styles.badge} ${styles[`badge--${getBadgeVariant(action)}`]}`}>
-            {action}
+            {localizeAction(action)}
           </span>
         );
       }
     },
     {
       key: 'count',
-      header: 'Count',
+      header: tr('Count', 'ចំនួន'),
       sortable: true,
       render: (row) => (
         <span className={styles.countBadge}>
@@ -85,18 +127,18 @@ const AuditLogsTable = ({
     },
     {
       key: 'module',
-      header: 'Module',
+      header: tr('Module', 'ម៉ូឌុល'),
       sortable: true,
       render: (row) => (
         <div className={styles.moduleCell}>
           <div className={styles.moduleIcon}>{getModuleIcon(row.details?.module)}</div>
-          {row.details?.module || '-'}
+          {localizeModule(row.details?.module)}
         </div>
       )
     },
     {
       key: 'entity',
-      header: 'Target Entity',
+      header: tr('Target Entity', 'ធាតុគោលដៅ'),
       render: (row) => (
         <div className={styles.entityCell} title={row.details?.entityName || row.label}>
           {row.details?.entityName || row.label || '-'}
@@ -105,18 +147,18 @@ const AuditLogsTable = ({
     },
     {
       key: 'user',
-      header: 'Performer',
+      header: tr('Performer', 'អ្នកអនុវត្ត'),
       sortable: true,
       render: (row) => (
         <div className={styles.userCell}>
           <User size={12} />
-          {row.user || 'System'}
+          {row.user || tr('System', 'ប្រព័ន្ធ')}
         </div>
       )
     },
     {
       key: 'timestamp',
-      header: 'Time',
+      header: tr('Time', 'ពេលវេលា'),
       sortable: true,
       render: (row) => (
         <div className={styles.timeCell}>
@@ -130,26 +172,26 @@ const AuditLogsTable = ({
   const securityColumns = [
     {
       key: 'status',
-      header: 'Status',
+      header: tr('Status', 'ស្ថានភាព'),
       render: (row) => (
         <span className={`${styles.badge} ${styles[`badge--${getBadgeVariant(row.status)}`]}`}>
-          {row.status || 'success'}
+          {localizeAction(row.status || 'success')}
         </span>
       )
     },
     {
       key: 'user',
-      header: 'User Email',
+      header: tr('User Email', 'អ៊ីមែលអ្នកប្រើ'),
       sortable: true,
       render: (row) => (
         <div className={styles.userCell}>
-          {row.user || row.email || 'System'}
+          {row.user || row.email || tr('System', 'ប្រព័ន្ធ')}
         </div>
       )
     },
     {
       key: 'ipAddress',
-      header: 'IP Address',
+      header: tr('IP Address', 'អាសយដ្ឋាន IP'),
       sortable: true,
       render: (row) => (
         <div className={styles.ipCell}>
@@ -160,20 +202,20 @@ const AuditLogsTable = ({
     },
     {
       key: 'device',
-      header: 'Device',
+      header: tr('Device', 'ឧបករណ៍'),
       sortable: true,
       render: (row) => (
         <div className={styles.deviceCell}>
           <div className={styles.deviceCellIcon}>
             {getDeviceIcon(row.device)}
           </div>
-          <span>{row.device || 'Desktop'}</span>
+          <span>{localizeDevice(row.device)}</span>
         </div>
       )
     },
     {
       key: 'userAgent',
-      header: 'User Agent',
+      header: tr('User Agent', 'ព័ត៌មានកម្មវិធីរុករក'),
       render: (row) => (
         <div className={styles.userAgentCell} title={row.userAgent}>
           {row.userAgent || '-'}
@@ -182,7 +224,7 @@ const AuditLogsTable = ({
     },
     {
       key: 'timestamp',
-      header: 'Timestamp',
+      header: tr('Timestamp', 'ពេលវេលា'),
       sortable: true,
       render: (row) => (
         <div className={styles.timeStrongCell}>
@@ -212,8 +254,10 @@ const AuditLogsTable = ({
       onPrevious={onPrevious}
       emptyState={{
         icon: view === 'security' ? Shield : Activity,
-        title: `No ${view === 'security' ? 'Security' : 'Activity'} Logs Found`,
-        description: "There are currently no recorded events."
+        title: view === 'security'
+          ? tr('No Security Logs Found', 'មិនមានកំណត់ហេតុសុវត្ថិភាព')
+          : tr('No Activity Logs Found', 'មិនមានកំណត់ហេតុសកម្មភាព'),
+        description: tr('There are currently no recorded events.', 'បច្ចុប្បន្នមិនមានព្រឹត្តិការណ៍ដែលបានកត់ត្រាទេ។')
       }}
     />
   );

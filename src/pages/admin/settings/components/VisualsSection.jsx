@@ -121,7 +121,7 @@ const VisualsSection = ({
                                 <div className={tabStyles.rangeCard}>
                                     <div className={tabStyles.rangeCardHeader}>
                                         <div>
-                                            <div className={tabStyles.rangeTitle}>Particle Density</div>
+                                            <div className={tabStyles.rangeTitle}>{tr('Particle Density', 'ដង់ស៊ីតេភាគល្អិត')}</div>
                                             <div className={tabStyles.rangeHint}>{tr('Control how full or minimal the scene feels.', 'គ្រប់គ្រងកម្រិតកកកុញ ឬទំនេរនៃឈុត។')}</div>
                                         </div>
                                         <span className={tabStyles.rangeValue}>{bgDensity}%</span>

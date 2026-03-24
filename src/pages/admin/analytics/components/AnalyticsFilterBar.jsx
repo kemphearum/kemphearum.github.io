@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Calendar, Download, RefreshCw, Clock3 } from 'lucide-react';
 import Button from '../../../../shared/components/ui/button/Button';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 /**
  * AnalyticsFilterBar Component
@@ -24,10 +25,13 @@ const AnalyticsFilterBar = ({
     lastUpdated,
     totalRecords
 }) => {
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const dateLocale = language === 'km' ? 'km-KH' : 'en-US';
     const isInvalidRange = Boolean(range.start && range.end && range.start > range.end);
 
     const rangeLabel = useMemo(() => {
-        if (!range.start || !range.end) return 'Select a date range';
+        if (!range.start || !range.end) return tr('Select a date range', 'ជ្រើសរើសចន្លោះកាលបរិច្ឆេទ');
 
         const startDate = new Date(`${range.start}T00:00:00`);
         const endDate = new Date(`${range.end}T00:00:00`);
@@ -36,12 +40,14 @@ const AnalyticsFilterBar = ({
         const withYear = { ...compact, year: 'numeric' };
 
         const sameYear = startDate.getFullYear() === endDate.getFullYear();
-        const startText = startDate.toLocaleDateString('en-US', sameYear ? compact : withYear);
-        const endText = endDate.toLocaleDateString('en-US', withYear);
-        const daysText = Number.isFinite(dayDiff) && dayDiff > 0 ? `${dayDiff} day${dayDiff > 1 ? 's' : ''}` : 'Custom';
+        const startText = startDate.toLocaleDateString(dateLocale, sameYear ? compact : withYear);
+        const endText = endDate.toLocaleDateString(dateLocale, withYear);
+        const daysText = Number.isFinite(dayDiff) && dayDiff > 0
+            ? tr(`${dayDiff} day${dayDiff > 1 ? 's' : ''}`, `${dayDiff} ថ្ងៃ`)
+            : tr('Custom', 'ផ្ទាល់ខ្លួន');
 
-        return `${startText} to ${endText} (${daysText})`;
-    }, [range.end, range.start]);
+        return `${startText} ${tr('to', 'ដល់')} ${endText} (${daysText})`;
+    }, [dateLocale, range.end, range.start, tr]);
 
     const handlePresetClick = (preset) => {
         const end = new Date();
@@ -85,18 +91,18 @@ const AnalyticsFilterBar = ({
             <div className="admin-filter-meta" aria-live="polite">
                 <span className="admin-range-summary">{rangeLabel}</span>
                 {typeof totalRecords === 'number' && (
-                    <span className="admin-range-records">{totalRecords.toLocaleString()} records</span>
+                    <span className="admin-range-records">{totalRecords.toLocaleString()} {tr('records', 'កំណត់ត្រា')}</span>
                 )}
-                {isInvalidRange && <span className="admin-range-error">Start date must be before end date.</span>}
+                {isInvalidRange && <span className="admin-range-error">{tr('Start date must be before end date.', 'កាលបរិច្ឆេទចាប់ផ្តើមត្រូវតែមុនកាលបរិច្ឆេទបញ្ចប់។')}</span>}
             </div>
 
             <div className="admin-preset-group">
                 {[
-                    { label: 'Today', value: 'today' },
+                    { label: tr('Today', 'ថ្ងៃនេះ'), value: 'today' },
                     { label: '7D', value: '7d' },
                     { label: '30D', value: '30d' },
                     { label: '90D', value: '90d' },
-                    { label: 'All', value: 'all' }
+                    { label: tr('All', 'ទាំងអស់'), value: 'all' }
                 ].map(p => (
                     <button
                         key={p.value}
@@ -115,16 +121,16 @@ const AnalyticsFilterBar = ({
                     type="date"
                     value={range.start}
                     max={range.end || undefined}
-                    aria-label="Start date"
+                    aria-label={tr('Start date', 'កាលបរិច្ឆេទចាប់ផ្តើម')}
                     onChange={(e) => handleDateChange('start', e.target.value)}
                     onClick={(e) => e.target.showPicker?.()}
                 />
-                <span className="admin-date-separator">to</span>
+                <span className="admin-date-separator">{tr('to', 'ដល់')}</span>
                 <input
                     type="date"
                     value={range.end}
                     min={range.start || undefined}
-                    aria-label="End date"
+                    aria-label={tr('End date', 'កាលបរិច្ឆេទបញ្ចប់')}
                     onChange={(e) => handleDateChange('end', e.target.value)}
                     onClick={(e) => e.target.showPicker?.()}
                 />
@@ -139,7 +145,7 @@ const AnalyticsFilterBar = ({
                     className="ui-button--with-icon"
                 >
                     <Download size={14} />
-                    Export
+                    {tr('Export', 'នាំចេញ')}
                 </Button>
                 
                 <Button
@@ -150,12 +156,12 @@ const AnalyticsFilterBar = ({
                     className="ui-button--with-icon"
                 >
                     <RefreshCw size={14} className={isLoading ? 'ui-spin' : ''} />
-                    {isLoading ? 'Wait...' : 'Refresh'}
+                    {isLoading ? tr('Wait...', 'រង់ចាំ...') : tr('Refresh', 'ធ្វើបច្ចុប្បន្នភាព')}
                 </Button>
 
                 {lastUpdated && (
                     <div className="admin-last-updated-container">
-                        <span className="admin-last-updated-label">Updated:</span>
+                        <span className="admin-last-updated-label">{tr('Updated:', 'បានធ្វើបច្ចុប្បន្នភាព៖')}</span>
                         <span className="admin-last-updated-time">
                             <Clock3 size={12} />
                             {new Date(lastUpdated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

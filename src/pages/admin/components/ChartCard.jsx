@@ -1,5 +1,6 @@
 import React from 'react';
 import { RefreshCw } from 'lucide-react';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 const ChartCard = ({
     title,
@@ -10,6 +11,9 @@ const ChartCard = ({
     children,
     headerRight
 }) => {
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+
     return (
         <div className="ui-chartCard">
             <div className="ui-chartHeader">
@@ -21,7 +25,7 @@ const ChartCard = ({
                     {headerRight}
                     {onViewDetails && (
                         <button className="ui-detailBtn" onClick={onViewDetails}>
-                            View Details
+                            {tr('View Details', 'មើលលម្អិត')}
                         </button>
                     )}
                     {onRefresh && (
@@ -31,7 +35,7 @@ const ChartCard = ({
                             disabled={isLoading}
                         >
                             <RefreshCw size={14} className={isLoading ? 'ui-spin' : ''} />
-                            Refresh
+                            {tr('Refresh', 'ធ្វើបច្ចុប្បន្នភាព')}
                         </button>
                     )}
                 </div>

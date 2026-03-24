@@ -17,6 +17,7 @@ import {
 import ChartCard from '../../components/ChartCard';
 import EmptyState from '../../../../shared/components/ui/empty-state/EmptyState';
 import { BarChart2 } from 'lucide-react';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 /**
  * AnalyticsChart Component
@@ -46,8 +47,12 @@ const AnalyticsChart = ({
     height = 300,
     isLoading = false,
     onViewDetails,
-    emptyMessage = "No data available for selected range"
+    emptyMessage
 }) => {
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const dateLocale = language === 'km' ? 'km-KH' : 'en-US';
+    const normalizedEmptyMessage = emptyMessage || tr('No data available for selected range', 'មិនមានទិន្នន័យសម្រាប់រយៈពេលដែលបានជ្រើស។');
     const hasData = data && data.length > 0;
 
     const tooltipStyle = {
@@ -64,8 +69,8 @@ const AnalyticsChart = ({
             return (
                 <EmptyState 
                     icon={Icon}
-                    title="No Data"
-                    description={emptyMessage}
+                    title={tr('No Data', 'គ្មានទិន្នន័យ')}
+                    description={normalizedEmptyMessage}
                     className="admin-chart-empty"
                 />
             );
@@ -150,7 +155,7 @@ const AnalyticsChart = ({
                                 tickFormatter={(v) => {
                                     if (typeof v === 'string' && v.includes('-')) {
                                         const d = new Date(v + 'T00:00:00');
-                                        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                        return d.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' });
                                     }
                                     return v;
                                 }}
@@ -167,7 +172,7 @@ const AnalyticsChart = ({
                                 contentStyle={tooltipStyle}
                                 labelFormatter={(v) => {
                                     if (typeof v === 'string' && v.includes('-')) {
-                                        return new Date(v + 'T00:00:00').toLocaleDateString('en-US', { 
+                                        return new Date(v + 'T00:00:00').toLocaleDateString(dateLocale, {
                                             weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
                                         });
                                     }

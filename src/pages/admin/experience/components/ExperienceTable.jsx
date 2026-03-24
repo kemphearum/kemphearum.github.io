@@ -3,6 +3,7 @@ import { Briefcase, Plus } from 'lucide-react';
 import { Badge } from '@/shared/components/ui';
 import DataTable from '@/shared/components/ui/data-table/DataTable';
 import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableHelpers';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 /**
  * ExperienceTable Component
@@ -28,6 +29,8 @@ const ExperienceTable = ({
   onPageChange,
   paginationVariant = 'cursor'
 }) => {
+  const { language } = useTranslation();
+  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
   const normalizeMonthValue = (value) => {
     if (!value) return '';
 
@@ -73,29 +76,29 @@ const ExperienceTable = ({
     const startRaw = row.startMonthYear || row.startDate || row.period;
     const endRaw = row.endMonthYear || row.endDate || row.period;
     const start = formatMonth(startRaw);
-    const end = isCurrent ? 'Present' : formatMonth(endRaw);
+    const end = isCurrent ? tr('Present', 'បច្ចុប្បន្ន') : formatMonth(endRaw);
 
     if (start && end) return `${start} - ${end}`;
-    return row.period || start || end || 'Timeline not set';
+    return row.period || start || end || tr('Timeline not set', 'មិនទាន់កំណត់ពេលវេលា');
   };
 
   const getDescription = (text = '') => {
     const normalized = String(text).replace(/\s+/g, ' ').trim();
-    if (!normalized) return 'No description added yet.';
+    if (!normalized) return tr('No description added yet.', 'មិនទាន់មានការពិពណ៌នានៅឡើយទេ។');
     return normalized.length > 96 ? `${normalized.slice(0, 96)}...` : normalized;
   };
 
   const columns = [
     { 
       key: 'role', 
-      header: 'Role', 
+      header: tr('Role', 'តួនាទី'),
       sortable: true, 
       className: 'ui-table-cell--title',
       render: (row) => (
         <div className="ui-blog-tableTitle">
-          <div className="ui-blog-tableTitle__main">{row.role || 'Untitled role'}</div>
+          <div className="ui-blog-tableTitle__main">{row.role || tr('Untitled role', 'តួនាទីគ្មានចំណងជើង')}</div>
           <div className="ui-blog-tableTitle__meta">
-            <span>{row.company || 'Company not set'}</span>
+            <span>{row.company || tr('Company not set', 'មិនទាន់កំណត់ក្រុមហ៊ុន')}</span>
             <span>{getDescription(row.description)}</span>
           </div>
         </div>
@@ -103,14 +106,14 @@ const ExperienceTable = ({
     },
     { 
       key: 'period', 
-      header: 'Timeline',
+      header: tr('Timeline', 'ពេលវេលា'),
       render: (row) => {
         const isCurrent = row.current === true || `${row.endMonthYear || row.endDate || row.period || ''}`.toLowerCase().includes('present');
         return (
           <div className="ui-blog-dateCell">
             <span className="ui-blog-dateCell__day">{getPeriodSummary(row)}</span>
             <span className="ui-blog-dateCell__time">
-              {isCurrent ? 'Current position' : 'Completed role'}
+              {isCurrent ? tr('Current position', 'តួនាទីបច្ចុប្បន្ន') : tr('Completed role', 'តួនាទីដែលបានបញ្ចប់')}
             </span>
           </div>
         );
@@ -118,7 +121,7 @@ const ExperienceTable = ({
     },
     {
       key: 'visible',
-      header: 'Status',
+      header: tr('Status', 'ស្ថានភាព'),
       sortable: true,
       render: (row) => {
         const isCurrent = row.current === true || `${row.endMonthYear || row.endDate || row.period || ''}`.toLowerCase().includes('present');
@@ -126,12 +129,14 @@ const ExperienceTable = ({
           <div className="ui-blog-statusCell">
             <div className="ui-blog-statusCell__badges">
               <Badge variant={row.visible !== false ? 'success' : 'warning'}>
-                {row.visible !== false ? 'Visible' : 'Hidden'}
+                {row.visible !== false ? tr('Visible', 'បង្ហាញ') : tr('Hidden', 'លាក់')}
               </Badge>
-              {isCurrent && <Badge variant="primary">Current</Badge>}
+              {isCurrent && <Badge variant="primary">{tr('Current', 'បច្ចុប្បន្ន')}</Badge>}
             </div>
             <span className="ui-blog-statusCell__note">
-              {row.visible !== false ? 'Appears on the public career timeline' : 'Saved only in admin for now'}
+              {row.visible !== false
+                ? tr('Appears on the public career timeline', 'បង្ហាញលើបទពិសោធន៍សាធារណៈ')
+                : tr('Saved only in admin for now', 'រក្សាទុកសម្រាប់តែ Admin សិន')}
             </span>
           </div>
         );
@@ -139,7 +144,7 @@ const ExperienceTable = ({
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: tr('Actions', 'សកម្មភាព'),
       className: 'ui-table-cell--actions',
       render: (row) => renderAdminActions({
         row,
@@ -172,10 +177,10 @@ const ExperienceTable = ({
       exportFileName="experience_export.csv"
       emptyState={{
         icon: Briefcase,
-        title: "No Experience Entries",
-        description: "Add your first role to start shaping the public career timeline and internal work history.",
+        title: tr('No Experience Entries', 'មិនមានបទពិសោធន៍ការងារ'),
+        description: tr('Add your first role to start shaping the public career timeline and internal work history.', 'បន្ថែមតួនាទីដំបូងរបស់អ្នក ដើម្បីចាប់ផ្តើមរៀបចំពេលវេលាការងារសាធារណៈ និងប្រវត្តិការងារខាងក្នុង។'),
         action: canCreate ? {
-          label: 'Create first entry',
+          label: tr('Create first entry', 'បង្កើតទិន្នន័យដំបូង'),
           onClick: onCreate,
           icon: Plus
         } : null

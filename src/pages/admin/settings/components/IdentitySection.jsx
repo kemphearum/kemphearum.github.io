@@ -33,11 +33,11 @@ const IdentitySection = ({
                     <div className={tabStyles.surfaceMeta}>
                         <div className={tabStyles.surfaceMetaCard}>
                             <span className={tabStyles.surfaceMetaValue}>{hasFavicon ? tr('Ready', 'រួចរាល់') : tr('Pending', 'កំពុងរង់ចាំ')}</span>
-                            <span className={tabStyles.surfaceMetaLabel}>{tr('Favicon', 'Favicon')}</span>
+                            <span className={tabStyles.surfaceMetaLabel}>{tr('Favicon', 'រូបតំណាង')}</span>
                             <span className={tabStyles.surfaceMetaHint}>{tr('Upload a small icon for browser tabs', 'ផ្ទុកឡើងរូបតំណាងតូចសម្រាប់ផ្ទាំង Browser')}</span>
                         </div>
                         <div className={tabStyles.surfaceMetaCard}>
-                            <span className={tabStyles.surfaceMetaValue}>{settingsData.logoHighlight || 'Kem'} {settingsData.logoText || 'Phearum'}</span>
+                            <span className={tabStyles.surfaceMetaValue}>{settingsData.logoHighlight || tr('Kem', 'ខេម')} {settingsData.logoText || tr('Phearum', 'ភារុំ')}</span>
                             <span className={tabStyles.surfaceMetaLabel}>{tr('Brand Name', 'ឈ្មោះម៉ាក')}</span>
                             <span className={tabStyles.surfaceMetaHint}>{tr('Used across logo treatments and previews', 'ប្រើសម្រាប់ឡូហ្គោ និងការមើលជាមុន')}</span>
                         </div>
@@ -64,7 +64,7 @@ const IdentitySection = ({
                             <div className={tabStyles.formGrid}>
                                 <FormField label={tr('Page Title (Browser Tab)', 'ចំណងជើងទំព័រ (ផ្ទាំង Browser)')} columns={1}>
                                     <FormInput
-                                        placeholder="Kem Phearum | Portfolio"
+                                        placeholder={tr('Kem Phearum | Portfolio', 'ខេម ភារុំ | ផតហ្វូលីយ៉ូ')}
                                         value={settingsData.title || ''}
                                         onChange={(e) => setSettingsData({ ...settingsData, title: e.target.value })}
                                     />
@@ -72,7 +72,7 @@ const IdentitySection = ({
 
                                 <FormField label={tr('Site Tagline', 'Tagline គេហទំព័រ')} columns={1}>
                                     <FormInput
-                                        placeholder="ICT Security & IT Audit Professional"
+                                        placeholder={tr('ICT Security & IT Audit Professional', 'អ្នកជំនាញសន្តិសុខ ICT និងសវនកម្ម IT')}
                                         value={settingsData.tagline || ''}
                                         onChange={(e) => setSettingsData({ ...settingsData, tagline: e.target.value })}
                                     />
@@ -82,7 +82,7 @@ const IdentitySection = ({
                             <FormRow>
                                 <FormField label={tr('Logo Prefix', 'ផ្នែកដើមឡូហ្គោ')} columns={1}>
                                     <FormInput
-                                        placeholder="Kem"
+                                        placeholder={tr('Kem', 'ខេម')}
                                         value={settingsData.logoHighlight || ''}
                                         onChange={(e) => setSettingsData({ ...settingsData, logoHighlight: e.target.value })}
                                     />
@@ -90,7 +90,7 @@ const IdentitySection = ({
 
                                 <FormField label={tr('Logo Suffix', 'ផ្នែកចុងឡូហ្គោ')} columns={1}>
                                     <FormInput
-                                        placeholder="Phearum"
+                                        placeholder={tr('Phearum', 'ភារុំ')}
                                         value={settingsData.logoText || ''}
                                         onChange={(e) => setSettingsData({ ...settingsData, logoText: e.target.value })}
                                     />
@@ -98,11 +98,11 @@ const IdentitySection = ({
                             </FormRow>
 
                             <FormField label={tr('Footer Copyright Text', 'អត្ថបទរក្សាសិទ្ធិ Footer')} columns={1}>
-                                <FormInput
-                                    placeholder="(c) 2026 Your Name. All Rights Reserved."
-                                    value={settingsData.footerText || ''}
-                                    onChange={(e) => setSettingsData({ ...settingsData, footerText: e.target.value })}
-                                />
+                                    <FormInput
+                                        placeholder={tr('(c) 2026 Your Name. All Rights Reserved.', '(c) 2026 ឈ្មោះរបស់អ្នក។ រក្សាសិទ្ធិគ្រប់យ៉ាង។')}
+                                        value={settingsData.footerText || ''}
+                                        onChange={(e) => setSettingsData({ ...settingsData, footerText: e.target.value })}
+                                    />
                             </FormField>
                         </section>
 
@@ -119,7 +119,7 @@ const IdentitySection = ({
                             <div className={tabStyles.identityFilterGrid}>
                                 <FormField label={tr('Project Category Filters', 'តម្រងប្រភេទ Project')} hint={tr('Comma separated', 'បំបែកដោយសញ្ញាក្បៀស')} columns={1}>
                                     <FormInput
-                                        placeholder="React, Python, Firebase..."
+                                        placeholder={tr('React, Python, Firebase...', 'React, Python, Firebase...')}
                                         value={settingsData.projectFilters || ''}
                                         onChange={(e) => setSettingsData({ ...settingsData, projectFilters: e.target.value })}
                                     />
@@ -127,7 +127,7 @@ const IdentitySection = ({
 
                                 <FormField label={tr('Blog Tag Filters', 'តម្រងស្លាក Blog')} hint={tr('Comma separated', 'បំបែកដោយសញ្ញាក្បៀស')} columns={1}>
                                     <FormInput
-                                        placeholder="Tutorial, Tech, Security..."
+                                        placeholder={tr('Tutorial, Tech, Security...', 'មេរៀន, បច្ចេកវិទ្យា, សន្តិសុខ...')}
                                         value={settingsData.blogFilters || ''}
                                         onChange={(e) => setSettingsData({ ...settingsData, blogFilters: e.target.value })}
                                     />
@@ -192,7 +192,7 @@ const IdentitySection = ({
                                 </div>
                                 <div>
                                     <div className={tabStyles.identityPreviewLogo}>
-                                        {settingsData.logoHighlight || 'Kem'} <span>{settingsData.logoText || 'Phearum'}</span>
+                                        {settingsData.logoHighlight || tr('Kem', 'ខេម')} <span>{settingsData.logoText || tr('Phearum', 'ភារុំ')}</span>
                                     </div>
                                     <div className={tabStyles.identityPreviewTitle}>{settingsData.title || tr('Kem Phearum | Portfolio', 'Kem Phearum | ផតហ្វូលីយ៉ូ')}</div>
                                 </div>

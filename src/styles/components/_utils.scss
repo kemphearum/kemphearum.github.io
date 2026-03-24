@@ -167,3 +167,10 @@
 .ui-archive-select {
     min-width: 180px;
 }
+
+@media (max-width: 640px) {
+    .ui-archive-select {
+        min-width: 0;
+        width: 100%;
+    }
+}

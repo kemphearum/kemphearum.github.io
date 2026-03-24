@@ -3270,17 +3270,23 @@
 .ui-header {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.5rem;
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 1rem;
+    line-height: 1.4;
 
     .ui-last-updated {
         font-size: 0.75rem;
         color: var(--text-secondary);
         font-weight: 500;
         margin-left: auto;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        text-align: right;
     }
 }
 
@@ -3355,6 +3361,9 @@
 .ui-db-overview-text {
     font-size: 0.8rem;
     color: var(--text-secondary);
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .ui-db-inline-meta {
@@ -3375,6 +3384,7 @@
 .ui-cardHeader {
     display: flex;
     align-items: flex-start;
+    flex-wrap: wrap;
     gap: 1.25rem;
     padding: 1.5rem 1.5rem 1.25rem;
     border-bottom: 1px solid var(--divider);
@@ -3399,16 +3409,22 @@
 }
 
 .ui-title-meta {
+    min-width: 0;
+
     h3 {
         margin: 0 0 0.25rem 0;
         font-size: 1.15rem;
         font-weight: 700;
         color: var(--text-primary);
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
     p {
         margin: 0;
         font-size: 0.85rem;
         color: var(--text-secondary);
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 }
 
@@ -3442,6 +3458,7 @@
     border: 1px solid var(--glass-border);
     background: var(--card-bg);
     transition: all 0.3s ease;
+    min-width: 0;
     
     &.ui-success {
         border-top: 3px solid #10b981;
@@ -3464,6 +3481,7 @@
     border-radius: 12px;
     border: 1px solid var(--glass-border);
     background: rgba($primary-color, 0.05);
+    min-width: 0;
 }
 
 .ui-file-icon {
@@ -3573,6 +3591,101 @@
     margin-top: 0.5rem;
     font-size: 0.78rem;
     color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+    .ui-actions-section .ui-grid,
+    .ui-audit-settings-section .ui-grid {
+        gap: 1rem;
+    }
+
+    .ui-actions-section .ui-database-card {
+        padding: 1.15rem;
+        gap: 1rem;
+    }
+
+    .ui-actions-section .ui-database-card h5,
+    .ui-actions-section .ui-database-card p {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .ui-actions-section .ui-database-card .ui-flex-gap-medium,
+    .ui-actions-section .ui-database-card .ui-flex-center-gap-medium {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .ui-actions-section .ui-database-card .ui-button {
+        white-space: normal;
+        line-height: 1.3;
+    }
+}
+
+@media (max-width: 640px) {
+    .ui-header {
+        align-items: flex-start;
+        gap: 0.65rem;
+    }
+
+    .ui-header .ui-last-updated {
+        width: 100%;
+        margin-left: 0;
+        text-align: left;
+    }
+
+    .ui-db-overview {
+        align-items: flex-start;
+    }
+
+    .ui-db-overview-text {
+        width: 100%;
+    }
+
+    .ui-actions-section .ui-flex-between {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.65rem;
+    }
+
+    .ui-actions-section .ui-database-card .ui-flex-gap-medium,
+    .ui-actions-section .ui-database-card .ui-flex-center-gap-medium {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .ui-actions-section .ui-database-card .ui-button,
+    .ui-actions-section .ui-database-card .ui-input,
+    .ui-actions-section .ui-database-card .ui-archive-select {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .ui-file-info {
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .ui-file-name {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .ui-file-meta {
+        flex-wrap: wrap;
+    }
+
+    .ui-warning-box {
+        align-items: flex-start;
+    }
+
+    .ui-progress-header {
+        flex-wrap: wrap;
+    }
 }
 
 // ANIMATIONS

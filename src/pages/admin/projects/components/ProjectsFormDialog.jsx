@@ -142,7 +142,7 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                                         validation={{ required: tr('Tech stack is required', 'ត្រូវការបញ្ជីបច្ចេកវិទ្យា') }}
                                         hint={tr('Separate technologies with commas.', 'បំបែកបច្ចេកវិទ្យាដោយក្បៀស។')}
                                     >
-                                        <FormInput placeholder="e.g. React, Firebase, SCSS" />
+                                        <FormInput placeholder={tr('e.g. React, Firebase, SCSS', 'ឧ. React, Firebase, SCSS')} />
                                     </FormField>
                                 </div>
                             </div>
@@ -155,27 +155,27 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                                     </div>
 
                                     <FormField
-                                        label={tr('GitHub URL', 'GitHub URL')}
+                                        label={tr('GitHub URL', 'តំណ GitHub')}
                                         name="githubUrl"
                                         validation={{
                                             validate: (value) => !value || /^https?:\/\/.+/i.test(value) || tr('Enter a valid URL (http/https)', 'សូមបញ្ចូល URL ត្រឹមត្រូវ (http/https)')
                                         }}
                                     >
-                                        <FormInput type="url" placeholder="https://github.com/..." />
+                                        <FormInput type="url" placeholder={tr('https://github.com/...', 'https://github.com/...')} />
                                     </FormField>
 
                                     <FormField
-                                        label={tr('Live Demo URL', 'Live Demo URL')}
+                                        label={tr('Live Demo URL', 'តំណ Live Demo')}
                                         name="liveUrl"
                                         validation={{
                                             validate: (value) => !value || /^https?:\/\/.+/i.test(value) || tr('Enter a valid URL (http/https)', 'សូមបញ្ចូល URL ត្រឹមត្រូវ (http/https)')
                                         }}
                                     >
-                                        <FormInput type="url" placeholder="https://..." />
+                                        <FormInput type="url" placeholder={tr('https://...', 'https://...')} />
                                     </FormField>
 
                                     <FormField label={tr('Custom Slug', 'Slug ផ្ទាល់ខ្លួន')} name="slug" hint={tr('Leave blank to generate from English title.', 'ទុកទទេ ដើម្បីបង្កើតពីចំណងជើងអង់គ្លេស។')}>
-                                        <FormInput placeholder="e.g. portfolio-website" />
+                                        <FormInput placeholder={tr('e.g. portfolio-website', 'ឧ. គេហទំព័រ-ផតហ្វូលីយ៉ូ')} />
                                     </FormField>
                                 </div>
 

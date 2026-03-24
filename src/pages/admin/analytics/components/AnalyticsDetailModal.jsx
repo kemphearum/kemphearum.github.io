@@ -302,7 +302,7 @@ const AnalyticsDetailModal = ({
                                                                  analyticsDetail === 'devices' ? tr('Device', 'ឧបករណ៍') : 
                                                                  analyticsDetail === 'pages' ? tr('Page Path', 'ផ្លូវទំព័រ') : 
                                                                  analyticsDetail === 'referrers' ? tr('Source', 'ប្រភព') : 
-                                                                 analyticsDetail === 'browsers' ? tr('Browser', 'Browser') : tr('Operating System', 'ប្រព័ន្ធប្រតិបត្តិការ')}
+                                                                 analyticsDetail === 'browsers' ? tr('Browser', 'កម្មវិធីរុករក') : tr('Operating System', 'ប្រព័ន្ធប្រតិបត្តិការ')}
                                                             </th>
                                                             <th style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'center', width: '100px' }}>{tr('Visits', 'ចំនួនចូលមើល')}</th>
                                                             <th style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'right', width: '120px' }}>{tr('Percentage', 'ភាគរយ')}</th>

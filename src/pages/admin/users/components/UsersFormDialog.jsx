@@ -54,7 +54,7 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading }) => {
                       }
                     }}
                   >
-                    <Input type="email" placeholder="user@example.com" />
+                    <Input type="email" placeholder={tr('user@example.com', 'អ្នក@ឧទាហរណ៍.com')} />
                   </FormField>
 
                   <FormField

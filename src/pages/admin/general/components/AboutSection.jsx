@@ -5,13 +5,16 @@ import { Button } from '../../../../shared/components/ui';
 import FormField from '../../components/FormField';
 import FormInput from '../../components/FormInput';
 import FormMarkdownEditor from '../../components/FormMarkdownEditor';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
-const AboutSection = ({ 
-    aboutPreview, 
-    setAboutPreview, 
+const AboutSection = ({
+    aboutPreview,
+    setAboutPreview,
     loading,
-    onOpenHistory 
+    onOpenHistory
 }) => {
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const { watch } = useFormContext();
     const skills = watch('skills') || '';
 
@@ -22,17 +25,17 @@ const AboutSection = ({
                     <User size={24} />
                 </div>
                 <div className={'ui-title-meta'}>
-                    <h3>About Section</h3>
-                    <p>Update your biography, professional summary, and key skills.</p>
+                    <h3>{tr('About Section', 'ផ្នែកអំពី')}</h3>
+                    <p>{tr('Update your biography, professional summary, and key skills.', 'ធ្វើបច្ចុប្បន្នភាពជីវប្រវត្តិ សេចក្តីសង្ខេបវិជ្ជាជីវៈ និងជំនាញសំខាន់ៗ។')}</p>
                 </div>
-                <Button 
-                    type="button" 
+                <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => onOpenHistory('about', 'About Section')} 
+                    onClick={() => onOpenHistory('about', tr('About Section', 'ផ្នែកអំពី'))}
                     className={'ui-history-btn'}
                 >
-                    <History size={16} /> <span>History</span>
+                    <History size={16} /> <span>{tr('History', 'ប្រវត្តិ')}</span>
                 </Button>
             </div>
             <div className={'ui-form'}>
@@ -40,18 +43,18 @@ const AboutSection = ({
                     <div className="ui-generalPrimary">
                         <div className="ui-generalAsideCard">
                             <div className="ui-generalAsideCard__head">
-                                <h4>Biography</h4>
-                                <p>Write the narrative that introduces your background, experience, and point of view.</p>
+                                <h4>{tr('Biography', 'ជីវប្រវត្តិ')}</h4>
+                                <p>{tr('Write the narrative that introduces your background, experience, and point of view.', 'សរសេរអត្ថបទណែនាំពីផ្ទៃខាងក្រោយ បទពិសោធន៍ និងទស្សនៈរបស់អ្នក។')}</p>
                             </div>
 
                             <FormField
-                                label="Biography (EN)"
+                                label={tr('Biography (EN)', 'ជីវប្រវត្តិ (EN)')}
                                 name="bioEn"
-                                validation={{ required: 'English bio is required' }}
+                                validation={{ required: tr('English bio is required', 'ត្រូវការជីវប្រវត្តិជាភាសាអង់គ្លេស') }}
                             >
                                 <FormMarkdownEditor
                                     id="about-bio-en"
-                                    placeholder="Write your professional bio..."
+                                    placeholder={tr('Write your professional bio...', 'សរសេរជីវប្រវត្តិវិជ្ជាជីវៈរបស់អ្នក...')}
                                     isPreviewMode={aboutPreview}
                                     onTogglePreview={() => setAboutPreview(!aboutPreview)}
                                     rows="8"
@@ -59,12 +62,12 @@ const AboutSection = ({
                             </FormField>
 
                             <FormField
-                                label="Biography (KM)"
+                                label={tr('Biography (KM)', 'ជីវប្រវត្តិ (KM)')}
                                 name="bioKm"
                             >
                                 <FormMarkdownEditor
                                     id="about-bio-km"
-                                    placeholder="សរសេរព័ត៌មានអំពីខ្លួនអ្នកជាភាសាខ្មែរ..."
+                                    placeholder={tr('Write your Khmer biography...', 'សរសេរជីវប្រវត្តិជាភាសាខ្មែរ...')}
                                     isPreviewMode={aboutPreview}
                                     onTogglePreview={() => setAboutPreview(!aboutPreview)}
                                     rows="8"
@@ -76,17 +79,17 @@ const AboutSection = ({
                     <aside className="ui-generalAside">
                         <div className="ui-generalAsideCard">
                             <div className="ui-generalAsideCard__head">
-                                <h4>Skills snapshot</h4>
-                                <p>List the capabilities you want visitors to notice first.</p>
+                                <h4>{tr('Skills snapshot', 'សង្ខេបជំនាញ')}</h4>
+                                <p>{tr('List the capabilities you want visitors to notice first.', 'រាយបញ្ជីសមត្ថភាពដែលអ្នកចង់ឱ្យអ្នកទស្សនាឃើញមុនគេ។')}</p>
                             </div>
 
                             <FormField
-                                label="Professional Skills"
+                                label={tr('Professional Skills', 'ជំនាញវិជ្ជាជីវៈ')}
                                 name="skills"
                             >
                                 <FormInput
-                                    placeholder="React, Python, Firebase, ..."
-                                    hint="comma separated"
+                                    placeholder={tr('React, Python, Firebase, ...', 'React, Python, Firebase, ...')}
+                                    hint={tr('comma separated', 'បំបែកដោយសញ្ញាក្បៀស')}
                                 />
                             </FormField>
 
@@ -103,7 +106,7 @@ const AboutSection = ({
 
                 <div className={'ui-formFooter'}>
                     <Button type="submit" isLoading={loading} className="ui-button-block">
-                        <Save size={18} /> Save Changes
+                        <Save size={18} /> {tr('Save Changes', 'រក្សាទុកការកែប្រែ')}
                     </Button>
                 </div>
             </div>

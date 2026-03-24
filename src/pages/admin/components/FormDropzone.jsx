@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, X, ImageIcon, Image as ImageIcon2, FolderPlus, Trash2, Eye, XCircle, CheckCircle2, Maximize2 } from 'lucide-react';
 import { Dialog } from '@/shared/components/ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 /**
  * FormDropzone component for file uploads with live preview.
@@ -13,10 +14,13 @@ const FormDropzone = ({
     currentImageUrl,
     onClearExisting,
     accept = "image/*",
-    placeholder = 'Upload Image',
+    placeholder = '',
     circular = false,
     aspectRatio = "16 / 6"
 }) => {
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const dropzonePlaceholder = placeholder || tr('Upload Image', 'ផ្ទុករូបភាព');
     const [previewUrl, setPreviewUrl] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
     const [internalClear, setInternalClear] = useState(false);
@@ -48,13 +52,13 @@ const FormDropzone = ({
         // Check file type
         const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
         if (!validTypes.includes(file.type)) {
-            return "Invalid file type. Please upload an image (JPG, PNG, WebP, GIF, or SVG).";
+            return tr('Invalid file type. Please upload an image (JPG, PNG, WebP, GIF, or SVG).', 'ប្រភេទឯកសារមិនត្រឹមត្រូវ។ សូមផ្ទុករូបភាព (JPG, PNG, WebP, GIF ឬ SVG)។');
         }
 
         // Check file size (1MB Firestore limit)
         const maxSize = 1 * 1024 * 1024;
         if (file.size > maxSize) {
-            return "File is too large. Maximum size is 1MB to ensure database compatibility.";
+            return tr('File is too large. Maximum size is 1MB to ensure database compatibility.', 'ឯកសារធំពេក។ ទំហំអតិបរមា 1MB ដើម្បីឱ្យសមស្របជាមួយមូលដ្ឋានទិន្នន័យ។');
         }
 
         return null;
@@ -163,7 +167,7 @@ const FormDropzone = ({
                         <div className="ui-premiumImageCard" style={circular ? { borderRadius: '50%', height: '100%', overflow: 'visible' } : {}}>
                             <img 
                                 src={previewUrl || currentImageUrl} 
-                                alt="Current" 
+                                alt={tr('Current image', 'រូបភាពបច្ចុប្បន្ន')}
                                 className="ui-unifiedPreviewImg" 
                                 style={circular ? { borderRadius: '50%' } : {}}
                             />
@@ -180,10 +184,10 @@ const FormDropzone = ({
                                         e.stopPropagation();
                                         setIsPreviewModalOpen(true);
                                     }}
-                                    title="Preview Image"
+                                    title={tr('Preview Image', 'មើលរូបភាពជាមុន')}
                                 >
                                     <Maximize2 size={18} />
-                                    {!circular && <span>Preview</span>}
+                                    {!circular && <span>{tr('Preview', 'មើលជាមុន')}</span>}
                                 </button>
                                 
                                 <div className="ui-pillDivider" />
@@ -192,10 +196,10 @@ const FormDropzone = ({
                                     type="button"
                                     className="ui-pillActionBtn"
                                     onClick={handleBrowseClick}
-                                    title="Change Image"
+                                    title={tr('Change Image', 'ប្តូររូបភាព')}
                                 >
                                     <FolderPlus size={18} />
-                                    {!circular && <span>Change</span>}
+                                    {!circular && <span>{tr('Change', 'ប្តូរ')}</span>}
                                 </button>
                                 
                                 {onClearExisting && (
@@ -205,10 +209,10 @@ const FormDropzone = ({
                                             type="button"
                                             className="ui-pillActionBtn ui-danger"
                                             onClick={handleRemove}
-                                            title="Clear Image"
+                                            title={tr('Clear Image', 'សម្អាតរូបភាព')}
                                         >
                                             <Trash2 size={18} />
-                                            {!circular && <span>Clear</span>}
+                                            {!circular && <span>{tr('Clear', 'សម្អាត')}</span>}
                                         </button>
                                     </>
                                 )}
@@ -218,26 +222,26 @@ const FormDropzone = ({
                             <div className={`ui-topBadge ${isNewImage ? 'ui-newBadge' : ''} ${circular ? 'ui-circularBadge' : ''}`}>
                                 {isNewImage ? (
                                     <>
-                                        <CheckCircle2 size={12} /> {circular ? 'Ready' : 'Ready to Upload'}
+                                        <CheckCircle2 size={12} /> {circular ? tr('Ready', 'រួចរាល់') : tr('Ready to Upload', 'រួចរាល់សម្រាប់ផ្ទុក')}
                                         {file && <span className="ui-fileMetric">({formatSize(file.size)})</span>}
                                     </>
                                 ) : (
                                     <>
-                                        <ImageIcon size={12} /> {circular ? 'Active' : 'Currently Published'}
+                                        <ImageIcon size={12} /> {circular ? tr('Active', 'កំពុងប្រើ') : tr('Currently Published', 'កំពុងប្រើបច្ចុប្បន្ន')}
                                     </>
                                 )}
                             </div>
 
                             {/* Hover Help Info */}
                             <div className="ui-hoverHelp">
-                                <Upload size={14} /> Click or Drop to Change
+                                <Upload size={14} /> {tr('Click or Drop to Change', 'ចុច ឬទម្លាក់ដើម្បីប្តូរ')}
                             </div>
 
                             {/* Drop Overlay (only visible on drag) */}
                             {isDragging && (
                                 <div className="ui-dropOverlay">
                                     <Upload size={32} />
-                                    <span>Drop to Replace</span>
+                                    <span>{tr('Drop to Replace', 'ទម្លាក់ដើម្បីជំនួស')}</span>
                                 </div>
                             )}
                         </div>
@@ -262,10 +266,10 @@ const FormDropzone = ({
                                 <Upload size={circular ? 24 : 32} />
                             </div>
                             <div className="ui-fullUploadText">
-                                <span className="ui-main" style={circular ? { fontSize: '0.9rem' } : {}}>{placeholder}</span>
-                                {!circular && <span className="ui-sub">Drag and drop your image here, or click to browse</span>}
+                                <span className="ui-main" style={circular ? { fontSize: '0.9rem' } : {}}>{dropzonePlaceholder}</span>
+                                {!circular && <span className="ui-sub">{tr('Drag and drop your image here, or click to browse', 'អូសទម្លាក់រូបភាពនៅទីនេះ ឬចុចដើម្បីរកមើល')}</span>}
                                 <span className="ui-uploadRequirements" style={circular ? { fontSize: '0.7rem' } : {}}>
-                                    {circular ? 'Max 1MB' : 'Max 1MB • Recommended: 1920x720 (16:6)'}
+                                    {circular ? tr('Max 1MB', 'អតិបរមា 1MB') : tr('Max 1MB • Recommended: 1920x720 (16:6)', 'អតិបរមា 1MB • ណែនាំ៖ 1920x720 (16:6)')}
                                 </span>
                             </div>
                         </div>
@@ -284,14 +288,14 @@ const FormDropzone = ({
                     <Dialog.Header>
                         <Dialog.Title style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <ImageIcon2 size={20} className="ui-primaryText" />
-                            <span>Image Preview</span>
+                            <span>{tr('Image Preview', 'មើលរូបភាពជាមុន')}</span>
                         </Dialog.Title>
                     </Dialog.Header>
                     
                     <Dialog.Body style={{ padding: 0, background: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
                         <img 
                             src={previewUrl || currentImageUrl} 
-                            alt="Preview" 
+                            alt={tr('Preview image', 'រូបភាពមើលជាមុន')}
                             style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }} 
                         />
                     </Dialog.Body>

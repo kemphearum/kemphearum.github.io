@@ -1,32 +1,33 @@
 import React from 'react';
 import { Eye, Mail, MailOpen, Trash2 } from 'lucide-react';
 import { Button, Badge, DataTable } from '../../../../shared/components/ui';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp?.seconds) return null;
   return new Date(timestamp.seconds * 1000);
 };
 
-const formatAbsoluteDate = (timestamp) => {
+const formatAbsoluteDate = (timestamp, tr, locale) => {
   const date = getDateFromTimestamp(timestamp);
   return date
-    ? new Intl.DateTimeFormat(undefined, {
+    ? new Intl.DateTimeFormat(locale, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
         hour: 'numeric',
         minute: '2-digit'
       }).format(date)
-    : 'Recently';
+    : tr('Recently', 'ថ្មីៗនេះ');
 };
 
-const formatRelativeDate = (timestamp) => {
+const formatRelativeDate = (timestamp, tr, locale) => {
   const date = getDateFromTimestamp(timestamp);
-  if (!date) return 'Just arrived';
+  if (!date) return tr('Just arrived', 'ទើបមកដល់');
 
   const diffMs = date.getTime() - Date.now();
   const diffMinutes = Math.abs(diffMs) / 60000;
-  const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
 
   if (diffMinutes < 60) {
     return formatter.format(Math.round(diffMs / 60000), 'minute');
@@ -55,9 +56,9 @@ const getInitials = (name = '') => {
     .join('');
 };
 
-const buildPreview = (message = '') => {
+const buildPreview = (message = '', tr) => {
   const normalized = message.replace(/\s+/g, ' ').trim();
-  return normalized || 'No message preview available.';
+  return normalized || tr('No message preview available.', 'មិនមានការមើលសារជាមុនទេ។');
 };
 
 const MessagesTable = ({
@@ -77,10 +78,13 @@ const MessagesTable = ({
   onPageChange,
   paginationVariant = 'cursor'
 }) => {
+  const { language } = useTranslation();
+  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const locale = language === 'km' ? 'km-KH' : undefined;
   const columns = [
     {
       key: 'name',
-      header: 'Sender',
+      header: tr('Sender', 'អ្នកផ្ញើ'),
       sortable: true,
       width: '34%',
       render: (row) => (
@@ -91,12 +95,12 @@ const MessagesTable = ({
           <div className="ui-message-rowSender__meta">
             <div className="ui-message-rowSender__top">
               <span className="ui-message-rowSender__name">
-                {row.name || 'Unknown sender'}
+                {row.name || tr('Unknown sender', 'មិនស្គាល់អ្នកផ្ញើ')}
               </span>
               {!row.isRead && <span className="ui-message-rowSender__dot" aria-hidden="true" />}
             </div>
             <span className="ui-message-rowSender__email">
-              {row.email || 'No email provided'}
+              {row.email || tr('No email provided', 'មិនមានអ៊ីមែល')}
             </span>
           </div>
         </div>
@@ -104,41 +108,41 @@ const MessagesTable = ({
     },
     {
       key: 'message',
-      header: 'Preview',
+      header: tr('Preview', 'មើលជាមុន'),
       width: '36%',
       render: (row) => (
         <div className="ui-message-rowPreview">
           <p className="ui-message-rowPreview__text">
-            {buildPreview(row.message)}
+            {buildPreview(row.message, tr)}
           </p>
           <div className="ui-message-rowPreview__meta">
             <Badge variant={!row.isRead ? 'primary' : 'default'}>
-              {!row.isRead ? 'Unread' : 'Read'}
+              {!row.isRead ? tr('Unread', 'មិនទាន់អាន') : tr('Read', 'បានអាន')}
             </Badge>
-            <span>{!row.isRead ? 'Needs a reply check' : 'Open to review details'}</span>
+            <span>{!row.isRead ? tr('Needs a reply check', 'ត្រូវពិនិត្យឆ្លើយតប') : tr('Open to review details', 'បើកមើលលម្អិត')}</span>
           </div>
         </div>
       )
     },
     {
       key: 'createdAt',
-      header: 'Received',
+      header: tr('Received', 'ទទួលបាន'),
       sortable: true,
       width: '18%',
       render: (row) => (
         <div className="ui-message-rowDate">
           <span className="ui-message-rowDate__primary">
-            {formatAbsoluteDate(row.createdAt)}
+            {formatAbsoluteDate(row.createdAt, tr, locale)}
           </span>
           <span className="ui-message-rowDate__secondary">
-            {formatRelativeDate(row.createdAt)}
+            {formatRelativeDate(row.createdAt, tr, locale)}
           </span>
         </div>
       )
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: tr('Actions', 'សកម្មភាព'),
       className: 'ui-table-cell--actions',
       width: '12%',
       render: (row) => (
@@ -151,8 +155,8 @@ const MessagesTable = ({
               event.stopPropagation();
               onView(row);
             }}
-            title="Open message"
-            aria-label="Open message"
+            title={tr('Open message', 'បើកសារ')}
+            aria-label={tr('Open message', 'បើកសារ')}
           >
             <Eye size={16} />
           </Button>
@@ -164,8 +168,8 @@ const MessagesTable = ({
               event.stopPropagation();
               onToggleRead(row.id, row.isRead);
             }}
-            title={row.isRead ? 'Mark unread' : 'Mark read'}
-            aria-label={row.isRead ? 'Mark unread' : 'Mark read'}
+            title={row.isRead ? tr('Mark unread', 'ដាក់ថាមិនទាន់អាន') : tr('Mark read', 'ដាក់ថាបានអាន')}
+            aria-label={row.isRead ? tr('Mark unread', 'ដាក់ថាមិនទាន់អាន') : tr('Mark read', 'ដាក់ថាបានអាន')}
           >
             {row.isRead ? <MailOpen size={16} /> : <Mail size={16} />}
           </Button>
@@ -177,8 +181,8 @@ const MessagesTable = ({
               event.stopPropagation();
               onDelete(row.id);
             }}
-            title="Delete message"
-            aria-label="Delete message"
+            title={tr('Delete message', 'លុបសារ')}
+            aria-label={tr('Delete message', 'លុបសារ')}
           >
             <Trash2 size={16} />
           </Button>
@@ -208,8 +212,8 @@ const MessagesTable = ({
       rowClassName={(row) => (!row.isRead ? 'ui-table-row--unread ui-message-row--unread' : 'ui-message-row')}
       emptyState={{
         icon: Mail,
-        title: 'No messages yet',
-        description: 'Incoming inquiries from your portfolio contact form will appear here.'
+        title: tr('No messages yet', 'មិនទាន់មានសារ'),
+        description: tr('Incoming inquiries from your portfolio contact form will appear here.', 'សារសួរព័ត៌មានពីទម្រង់ទំនាក់ទំនងរបស់អ្នកនឹងបង្ហាញនៅទីនេះ។')
       }}
     />
   );

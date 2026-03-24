@@ -1,4 +1,3 @@
-import BaseService from './BaseService';
 import { db } from '../firebase';
 import { collection, getDocs, query, where, doc, writeBatch, setDoc, Timestamp, getDoc, limit as firestoreLimit } from 'firebase/firestore';
 import SettingsService from './SettingsService';
@@ -7,6 +6,55 @@ import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 class DatabaseService {
     static SOFT_DOC_LIMIT = 50000;
     static HEALTH_COLLECTIONS = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'visits', 'dailyUsage'];
+    static MAX_BATCH_OPERATIONS = 450;
+    static META_KEYS = new Set(['format', 'version', 'exportDate', 'archiveDate', 'cutoffDate', 'daysOld', 'date', 'timestamp']);
+
+    static isPlainObject(value) {
+        return value !== null && typeof value === 'object' && !Array.isArray(value);
+    }
+
+    static triggerJsonDownload(payload, filename) {
+        const json = JSON.stringify(payload, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.setAttribute('href', url);
+        anchor.setAttribute('download', filename);
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        setTimeout(() => URL.revokeObjectURL(url), 150);
+    }
+
+    static isDateKeyBeforeCutoff(docId, cutoffDate) {
+        if (typeof docId !== 'string') return false;
+        const match = docId.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!match) return false;
+        const parsed = new Date(`${match[1]}-${match[2]}-${match[3]}T23:59:59.999Z`);
+        return Number.isFinite(parsed.getTime()) && parsed < cutoffDate;
+    }
+
+    static restoreFirestoreTypes(value) {
+        if (value instanceof Timestamp) return value;
+        if (value === null || typeof value !== 'object') return value;
+        if (Array.isArray(value)) return value.map((item) => DatabaseService.restoreFirestoreTypes(item));
+
+        const hasSeconds = Object.prototype.hasOwnProperty.call(value, 'seconds') && Object.prototype.hasOwnProperty.call(value, 'nanoseconds');
+        const hasUnderscoreSeconds = Object.prototype.hasOwnProperty.call(value, '_seconds') && Object.prototype.hasOwnProperty.call(value, '_nanoseconds');
+        if (hasSeconds || hasUnderscoreSeconds) {
+            const seconds = Number(hasSeconds ? value.seconds : value._seconds);
+            const nanoseconds = Number(hasSeconds ? value.nanoseconds : value._nanoseconds);
+            if (Number.isFinite(seconds) && Number.isFinite(nanoseconds)) {
+                return new Timestamp(seconds, nanoseconds);
+            }
+        }
+
+        const restored = {};
+        for (const [key, nestedValue] of Object.entries(value)) {
+            restored[key] = DatabaseService.restoreFirestoreTypes(nestedValue);
+        }
+        return restored;
+    }
 
     static safeTrackRead(trackRead, count, label) {
         if (!trackRead) return;
@@ -167,11 +215,14 @@ class DatabaseService {
         }
 
         const collectionsToExport = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'visits', 'dailyUsage'];
-        let exportData = { exportDate: new Date().toISOString(), collections: {} };
+        const exportData = {
+            format: 'portfolio-backup/v2',
+            exportDate: new Date().toISOString(),
+            collections: {}
+        };
 
         for (const collName of collectionsToExport) {
-            const q = query(collection(db, collName));
-            const querySnapshot = await getDocs(q);
+            const querySnapshot = await getDocs(collection(db, collName));
             if (trackRead) trackRead(querySnapshot.size, `Exported ${collName}`);
             
             if (!querySnapshot.empty) {
@@ -182,6 +233,7 @@ class DatabaseService {
                     // Handle history subcollections
                     if (['posts', 'projects', 'experience', 'content', 'users'].includes(collName)) {
                         const historySnap = await getDocs(collection(db, collName, d.id, 'history'));
+                        if (trackRead) trackRead(historySnap.size, `Exported ${collName}/${d.id}/history`);
                         if (!historySnap.empty) {
                             const historyPath = `${collName}/${d.id}/history`;
                             exportData.collections[historyPath] = {};
@@ -192,6 +244,7 @@ class DatabaseService {
                     // Handle dailyUsage logs
                     if (collName === 'dailyUsage') {
                         const logsSnap = await getDocs(collection(db, collName, d.id, 'logs'));
+                        if (trackRead) trackRead(logsSnap.size, `Exported ${collName}/${d.id}/logs`);
                         if (!logsSnap.empty) {
                             const logsPath = `${collName}/${d.id}/logs`;
                             exportData.collections[logsPath] = {};
@@ -202,16 +255,10 @@ class DatabaseService {
             }
         }
 
-        const json = JSON.stringify(exportData, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.setAttribute("href", url);
-        a.setAttribute("download", `portfolio_backup_${new Date().toISOString().split('T')[0]}.json`);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 150);
+        DatabaseService.triggerJsonDownload(
+            exportData,
+            `portfolio_backup_${new Date().toISOString().split('T')[0]}.json`
+        );
 
         return true;
     }
@@ -229,11 +276,34 @@ class DatabaseService {
             throw new Error('Unauthorized');
         }
 
+        const safeDaysOld = Number(daysOld);
+        if (!Number.isFinite(safeDaysOld) || safeDaysOld <= 0) {
+            throw new Error('Invalid archive range. Please choose a positive number of days.');
+        }
+
         const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+        cutoffDate.setDate(cutoffDate.getDate() - safeDaysOld);
         const cutoffTimestamp = Timestamp.fromDate(cutoffDate);
 
-        const archivedData = { archiveDate: new Date().toISOString(), cutoffDate: cutoffDate.toISOString(), collections: { messages: {}, auditLogs: {} } };
+        const archivedData = {
+            format: 'portfolio-archive/v2',
+            archiveDate: new Date().toISOString(),
+            cutoffDate: cutoffDate.toISOString(),
+            daysOld: safeDaysOld,
+            collections: {}
+        };
+        const refsToDelete = [];
+        let fetchedCount = 0;
+
+        const collectSnapshot = (collectionKey, snapshot) => {
+            if (!snapshot || snapshot.empty) return;
+            archivedData.collections[collectionKey] = archivedData.collections[collectionKey] || {};
+            snapshot.forEach((docSnap) => {
+                archivedData.collections[collectionKey][docSnap.id] = docSnap.data();
+                refsToDelete.push(docSnap.ref);
+            });
+            fetchedCount += snapshot.size;
+        };
 
         const [oldMessagesSnap, oldLogsSnap, oldVisitsSnap] = await Promise.all([
             getDocs(query(collection(db, 'messages'), where('createdAt', '<', cutoffTimestamp))),
@@ -241,36 +311,42 @@ class DatabaseService {
             getDocs(query(collection(db, 'visits'), where('timestamp', '<', cutoffTimestamp)))
         ]);
 
-        if (trackRead) {
-            trackRead(oldMessagesSnap.size + oldLogsSnap.size + oldVisitsSnap.size, 'Fetched old records for archive');
+        collectSnapshot('messages', oldMessagesSnap);
+        collectSnapshot('auditLogs', oldLogsSnap);
+        collectSnapshot('visits', oldVisitsSnap);
+
+        // Archive aggregated analytics counters + detail logs by dailyUsage date key.
+        const dailyUsageSnap = await getDocs(collection(db, 'dailyUsage'));
+        for (const dayDoc of dailyUsageSnap.docs) {
+            if (!DatabaseService.isDateKeyBeforeCutoff(dayDoc.id, cutoffDate)) continue;
+
+            archivedData.collections.dailyUsage = archivedData.collections.dailyUsage || {};
+            archivedData.collections.dailyUsage[dayDoc.id] = dayDoc.data();
+            refsToDelete.push(dayDoc.ref);
+            fetchedCount += 1;
+
+            const logsSnap = await getDocs(collection(db, 'dailyUsage', dayDoc.id, 'logs'));
+            collectSnapshot(`dailyUsage/${dayDoc.id}/logs`, logsSnap);
         }
 
-        const batch = writeBatch(db);
-        let deletionCount = 0;
+        if (trackRead) trackRead(fetchedCount, 'Fetched old records for archive');
 
-        oldMessagesSnap.forEach(docSnap => { archivedData.collections.messages[docSnap.id] = docSnap.data(); batch.delete(docSnap.ref); deletionCount++; });
-        oldLogsSnap.forEach(docSnap => { archivedData.collections.auditLogs[docSnap.id] = docSnap.data(); batch.delete(docSnap.ref); deletionCount++; });
-        oldVisitsSnap.forEach(docSnap => {
-            if (!archivedData.collections.visits) archivedData.collections.visits = {};
-            archivedData.collections.visits[docSnap.id] = docSnap.data();
-            batch.delete(docSnap.ref);
-            deletionCount++;
-        });
-
+        const deletionCount = refsToDelete.length;
         if (deletionCount === 0) return { deleted: 0 };
 
-        const json = JSON.stringify(archivedData, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.setAttribute("href", url);
-        a.setAttribute("download", `portfolio_ARCHIVE_${new Date().toISOString().split('T')[0]}.json`);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        for (let i = 0; i < refsToDelete.length; i += DatabaseService.MAX_BATCH_OPERATIONS) {
+            const batch = writeBatch(db);
+            refsToDelete.slice(i, i + DatabaseService.MAX_BATCH_OPERATIONS).forEach((ref) => {
+                batch.delete(ref);
+            });
+            await batch.commit();
+        }
 
-        await batch.commit();
+        DatabaseService.triggerJsonDownload(
+            archivedData,
+            `portfolio_ARCHIVE_${new Date().toISOString().split('T')[0]}.json`
+        );
+
         if (trackDelete) trackDelete(deletionCount, 'Archived old records');
 
         return { deleted: deletionCount };
@@ -289,29 +365,34 @@ class DatabaseService {
             throw new Error('Unauthorized');
         }
 
-        const restoreTimestamps = (obj) => {
-            if (obj === null || typeof obj !== 'object') return obj;
-            if (Array.isArray(obj)) return obj.map(item => restoreTimestamps(item));
-            if (Object.keys(obj).length === 2 && 'seconds' in obj && 'nanoseconds' in obj) return new Timestamp(obj.seconds, obj.nanoseconds);
-            const newObj = {};
-            for (const key in obj) newObj[key] = restoreTimestamps(obj[key]);
-            return newObj;
-        };
+        if (!jsonContent || typeof jsonContent !== 'string') {
+            throw new Error('Restore file is empty or unreadable.');
+        }
 
-        const importData = JSON.parse(jsonContent);
-        const isNewFormat = importData.collections && typeof importData.collections === 'object';
+        let importData;
+        try {
+            importData = JSON.parse(jsonContent);
+        } catch {
+            throw new Error('Invalid JSON format. Please provide a valid backup file.');
+        }
+
+        if (!DatabaseService.isPlainObject(importData)) {
+            throw new Error('Invalid backup format. Expected a JSON object.');
+        }
+
+        const isNewFormat = DatabaseService.isPlainObject(importData.collections);
         const collections = isNewFormat ? importData.collections : importData;
 
         const collectionsToProcess = Object.entries(collections).filter(([key, val]) => {
-            const metaFields = ['exportDate', 'archiveDate', 'cutoffDate', 'date', 'timestamp'];
-            return !metaFields.includes(key) && val && typeof val === 'object';
+            return !DatabaseService.META_KEYS.has(key) && DatabaseService.isPlainObject(val);
         });
 
         const totalDocs = collectionsToProcess.reduce((acc, [, docs]) => acc + Object.keys(docs).length, 0);
         if (totalDocs === 0) throw new Error('No valid records found in file.');
 
+        let processedCount = 0;
         let completedCount = 0;
-        let failedCollections = new Set();
+        const failedCollections = new Set();
 
         for (const [colName, docs] of collectionsToProcess) {
             const docEntries = Object.entries(docs);
@@ -319,19 +400,26 @@ class DatabaseService {
                 const chunk = docEntries.slice(i, i + 25);
                 await Promise.all(chunk.map(async ([docId, docData]) => {
                     try {
-                        const processedData = restoreTimestamps(docData);
+                        const processedData = DatabaseService.restoreFirestoreTypes(docData);
                         const docRef = doc(db, colName, docId);
                         await setDoc(docRef, processedData);
                         completedCount++;
-                        if (onProgress) onProgress(completedCount, totalDocs);
-                    } catch {
+                    } catch (error) {
                         failedCollections.add(colName);
+                        console.error(`Failed to restore ${colName}/${docId}:`, error);
+                    } finally {
+                        processedCount++;
+                        if (onProgress) onProgress(processedCount, totalDocs);
                     }
                 }));
             }
         }
 
-        if (trackWrite) trackWrite(completedCount, 'Restored database');
+        if (completedCount === 0) {
+            throw new Error('Restore failed. No records were imported.');
+        }
+
+        if (trackWrite) trackWrite(completedCount, `Restored database (${completedCount}/${totalDocs})`);
         return { completedCount, totalDocs, failedCollections: Array.from(failedCollections) };
     }
 }

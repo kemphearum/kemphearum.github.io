@@ -20,7 +20,8 @@ const Header = ({
     onHeightChange
 }) => {
     const navigate = useNavigate();
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const headerRef = useRef(null);
 
     useEffect(() => {
@@ -67,7 +68,7 @@ const Header = ({
                 <button className={styles.menuToggle} onClick={onToggleSidebar}>
                     <span /><span /><span />
                 </button>
-                <span className={styles.brand}>Admin<span>.</span></span>
+                <span className={styles.brand}>{tr('Admin', 'គ្រប់គ្រង')}<span>.</span></span>
             </div>
 
             <div className={styles.center}>

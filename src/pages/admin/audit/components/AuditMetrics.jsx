@@ -2,13 +2,17 @@ import React from 'react';
 import { Eye, Edit3, Trash2 } from 'lucide-react';
 import UsageBar from '../../components/UsageBar';
 import styles from '../AuditLogsTab.module.scss';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const AuditMetrics = ({ stats, onViewReads, onViewWrites, onViewDeletes }) => {
+  const { language } = useTranslation();
+  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
   const { reads = 0, writes = 0, deletes = 0 } = stats || {};
 
   const metrics = [
     {
-      label: 'Read Operations',
+      key: 'reads',
+      label: tr('Read Operations', 'សកម្មភាពអាន'),
       current: reads,
       total: 50000,
       icon: Eye,
@@ -16,7 +20,8 @@ const AuditMetrics = ({ stats, onViewReads, onViewWrites, onViewDeletes }) => {
       onDetails: onViewReads
     },
     {
-      label: 'Write Operations',
+      key: 'writes',
+      label: tr('Write Operations', 'សកម្មភាពសរសេរ'),
       current: writes,
       total: 20000,
       icon: Edit3,
@@ -24,7 +29,8 @@ const AuditMetrics = ({ stats, onViewReads, onViewWrites, onViewDeletes }) => {
       onDetails: onViewWrites
     },
     {
-      label: 'Delete Operations',
+      key: 'deletes',
+      label: tr('Delete Operations', 'សកម្មភាពលុប'),
       current: deletes,
       total: 20000,
       icon: Trash2,
@@ -38,7 +44,7 @@ const AuditMetrics = ({ stats, onViewReads, onViewWrites, onViewDeletes }) => {
       {metrics.map((metric) => {
         const Icon = metric.icon;
         return (
-          <div key={metric.label} className="ui-card">
+          <div key={metric.key} className="ui-card">
             <div className={styles.metricHeader}>
               <div
                 className={styles.metricIcon}
@@ -51,12 +57,12 @@ const AuditMetrics = ({ stats, onViewReads, onViewWrites, onViewDeletes }) => {
                 onClick={metric.onDetails}
                 className={styles.viewDetailsBtn}
               >
-                View Details
+                {tr('View Details', 'មើលលម្អិត')}
               </button>
             </div>
 
             <UsageBar
-              label={metric.label.toUpperCase()}
+              label={language === 'km' ? metric.label : metric.label.toUpperCase()}
               current={metric.current}
               total={metric.total}
               color={metric.color}

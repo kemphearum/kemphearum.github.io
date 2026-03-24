@@ -30,7 +30,7 @@ const ExperienceLocalizedFields = ({ activeLanguage, setActiveLanguage, tr }) =>
                 validation={activeLanguage === 'en' ? { required: tr('English company name is required', 'ត្រូវការឈ្មោះក្រុមហ៊ុនជាអង់គ្លេស') } : {}}
                 hint={activeLanguage === 'km' ? tr('Optional. English fallback is automatic.', 'ស្រេចចិត្ត។ ប្រើអង់គ្លេសជំនួសដោយស្វ័យប្រវត្តិ។') : undefined}
             >
-                <FormInput placeholder={activeLanguage === 'en' ? 'e.g. Google Inc.' : 'ឧ. Google Inc.'} />
+                <FormInput placeholder={activeLanguage === 'en' ? 'e.g. Google Inc.' : 'ឧ. ក្រុមហ៊ុន Google'} />
             </FormField>
 
             <FormField
@@ -38,7 +38,7 @@ const ExperienceLocalizedFields = ({ activeLanguage, setActiveLanguage, tr }) =>
                 name={roleName}
                 validation={activeLanguage === 'en' ? { required: tr('English role is required', 'ត្រូវការតួនាទីជាអង់គ្លេស') } : {}}
             >
-                <FormInput placeholder={activeLanguage === 'en' ? 'e.g. Senior Developer' : 'ឧ. Senior Developer'} />
+                <FormInput placeholder={activeLanguage === 'en' ? 'e.g. Senior Developer' : 'ឧ. អ្នកអភិវឌ្ឍជាន់ខ្ពស់'} />
             </FormField>
 
             <FormField

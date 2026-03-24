@@ -106,7 +106,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 } else {
                     const fallbackKey = error?.code || error?.message || 'database-health-failure';
                     if (lastHealthErrorKeyRef.current !== fallbackKey) {
-                        showToast(error?.message || 'Failed to load database health.', 'error');
+                        showToast(error?.message || tr('Failed to load database health.', 'មិនអាចផ្ទុកសុខភាពមូលដ្ឋានទិន្នន័យបាន។'), 'error');
                         lastHealthErrorKeyRef.current = fallbackKey;
                     }
                 }
@@ -229,13 +229,19 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                     setTimeout(() => setRestoreProgress(null), 3000);
                     resolve(data);
                 };
-                reader.onerror = () => reject(new Error('Failed to read file.'));
+                reader.onerror = () => reject(new Error(tr('Failed to read file.', 'មិនអាចអានឯកសារបាន។')));
                 reader.readAsText(restoreFile);
             });
         }).then(({ success, data, error }) => {
             if (success) {
                 if (data.failedCollections.length > 0) {
-                    showToast(`Partially completed (${data.completedCount}/${data.totalDocs}). Issues on: ${data.failedCollections.join(', ')}`, 'warning');
+                    showToast(
+                        tr(
+                            `Partially completed (${data.completedCount}/${data.totalDocs}). Issues on: ${data.failedCollections.join(', ')}`,
+                            `បានបញ្ចប់ផ្នែកខ្លះ (${data.completedCount}/${data.totalDocs})។ មានបញ្ហានៅ៖ ${data.failedCollections.join(', ')}`
+                        ),
+                        'warning'
+                    );
                 } else {
                     showToast(tr(`Successfully restored ${data.completedCount} records!`, `បានស្តារកំណត់ត្រា ${data.completedCount} ដោយជោគជ័យ!`), 'success');
                 }
@@ -245,30 +251,37 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         });
     };
 
-    const handleRestoreSelect = useCallback((file) => {
+        const handleRestoreSelect = useCallback((file) => {
         if (!file) return;
 
         const name = String(file.name || '').toLowerCase();
         const mime = String(file.type || '').toLowerCase();
         const isJsonFile = name.endsWith('.json') || mime.includes('json');
         const maxSizeBytes = 25 * 1024 * 1024;
+        const isKhmer = language === 'km';
 
         if (!isJsonFile) {
-            showToast(tr('Please choose a valid JSON backup file.', 'សូមជ្រើសឯកសារ JSON backup ដែលត្រឹមត្រូវ។'), 'error');
+            showToast(
+                isKhmer ? 'សូមជ្រើសឯកសារ JSON backup ដែលត្រឹមត្រូវ។' : 'Please choose a valid JSON backup file.',
+                'error'
+            );
             return;
         }
         if (!file.size) {
-            showToast(tr('Selected file is empty.', 'ឯកសារដែលបានជ្រើសគ្មានទិន្នន័យ។'), 'error');
+            showToast(isKhmer ? 'ឯកសារដែលបានជ្រើសគ្មានទិន្នន័យ។' : 'Selected file is empty.', 'error');
             return;
         }
         if (file.size > maxSizeBytes) {
-            showToast(tr('Backup file is too large. Please use a file smaller than 25 MB.', 'ឯកសារ backup ធំពេក។ សូមប្រើឯកសារតូចជាង 25 MB។'), 'error');
+            showToast(
+                isKhmer ? 'ឯកសារ backup ធំពេក។ សូមប្រើឯកសារតូចជាង 25 MB។' : 'Backup file is too large. Please use a file smaller than 25 MB.',
+                'error'
+            );
             return;
         }
 
         setRestoreFile(file);
         setShowRestoreConfirm(true);
-    }, [showToast]);
+    }, [showToast, language]);
 
     const actionLoadingState = useMemo(() => ({
         any: backupLoading || archiveLoading || restoreLoading,
@@ -295,9 +308,9 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
             {Object.keys(healthFailures).length > 0 && (
                 <div className="ui-quota-banner" role="alert">
                     <div className="ui-quota-banner-content">
-                        <h3>Health Check Incomplete</h3>
+                        <h3>{tr('Health Check Incomplete', 'ការត្រួតពិនិត្យសុខភាពមិនទាន់ពេញលេញ')}</h3>
                         <p>
-                            {tr('Some collection counts could not be loaded:', 'មិនអាចផ្ទុកចំនួននៃ collection ខ្លះបាន៖')} {Object.keys(healthFailures).join(', ')}.
+                            {tr('Some collection counts could not be loaded:', 'មិនអាចផ្ទុកចំនួនបណ្ដុំទិន្នន័យខ្លះបាន៖')} {Object.keys(healthFailures).join(', ')}.
                         </p>
                     </div>
                 </div>
@@ -305,7 +318,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
 
             <SectionHeader
                 title={tr('Database Management', 'ការគ្រប់គ្រងមូលដ្ឋានទិន្នន័យ')}
-                description={tr('Track collection health, backup and restore safely, and tune audit retention.', 'តាមដានសុខភាព collection បម្រុងទុក និងស្តារដោយសុវត្ថិភាព និងកែការរក្សាទុកសវនកម្ម។')}
+                description={tr('Track collection health, backup and restore safely, and tune audit retention.', 'តាមដានសុខភាពបណ្ដុំទិន្នន័យ បម្រុងទុក និងស្តារដោយសុវត្ថិភាព និងកែការរក្សាទុកសវនកម្ម។')}
                 icon={RefreshCw}
                 rightElement={
                     <Button 

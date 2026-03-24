@@ -22,6 +22,34 @@ Live sites:
 - Settings module (identity, typography, visuals, sync)
 - User management and role-based access control
 - Audit logs, analytics, and message management
+- Database maintenance tools (backup, restore, archive)
+
+## Admin Database Maintenance
+
+The Database tab includes three operational tools:
+
+### 1) Full Backup
+- Exports a JSON snapshot of tracked collections:
+  - `posts`, `projects`, `experience`, `content`, `messages`, `auditLogs`, `users`, `rolePermissions`, `settings`, `visits`, `dailyUsage`
+- Also exports important subcollections:
+  - document `history` for selected admin-managed collections
+  - `dailyUsage/{date}/logs`
+- Downloaded file format includes metadata (`format`, `exportDate`, `collections`).
+
+### 2) Restore From Backup
+- Accepts JSON backup files and restores to Firestore document-by-document.
+- Supports both newer backup envelope format (`collections`) and legacy object-only backups.
+- Restores Firestore timestamps from serialized objects (including `{ seconds, nanoseconds }` forms).
+- Progress reflects processed records across the entire restore job.
+- Existing documents with the same IDs are overwritten.
+
+### 3) Archive Old Records
+- Archives and removes old operational data:
+  - `messages`, `auditLogs`, `visits`
+  - `dailyUsage` day documents older than cutoff, including `dailyUsage/{date}/logs`
+- Produces a downloadable archive JSON before finishing.
+- Uses chunked Firestore batch deletes for reliability on large archives (avoids batch operation limits).
+- Requires a positive day-range value.
 
 ## Multilingual System (English + Khmer)
 
@@ -104,6 +132,12 @@ If Khmer text appears as `?`:
 1. Ensure translation files are saved in UTF-8
 2. Hard refresh browser cache (`Ctrl+F5`)
 3. Confirm app language is set to `km`
+
+## Responsive Admin UI (EN + KM)
+
+- Admin dialogs and form controls are tuned for small screens (mobile-first behavior for action buttons, field wrapping, and footer stacks).
+- Long Khmer and English labels are wrapped safely to prevent overflow in cards, dialogs, and database controls.
+- Database action cards (Backup/Restore/Archive) are optimized for touch-width layouts.
 
 ## Architecture
 

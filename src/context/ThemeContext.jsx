@@ -1,9 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const ThemeContext = createContext();
+const defaultThemeContext = {
+    theme: 'dark',
+    // Safe fallback when a component renders outside ThemeProvider
+    toggleTheme: () => {}
+};
+
+const ThemeContext = createContext(defaultThemeContext);
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => useContext(ThemeContext) || defaultThemeContext;
 
 export const ThemeProvider = ({ children }) => {
     // Start with a consistent theme for the initial hydration pass

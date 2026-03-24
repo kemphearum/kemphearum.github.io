@@ -1,13 +1,16 @@
 import React from 'react';
 import { Shield, Check, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { Button } from '../../../../shared/components/ui';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const AuditSettingsPanel = ({ auditSettings, onUpdateSetting, canEdit = true, loading = false }) => {
+  const { language } = useTranslation();
+  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
   const settingsList = [
-    { key: 'logReads', label: 'Log Read Operations', desc: 'Track when documents are fetched.' },
-    { key: 'logWrites', label: 'Log Write Operations', desc: 'Track creates and updates.' },
-    { key: 'logDeletes', label: 'Log Delete Operations', desc: 'Track document removals.' },
-    { key: 'logAnonymous', label: 'Log Anonymous Actions', desc: 'Track public visitors.' },
+    { key: 'logReads', label: tr('Log Read Operations', 'កត់ត្រាសកម្មភាពអាន'), desc: tr('Track when documents are fetched.', 'តាមដានពេលមានការទាញយកឯកសារ។') },
+    { key: 'logWrites', label: tr('Log Write Operations', 'កត់ត្រាសកម្មភាពសរសេរ'), desc: tr('Track creates and updates.', 'តាមដានការបង្កើត និងការកែប្រែ។') },
+    { key: 'logDeletes', label: tr('Log Delete Operations', 'កត់ត្រាសកម្មភាពលុប'), desc: tr('Track document removals.', 'តាមដានការលុបឯកសារ។') },
+    { key: 'logAnonymous', label: tr('Log Anonymous Actions', 'កត់ត្រាសកម្មភាពអនាមិក'), desc: tr('Track public visitors.', 'តាមដានភ្ញៀវសាធារណៈ។') },
   ];
   const activeSettings = settingsList.filter((item) => auditSettings[item.key]).length;
   const disabled = !canEdit || loading;
@@ -27,7 +30,7 @@ const AuditSettingsPanel = ({ auditSettings, onUpdateSetting, canEdit = true, lo
   return (
     <div className="ui-audit-settings-section">
       <h4 className="ui-flex-center-gap-small ui-mb-medium">
-        <Shield size={20} className="ui-text-accent" /> Audit Log Configuration
+        <Shield size={20} className="ui-text-accent" /> {tr('Audit Log Configuration', 'ការកំណត់ Audit Log')}
       </h4>
       
       <div className="ui-card ui-p-large">
@@ -38,9 +41,9 @@ const AuditSettingsPanel = ({ auditSettings, onUpdateSetting, canEdit = true, lo
               <Shield size={22} />
             </div>
             <div className="ui-flex-1">
-              <div className="ui-font-bold ui-text-primary ui-mb-extra-small">Master Audit Tracking</div>
-              <div className="ui-text-small ui-text-secondary">Enable or disable all database activity logging globally. Highly recommended for production stability.</div>
-              <div className="ui-db-inline-meta">{activeSettings}/{settingsList.length} granular rules enabled</div>
+              <div className="ui-font-bold ui-text-primary ui-mb-extra-small">{tr('Master Audit Tracking', 'ការតាមដាន Audit មេ')}</div>
+              <div className="ui-text-small ui-text-secondary">{tr('Enable or disable all database activity logging globally. Highly recommended for production stability.', 'បើក ឬបិទការកត់ត្រាសកម្មភាពមូលដ្ឋានទិន្នន័យទាំងមូល។ ផ្តល់អនុសាសន៍ខ្ពស់សម្រាប់ស្ថេរភាពប្រព័ន្ធពេលប្រើប្រាស់ពិត។')}</div>
+              <div className="ui-db-inline-meta">{activeSettings}/{settingsList.length} {tr('granular rules enabled', 'ច្បាប់លម្អិតដែលបានបើក')}</div>
             </div>
             <Button 
               variant={auditSettings.logAll ? 'primary' : 'ghost'}
@@ -49,9 +52,9 @@ const AuditSettingsPanel = ({ auditSettings, onUpdateSetting, canEdit = true, lo
               icon={auditSettings.logAll ? ShieldCheck : ShieldAlert}
               isLoading={loading}
               disabled={disabled}
-              title={canEdit ? 'Toggle Master Audit' : 'Not authorized'}
+              title={canEdit ? tr('Toggle Master Audit', 'ប្ដូរ Master Audit') : tr('Not authorized', 'គ្មានសិទ្ធិ')}
             >
-              {auditSettings.logAll ? 'Tracking Enabled' : 'Tracking Disabled'}
+              {auditSettings.logAll ? tr('Tracking Enabled', 'បានបើកការតាមដាន') : tr('Tracking Disabled', 'បានបិទការតាមដាន')}
             </Button>
           </div>
 
@@ -66,7 +69,7 @@ const AuditSettingsPanel = ({ auditSettings, onUpdateSetting, canEdit = true, lo
                 role="button"
                 aria-pressed={Boolean(auditSettings[item.key])}
                 tabIndex={disabled ? -1 : 0}
-                title={canEdit ? `Toggle ${item.label}` : 'Not authorized'}
+                title={canEdit ? tr(`Toggle ${item.label}`, `ប្ដូរ ${item.label}`) : tr('Not authorized', 'គ្មានសិទ្ធិ')}
               >
                 <div className="ui-flex-1">
                   <div className={`ui-font-bold ui-text-small ui-mb-extra-small ${auditSettings[item.key] ? 'ui-text-accent' : 'ui-text-primary'}`}>

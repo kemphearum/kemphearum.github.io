@@ -186,7 +186,7 @@ const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loadi
                                         name="slug"
                                         hint={tr('Leave blank to generate the URL automatically from the English title.', 'ទុកទទេ ដើម្បីបង្កើត URL ពីចំណងជើងអង់គ្លេសដោយស្វ័យប្រវត្តិ។')}
                                     >
-                                        <FormInput placeholder="e.g. my-blog-post" />
+                                        <FormInput placeholder={tr('e.g. my-blog-post', 'ឧ. អត្ថបទ-របស់-ខ្ញុំ')} />
                                     </FormField>
 
                                     <FormField
@@ -194,7 +194,7 @@ const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loadi
                                         name="tags"
                                         hint={tr('Separate topics with commas to improve filtering and related-post suggestions.', 'បំបែកប្រធានបទដោយក្បៀស ដើម្បីជួយការតម្រង និងអត្ថបទពាក់ព័ន្ធ។')}
                                     >
-                                        <FormInput placeholder="React, Firebase, Security" />
+                                        <FormInput placeholder={tr('React, Firebase, Security', 'React, Firebase, សន្តិសុខ')} />
                                     </FormField>
                                 </div>
 

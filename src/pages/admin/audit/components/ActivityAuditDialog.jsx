@@ -16,6 +16,25 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
   const { language } = useTranslation();
   const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const locale = language === 'km' ? 'km-KH' : 'en-US';
+
+  const localizeAction = (value) => {
+    const key = String(value || '').toLowerCase();
+    const map = {
+      read: tr('Read', 'អាន'),
+      write: tr('Write', 'សរសេរ'),
+      delete: tr('Delete', 'លុប'),
+      created: tr('Created', 'បានបង្កើត'),
+      updated: tr('Updated', 'បានកែប្រែ'),
+      deleted: tr('Deleted', 'បានលុប')
+    };
+    return map[key] || value || tr('Activity event', 'ព្រឹត្តិការណ៍សកម្មភាព');
+  };
+
+  const resolveOperationLabel = (log) => {
+    const candidate = log?.label || log?.details?.action || type;
+    return localizeAction(candidate);
+  };
   const handleOpenChange = (nextOpen) => {
     if (!nextOpen) setExpandedRows(new Set());
     onOpenChange(nextOpen);
@@ -33,7 +52,7 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
 
   const getHeaderInfo = () => {
     const now = new Date();
-    const dateStr = now.toLocaleDateString('en-US', { 
+    const dateStr = now.toLocaleDateString(locale, {
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
@@ -152,8 +171,8 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
                   {logs.map((log, index) => {
                     const rowId = log.id || index;
                     const isExpanded = expandedRows.has(rowId);
-                    const time = log.time?.seconds 
-                      ? new Date(log.time.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+                    const time = log.time?.seconds
+                      ? new Date(log.time.seconds * 1000).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
                       : '-';
 
                     return (
@@ -177,7 +196,7 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
                                 <Icon size={14} />
                               </div>
                               <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                                {log.label || log.details?.action || tr(`Logged ${type} access`, `បានកត់ត្រាការចូលប្រើ ${type}`)}
+                                {resolveOperationLabel(log)}
                                 {log.details?.path && (
                                   <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '4px' }}>
                                     : {log.details.path}
@@ -192,7 +211,7 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
                           <td className={styles.activityCell}>
                             <div className={styles.originator}>
                               <div className={styles.statusDot} style={{ background: info.color }} />
-                              <span style={{ fontSize: '0.85rem' }}>{log.user || tr('system', 'ប្រព័ន្ធ')}</span>
+                              <span style={{ fontSize: '0.85rem' }}>{log.user || tr('System', 'ប្រព័ន្ធ')}</span>
                             </div>
                           </td>
                           <td className={styles.activityCell}>

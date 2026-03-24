@@ -3,6 +3,7 @@ import { Search, Download, RotateCcw, Clock, Layers, MousePointer2 } from 'lucid
 import { Input } from '../../../../shared/components/ui';
 import FormSelect from '../../components/FormSelect';
 import styles from '../AuditLogsTab.module.scss';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const AuditLogsToolbar = ({ 
   searchQuery, 
@@ -16,8 +17,12 @@ const AuditLogsToolbar = ({
   totalItems,
   isExportDisabled = false,
   searchHint = '',
-  placeholder = "Search by user, IP or entity..."
+  placeholder = ''
 }) => {
+  const { language } = useTranslation();
+  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const resolvedPlaceholder = placeholder || tr('Search by user, IP or entity...', 'ស្វែងរកតាមអ្នកប្រើ IP ឬធាតុ...');
+
   const hasFilters = Boolean(
     searchQuery
     || (dateRange && dateRange !== 'today')
@@ -31,7 +36,7 @@ const AuditLogsToolbar = ({
         <div className={styles.search}>
           <Input
             icon={Search}
-            placeholder={placeholder}
+            placeholder={resolvedPlaceholder}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
           />
@@ -44,10 +49,10 @@ const AuditLogsToolbar = ({
             value={dateRange}
             onChange={(e) => onDateRangeChange(e.target.value)}
             options={[
-              { value: 'today', label: 'Today' },
-              { value: '7d', label: 'Last 7 Days' },
-              { value: '30d', label: 'Last 30 Days' },
-              { value: 'all', label: 'All Time' }
+              { value: 'today', label: tr('Today', 'ថ្ងៃនេះ') },
+              { value: '7d', label: tr('Last 7 Days', '7 ថ្ងៃចុងក្រោយ') },
+              { value: '30d', label: tr('Last 30 Days', '30 ថ្ងៃចុងក្រោយ') },
+              { value: 'all', label: tr('All Time', 'គ្រប់ពេល') }
             ]}
           />
         </div>
@@ -61,11 +66,11 @@ const AuditLogsToolbar = ({
                 value={filters.module}
                 onChange={(e) => onFilterChange('module', e.target.value)}
                 options={[
-                  { value: 'all', label: 'All Modules' },
-                  { value: 'blog', label: 'Blog' },
-                  { value: 'projects', label: 'Projects' },
-                  { value: 'experience', label: 'Experience' },
-                  { value: 'users', label: 'Users' }
+                  { value: 'all', label: tr('All Modules', 'គ្រប់ម៉ូឌុល') },
+                  { value: 'blog', label: tr('Blog', 'ប្លុក') },
+                  { value: 'projects', label: tr('Projects', 'គម្រោង') },
+                  { value: 'experience', label: tr('Experience', 'បទពិសោធន៍') },
+                  { value: 'users', label: tr('Users', 'អ្នកប្រើ') }
                 ]}
               />
             </div>
@@ -77,12 +82,12 @@ const AuditLogsToolbar = ({
                 value={filters.action}
                 onChange={(e) => onFilterChange('action', e.target.value)}
                 options={[
-                  { value: 'all', label: 'All Actions' },
-                  { value: 'created', label: 'Created' },
-                  { value: 'updated', label: 'Updated' },
-                  { value: 'deleted', label: 'Deleted' },
-                  { value: 'disabled', label: 'Disabled' },
-                  { value: 'enabled', label: 'Enabled' }
+                  { value: 'all', label: tr('All Actions', 'គ្រប់សកម្មភាព') },
+                  { value: 'created', label: tr('Created', 'បានបង្កើត') },
+                  { value: 'updated', label: tr('Updated', 'បានកែប្រែ') },
+                  { value: 'deleted', label: tr('Deleted', 'បានលុប') },
+                  { value: 'disabled', label: tr('Disabled', 'បានបិទ') },
+                  { value: 'enabled', label: tr('Enabled', 'បានបើក') }
                 ]}
               />
             </div>
@@ -97,7 +102,7 @@ const AuditLogsToolbar = ({
             disabled={!hasFilters}
           >
             <RotateCcw size={14} />
-            Reset
+            {tr('Reset', 'កំណត់ឡើងវិញ')}
           </button>
           <button 
             type="button"
@@ -106,15 +111,16 @@ const AuditLogsToolbar = ({
             disabled={isExportDisabled}
           >
             <Download size={14} />
-            Export
+            {tr('Export', 'នាំចេញ')}
           </button>
         </div>
       </div>
       
       <div className={styles.searchMeta}>
         <span>
-          Showing <strong>{totalItems || 0}</strong> record{totalItems === 1 ? '' : 's'}
-          {searchQuery ? ' in this view' : ''}.
+          {tr('Showing', 'កំពុងបង្ហាញ')} <strong>{totalItems || 0}</strong>{' '}
+          {totalItems === 1 ? tr('record', 'កំណត់ត្រា') : tr('records', 'កំណត់ត្រា')}
+          {searchQuery ? ` ${tr('in this view', 'ក្នុងទិដ្ឋភាពនេះ')}` : ''}.
         </span>
         {searchHint && <span className={styles.searchHint}>{searchHint}</span>}
       </div>
