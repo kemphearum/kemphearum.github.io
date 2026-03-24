@@ -53,7 +53,7 @@ const ArchiveDialog = ({
             isLoading={loading}
             icon={Trash2}
           >
-            Delete Forever
+            Archive and Delete
           </Button>
         </Dialog.Footer>
       </Dialog.Content>

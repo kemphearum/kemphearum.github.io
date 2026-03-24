@@ -34,10 +34,45 @@ service cloud.firestore {
         'isReturning', 'country', 'countryCode', 'city', 'ip', 'referrer',
         'duration', 'timestamp'
       ])
+      && request.resource.data.sessionId is string
+      && request.resource.data.sessionId.size() > 0
+      && request.resource.data.sessionId.size() <= 128
       && request.resource.data.path is string
       && request.resource.data.path.size() > 0
       && request.resource.data.path.size() <= 512
+      && request.resource.data.date is string
+      && request.resource.data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
+      && request.resource.data.userAgent is string
+      && request.resource.data.userAgent.size() <= 1024
+      && request.resource.data.device is string
+      && request.resource.data.device.size() <= 24
+      && request.resource.data.browser is string
+      && request.resource.data.browser.size() <= 80
+      && request.resource.data.os is string
+      && request.resource.data.os.size() <= 80
+      && request.resource.data.isReturning is bool
+      && request.resource.data.country is string
+      && request.resource.data.country.size() <= 100
+      && request.resource.data.countryCode is string
+      && request.resource.data.countryCode.size() <= 3
+      && request.resource.data.city is string
+      && request.resource.data.city.size() <= 120
+      && request.resource.data.ip is string
+      && request.resource.data.ip.size() <= 64
+      && request.resource.data.referrer is string
+      && request.resource.data.referrer.size() <= 1024
+      && (!request.resource.data.keys().hasAny(['duration'])
+        || (request.resource.data.duration is int
+            && request.resource.data.duration >= 0
+            && request.resource.data.duration <= 86400))
       && request.resource.data.timestamp is timestamp;
+    }
+
+    function isVisitDurationUpdateValid() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['duration'])
+      && request.resource.data.duration is int
+      && request.resource.data.duration >= 0
+      && request.resource.data.duration <= 86400;
     }
 
     function isDailyUsagePayloadValid() {
@@ -133,10 +168,11 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin();
     }
 
-    // Analytics/Visits Tracking: write access restricted to trusted admin roles.
+    // Analytics/Visits Tracking
     match /visits/{document=**} {
-      allow create: if isAdmin() && isVisitPayloadValid();
-      allow read, update, delete: if isAdmin();
+      allow create: if isVisitPayloadValid();
+      allow read, delete: if isAdmin();
+      allow update: if isAdmin() || isVisitDurationUpdateValid();
     }
 
     // Global Activity Tracker

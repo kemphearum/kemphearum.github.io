@@ -6,22 +6,23 @@
 export const parseUserAgent = (ua) => {
     let browser = 'Unknown';
     let os = 'Unknown';
+    const normalizedUa = typeof ua === 'string' ? ua : '';
 
     // Browser Detection
-    if (ua.includes('Firefox')) browser = 'Firefox';
-    else if (ua.includes('SamsungBrowser')) browser = 'Samsung Browser';
-    else if (ua.includes('Opera') || ua.includes('OPR')) browser = 'Opera';
-    else if (ua.includes('Trident')) browser = 'Internet Explorer';
-    else if (ua.includes('Edge')) browser = 'Edge';
-    else if (ua.includes('Chrome')) browser = 'Chrome';
-    else if (ua.includes('Safari')) browser = 'Safari';
+    if (normalizedUa.includes('Firefox')) browser = 'Firefox';
+    else if (normalizedUa.includes('SamsungBrowser')) browser = 'Samsung Browser';
+    else if (normalizedUa.includes('Opera') || normalizedUa.includes('OPR')) browser = 'Opera';
+    else if (normalizedUa.includes('Trident') || normalizedUa.includes('MSIE')) browser = 'Internet Explorer';
+    else if (normalizedUa.includes('Edg/') || normalizedUa.includes('Edge')) browser = 'Edge';
+    else if (normalizedUa.includes('Chrome')) browser = 'Chrome';
+    else if (normalizedUa.includes('Safari')) browser = 'Safari';
 
     // OS Detection
-    if (ua.includes('Win')) os = 'Windows';
-    else if (ua.includes('Mac')) os = 'macOS';
-    else if (ua.includes('Linux')) os = 'Linux';
-    else if (ua.includes('Android')) os = 'Android';
-    else if (ua.includes('like Mac')) os = 'iOS';
+    if (normalizedUa.includes('Win')) os = 'Windows';
+    else if (normalizedUa.includes('Android')) os = 'Android';
+    else if (normalizedUa.includes('like Mac') || normalizedUa.includes('iPhone') || normalizedUa.includes('iPad')) os = 'iOS';
+    else if (normalizedUa.includes('Mac')) os = 'macOS';
+    else if (normalizedUa.includes('Linux')) os = 'Linux';
 
     return { browser, os };
 };

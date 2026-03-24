@@ -34,8 +34,7 @@ describe('parseUserAgent', () => {
         const ua = 'Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/23.0 Chrome/115.0.0.0 Mobile Safari/537.36';
         const result = parseUserAgent(ua);
         expect(result.browser).toBe('Samsung Browser');
-        // Note: UA contains 'Linux' before 'Android', so parser detects Linux first
-        expect(result.os).toBe('Linux');
+        expect(result.os).toBe('Android');
     });
 
     it('detects Opera', () => {
@@ -55,7 +54,13 @@ describe('parseUserAgent', () => {
         const ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Mobile/15E148 Safari/604.1';
         const result = parseUserAgent(ua);
         expect(result.browser).toBe('Safari');
-        // Note: UA contains 'Mac' which matches before 'like Mac', so parser detects macOS
-        expect(result.os).toBe('macOS');
+        expect(result.os).toBe('iOS');
+    });
+
+    it('detects Chromium Edge via Edg token', () => {
+        const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0';
+        const result = parseUserAgent(ua);
+        expect(result.browser).toBe('Edge');
+        expect(result.os).toBe('Windows');
     });
 });

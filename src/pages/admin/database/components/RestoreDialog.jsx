@@ -2,32 +2,36 @@ import React from 'react';
 import { Upload, FileJson, AlertTriangle } from 'lucide-react';
 import { Dialog, Button } from '../../../../shared/components/ui';
 
-const RestoreDialog = ({ 
-  open, 
-  onOpenChange, 
-  restoreFile, 
-  onConfirm, 
-  loading 
+const RestoreDialog = ({
+  open,
+  onOpenChange,
+  restoreFile,
+  onConfirm,
+  loading
 }) => {
+  if (!restoreFile) return null;
+
+  const sizeKb = (restoreFile.size / 1024).toFixed(2);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <Dialog.Content maxWidth="460px">
-        <Dialog.Header 
-          title="Restore Data" 
+        <Dialog.Header
+          title="Restore Data"
           icon={Upload}
           variant="primary"
         />
-        
+
         <Dialog.Body>
           <div className="ui-file-info">
             <div className="ui-file-icon">
               <FileJson size={28} />
             </div>
             <div className="ui-file-details">
-              <div className="ui-file-name">{restoreFile?.name}</div>
+              <div className="ui-file-name">{restoreFile.name}</div>
               <div className="ui-file-meta">
                 <div className="ui-dot-indicator"></div>
-                {(restoreFile?.size / 1024).toFixed(2)} KB • JSON Backup File
+                {sizeKb} KB - JSON backup file
               </div>
             </div>
           </div>
@@ -49,13 +53,13 @@ const RestoreDialog = ({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button 
-            variant="primary" 
-            onClick={onConfirm} 
+          <Button
+            variant="primary"
+            onClick={onConfirm}
             isLoading={loading}
             icon={Upload}
           >
-            Start Full Restore
+            Start Restore
           </Button>
         </Dialog.Footer>
       </Dialog.Content>

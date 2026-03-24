@@ -9,6 +9,30 @@ import { fetchGeoData } from '../utils/geoUtils';
 import { parseUserAgent, isReturningVisitor } from '../utils/uaUtils';
 import { useActivity } from './useActivity';
 
+const safeSessionGet = (key) => {
+    try {
+        return sessionStorage.getItem(key);
+    } catch {
+        return null;
+    }
+};
+
+const safeSessionSet = (key, value) => {
+    try {
+        sessionStorage.setItem(key, value);
+    } catch {
+        // Ignore storage failures (privacy mode, disabled storage, etc.).
+    }
+};
+
+const safeSessionRemove = (key) => {
+    try {
+        sessionStorage.removeItem(key);
+    } catch {
+        // Ignore storage failures.
+    }
+};
+
 export const getSessionId = () => {
     if (typeof window === 'undefined') return 'ssr-session';
     try {
@@ -42,13 +66,17 @@ export const useAnalytics = () => {
     const startTimeRef = useRef(0);
 
     useEffect(() => {
-        const path = location.pathname;
+        const path = location.pathname || '/';
+        const pathWithQuery = `${path}${location.search || ''}`;
+        const isAdminPath = path.startsWith('/admin');
         startTimeRef.current = Date.now();
+
+        if (isAdminPath) return undefined;
 
         // --- 1. FIREBASE GA4 TRACKING ---
         if (analytics) {
             logEvent(analytics, 'page_view', {
-                page_path: path + location.search,
+                page_path: pathWithQuery,
                 page_title: document.title,
             });
         }
@@ -60,14 +88,14 @@ export const useAnalytics = () => {
                 const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
                 // Client-side dedup using sessionStorage (avoids needing Firestore read permissions)
-                const dedupKey = `visit_${path}`;
-                const lastLogged = sessionStorage.getItem(dedupKey);
+                const dedupKey = `visit_${pathWithQuery}`;
+                const lastLogged = safeSessionGet(dedupKey);
                 if (lastLogged) {
                     const diffMinutes = (Date.now() - parseInt(lastLogged, 10)) / (1000 * 60);
                     if (diffMinutes < 30) return; // Don't re-log within 30 minutes
                 }
                 // Mark immediately to avoid strict-mode double invokes racing before the request finishes.
-                sessionStorage.setItem(dedupKey, Date.now().toString());
+                safeSessionSet(dedupKey, Date.now().toString());
 
                 // Fetch geo-data and UA details
                 const geoData = await fetchGeoData();
@@ -101,12 +129,12 @@ export const useAnalytics = () => {
                 
                 // Store visit ID to update duration on cleanup
                 if (visitId) {
-                    sessionStorage.setItem(`last_visit_id_${path}`, visitId);
+                    safeSessionSet(`last_visit_id_${pathWithQuery}`, visitId);
                 }
 
             } catch (error) {
                 // Allow retry on next navigation if this attempt failed.
-                sessionStorage.removeItem(`visit_${path}`);
+                safeSessionRemove(`visit_${pathWithQuery}`);
                 console.error("Error logging visit to Firestore:", error);
             }
         };
@@ -121,12 +149,12 @@ export const useAnalytics = () => {
             clearTimeout(timeoutId);
             const endTime = Date.now();
             const durationSeconds = Math.round((endTime - startTimeRef.current) / 1000);
-            const visitId = sessionStorage.getItem(`last_visit_id_${path}`);
+            const visitId = safeSessionGet(`last_visit_id_${pathWithQuery}`);
             
             // Only update if they stayed for more than 2 seconds (ignore bounces/skips)
             if (visitId && durationSeconds > 2) {
                 analyticsSvc.updateVisitDuration(visitId, durationSeconds).catch(() => {});
-                sessionStorage.removeItem(`last_visit_id_${path}`);
+                safeSessionRemove(`last_visit_id_${pathWithQuery}`);
             }
         };
     }, [location.pathname, location.search, trackWrite]);

@@ -8,59 +8,55 @@ const AuditMetrics = ({ stats, onViewReads, onViewWrites, onViewDeletes }) => {
 
   const metrics = [
     {
-      label: 'READ OPERATIONS',
+      label: 'Read Operations',
       current: reads,
       total: 50000,
       icon: Eye,
       color: '#38bdf8',
-      showDetails: true,
       onDetails: onViewReads
     },
     {
-      label: 'WRITE OPERATIONS',
+      label: 'Write Operations',
       current: writes,
       total: 20000,
       icon: Edit3,
       color: '#a78bfa',
-      showDetails: true,
       onDetails: onViewWrites
     },
     {
-      label: 'DELETE OPERATIONS',
+      label: 'Delete Operations',
       current: deletes,
       total: 20000,
       icon: Trash2,
       color: '#fb923c',
-      showDetails: true,
       onDetails: onViewDeletes
     }
   ];
 
   return (
     <div className={styles.metricsGrid}>
-      {metrics.map((metric, idx) => {
+      {metrics.map((metric) => {
         const Icon = metric.icon;
         return (
-          <div key={idx} className="ui-card">
+          <div key={metric.label} className="ui-card">
             <div className={styles.metricHeader}>
-              <div 
-                className={styles.metricIcon} 
+              <div
+                className={styles.metricIcon}
                 style={{ backgroundColor: `${metric.color}15`, color: metric.color }}
               >
                 <Icon size={18} />
               </div>
-              {metric.showDetails && (
-                <button 
-                  onClick={metric.onDetails}
-                  className={styles.viewDetailsBtn}
-                >
-                  View Details →
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={metric.onDetails}
+                className={styles.viewDetailsBtn}
+              >
+                View Details
+              </button>
             </div>
-            
+
             <UsageBar
-              label={metric.label}
+              label={metric.label.toUpperCase()}
               current={metric.current}
               total={metric.total}
               color={metric.color}

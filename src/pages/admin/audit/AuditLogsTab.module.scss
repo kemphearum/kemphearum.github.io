@@ -79,6 +79,182 @@
   opacity: 0.8;
 }
 
+.tableSection {
+  padding: 1.1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.tableTitle {
+  margin: 0;
+}
+
+.securityIcon {
+  color: #38bdf8;
+}
+
+.toolbarActions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.searchMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+
+  strong {
+    color: var(--text-primary);
+  }
+}
+
+.searchHint {
+  color: $primary-color;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.badge--create {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.badge--update {
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.14);
+  border-color: rgba(167, 139, 250, 0.25);
+}
+
+.badge--delete {
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.14);
+  border-color: rgba(251, 113, 133, 0.25);
+}
+
+.badge--read {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.14);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+.badge--neutral {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.moduleCell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: capitalize;
+}
+
+.moduleIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba($primary-color, 0.12);
+  color: $primary-color;
+  border: 1px solid rgba($primary-color, 0.18);
+}
+
+.entityCell {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: $primary-color;
+  font-weight: 600;
+
+  svg {
+    opacity: 0.65;
+  }
+}
+
+.timeCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+
+  svg {
+    opacity: 0.65;
+  }
+}
+
+.timeStrongCell {
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.ipCell {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+}
+
+.deviceCell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.deviceCellIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: $primary-color;
+  opacity: 0.85;
+}
+
+.userAgentCell {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
 .payloadWrapper {
   padding: 1rem 1.5rem 1.5rem 3.5rem;
   background: rgba(var(--primary-rgb), 0.03);
@@ -400,4 +576,21 @@
   font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .tableSection {
+    padding: 0.9rem;
+  }
+
+  .toolbarActions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .entityCell,
+  .userAgentCell {
+    max-width: 100%;
+  }
 }

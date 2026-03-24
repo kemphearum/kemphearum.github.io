@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useId, useMemo, useRef } from 'react';
 import { Server, Download, Upload, Trash2, ShieldAlert } from 'lucide-react';
 import { Button, Select } from '../../../../shared/components/ui';
 
 const DatabaseActions = ({ 
-  loading, 
+  loading,
   onBackup, 
   onRestoreSelect, 
   archiveDays, 
@@ -12,6 +12,35 @@ const DatabaseActions = ({
   canBackup = true,
   canArchive = true
 }) => {
+  const restoreInputId = useId();
+  const restoreInputRef = useRef(null);
+
+  const loadingState = useMemo(() => {
+    if (typeof loading === 'boolean') {
+      return { any: loading, backup: loading, restore: loading, archive: loading };
+    }
+    return {
+      any: Boolean(loading?.any),
+      backup: Boolean(loading?.backup),
+      restore: Boolean(loading?.restore),
+      archive: Boolean(loading?.archive)
+    };
+  }, [loading]);
+
+  const triggerFilePicker = () => {
+    if (!canBackup || loadingState.any) return;
+    restoreInputRef.current?.click();
+  };
+
+  const handleRestoreFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      onRestoreSelect(file);
+    }
+    // Allow selecting the same file again after cancel/error.
+    event.target.value = '';
+  };
+
   return (
     <div className={"ui-actions-section"}>
       <div className="ui-flex-between ui-mb-medium">
@@ -34,8 +63,8 @@ const DatabaseActions = ({
           <Button 
             variant="primary" 
             onClick={onBackup} 
-            isLoading={loading}
-            disabled={!canBackup}
+            isLoading={loadingState.backup}
+            disabled={!canBackup || loadingState.any}
             title={canBackup ? "Backup Database" : "Not authorized"}
             className="ui-self-start"
             icon={Download}
@@ -57,24 +86,21 @@ const DatabaseActions = ({
           <div className="ui-flex-gap-medium">
             <input 
               type="file" 
-              id="restore-upload" 
+              id={restoreInputId}
+              ref={restoreInputRef}
               hidden 
               accept=".json" 
-              onChange={(e) => { 
-                if (e.target.files?.[0]) { 
-                  onRestoreSelect(e.target.files[0]); 
-                } 
-              }} 
+              onChange={handleRestoreFileChange}
             />
             <Button 
               variant="primary" 
-              onClick={() => document.getElementById('restore-upload').click()} 
-              isLoading={loading}
-              disabled={!canBackup}
+              onClick={triggerFilePicker}
+              isLoading={loadingState.restore}
+              disabled={!canBackup || loadingState.any}
               title={canBackup ? "Select File" : "Not authorized"}
               icon={Upload}
             >
-              Select File
+              Select JSON File
             </Button>
           </div>
         </div>
@@ -104,12 +130,13 @@ const DatabaseActions = ({
             <Button 
               variant="danger" 
               onClick={onArchiveClick} 
-              isLoading={loading}
-              disabled={!canArchive}
+              isLoading={loadingState.archive}
+              disabled={!canArchive || loadingState.any}
               title={canArchive ? "Archive Now" : "Not authorized"}
               icon={ShieldAlert}
-              className="ui-btn-icon-only"
-            />
+            >
+              Archive Now
+            </Button>
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, Clock, User, Globe, Hash, Layout, FileText, Briefcase, Users, Monitor, Smartphone, Tablet, Info, Shield, Activity } from 'lucide-react';
+import { Clock, User, Globe, Hash, Layout, FileText, Briefcase, Users, Monitor, Smartphone, Tablet, Shield, Activity } from 'lucide-react';
 import DataTable from '../../../../shared/components/ui/data-table/DataTable';
 import styles from '../AuditLogsTab.module.scss';
 
@@ -36,6 +36,15 @@ const AuditLogsTable = ({
     }
   };
 
+  const getBadgeVariant = (value) => {
+    const key = String(value || '').toLowerCase();
+    if (['created', 'create', 'success', 'enabled'].includes(key)) return 'create';
+    if (['updated', 'update', 'write', 'edited'].includes(key)) return 'update';
+    if (['deleted', 'delete', 'failure', 'disabled'].includes(key)) return 'delete';
+    if (['read'].includes(key)) return 'read';
+    return 'neutral';
+  };
+
   const formatTimestamp = (ts) => {
     if (!ts) return '-';
     const date = ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts);
@@ -55,9 +64,22 @@ const AuditLogsTable = ({
       key: 'action',
       header: 'Action',
       sortable: true,
+      render: (row) => {
+        const action = row.details?.action || row.type || 'read';
+        return (
+          <span className={`${styles.badge} ${styles[`badge--${getBadgeVariant(action)}`]}`}>
+            {action}
+          </span>
+        );
+      }
+    },
+    {
+      key: 'count',
+      header: 'Count',
+      sortable: true,
       render: (row) => (
-        <span className={`${styles.badge} ${styles[`badge--${row.details?.action || 'read'}`] || ''}`}>
-          {row.details?.action || row.type || 'read'}
+        <span className={styles.countBadge}>
+          {Number.isFinite(row.count) ? row.count : 1}
         </span>
       )
     },
@@ -66,7 +88,7 @@ const AuditLogsTable = ({
       header: 'Module',
       sortable: true,
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textTransform: 'capitalize' }}>
+        <div className={styles.moduleCell}>
           <div className={styles.moduleIcon}>{getModuleIcon(row.details?.module)}</div>
           {row.details?.module || '-'}
         </div>
@@ -76,7 +98,7 @@ const AuditLogsTable = ({
       key: 'entity',
       header: 'Target Entity',
       render: (row) => (
-        <div style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.details?.entityName || row.label}>
+        <div className={styles.entityCell} title={row.details?.entityName || row.label}>
           {row.details?.entityName || row.label || '-'}
         </div>
       )
@@ -86,8 +108,8 @@ const AuditLogsTable = ({
       header: 'Performer',
       sortable: true,
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-color)', fontWeight: 600 }}>
-          <User size={12} style={{ opacity: 0.6 }} />
+        <div className={styles.userCell}>
+          <User size={12} />
           {row.user || 'System'}
         </div>
       )
@@ -97,8 +119,8 @@ const AuditLogsTable = ({
       header: 'Time',
       sortable: true,
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
-          <Clock size={12} style={{ opacity: 0.6 }} />
+        <div className={styles.timeCell}>
+          <Clock size={12} />
           {formatTimestamp(row.time || row.timestamp)}
         </div>
       )
@@ -108,65 +130,63 @@ const AuditLogsTable = ({
   const securityColumns = [
     {
       key: 'status',
-      header: 'STATUS',
+      header: 'Status',
       render: (row) => (
-        <span className={`${styles.badge} ${row.status === 'failure' ? styles['badge--delete'] : styles['badge--create']}`}>
+        <span className={`${styles.badge} ${styles[`badge--${getBadgeVariant(row.status)}`]}`}>
           {row.status || 'success'}
         </span>
       )
     },
     {
       key: 'user',
-      header: 'USER EMAIL',
+      header: 'User Email',
       sortable: true,
       render: (row) => (
-        <div style={{ color: '#4361ee', fontWeight: 600, fontSize: '0.9rem' }}>
+        <div className={styles.userCell}>
           {row.user || row.email || 'System'}
         </div>
       )
     },
     {
       key: 'ipAddress',
-      header: 'IP ADDRESS',
+      header: 'IP Address',
       sortable: true,
       render: (row) => (
-        <div style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontFamily: 'var(--font-mono)' }}>
+        <div className={styles.ipCell}>
+          <Globe size={12} />
           {row.ipAddress || '-'}
         </div>
       )
     },
     {
       key: 'device',
-      header: 'DEVICE',
+      header: 'Device',
       sortable: true,
       render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
-          <div style={{ color: 'var(--primary-color)', opacity: 0.8 }}>
+        <div className={styles.deviceCell}>
+          <div className={styles.deviceCellIcon}>
             {getDeviceIcon(row.device)}
           </div>
-          <span style={{ fontSize: '0.9rem' }}>{row.device || 'Desktop'}</span>
+          <span>{row.device || 'Desktop'}</span>
         </div>
       )
     },
     {
       key: 'userAgent',
-      header: 'USER AGENT',
+      header: 'User Agent',
       render: (row) => (
-        <div 
-          style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)', fontSize: '0.85rem' }} 
-          title={row.userAgent}
-        >
+        <div className={styles.userAgentCell} title={row.userAgent}>
           {row.userAgent || '-'}
         </div>
       )
     },
     {
       key: 'timestamp',
-      header: 'TIMESTAMP',
+      header: 'Timestamp',
       sortable: true,
       render: (row) => (
-        <div style={{ color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 500 }}>
-          {formatTimestamp(row.timestamp || row.time || row.time)}
+        <div className={styles.timeStrongCell}>
+          {formatTimestamp(row.timestamp || row.time)}
         </div>
       )
     }

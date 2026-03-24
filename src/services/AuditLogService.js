@@ -2,7 +2,7 @@ import BaseService from './BaseService';
 import { db } from '../firebase';
 import { 
     collection, getDocs, query, orderBy, limit as firestoreLimit, 
-    collectionGroup, addDoc, serverTimestamp, where, getCountFromServer,
+    collectionGroup, addDoc, serverTimestamp, where,
     startAfter 
 } from 'firebase/firestore';
 
@@ -67,14 +67,19 @@ class AuditLogService extends BaseService {
      * @returns {Promise<{data: Array, lastDoc: any, hasMore: boolean}>}
      */
     async fetchActivityDetails({ activityDateRange, operationType, currentDateKey, lastDoc = null, limit = 50, search = '', filters = {} }) {
+        const normalizedRange = activityDateRange || 'today';
+        const safeLimit = Math.min(100, Math.max(5, Number(limit) || 50));
+        const normalizedSearch = (search || '').trim();
+
         let baseQuery;
-        if (activityDateRange === 'today') {
-            const logsRef = collection(db, 'dailyUsage', currentDateKey, 'logs');
+        if (normalizedRange === 'today') {
+            const dateKey = currentDateKey || new Date().toISOString().split('T')[0];
+            const logsRef = collection(db, 'dailyUsage', dateKey, 'logs');
             baseQuery = query(logsRef);
         } else {
             baseQuery = query(collectionGroup(db, 'logs'));
-            if (activityDateRange !== 'all') {
-                const days = activityDateRange === '7d' ? 7 : (activityDateRange === '30d' ? 30 : 365);
+            if (normalizedRange !== 'all') {
+                const days = normalizedRange === '7d' ? 7 : (normalizedRange === '30d' ? 30 : 365);
                 const cutoff = new Date();
                 cutoff.setDate(cutoff.getDate() - days);
                 const { Timestamp } = await import('firebase/firestore');
@@ -91,26 +96,26 @@ class AuditLogService extends BaseService {
         }
 
         if (filters.action && filters.action !== 'all') {
-            baseQuery = query(baseQuery, where('action', '==', filters.action));
+            baseQuery = query(baseQuery, where('details.action', '==', filters.action));
         }
 
-        if (search) {
+        if (normalizedSearch) {
             baseQuery = query(
                 baseQuery, 
-                where('label', '>=', search),
-                where('label', '<=', search + '\uf8ff')
+                where('label', '>=', normalizedSearch),
+                where('label', '<=', normalizedSearch + '\uf8ff')
             );
         }
 
-        let constraints = [orderBy('time', 'desc'), firestoreLimit(limit + 1)];
+        const constraints = [orderBy('time', 'desc'), firestoreLimit(safeLimit + 1)];
         if (lastDoc) constraints.push(startAfter(lastDoc));
 
         const q = query(baseQuery, ...constraints);
         const snap = await getDocs(q);
         
         const docs = snap.docs;
-        const hasMore = docs.length > limit;
-        const resultDocs = hasMore ? docs.slice(0, limit) : docs;
+        const hasMore = docs.length > safeLimit;
+        const resultDocs = hasMore ? docs.slice(0, safeLimit) : docs;
         
         const data = resultDocs.map(doc => ({ id: doc.id, ...doc.data() }));
         const lastVisible = resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null;
@@ -135,6 +140,8 @@ class AuditLogService extends BaseService {
      */
     async fetchSecurityAuditTrail({ userRole, trackRead, lastDoc = null, limit = 10, search = '', dateRange = 'all' }) {
         if (userRole !== 'superadmin') throw new Error('Unauthorized');
+        const safeLimit = Math.min(100, Math.max(5, Number(limit) || 10));
+        const normalizedSearch = (search || '').trim();
         
         const baseRef = collection(db, this.collectionName);
         let baseQuery = query(baseRef);
@@ -148,23 +155,23 @@ class AuditLogService extends BaseService {
             baseQuery = query(baseQuery, where('timestamp', '>=', cutoff));
         }
 
-        if (search) {
+        if (normalizedSearch) {
             baseQuery = query(
                 baseQuery,
-                where('email', '>=', search),
-                where('email', '<=', search + '\uf8ff')
+                where('email', '>=', normalizedSearch),
+                where('email', '<=', normalizedSearch + '\uf8ff')
             );
         }
 
-        let queryConstraints = [orderBy('timestamp', 'desc'), firestoreLimit(limit + 1)];
+        const queryConstraints = [orderBy('timestamp', 'desc'), firestoreLimit(safeLimit + 1)];
         if (lastDoc) queryConstraints.push(startAfter(lastDoc));
 
         const q = query(baseQuery, ...queryConstraints);
         const querySnapshot = await getDocs(q);
         
         const docs = querySnapshot.docs;
-        const hasMore = docs.length > limit;
-        const resultDocs = hasMore ? docs.slice(0, limit) : docs;
+        const hasMore = docs.length > safeLimit;
+        const resultDocs = hasMore ? docs.slice(0, safeLimit) : docs;
         
         const data = resultDocs.map(doc => ({ id: doc.id, ...doc.data() }));
         const lastVisible = resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null;

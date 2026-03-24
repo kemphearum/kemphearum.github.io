@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter, Download, X, Clock, Layers, MousePointer2 } from 'lucide-react';
+import { Search, Download, RotateCcw, Clock, Layers, MousePointer2 } from 'lucide-react';
 import { Input } from '../../../../shared/components/ui';
 import FormSelect from '../../components/FormSelect';
 import styles from '../AuditLogsTab.module.scss';
@@ -12,9 +12,19 @@ const AuditLogsToolbar = ({
   filters, 
   onFilterChange,
   onExport,
+  onReset,
   totalItems,
+  isExportDisabled = false,
+  searchHint = '',
   placeholder = "Search by user, IP or entity..."
 }) => {
+  const hasFilters = Boolean(
+    searchQuery
+    || (dateRange && dateRange !== 'today')
+    || (filters?.module && filters.module !== 'all')
+    || (filters?.action && filters.action !== 'all')
+  );
+
   return (
     <div className={styles.toolbar}>
       <div className={styles.filters}>
@@ -79,28 +89,35 @@ const AuditLogsToolbar = ({
           </>
         )}
 
-        <button 
-          onClick={onExport}
-          className="ui-button ui-primary ui-sm"
-          style={{ 
-            marginLeft: 'auto', 
-            gap: '0.5rem', 
-            borderRadius: '10px',
-            padding: '0.5rem 1.25rem',
-            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)'
-          }}
-        >
-          <Download size={16} />
-          <span>Export</span>
-        </button>
+        <div className={styles.toolbarActions}>
+          <button
+            type="button"
+            onClick={onReset}
+            className="ui-button ui-button--ghost ui-button--sm"
+            disabled={!hasFilters}
+          >
+            <RotateCcw size={14} />
+            Reset
+          </button>
+          <button 
+            type="button"
+            onClick={onExport}
+            className="ui-button ui-button--primary ui-button--sm"
+            disabled={isExportDisabled}
+          >
+            <Download size={14} />
+            Export
+          </button>
+        </div>
       </div>
       
-      {searchQuery && (
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          Found {totalItems} matching audit records
-        </div>
-      )}
+      <div className={styles.searchMeta}>
+        <span>
+          Showing <strong>{totalItems || 0}</strong> record{totalItems === 1 ? '' : 's'}
+          {searchQuery ? ' in this view' : ''}.
+        </span>
+        {searchHint && <span className={styles.searchHint}>{searchHint}</span>}
+      </div>
     </div>
   );
 };

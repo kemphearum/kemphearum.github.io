@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Activity, Shield, RefreshCw } from 'lucide-react';
 import { EmptyState } from '@/shared/components/ui';
@@ -29,6 +29,8 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     module: 'all',
     action: 'all'
   });
+  const normalizedActivitySearch = debouncedActivitySearch.trim().toLowerCase();
+  const normalizedSecuritySearch = debouncedSecuritySearch.trim().toLowerCase();
 
   // Reusable Pagination Hook for Activity Logs
   const activityPagination = useCursorPagination(5, [debouncedActivitySearch, activityDateRange, activityFilters]);
@@ -66,18 +68,17 @@ const AuditLogsTab = ({ userRole, showToast }) => {
   });
 
   // 2. Fetch Security Audit Logs
-  const { data: securityLogsResult = { data: [], lastDoc: null, hasMore: false }, isLoading: securityLoading, refetch: refetchSecurity } = useQuery({
+  const { data: securityLogsResult = { data: [], lastDoc: null, hasMore: false }, isLoading: securityLoading, isFetching: securityFetching, refetch: refetchSecurity } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['auditLogs', 'security', userRole, debouncedSecuritySearch, securityDateRange, securityPagination.cursor, securityPagination.limit],
+    queryKey: ['auditLogs', 'security', userRole, securityDateRange, securityPagination.cursor, securityPagination.limit],
     queryFn: async () => {
       const requestCursor = securityPagination.cursor;
       if (userRole !== 'superadmin') return { data: [], lastDoc: null, hasMore: false };
       const result = await BaseService.safe(() => AuditLogService.fetchSecurityAuditTrail({
         userRole,
         trackRead,
-        search: debouncedSecuritySearch,
         dateRange: securityDateRange,
         lastDoc: requestCursor,
         limit: securityPagination.limit
@@ -97,11 +98,11 @@ const AuditLogsTab = ({ userRole, showToast }) => {
   const securityLogs = securityLogsResult.data;
 
   // 3. Fetch Detailed Activity Logs (Writes & Deletes for main table)
-  const { data: activityLogsResult = { data: [], lastDoc: null, hasMore: false }, isLoading: activityLoading, refetch: refetchActivity } = useQuery({
+  const { data: activityLogsResult = { data: [], lastDoc: null, hasMore: false }, isLoading: activityLoading, isFetching: activityFetching, refetch: refetchActivity } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['auditLogs', 'activity', activityDateRange, activityPagination.cursor, activityPagination.limit, debouncedActivitySearch, activityFilters],
+    queryKey: ['auditLogs', 'activity', activityDateRange, activityPagination.cursor, activityPagination.limit, activityFilters],
     queryFn: async () => {
       const requestCursor = activityPagination.cursor;
       const result = await BaseService.safe(() => AuditLogService.fetchActivityDetails({
@@ -110,7 +111,6 @@ const AuditLogsTab = ({ userRole, showToast }) => {
         currentDateKey,
         lastDoc: requestCursor,
         limit: activityPagination.limit,
-        search: debouncedActivitySearch,
         filters: activityFilters
       }));
 
@@ -131,7 +131,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['auditLogs', 'activity', activityDateRange, activityDetailType],
+    queryKey: ['auditLogs', 'activity', activityDateRange, activityDetailType, currentDateKey],
     queryFn: async () => {
       const result = await BaseService.safe(() => AuditLogService.fetchActivityDetails({
         activityDateRange,
@@ -151,19 +151,76 @@ const AuditLogsTab = ({ userRole, showToast }) => {
 
   const detailLogs = detailLogsResult.data;
 
-  // Since we're doing server-side pagination/filtering, 
-  // we use the logs directly from the query.
-  const filteredActivityLogs = activityLogs;
-  const filteredSecurityLogs = securityLogs;
+  const matchesSearch = (value, searchTerm) =>
+    String(value || '').toLowerCase().includes(searchTerm);
+
+  const filteredActivityLogs = useMemo(() => {
+    if (!normalizedActivitySearch) return activityLogs;
+
+    return activityLogs.filter((log) => (
+      matchesSearch(log.label, normalizedActivitySearch)
+      || matchesSearch(log.user, normalizedActivitySearch)
+      || matchesSearch(log.details?.entityName, normalizedActivitySearch)
+      || matchesSearch(log.details?.path, normalizedActivitySearch)
+      || matchesSearch(log.details?.module, normalizedActivitySearch)
+      || matchesSearch(log.details?.action, normalizedActivitySearch)
+    ));
+  }, [activityLogs, normalizedActivitySearch]);
+
+  const filteredSecurityLogs = useMemo(() => {
+    if (!normalizedSecuritySearch) return securityLogs;
+
+    return securityLogs.filter((log) => (
+      matchesSearch(log.user, normalizedSecuritySearch)
+      || matchesSearch(log.email, normalizedSecuritySearch)
+      || matchesSearch(log.ipAddress, normalizedSecuritySearch)
+      || matchesSearch(log.device, normalizedSecuritySearch)
+      || matchesSearch(log.userAgent, normalizedSecuritySearch)
+      || matchesSearch(log.country, normalizedSecuritySearch)
+      || matchesSearch(log.city, normalizedSecuritySearch)
+    ));
+  }, [securityLogs, normalizedSecuritySearch]);
+
+  const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
   const handleExport = (type) => {
     const targetLogs = type === 'security' ? filteredSecurityLogs : filteredActivityLogs;
+    if (!targetLogs.length) {
+      showToast('No logs to export for this view.', 'error');
+      return;
+    }
+
+    const header = type === 'security'
+      ? ['Status', 'Email', 'IP Address', 'Device', 'Location', 'Timestamp', 'Reason']
+      : ['Action', 'Module', 'Entity', 'User', 'Count', 'Timestamp'];
+    const rows = targetLogs.map((log) => {
+      const time = log.time?.seconds || log.timestamp?.seconds
+        ? new Date((log.time?.seconds || log.timestamp?.seconds) * 1000).toLocaleString()
+        : '-';
+      if (type === 'security') {
+        return [
+          escapeCsv(log.status || 'success'),
+          escapeCsv(log.user || log.email || 'System'),
+          escapeCsv(log.ipAddress || '-'),
+          escapeCsv(log.device || 'Desktop'),
+          escapeCsv([log.city, log.country].filter(Boolean).join(', ') || 'Unknown'),
+          escapeCsv(time),
+          escapeCsv(log.reason || '')
+        ].join(',');
+      }
+      return [
+        escapeCsv(log.details?.action || log.type || 'read'),
+        escapeCsv(log.details?.module || '-'),
+        escapeCsv(log.details?.entityName || log.label || '-'),
+        escapeCsv(log.user || 'System'),
+        escapeCsv(Number.isFinite(log.count) ? log.count : 1),
+        escapeCsv(time)
+      ].join(',');
+    });
+
     const csvContent = "data:text/csv;charset=utf-8,"
-      + "Email,IP Address,Device,User Agent,Timestamp\n"
-      + targetLogs.map(log => {
-          const time = log.timestamp?.seconds ? new Date(log.timestamp.seconds * 1000).toLocaleString() : '-';
-          return `"${log.user || log.email || 'System'}","${log.ipAddress || ''}","${log.device || ''}","${log.userAgent || ''}","${time}"`;
-      }).join("\n");
+      + `${header.join(',')}\n`
+      + rows.join("\n");
     
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -172,8 +229,21 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Exported audit logs successfully');
+    showToast('Exported audit logs successfully.');
   };
+
+  const resetActivityView = useCallback(() => {
+    setActivitySearch('');
+    setActivityDateRange('today');
+    setActivityFilters({ module: 'all', action: 'all' });
+    activityPagination.reset();
+  }, [activityPagination]);
+
+  const resetSecurityView = useCallback(() => {
+    setSecuritySearch('');
+    setSecurityDateRange('today');
+    securityPagination.reset();
+  }, [securityPagination]);
 
   const handleRefresh = useCallback(() => {
     activityPagination.reset();
@@ -198,15 +268,16 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     <div className={styles.container}>
       <SectionHeader
         title="Audit Intelligence Dashboard"
-        description="Comprehensive history of administrative actions, authentication events, and system security."
+        description="Track admin activity, auth events, and operational risk signals in one place."
         icon={Activity}
         rightElement={
           <button 
+            type="button"
             onClick={handleRefresh} 
-            className="ui-button ui-ghost ui-square"
+            className="ui-button ui-button--ghost ui-btn-icon-only"
             title="Refresh All Data"
           >
-            <RefreshCw size={18} className={(securityLoading || activityLoading) ? 'ui-spin' : ''} />
+            <RefreshCw size={18} className={(securityFetching || activityFetching) ? 'ui-spin' : ''} />
           </button>
         }
       />
@@ -223,80 +294,94 @@ const AuditLogsTab = ({ userRole, showToast }) => {
       />
 
       {/* Activity Logs Section */}
-      <div className={styles.tableHeaderSection}>
-        <div className={styles.tableTitleGroup}>
-          <Activity size={18} className={styles.accentIcon} />
-          <h3 className={styles.tableTitle}>Activity History</h3>
+      <section className={styles.tableSection}>
+        <div className={styles.tableHeaderSection}>
+          <div className={styles.tableTitleGroup}>
+            <Activity size={18} className={styles.accentIcon} />
+            <h3 className={styles.tableTitle}>Activity History</h3>
+          </div>
+          <p className={styles.tableSubtitle}>Data mutations and admin-level changes.</p>
         </div>
-        <p className={styles.tableSubtitle}>Tracking data mutations and administrative changes.</p>
-      </div>
       
-      <AuditLogsToolbar
-        searchQuery={activitySearch}
-        onSearchChange={setActivitySearch}
-        dateRange={activityDateRange}
-        onDateRangeChange={setActivityDateRange}
-        filters={activityFilters}
-        onFilterChange={(k, v) => setActivityFilters(prev => ({ ...prev, [k]: v }))}
-        onExport={() => handleExport('activity')}
-        placeholder="Search actions or users..."
-      />
+        <AuditLogsToolbar
+          searchQuery={activitySearch}
+          onSearchChange={setActivitySearch}
+          dateRange={activityDateRange}
+          onDateRangeChange={setActivityDateRange}
+          filters={activityFilters}
+          onFilterChange={(k, v) => setActivityFilters(prev => ({ ...prev, [k]: v }))}
+          onExport={() => handleExport('activity')}
+          onReset={resetActivityView}
+          totalItems={filteredActivityLogs.length}
+          isExportDisabled={!filteredActivityLogs.length}
+          searchHint={normalizedActivitySearch ? `Search: "${debouncedActivitySearch}"` : ''}
+          placeholder="Search labels, users, module, action..."
+        />
 
-      <AuditLogsTable
-        data={filteredActivityLogs}
-        loading={activityLoading}
-        view="activity"
-        page={activityPagination.page}
-        pageSize={activityPagination.limit}
-        onRowClick={setSelectedLog}
-        hasMore={activityLogsResult.hasMore}
-        isFirstPage={activityPagination.isFirstPage}
-        onNext={() => activityPagination.fetchNext(activityLogsResult.lastDoc)}
-        onPrevious={activityPagination.fetchPrevious}
-        onPageChange={(page, size) => {
-          if (size !== activityPagination.limit) {
-            activityPagination.handlePageSizeChange(size);
-          }
-        }}
-        paginationVariant="cursor"
-      />
+        <AuditLogsTable
+          data={filteredActivityLogs}
+          loading={activityLoading}
+          view="activity"
+          page={activityPagination.page}
+          pageSize={activityPagination.limit}
+          onRowClick={setSelectedLog}
+          hasMore={activityLogsResult.hasMore}
+          isFirstPage={activityPagination.isFirstPage}
+          onNext={() => activityPagination.fetchNext(activityLogsResult.lastDoc)}
+          onPrevious={activityPagination.fetchPrevious}
+          totalItems={filteredActivityLogs.length}
+          onPageChange={(page, size) => {
+            if (size !== activityPagination.limit) {
+              activityPagination.handlePageSizeChange(size);
+            }
+          }}
+          paginationVariant="cursor"
+        />
+      </section>
 
       {/* Login & Security Audit Table (Added as persistent second table) */}
-      <div className={styles.tableHeaderSection} style={{ marginTop: '1rem' }}>
-        <div className={styles.tableTitleGroup}>
-          <Shield size={18} style={{ color: '#38bdf8' }} />
-          <h3 className={styles.tableTitle}>Login Audit Trail</h3>
+      <section className={styles.tableSection}>
+        <div className={styles.tableHeaderSection}>
+          <div className={styles.tableTitleGroup}>
+            <Shield size={18} className={styles.securityIcon} />
+            <h3 className={styles.tableTitle}>Login Audit Trail</h3>
+          </div>
+          <p className={styles.tableSubtitle}>Authentication attempts, origins, and device profile.</p>
         </div>
-        <p className={styles.tableSubtitle}>Monitoring system access, IP origins, and device authentication.</p>
-      </div>
 
-      <AuditLogsToolbar
-        searchQuery={securitySearch}
-        onSearchChange={setSecuritySearch}
-        dateRange={securityDateRange}
-        onDateRangeChange={setSecurityDateRange}
-        onExport={() => handleExport('security')}
-        placeholder="Search email or IP address..."
-      />
+        <AuditLogsToolbar
+          searchQuery={securitySearch}
+          onSearchChange={setSecuritySearch}
+          dateRange={securityDateRange}
+          onDateRangeChange={setSecurityDateRange}
+          onExport={() => handleExport('security')}
+          onReset={resetSecurityView}
+          totalItems={filteredSecurityLogs.length}
+          isExportDisabled={!filteredSecurityLogs.length}
+          searchHint={normalizedSecuritySearch ? `Search: "${debouncedSecuritySearch}"` : ''}
+          placeholder="Search email, IP, device, country..."
+        />
 
-      <AuditLogsTable
-        data={filteredSecurityLogs}
-        loading={securityLoading}
-        view="security"
-        page={securityPagination.page}
-        pageSize={securityPagination.limit}
-        onRowClick={setSelectedLog}
-        hasMore={securityLogsResult.hasMore}
-        isFirstPage={securityPagination.isFirstPage}
-        onNext={() => securityPagination.fetchNext(securityLogsResult.lastDoc)}
-        onPrevious={securityPagination.fetchPrevious}
-        onPageChange={(page, size) => {
-          if (size !== securityPagination.limit) {
-            securityPagination.handlePageSizeChange(size);
-          }
-        }}
-        paginationVariant="cursor"
-      />
+        <AuditLogsTable
+          data={filteredSecurityLogs}
+          loading={securityLoading}
+          view="security"
+          page={securityPagination.page}
+          pageSize={securityPagination.limit}
+          onRowClick={setSelectedLog}
+          hasMore={securityLogsResult.hasMore}
+          isFirstPage={securityPagination.isFirstPage}
+          onNext={() => securityPagination.fetchNext(securityLogsResult.lastDoc)}
+          onPrevious={securityPagination.fetchPrevious}
+          totalItems={filteredSecurityLogs.length}
+          onPageChange={(page, size) => {
+            if (size !== securityPagination.limit) {
+              securityPagination.handlePageSizeChange(size);
+            }
+          }}
+          paginationVariant="cursor"
+        />
+      </section>
 
       {/* Dialogs */}
       <AuditLogDetailsDialog

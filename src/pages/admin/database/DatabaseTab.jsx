@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -21,6 +21,13 @@ import QuotaResilienceBanner from '../components/QuotaResilienceBanner';
 
 // Styles
 
+const DEFAULT_AUDIT_SETTINGS = {
+    logAll: true,
+    logReads: true,
+    logWrites: true,
+    logDeletes: true,
+    logAnonymous: false
+};
 
 const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userEmail }) => {
     const { loading: auditLoading, execute: executeAudit } = useAsyncAction({
@@ -43,7 +50,6 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         showToast: false
     });
 
-    const isAnyLoading = auditLoading || backupLoading || archiveLoading || restoreLoading;
     const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
     const [archiveDays, setArchiveDays] = useState(30);
     const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
@@ -51,14 +57,15 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     const [restoreProgress, setRestoreProgress] = useState(null);
     const [quotaExceeded, setQuotaExceeded] = useState(false);
     const [healthFailures, setHealthFailures] = useState({});
+    const lastHealthErrorKeyRef = useRef('');
     
     const { trackRead, trackWrite, trackDelete } = useActivity();
     const queryClient = useQueryClient();
 
     // Queries
-    const healthKeys = DatabaseService.HEALTH_COLLECTIONS;
-    const defaults = Object.fromEntries(healthKeys.map((key) => [key, 0]));
-    const { data: dbHealth = { ...defaults }, isLoading: dbHealthLoading, refetch: refetchDbHealth } = useQuery({
+    const healthKeys = useMemo(() => DatabaseService.HEALTH_COLLECTIONS, []);
+    const defaults = useMemo(() => Object.fromEntries(healthKeys.map((key) => [key, 0])), [healthKeys]);
+    const { data: dbHealth = { ...defaults }, isLoading: dbHealthLoading, isFetching: dbHealthFetching, refetch: refetchDbHealth } = useQuery({
         queryKey: ['database', 'health'],
         queryFn: async () => {
             setQuotaExceeded(false);
@@ -66,6 +73,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
 
             try {
                 const data = await DatabaseService.getHealth(trackRead);
+                lastHealthErrorKeyRef.current = '';
                 return { ...defaults, ...data, lastUpdated: new Date() };
             } catch (error) {
                 if (error?.code === 'DATABASE_HEALTH_PARTIAL_FAILURE') {
@@ -78,10 +86,14 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                         setQuotaExceeded(true);
                     }
 
-                    showToast(
-                        `Could not load health metrics for: ${Object.keys(failures).join(', ')}`,
-                        'error'
-                    );
+                    const failureKey = Object.keys(failures).sort().join('|');
+                    if (lastHealthErrorKeyRef.current !== failureKey) {
+                        showToast(
+                            `Could not load health metrics for: ${Object.keys(failures).join(', ')}`,
+                            'error'
+                        );
+                        lastHealthErrorKeyRef.current = failureKey;
+                    }
 
                     return { ...defaults, ...partialCounts, lastUpdated: new Date() };
                 }
@@ -89,7 +101,11 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 if (error?.code === 'resource-exhausted' || `${error?.message || ''}`.toLowerCase().includes('quota')) {
                     setQuotaExceeded(true);
                 } else {
-                    showToast(error?.message || 'Failed to load database health.', 'error');
+                    const fallbackKey = error?.code || error?.message || 'database-health-failure';
+                    if (lastHealthErrorKeyRef.current !== fallbackKey) {
+                        showToast(error?.message || 'Failed to load database health.', 'error');
+                        lastHealthErrorKeyRef.current = fallbackKey;
+                    }
                 }
 
                 return { ...defaults, lastUpdated: new Date() };
@@ -99,15 +115,15 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         refetchOnWindowFocus: false
     });
 
-    const { data: auditSettings = { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false } } = useQuery({
+    const { data: auditSettings = DEFAULT_AUDIT_SETTINGS } = useQuery({
         queryKey: ['database', 'auditSettings'],
         queryFn: async () => {
             const result = await BaseService.safe(() => DatabaseService.getAuditSettings());
             if (result.error) {
                 showToast(result.error, 'error');
-                return { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false };
+                return DEFAULT_AUDIT_SETTINGS;
             }
-            return result.data;
+            return { ...DEFAULT_AUDIT_SETTINGS, ...result.data };
         },
         refetchOnWindowFocus: false
     });
@@ -224,6 +240,42 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         });
     };
 
+    const handleRestoreSelect = useCallback((file) => {
+        if (!file) return;
+
+        const name = String(file.name || '').toLowerCase();
+        const mime = String(file.type || '').toLowerCase();
+        const isJsonFile = name.endsWith('.json') || mime.includes('json');
+        const maxSizeBytes = 25 * 1024 * 1024;
+
+        if (!isJsonFile) {
+            showToast('Please choose a valid JSON backup file.', 'error');
+            return;
+        }
+        if (!file.size) {
+            showToast('Selected file is empty.', 'error');
+            return;
+        }
+        if (file.size > maxSizeBytes) {
+            showToast('Backup file is too large. Please use a file smaller than 25 MB.', 'error');
+            return;
+        }
+
+        setRestoreFile(file);
+        setShowRestoreConfirm(true);
+    }, [showToast]);
+
+    const actionLoadingState = useMemo(() => ({
+        any: backupLoading || archiveLoading || restoreLoading,
+        backup: backupLoading,
+        restore: restoreLoading,
+        archive: archiveLoading
+    }), [backupLoading, archiveLoading, restoreLoading]);
+
+    const handleRefreshHealth = useCallback(() => {
+        refetchDbHealth();
+    }, [refetchDbHealth]);
+
     // Adjusted totalDocs calculation to be safer
     const calculatedTotal = healthKeys.reduce((sum, key) => sum + (Number(dbHealth[key]) || 0), 0);
 
@@ -248,16 +300,16 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
 
             <SectionHeader
                 title="Database Management"
-                description="Monitor Firebase health and manage your data backups."
+                description="Track collection health, backup and restore safely, and tune audit retention."
                 icon={RefreshCw}
                 rightElement={
                     <Button 
                         variant="ghost" 
-                        onClick={() => refetchDbHealth()}
+                        onClick={handleRefreshHealth}
                         title="Refresh Health"
                         className="ui-btn-icon-only"
                     >
-                        <RefreshCw size={18} className={dbHealthLoading ? "ui-spin" : ''} />
+                        <RefreshCw size={18} className={dbHealthFetching ? "ui-spin" : ''} />
                     </Button>
                 }
             />
@@ -266,14 +318,15 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 dbHealth={dbHealth}
                 healthFailures={healthFailures}
                 loading={dbHealthLoading}
+                isFetching={dbHealthFetching}
                 totalDocs={calculatedTotal}
                 setActiveTab={setActiveTab}
             />
 
             <DatabaseActions 
-                loading={isAnyLoading}
+                loading={actionLoadingState}
                 onBackup={handleBackupDatabase}
-                onRestoreSelect={(file) => { setRestoreFile(file); setShowRestoreConfirm(true); }}
+                onRestoreSelect={handleRestoreSelect}
                 archiveDays={archiveDays}
                 onArchiveDaysChange={setArchiveDays}
                 onArchiveClick={() => setShowArchiveConfirm(true)}
@@ -285,6 +338,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 auditSettings={auditSettings}
                 onUpdateSetting={handleUpdateAuditSetting}
                 canEdit={canEditAudit}
+                loading={auditLoading}
             />
 
             {/* Dialogs */}

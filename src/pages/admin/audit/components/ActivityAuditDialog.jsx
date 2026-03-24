@@ -13,6 +13,10 @@ import styles from '../AuditLogsTab.module.scss';
 
 const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const handleOpenChange = (nextOpen) => {
+    if (!nextOpen) setExpandedRows(new Set());
+    onOpenChange(nextOpen);
+  };
 
   const toggleRow = (id) => {
     const newExpanded = new Set(expandedRows);
@@ -67,7 +71,7 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
 
   const highlightJSON = (data) => {
     if (!data || Object.keys(data).length === 0) {
-      return <div className={styles.payloadEmpty}>No metadata recorded for this event.</div>;
+      return null;
     }
     
     const jsonStr = JSON.stringify(data, null, 2);
@@ -91,7 +95,7 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
         return `<span class="${cls}">${match}</span>`;
       });
 
-    return <div dangerouslySetInnerHTML={{ __html: highlighted }} />;
+    return highlighted;
   };
 
   const info = getHeaderInfo();
@@ -100,7 +104,7 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
   if (!open) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent maxWidth="900px">
         <DialogHeader>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -180,7 +184,7 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
                             </div>
                           </td>
                           <td className={styles.activityCell} style={{ textAlign: 'center' }}>
-                            <span className={styles.countBadge}>1</span>
+                            <span className={styles.countBadge}>{Number.isFinite(log.count) ? log.count : 1}</span>
                           </td>
                           <td className={styles.activityCell}>
                             <div className={styles.originator}>
@@ -197,9 +201,13 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
                             <td colSpan={5} style={{ padding: 0 }}>
                               <div className={styles.payloadDisplay}>
                                 <header>Event Payload</header>
-                                <pre>
-                                  {highlightJSON(log.details || log.data || {})}
-                                </pre>
+                                {(() => {
+                                  const payloadHtml = highlightJSON(log.details || log.data || {});
+                                  if (!payloadHtml) {
+                                    return <div className={styles.payloadEmpty}>No metadata recorded for this event.</div>;
+                                  }
+                                  return <pre dangerouslySetInnerHTML={{ __html: payloadHtml }} />;
+                                })()}
                               </div>
                             </td>
                           </tr>
@@ -220,10 +228,10 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
           </div>
           <button 
             className="ui-button ui-ghost" 
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
             style={{ fontSize: '0.85rem' }}
           >
-            Close Pipeline
+            Close
           </button>
         </DialogFooter>
       </DialogContent>
