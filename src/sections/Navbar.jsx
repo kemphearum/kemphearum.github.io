@@ -8,10 +8,12 @@ import { useTheme } from '../context/ThemeContext';
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [activeSection, setActiveSection] = useState('home');
     const location = useLocation();
     const isHome = location.pathname === '/';
     const currentHash = (location.hash || '').replace('#', '');
     const { theme, toggleTheme } = useTheme();
+    const sectionIds = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
 
     const { data: globalConfig } = useQuery({
     staleTime: 60000,
@@ -33,6 +35,40 @@ const Navbar = () => {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    useEffect(() => {
+        if (!isHome) return undefined;
+
+        const detectActiveSection = () => {
+            const headerOffset = 80;
+            const viewportAnchor = window.innerHeight * 0.3;
+            let next = 'home';
+
+            for (const id of sectionIds) {
+                const element = document.getElementById(id);
+                if (!element) continue;
+                const rect = element.getBoundingClientRect();
+                if (rect.top - headerOffset <= viewportAnchor && rect.bottom > headerOffset) {
+                    next = id;
+                }
+            }
+
+            setActiveSection((prev) => (prev === next ? prev : next));
+        };
+
+        detectActiveSection();
+        window.addEventListener('scroll', detectActiveSection, { passive: true });
+        window.addEventListener('resize', detectActiveSection);
+        return () => {
+            window.removeEventListener('scroll', detectActiveSection);
+            window.removeEventListener('resize', detectActiveSection);
+        };
+    }, [isHome]);
+
+    useEffect(() => {
+        if (!isHome) return;
+        if (currentHash) setActiveSection(currentHash);
+    }, [isHome, currentHash]);
 
     // Close mobile menu on resize
     useEffect(() => {
@@ -81,22 +117,35 @@ const Navbar = () => {
     const navItems = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
     const isItemActive = (item) => {
         if (item === 'blog') {
+            if (isHome) return activeSection === 'blog';
             return location.pathname === '/blog' || location.pathname.startsWith('/blog/');
         }
         if (item === 'projects') {
+            if (isHome) return activeSection === 'projects';
             return location.pathname === '/projects' || location.pathname.startsWith('/projects/');
         }
         if (location.pathname !== '/') {
             return currentHash === item;
         }
-        return currentHash ? currentHash === item : item === 'home';
+        return activeSection === item;
     };
 
     return (
         <nav className={`${styles.navbar} ${scrolled ? styles.scrolled : ''}`}>
             <div className={styles.container}>
                 <div className={styles.logo}>
-                    <Link to="/" onClick={(e) => { if (isHome) { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); } }}>
+                    <Link
+                        to="/"
+                        onClick={(e) => {
+                            setIsOpen(false);
+                            if (isHome) {
+                                e.preventDefault();
+                                setActiveSection('home');
+                                window.history.replaceState(null, '', '/');
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                        }}
+                    >
                         {settings.logoHighlight}<span className={styles.highlight}>{settings.logoText}</span>
                     </Link>
                 </div>

@@ -118,7 +118,11 @@ const Hero = () => {
                                     e.preventDefault();
                                     const el = document.querySelector('#contact');
                                     if (el) {
-                                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        const headerOffset = 70;
+                                        const elementPosition = el.getBoundingClientRect().top;
+                                        const offsetPosition = elementPosition + window.scrollY - headerOffset;
+                                        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                                        window.history.replaceState(null, '', '/#contact');
                                     }
                                 }}>
                                     Get in Touch
