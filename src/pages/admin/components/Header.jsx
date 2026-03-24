@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import styles from './Header.module.scss';
 import { LogOut, Sun, Moon, ExternalLink, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -14,9 +14,35 @@ const Header = ({
     onSettingsClick,
     onProfileClick,
     currentRoute,
-    isSettingsAllowed
+    isSettingsAllowed,
+    onHeightChange
 }) => {
     const navigate = useNavigate();
+    const headerRef = useRef(null);
+
+    useEffect(() => {
+        if (!onHeightChange || !headerRef.current) return;
+
+        const updateHeight = () => {
+            if (!headerRef.current) return;
+            const nextHeight = headerRef.current.getBoundingClientRect().height;
+            onHeightChange(nextHeight);
+        };
+
+        updateHeight();
+
+        let resizeObserver = null;
+        if (typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(updateHeight);
+            resizeObserver.observe(headerRef.current);
+        }
+
+        window.addEventListener('resize', updateHeight);
+        return () => {
+            if (resizeObserver) resizeObserver.disconnect();
+            window.removeEventListener('resize', updateHeight);
+        };
+    }, [onHeightChange]);
 
     // Recreate Settings & Profile icons since they are extracted from Admin
     const icons = {
@@ -33,7 +59,7 @@ const Header = ({
     };
 
     return (
-        <header className={styles.header}>
+        <header ref={headerRef} className={styles.header}>
             <div className={styles.left}>
                 <button className={styles.menuToggle} onClick={onToggleSidebar}>
                     <span /><span /><span />

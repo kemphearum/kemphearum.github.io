@@ -7,6 +7,7 @@ const AuditLogsTable = ({
   data, 
   loading, 
   page, 
+  pageSize = 5,
   onRowClick, 
   view = 'activity', 
   totalItems,
@@ -177,7 +178,7 @@ const AuditLogsTable = ({
     <DataTable
       data={data}
       columns={columns}
-      pageSize={15}
+      pageSize={pageSize}
       page={page}
       loading={loading}
       onRowClick={onRowClick}

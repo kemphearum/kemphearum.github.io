@@ -55,29 +55,31 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   const { trackRead, trackWrite } = useActivity();
 
   // cursor pagination hook
-  const pagination = useCursorPagination(10, [searchQuery]);
+  const pagination = useCursorPagination(5, [searchQuery]);
 
   // Queries
-  const { data: usersResult = { data: [], lastDoc: null, hasMore: false }, isLoading: usersLoading, isFetching: usersFetching } = useQuery({
+  const { data: usersResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading: usersLoading, isFetching: usersFetching } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     queryKey: ['users', searchQuery, pagination.cursor, pagination.limit],
     queryFn: async () => {
+      const requestCursor = pagination.cursor;
       const result = await BaseService.safe(() => UserService.fetchUsers({
         userRole,
         trackRead,
-        lastDoc: pagination.cursor,
+        lastDoc: requestCursor,
         limit: pagination.limit,
-        search: searchQuery
+        search: searchQuery,
+        includeTotal: true
       }));
 
       if (result.error) {
         showToast(result.error, 'error');
-        return { data: [], lastDoc: null, hasMore: false };
+        return { data: [], lastDoc: null, hasMore: false, totalCount: null };
       }
 
-      pagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+      pagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
       return result.data;
     },
     enabled: userRole === 'superadmin'
@@ -265,7 +267,8 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
         loading={usersLoading || usersFetching}
         page={pagination.page}
         pageSize={pagination.limit}
-        hasMore={pagination.hasMore}
+        totalItems={usersResult.totalCount}
+        hasMore={usersResult.hasMore}
         isFirstPage={pagination.isFirstPage}
         onNext={() => pagination.fetchNext(usersResult.lastDoc)}
         onPrevious={pagination.fetchPrevious}

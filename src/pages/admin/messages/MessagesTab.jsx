@@ -69,23 +69,25 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirm', type: 'danger' });
     const { trackWrite, trackDelete } = useActivity();
 
-    const pagination = useCursorPagination(10, [debouncedSearch]);
+    const pagination = useCursorPagination(5, [debouncedSearch]);
 
-    const { data: messagesResult = { data: [], lastDoc: null, hasMore: false }, isLoading, isFetching } = useQuery({
+    const { data: messagesResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading, isFetching } = useQuery({
         queryKey: ['messages', debouncedSearch, pagination.cursor, pagination.limit],
         queryFn: async () => {
+            const requestCursor = pagination.cursor;
             const result = await BaseService.safe(() => MessageService.fetchMessagesPaginated({
-                lastDoc: pagination.cursor,
+                lastDoc: requestCursor,
                 limit: pagination.limit,
-                search: debouncedSearch
+                search: debouncedSearch,
+                includeTotal: true
             }));
 
             if (result.error) {
                 showToast(result.error, 'error');
-                return { data: [], lastDoc: null, hasMore: false };
+                return { data: [], lastDoc: null, hasMore: false, totalCount: null };
             }
 
-            pagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+            pagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
             return result.data;
         },
         staleTime: 60000,
@@ -367,8 +369,9 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                 onDelete={handleDeleteMessage}
                 pageSize={pagination.limit}
                 page={pagination.page}
+                totalItems={messagesResult.totalCount}
                 loading={isLoading || isFetching}
-                hasMore={pagination.hasMore}
+                hasMore={messagesResult.hasMore}
                 isFirstPage={pagination.isFirstPage}
                 onNext={() => pagination.fetchNext(messagesResult.lastDoc)}
                 onPrevious={pagination.fetchPrevious}

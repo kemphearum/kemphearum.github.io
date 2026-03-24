@@ -23,7 +23,8 @@ const UsersTable = ({
   onClearSearch,
   onCreate,
   page,
-  pageSize = 10,
+  pageSize = 5,
+  totalItems,
   hasMore,
   isFirstPage,
   onNext,
@@ -203,6 +204,7 @@ const UsersTable = ({
       paginationVariant={paginationVariant}
       page={page}
       pageSize={pageSize}
+      totalItems={totalItems}
       hasMore={hasMore}
       isFirstPage={isFirstPage}
       onNext={onNext}

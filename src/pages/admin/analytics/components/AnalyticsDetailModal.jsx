@@ -22,7 +22,7 @@ const AnalyticsDetailModal = ({
     quotaExceeded = false,
     page = 1,
     onPageChange,
-    pageSize = 50,
+    pageSize = 5,
     enablePagination = false
 }) => {
     if (!analyticsDetail) return null;

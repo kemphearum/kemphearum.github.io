@@ -32,7 +32,7 @@ const Projects = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Pagination definitions
-    const itemsPerPage = 6;
+    const itemsPerPage = 5;
     const [currentPage, setCurrentPage] = useState(1);
 
     const handleFilterChange = (newFilter) => {

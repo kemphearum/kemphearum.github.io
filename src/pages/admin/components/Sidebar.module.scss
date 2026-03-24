@@ -3,8 +3,8 @@
 .sidebar {
     position: fixed;
     left: 0;
-    top: 56px;
-    height: calc(100vh - 56px);
+    top: var(--admin-header-height, 56px);
+    height: calc(100vh - var(--admin-header-height, 56px));
     background: var(--sidebar-bg, linear-gradient(180deg, var(--bg-surface-light) 0%, rgba(10, 10, 18, 0.8) 100%));
     backdrop-filter: blur(25px);
     border-right: 1px solid var(--divider);

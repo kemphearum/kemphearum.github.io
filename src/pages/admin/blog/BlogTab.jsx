@@ -71,8 +71,9 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     refetchOnWindowFocus: false,
     queryKey: ['posts', searchQuery, pagination.cursor, pagination.limit],
     queryFn: async () => {
+      const requestCursor = pagination.cursor;
       const result = await BaseService.safe(() => BlogService.fetchPaginated({
-        lastDoc: pagination.cursor,
+        lastDoc: requestCursor,
         limit: pagination.limit,
         search: searchQuery,
         searchField: 'title',
@@ -87,7 +88,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         return { data: [], lastDoc: null, hasMore: false, totalCount: null };
       }
 
-      pagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+      pagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
       return result.data;
     }
   });
@@ -594,7 +595,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         page={pagination.page}
         pageSize={pagination.limit}
         totalItems={postsResult.totalCount}
-        hasMore={pagination.hasMore}
+        hasMore={postsResult.hasMore}
         isFirstPage={pagination.isFirstPage}
         onNext={() => pagination.fetchNext(postsResult.lastDoc)}
         onPrevious={pagination.fetchPrevious}

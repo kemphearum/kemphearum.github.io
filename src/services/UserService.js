@@ -1,6 +1,6 @@
 import BaseService from './BaseService';
 import { db, auth } from '../firebase';
-import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, orderBy, query, updateDoc, where, serverTimestamp, limit as firestoreLimit, startAfter } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, query, updateDoc, where, serverTimestamp } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 import { normalizeUser, validateUser } from '../domain/user/userDomain';
@@ -20,8 +20,8 @@ class UserService extends BaseService {
      * @param {string} [params.search]
      * @returns {Promise<import('./BaseService').PaginatedResult>}
      */
-    async fetchUsers({ userRole, trackRead, lastDoc = null, limit = 20, search = '' }) {
-        if (userRole !== 'superadmin') return { data: [], lastDoc: null, hasMore: false };
+    async fetchUsers({ userRole, trackRead, lastDoc = null, limit = 20, search = '', includeTotal = false }) {
+        if (userRole !== 'superadmin') return { data: [], lastDoc: null, hasMore: false, totalCount: null };
 
         return this.fetchPaginated({
             lastDoc,
@@ -30,6 +30,7 @@ class UserService extends BaseService {
             searchField: 'email',
             sortBy: 'createdAt',
             sortDirection: 'desc',
+            includeTotal,
             trackRead
         });
     }

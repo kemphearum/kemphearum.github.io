@@ -69,7 +69,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const [searchQuery, setSearchQuery] = useState('');
   
   // Cursor pagination hook
-  const pagination = useCursorPagination(10, [searchQuery]);
+  const pagination = useCursorPagination(5, [searchQuery]);
   const queryClient = useQueryClient();
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
@@ -88,28 +88,30 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const { trackRead, trackWrite, trackDelete } = useActivity();
 
   // Fetch data
-  const { data: experiencesResult = { data: [], lastDoc: null, hasMore: false }, isLoading } = useQuery({
+  const { data: experiencesResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['experience', searchQuery, pagination.cursor],
+    queryKey: ['experience', searchQuery, pagination.cursor, pagination.limit],
     queryFn: async () => {
+      const requestCursor = pagination.cursor;
       const result = await BaseService.safe(() => ExperienceService.fetchPaginated({
-        lastDoc: pagination.cursor,
+        lastDoc: requestCursor,
         limit: pagination.limit || 10,
         search: searchQuery,
         searchField: 'company',
         sortBy: "createdAt",
         sortDirection: "desc",
+        includeTotal: true,
         trackRead
       }));
 
       if (result.error) {
         showToast(result.error, 'error');
-        return { data: [], lastDoc: null, hasMore: false };
+        return { data: [], lastDoc: null, hasMore: false, totalCount: null };
       }
 
-      pagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+      pagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
       return result.data;
     }
   });
@@ -351,10 +353,17 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         canDelete={canDelete}
         loading={isLoading}
         page={pagination.page}
-        hasMore={pagination.hasMore}
+        pageSize={pagination.limit}
+        totalItems={experiencesResult.totalCount}
+        hasMore={experiencesResult.hasMore}
         isFirstPage={pagination.isFirstPage}
         onNext={() => pagination.fetchNext(experiencesResult.lastDoc)}
         onPrevious={pagination.fetchPrevious}
+        onPageChange={(page, size) => {
+          if (size !== pagination.limit) {
+            pagination.handlePageSizeChange(size);
+          }
+        }}
       />
 
       <ExperienceFormDialog 

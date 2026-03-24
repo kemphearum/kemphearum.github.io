@@ -75,7 +75,7 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
     // Simple regex base for syntax highlighting in a terminal-like view
     const highlighted = jsonStr
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, (match) => {
         let cls = styles.jsonNumber;
         if (/^"/.test(match)) {
           if (/:$/.test(match)) {
@@ -120,8 +120,8 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
           <DialogClose />
         </DialogHeader>
 
-        <DialogBody style={{ padding: 0, overflow: 'hidden' }}>
-          <div className={styles.dialogTableWrapper} style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+        <DialogBody style={{ padding: 0, overflow: 'auto' }}>
+          <div className={styles.dialogTableWrapper} style={{ maxHeight: '60vh', overflow: 'auto' }}>
             {loading ? (
               <div style={{ padding: '3rem', display: 'flex', justifyContent: 'center' }}>
                 <div className="ui-spinner ui-spinner--md" />
@@ -131,7 +131,7 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
                 No activity records found for this period.
               </div>
             ) : (
-              <table className={styles.activityTable}>
+              <table className={styles.activityTable} style={{ minWidth: '680px' }}>
                 <thead className={styles.activityHeader}>
                   <tr>
                     <th style={{ width: '40px' }}></th>

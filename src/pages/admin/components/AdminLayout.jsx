@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import AnimatedBackground from '@/sections/AnimatedBackground';
@@ -25,6 +25,13 @@ const AdminLayout = ({
     // Dual states for sidebar toggle
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [headerHeight, setHeaderHeight] = useState(56);
+
+    const handleHeaderHeightChange = useCallback((nextHeight) => {
+        if (!Number.isFinite(nextHeight)) return;
+        const normalizedHeight = Math.max(56, Math.round(nextHeight));
+        setHeaderHeight((prev) => (Math.abs(prev - normalizedHeight) > 1 ? normalizedHeight : prev));
+    }, []);
 
     const toggleSidebar = () => {
         if (window.innerWidth <= 768) {
@@ -42,7 +49,12 @@ const AdminLayout = ({
     };
 
     return (
-        <div className={styles.layout} data-admin-theme="true" data-theme={theme}>
+        <div
+            className={styles.layout}
+            data-admin-theme="true"
+            data-theme={theme}
+            style={{ '--admin-header-height': `${headerHeight}px` }}
+        >
             <AnimatedBackground 
                 variant={settingsData.bgStyle || 'aurora'}
                 density={settingsData.bgDensity ?? 30}
@@ -62,6 +74,7 @@ const AdminLayout = ({
                 onProfileClick={() => handleNavigate('profile')}
                 currentRoute={currentRoute}
                 isSettingsAllowed={userRole === 'superadmin' || rolePermissions?.[userRole]?.includes('settings')}
+                onHeightChange={handleHeaderHeightChange}
             />
             
             <Sidebar 

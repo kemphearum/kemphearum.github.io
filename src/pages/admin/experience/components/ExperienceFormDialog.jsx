@@ -4,6 +4,7 @@ import { Dialog, Button } from '../../../../shared/components/ui';
 import Form from '../../components/Form';
 import FormField from '../../components/FormField';
 import FormInput from '../../components/FormInput';
+import FormMarkdownEditor from '../../components/FormMarkdownEditor';
 import FormSelect from '../../components/FormSelect';
 
 const ExperienceFormFields = () => {
@@ -40,9 +41,14 @@ const ExperienceFormFields = () => {
             label="Description"
             name="description"
             validation={{ required: 'Description is required' }}
-            hint="Summarize responsibilities, scope, and key impact in a concise way."
+            hint="Use Markdown to highlight impact, responsibilities, and measurable outcomes."
           >
-            <FormInput isTextArea rows="6" placeholder="Describe your responsibilities and achievements..." />
+            <FormMarkdownEditor
+              id="experience-description"
+              rows={8}
+              fullWidth={false}
+              placeholder="Describe your responsibilities, wins, and results in Markdown..."
+            />
           </FormField>
         </div>
 

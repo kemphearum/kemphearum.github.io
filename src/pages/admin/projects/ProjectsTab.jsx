@@ -9,6 +9,7 @@ import ProjectsToolbar from './components/ProjectsToolbar';
 import ProjectsTable from './components/ProjectsTable';
 import ProjectsFormDialog from './components/ProjectsFormDialog';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
+import HistoryModal from '../components/HistoryModal';
 import ImportConfirmDialog from '../components/ImportConfirmDialog';
 import { Button } from '@/shared/components/ui';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
@@ -19,7 +20,9 @@ import ImageProcessingService from '../../../services/ImageProcessingService';
 const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
+  const [historyItem, setHistoryItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [bulkConfirm, setBulkConfirm] = useState({ isOpen: false, type: '', ids: [] });
@@ -36,7 +39,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const [importLoading, setImportLoading] = useState(false);
   
   // Cursor pagination hook
-  const pagination = useCursorPagination(10, [searchQuery]);
+  const pagination = useCursorPagination(5, [searchQuery]);
   const queryClient = useQueryClient();
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
@@ -55,28 +58,30 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const { trackRead, trackWrite, trackDelete } = useActivity();
 
   // Fetch data
-  const { data: projectsResult = { data: [], lastDoc: null, hasMore: false }, isLoading } = useQuery({
+  const { data: projectsResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     queryKey: ['projects', searchQuery, pagination.cursor, pagination.limit],
     queryFn: async () => {
+      const requestCursor = pagination.cursor;
       const result = await BaseService.safe(() => ProjectService.fetchPaginated({
-        lastDoc: pagination.cursor,
+        lastDoc: requestCursor,
         limit: pagination.limit,
         search: searchQuery,
         searchField: 'title',
         sortBy: "createdAt",
         sortDirection: "desc",
+        includeTotal: true,
         trackRead
       }));
 
       if (result.error) {
         showToast(result.error, 'error');
-        return { data: [], lastDoc: null, hasMore: false };
+        return { data: [], lastDoc: null, hasMore: false, totalCount: null };
       }
 
-      pagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+      pagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
       return result.data;
     }
   });
@@ -147,6 +152,11 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       return showToast("You do not have permission to perform this action.", "error");
     }
     setDeletingItem(item);
+  };
+
+  const handleViewHistory = (item) => {
+    setHistoryItem(item);
+    setIsHistoryOpen(true);
   };
   
   // Selection Handlers
@@ -585,6 +595,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         projects={projects}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onViewHistory={handleViewHistory}
         onToggleVisibility={toggleVisibility}
         onToggleFeatured={toggleFeatured}
         onCreate={handleAdd}
@@ -594,7 +605,8 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         loading={isLoading || bulkDeleteMutation.isPending || bulkVisibilityMutation.isPending || bulkFeaturedMutation.isPending}
         page={pagination.page}
         pageSize={pagination.limit}
-        hasMore={pagination.hasMore}
+        totalItems={projectsResult.totalCount}
+        hasMore={projectsResult.hasMore}
         isFirstPage={pagination.isFirstPage}
         onNext={() => pagination.fetchNext(projectsResult.lastDoc)}
         onPrevious={pagination.fetchPrevious}
@@ -668,6 +680,14 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
           'Import keeps slug-based updates and creates new projects when no match is found.'
         ]}
         confirmText="Run Import"
+      />
+
+      <HistoryModal
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        recordId={historyItem?.id}
+        service={ProjectService}
+        title={historyItem?.title}
       />
     </div>
   );

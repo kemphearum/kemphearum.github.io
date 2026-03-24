@@ -53,7 +53,7 @@ const Blog = () => {
     const [selectedTag, setSelectedTag] = useState(null);
 
     // Pagination
-    const itemsPerPage = 6;
+    const itemsPerPage = 5;
     const [currentPage, setCurrentPage] = useState(1);
 
     // Extract all unique tags from visible posts

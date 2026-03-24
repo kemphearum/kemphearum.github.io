@@ -19,6 +19,8 @@ const ExperienceTable = ({
   canDelete = true,
   loading = false,
   page = 1,
+  pageSize = 5,
+  totalItems,
   hasMore = false,
   isFirstPage = true,
   onNext,
@@ -159,6 +161,8 @@ const ExperienceTable = ({
       manualPagination={true}
       paginationVariant={paginationVariant}
       page={page}
+      pageSize={pageSize}
+      totalItems={totalItems}
       hasMore={hasMore}
       isFirstPage={isFirstPage}
       onNext={onNext}

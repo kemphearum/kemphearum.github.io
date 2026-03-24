@@ -1,6 +1,6 @@
 import React from 'react';
-import { Layout, Plus } from 'lucide-react';
-import { Badge } from '@/shared/components/ui';
+import { Layout, Plus, History } from 'lucide-react';
+import { Badge, Button } from '@/shared/components/ui';
 import DataTable from '@/shared/components/ui/data-table/DataTable';
 import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableHelpers';
 
@@ -12,6 +12,7 @@ const ProjectsTable = ({
   projects, 
   onEdit, 
   onDelete,
+  onViewHistory,
   onToggleVisibility,
   onToggleFeatured,
   onCreate,
@@ -20,7 +21,8 @@ const ProjectsTable = ({
   canDelete = true,
   loading = false,
   page = 1,
-  pageSize = 10,
+  pageSize = 5,
+  totalItems,
   hasMore = false,
   isFirstPage = true,
   onNext,
@@ -131,7 +133,17 @@ const ProjectsTable = ({
         onToggleFeatured,
         viewUrlPrefix: '/projects/',
         canEdit,
-        canDelete
+        canDelete,
+        extraActions: (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onViewHistory(row)}
+            title="View History"
+          >
+            <History size={16} />
+          </Button>
+        )
       })
     }
   ];
@@ -146,6 +158,7 @@ const ProjectsTable = ({
       paginationVariant={paginationVariant}
       page={page}
       pageSize={pageSize}
+      totalItems={totalItems}
       hasMore={hasMore}
       isFirstPage={isFirstPage}
       onNext={onNext}

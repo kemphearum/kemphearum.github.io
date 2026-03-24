@@ -48,7 +48,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
     const [analyticsDetail, setAnalyticsDetail] = useState(null);
     const [detailPage, setDetailPage] = useState(1);
-    const detailLimit = 50;
+    const detailLimit = 5;
     const [quotaExceeded, setQuotaExceeded] = useState(false);
     const shouldFetchDetailLogs = analyticsDetail === 'visits';
 

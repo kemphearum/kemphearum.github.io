@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Activity, Shield, RefreshCw } from 'lucide-react';
 import { EmptyState } from '@/shared/components/ui';
@@ -31,17 +31,17 @@ const AuditLogsTab = ({ userRole, showToast }) => {
   });
 
   // Reusable Pagination Hook for Activity Logs
-  const activityPagination = useCursorPagination(15, [debouncedActivitySearch, activityDateRange, activityFilters]);
+  const activityPagination = useCursorPagination(5, [debouncedActivitySearch, activityDateRange, activityFilters]);
   
   // Reusable Pagination Hook for Security Logs
-  const securityPagination = useCursorPagination(15, [debouncedSecuritySearch, securityDateRange]);
+  const securityPagination = useCursorPagination(5, [debouncedSecuritySearch, securityDateRange]);
 
   // UI State for Dialogs
   const [selectedLog, setSelectedLog] = useState(null);
   const [activityDetailType, setActivityDetailType] = useState(null); // 'read', 'write', or 'delete'
 
   // 1. Fetch Aggregated Stats
-  const { data: stats = {}, isLoading: statsLoading, refetch: refetchStats } = useQuery({
+  const { data: stats = {}, refetch: refetchStats } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
@@ -70,16 +70,17 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['auditLogs', 'security', userRole, debouncedSecuritySearch, securityDateRange, securityPagination.cursor],
+    queryKey: ['auditLogs', 'security', userRole, debouncedSecuritySearch, securityDateRange, securityPagination.cursor, securityPagination.limit],
     queryFn: async () => {
+      const requestCursor = securityPagination.cursor;
       if (userRole !== 'superadmin') return { data: [], lastDoc: null, hasMore: false };
       const result = await BaseService.safe(() => AuditLogService.fetchSecurityAuditTrail({
         userRole,
         trackRead,
         search: debouncedSecuritySearch,
         dateRange: securityDateRange,
-        lastDoc: securityPagination.cursor,
-        limit: 15
+        lastDoc: requestCursor,
+        limit: securityPagination.limit
       }));
 
       if (result.error) {
@@ -87,7 +88,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
         return { data: [], lastDoc: null, hasMore: false };
       }
 
-      securityPagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+      securityPagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
       return result.data;
     },
     enabled: userRole === 'superadmin'
@@ -100,14 +101,15 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['auditLogs', 'activity', activityDateRange, activityPagination.cursor, debouncedActivitySearch, activityFilters],
+    queryKey: ['auditLogs', 'activity', activityDateRange, activityPagination.cursor, activityPagination.limit, debouncedActivitySearch, activityFilters],
     queryFn: async () => {
+      const requestCursor = activityPagination.cursor;
       const result = await BaseService.safe(() => AuditLogService.fetchActivityDetails({
         activityDateRange,
         operationType: 'all',
         currentDateKey,
-        lastDoc: activityPagination.cursor,
-        limit: 15,
+        lastDoc: requestCursor,
+        limit: activityPagination.limit,
         search: debouncedActivitySearch,
         filters: activityFilters
       }));
@@ -117,7 +119,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
         return { data: [], lastDoc: null, hasMore: false };
       }
 
-      activityPagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+      activityPagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
       return result.data;
     }
   });
@@ -148,8 +150,6 @@ const AuditLogsTab = ({ userRole, showToast }) => {
   });
 
   const detailLogs = detailLogsResult.data;
-
-  const [activeTab, setActiveTab] = useState('activity'); // 'activity' or 'security'
 
   // Since we're doing server-side pagination/filtering, 
   // we use the logs directly from the query.
@@ -247,11 +247,17 @@ const AuditLogsTab = ({ userRole, showToast }) => {
         loading={activityLoading}
         view="activity"
         page={activityPagination.page}
+        pageSize={activityPagination.limit}
         onRowClick={setSelectedLog}
-        hasMore={activityPagination.hasMore}
+        hasMore={activityLogsResult.hasMore}
         isFirstPage={activityPagination.isFirstPage}
         onNext={() => activityPagination.fetchNext(activityLogsResult.lastDoc)}
         onPrevious={activityPagination.fetchPrevious}
+        onPageChange={(page, size) => {
+          if (size !== activityPagination.limit) {
+            activityPagination.handlePageSizeChange(size);
+          }
+        }}
         paginationVariant="cursor"
       />
 
@@ -278,11 +284,17 @@ const AuditLogsTab = ({ userRole, showToast }) => {
         loading={securityLoading}
         view="security"
         page={securityPagination.page}
+        pageSize={securityPagination.limit}
         onRowClick={setSelectedLog}
-        hasMore={securityPagination.hasMore}
+        hasMore={securityLogsResult.hasMore}
         isFirstPage={securityPagination.isFirstPage}
         onNext={() => securityPagination.fetchNext(securityLogsResult.lastDoc)}
         onPrevious={securityPagination.fetchPrevious}
+        onPageChange={(page, size) => {
+          if (size !== securityPagination.limit) {
+            securityPagination.handlePageSizeChange(size);
+          }
+        }}
         paginationVariant="cursor"
       />
 

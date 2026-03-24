@@ -121,14 +121,15 @@ class MessageService extends BaseService {
      * @param {string} [params.search='']
      * @returns {Promise<import('./BaseService').PaginatedResult>}
      */
-    async fetchMessagesPaginated({ lastDoc = null, limit = 20, search = '' }) {
+    async fetchMessagesPaginated({ lastDoc = null, limit = 20, search = '', includeTotal = false }) {
         return this.fetchPaginated({
             lastDoc,
             limit,
             search,
             searchField: 'senderEmail',
             sortBy: 'createdAt',
-            sortDirection: 'desc'
+            sortDirection: 'desc',
+            includeTotal
         });
     }
 }

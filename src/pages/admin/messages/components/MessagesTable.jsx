@@ -66,7 +66,7 @@ const MessagesTable = ({
   onToggleRead,
   onDelete,
   loading = false,
-  pageSize = 10,
+  pageSize = 5,
   page = 1,
   selection,
   totalItems,

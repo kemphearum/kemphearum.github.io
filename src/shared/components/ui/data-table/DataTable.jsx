@@ -17,7 +17,7 @@ const DataTable = ({
   className = '', 
   rowClassName,
   // Pagination (Controlled)
-  pageSize = 10,
+  pageSize = 5,
   page = 1,
   onPageChange,
   // Cursor Pagination Props
@@ -122,7 +122,7 @@ const DataTable = ({
     ? loading || isFirstPage
     : loading || page === 1;
   const nextDisabled = isCursorMode
-    ? loading || !hasMore || (hasKnownTotalPages && page >= totalPages)
+    ? loading || !hasMore
     : loading || page === totalPages;
 
   // 4. Selection Helpers
