@@ -16,7 +16,8 @@ const Navbar = () => {
     const [activeSection, setActiveSection] = useState('home');
     const location = useLocation();
     const navigate = useNavigate();
-    const { t } = useTranslation();
+    const { language, t } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const isHome = location.pathname === '/';
     const currentHash = (location.hash || '').replace('#', '');
     const { theme, toggleTheme } = useTheme();
@@ -172,7 +173,7 @@ const Navbar = () => {
                 </div>
 
                 <div className={styles.navRight}>
-                    <ul id="primary-navigation" className={`${styles.navLinks} ${isOpen ? styles.active : ''}`} aria-label="Primary">
+                    <ul id="primary-navigation" className={`${styles.navLinks} ${isOpen ? styles.active : ''}`} aria-label={tr('Primary navigation', 'ម៉ឺនុយមេ')}>
                         {navItems.map((item) => {
                             const active = isItemActive(item);
                             return (
@@ -205,8 +206,12 @@ const Navbar = () => {
                     <button
                         className={styles.themeToggle}
                         onClick={toggleTheme}
-                        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                        aria-label={theme === 'dark'
+                            ? tr('Switch to light mode', 'ប្តូរទៅរបៀបភ្លឺ')
+                            : tr('Switch to dark mode', 'ប្តូរទៅរបៀបងងឹត')}
+                        title={theme === 'dark'
+                            ? tr('Switch to light mode', 'ប្តូរទៅរបៀបភ្លឺ')
+                            : tr('Switch to dark mode', 'ប្តូរទៅរបៀបងងឹត')}
                     >
                         {theme === 'dark' ? (
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -233,7 +238,9 @@ const Navbar = () => {
                         onClick={() => setIsOpen(!isOpen)}
                         aria-expanded={isOpen}
                         aria-controls="primary-navigation"
-                        aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                        aria-label={isOpen
+                            ? tr('Close navigation menu', 'បិទម៉ឺនុយរុករក')
+                            : tr('Open navigation menu', 'បើកម៉ឺនុយរុករក')}
                     >
                         <span />
                         <span />
@@ -247,7 +254,7 @@ const Navbar = () => {
                         type="button"
                         className={styles.backdrop}
                         onClick={() => setIsOpen(false)}
-                        aria-label="Close navigation menu"
+                        aria-label={tr('Close navigation menu', 'បិទម៉ឺនុយរុករក')}
                     />
                 )}
             </div>

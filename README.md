@@ -1,91 +1,137 @@
-# KEM PHEARUM — Portfolio
+# KEM PHEARUM - Portfolio
 
-A modern, responsive personal portfolio built with **React**, **Firebase**, and **SCSS**. Features dark & light theme support, glassmorphism UI, animated sections powered by Framer Motion, a full-featured admin dashboard with role-based access control, and automated deployment to GitHub Pages.
+A modern portfolio and admin platform built with React, React Router v7, Firebase, and SCSS.
 
-🔗 **Live Sites**: [GitHub Pages](https://kemphearum.github.io/) | [Vercel](https://phearum-info.vercel.app/) | [Firebase (Primary)](https://phearum-info.web.app/) | [Firebase (Mirror)](https://kem-phearum.web.app/)
+Live sites:
+- GitHub Pages: https://kemphearum.github.io/
+- Vercel: https://phearum-info.vercel.app/
+- Firebase (Primary): https://phearum-info.web.app/
+- Firebase (Mirror): https://kem-phearum.web.app/
 
----
+## Core Features
 
-## ✨ Features
-
-### Public Portfolio
-- **Hero Section** — Animated greeting with profile image, floating particles, pulsing glow, and scroll indicator
-- **About** — Bio and skill tags with hover effects and skeleton loading
-- **Experience** — Timeline layout with glassmorphism cards, sorted by date
-- **Projects** — Filterable project grid with tech-stack filter buttons and smooth layout animations. Includes direct **Telegram Sharing** integration.
-- **Blog** — Custom Markdown blog system with syntax-highlighted code blocks, copy button, embedded media support, and `DOMPurify` HTML sanitization. Supports social sharing via **Telegram**.
-- **Contact** — Contact form that saves messages to Firestore (features local rate-limiting and silent geolocation for spam prevention)
-- **Footer** — Social links (GitHub, Email) with hover animations
-- **🌗 Dark / Light Theme** — Toggle between dark and light modes; preference is saved to `localStorage` and respects the user's system setting by default
+### Public Site
+- Hero, About, Experience, Projects, Blog, Contact, Footer
+- Light and dark theme with persistent preference
+- Blog markdown rendering with sanitization and code highlighting
+- SEO-friendly SSG routing with clean URLs
 
 ### Admin Dashboard
-- 🔒 Firebase Auth login (Email/Password)
-- 📝 Full CRUD for **Projects**, **Experience**, and **Blog Posts**
-- 🏠 Advanced **Settings Tab** — Categorized sub-tab layout (Identity, Typography, Visuals, Site Sync) for deep site customization.
-- 🎨 **Typography Engine** — Quick-switch between premium design presets (Signature Pro, Khmer Premium, etc.) with real-time preview.
-- 📬 View and manage contact form **Messages**
-- 👥 **User Management** with role-based access control (Superadmin / Admin / Editor / Viewer). Features refined UI for password resets and account management.
-- 📋 **Audit Logs** — tracks login events, user actions, and admin activity
-- 🔄 **Reusable Pagination** with items-per-page selector (5 / 10 / 25) across all tabs
-- 🔍 **Search & Filter** on Experience, Projects, Blog, Users, and Audit Logs
-- ⭐ **Featured Projects & Blog** toggle for homepage pinning
-- 🖼️ Base64 image compression and direct Firestore storage (bypasses Firebase Storage limits)
-- ⚙️ **Site Sync** — Full mirror management (Vercel, Firebase, GitHub Pages) and manual site rebuild triggers via GitHub Actions.
-- 📱 **Premium Mobile UI** — Fully responsive admin panel optimized for Safari on iOS (iPhone 15 Pro testing)
+- Firebase Auth (email/password)
+- CRUD for Projects, Experience, and Blog
+- Settings module (identity, typography, visuals, sync)
+- User management and role-based access control
+- Audit logs, analytics, and message management
 
-### Technical Highlights
-- **React Router v7 (SSG)** — Full Static Site Generation for lightning-fast loads and perfect SEO (replaces traditional CSR)
-- **Clean URLs** — Modern navigation with no hashes (`/#/`), including automatic redirection for legacy links
-- **SSR Compatibility** — Full ESM support for syntax highlighting and pre-rendering (zero-crash builds)
-- **Custom Firebase hooks** (`useFirebaseDoc`, `useFirebaseCollection`) with in-memory caching and request deduplication
-- **ThemeContext** with `ThemeProvider` for global dark/light mode state management
-- **Skeleton loaders** for every data-fetching section
-- **Framer Motion** animations with `AnimatePresence` for smooth transitions
-- **Theme-proof CSS architecture** — all colors use CSS custom properties (`var(--text-primary)`, etc.) ensuring light/dark mode consistency across every component
-- **SCSS Modules** with a shared design system (variables, glassmorphism mixin)
-- **Full SEO Optimization** — dynamic meta tags, automated Sitemap/404 handling, and semantic HTML5
-- **Dual Deployment** — Fully automated CI/CD pipeline deploying to both **GitHub Pages** (primary) and **Firebase Hosting** (backup)
+## Multilingual System (English + Khmer)
 
----
+This project now supports bilingual UI and content with **ISO language codes only**:
+- English: `en`
+- Khmer: `km`
 
-## 🛠️ Tech Stack
+Important:
+- Do not use `kh` for language. `kh`/`KH` refers to country code (Cambodia), not language.
 
-| Category       | Technologies                                              |
-|----------------|----------------------------------------------------------|
-| **Core**       | React 19, Vite 7                                         |
-| **Architecture**| React Router v7 (Full SSG / Hybrid)                      |
-| **Styling**    | SCSS Modules, Framer Motion                              |
-| **Backend**    | Firebase (Firestore, Auth)                               |
-| **State**      | TanStack Query (React Query) v5                          |
-| **Key Libs**   | `lucide-react`, `dompurify`, `react-markdown`            |
-| **Deployment** | GitHub Actions (Auto-SSG + Multi-Cloud Deploy)           |
+### 1) Static UI Translations
+- Files:
+  - `src/i18n/en.json`
+  - `src/i18n/km.json`
+- Hook:
+  - `src/hooks/useTranslation.js`
+- Provider:
+  - `src/context/LanguageContext.jsx`
 
----
+Behavior:
+- `t('path.to.key')` translation helper
+- Fallback to English when key is missing
+- Language persisted in `localStorage` using key: `portfolio.language`
 
-## 🏗️ Architecture & Styling Conventions
+### 2) Dynamic Firestore Content (Localized Fields)
 
-To maintain codebase sanity as the project scales, please adhere to the following strict conventions:
+Localized content is stored in a **single document** per entity.
 
-### 1. Styling Rules (Modules vs. Global)
-- **Public Site (`src/sections/`, `src/pages/Home.jsx`)**: Exclusively use **CSS Modules** (`*.module.scss`). This prevents global style leakage on the public-facing portfolio.
-- **Admin Dashboard (`src/pages/admin/`)**: Exclusively use **Global UI Classes** (e.g., `.ui-card`, `.ui-button` defined in `_admin-ui.scss`), except for entirely unique layout grids. Avoid creating `.module.scss` files for admin components to maintain visual consistency and prevent dead code.
+Correct shape:
+```json
+{
+  "title": {
+    "en": "My Project",
+    "km": "..."
+  }
+}
+```
 
-### 2. Component Colocation
-- **Admin Modules**: Keep module-specific components inside their respective feature folders (e.g., `src/pages/admin/audit/components/`). 
-- **Shared Components**: If a component is needed by *multiple* admin modules, hoist it to `src/shared/components/`. Do not cross-import between feature folders (e.g., `projects` should not import from `blog/components`).
-- **Page Sections**: Full-page, single-use segments (like Hero, About, Footer) belong in `src/sections/`, *not* in reusable component folders.
+Rules:
+- Store both languages in the same document
+- Do not split collections per language
+- Do not use flat fields like `title_en`
 
-### 3. Type Safety Standard (JSDoc)
-- The project does not use TypeScript to maintain build simplicity, but **strict JSDoc annotations** (`@param`, `@returns`, `@typedef`) are required for all classes and methods in `src/services/`. This ensures full IDE intellisense.
+Localization utilities:
+- `src/utils/localization.js`
+  - `getLocalizedField(field, lang)`
+  - `toLocalizedField(value)`
+  - `buildLocalizedFieldFromInput(data, field)`
 
-### 4. Testing Requirements
-- All pure functions, utilities (in `src/utils/`), and data validation logic (in `src/domain/`) must be unit-tested using **Vitest**.
+### 3) Admin Language Support
 
----
+- Global switcher component:
+  - `src/shared/components/LanguageSwitcher.jsx`
+- Admin shell localized (header, sidebar, login, tab titles)
+- Role permissions panel localized
 
-## 🚀 Getting Started
+### 4) Data Migration for Existing Documents
 
-### Installation
+Migration service:
+- `src/services/MultilingualMigrationService.js`
+
+What it does:
+- Converts legacy string fields into `{ en, km }`
+- Keeps English as default
+- Initializes Khmer as empty when missing
+
+## Khmer Font Support
+
+Khmer rendering is supported with language-aware font fallbacks.
+
+Configured in:
+- `src/styles/global.scss`
+
+Includes:
+- Google font import for `Noto Sans Khmer`
+- Khmer-first font variables when `html[lang="km"]`
+- Admin font override updated to include Khmer-safe fallbacks
+
+If Khmer text appears as `?`:
+1. Ensure translation files are saved in UTF-8
+2. Hard refresh browser cache (`Ctrl+F5`)
+3. Confirm app language is set to `km`
+
+## Architecture
+
+```text
+src/
+  sections/              public UI sections
+  shared/components/     reusable UI components
+  pages/admin/           modular admin tabs and modules
+  services/              Firestore service layer
+  hooks/                 reusable hooks
+  i18n/                  translation dictionaries
+  context/               app-wide providers
+  utils/                 shared utilities
+```
+
+## Tech Stack
+
+- React 19
+- React Router v7
+- Vite 7
+- Firebase (Firestore + Auth)
+- TanStack Query v5
+- SCSS + CSS Modules
+- Vitest
+
+## Getting Started
+
+### Install
 ```bash
 git clone https://github.com/kemphearum/portfolio.git
 cd portfolio
@@ -97,9 +143,8 @@ npm install
 npm run dev
 ```
 
-### Build & Static Generation
+### Build
 ```bash
-# This generates a full static version in build/client
 npm run build
 ```
 
@@ -108,13 +153,21 @@ npm run build
 npm run preview
 ```
 
----
+### Test
+```bash
+npm test
+```
 
-## 📄 License
+## Scripts
 
-This project is open source and available under the [MIT License](LICENSE).
+- `npm run dev` - start local dev server
+- `npm run build` - production build (client + server output)
+- `npm run preview` - preview production build
+- `npm run lint` - lint project
+- `npm test` - run unit tests
 
----
+## License
 
-Built with ❤️ by **KEM PHEARUM**
+MIT License
 
+Built by KEM PHEARUM.

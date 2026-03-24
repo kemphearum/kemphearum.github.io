@@ -5,6 +5,7 @@ import FormField from '../../components/FormField';
 import FormInput from '../../components/FormInput';
 import FormRow from '../../components/FormRow';
 import tabStyles from '../SettingsTab.module.scss';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const IdentitySection = ({
     settingsData,
@@ -16,6 +17,8 @@ const IdentitySection = ({
     onSave,
     loading
 }) => {
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const hasFavicon = Boolean(settingsFavicon || settingsData.favicon || previewBase64);
 
     return (
@@ -23,25 +26,25 @@ const IdentitySection = ({
             <div className="ui-card">
                 <div className={tabStyles.surfaceHeader}>
                     <div className={tabStyles.surfaceCopy}>
-                        <span className={tabStyles.surfaceEyebrow}>Identity System</span>
-                        <h3 className={tabStyles.surfaceHeadline}>Shape how the portfolio is recognized in tabs, branding, and collection filters.</h3>
-                        <p className={tabStyles.surfaceLead}>This view keeps naming, browser assets, and taxonomy controls in one place so brand updates feel deliberate instead of scattered.</p>
+                        <span className={tabStyles.surfaceEyebrow}>{tr('Identity System', 'ប្រព័ន្ធអត្តសញ្ញាណ')}</span>
+                        <h3 className={tabStyles.surfaceHeadline}>{tr('Shape how the portfolio is recognized in tabs, branding, and collection filters.', 'កំណត់របៀបដែល Portfolio ត្រូវបានស្គាល់នៅលើផ្ទាំង ការប្រេន និងតម្រងបញ្ជី។')}</h3>
+                        <p className={tabStyles.surfaceLead}>{tr('This view keeps naming, browser assets, and taxonomy controls in one place so brand updates feel deliberate instead of scattered.', 'ផ្ទាំងនេះរួមបញ្ចូលឈ្មោះ Asset Browser និង Taxonomy នៅកន្លែងតែមួយ ដើម្បីងាយកែប្រែម៉ាក។')}</p>
                     </div>
                     <div className={tabStyles.surfaceMeta}>
                         <div className={tabStyles.surfaceMetaCard}>
-                            <span className={tabStyles.surfaceMetaValue}>{hasFavicon ? 'Ready' : 'Pending'}</span>
-                            <span className={tabStyles.surfaceMetaLabel}>Favicon</span>
-                            <span className={tabStyles.surfaceMetaHint}>Upload a small icon for browser tabs</span>
+                            <span className={tabStyles.surfaceMetaValue}>{hasFavicon ? tr('Ready', 'រួចរាល់') : tr('Pending', 'កំពុងរង់ចាំ')}</span>
+                            <span className={tabStyles.surfaceMetaLabel}>{tr('Favicon', 'Favicon')}</span>
+                            <span className={tabStyles.surfaceMetaHint}>{tr('Upload a small icon for browser tabs', 'ផ្ទុកឡើងរូបតំណាងតូចសម្រាប់ផ្ទាំង Browser')}</span>
                         </div>
                         <div className={tabStyles.surfaceMetaCard}>
                             <span className={tabStyles.surfaceMetaValue}>{settingsData.logoHighlight || 'Kem'} {settingsData.logoText || 'Phearum'}</span>
-                            <span className={tabStyles.surfaceMetaLabel}>Brand Name</span>
-                            <span className={tabStyles.surfaceMetaHint}>Used across logo treatments and previews</span>
+                            <span className={tabStyles.surfaceMetaLabel}>{tr('Brand Name', 'ឈ្មោះម៉ាក')}</span>
+                            <span className={tabStyles.surfaceMetaHint}>{tr('Used across logo treatments and previews', 'ប្រើសម្រាប់ឡូហ្គោ និងការមើលជាមុន')}</span>
                         </div>
                         <div className={tabStyles.surfaceMetaCard}>
                             <span className={tabStyles.surfaceMetaValue}>{[settingsData.projectFilters, settingsData.blogFilters].filter(Boolean).length}/2</span>
-                            <span className={tabStyles.surfaceMetaLabel}>Filter Sets</span>
-                            <span className={tabStyles.surfaceMetaHint}>Quick sorting for projects and blog posts</span>
+                            <span className={tabStyles.surfaceMetaLabel}>{tr('Filter Sets', 'សំណុំតម្រង')}</span>
+                            <span className={tabStyles.surfaceMetaHint}>{tr('Quick sorting for projects and blog posts', 'តម្រៀបរហ័សសម្រាប់ Project និង Blog')}</span>
                         </div>
                     </div>
                 </div>
@@ -51,15 +54,15 @@ const IdentitySection = ({
                         <section className={tabStyles.settingsPanel}>
                             <div className={tabStyles.panelHeader}>
                                 <div className={tabStyles.panelTitleGroup}>
-                                    <span className={tabStyles.panelEyebrow}>Brand Basics</span>
-                                    <h4 className={tabStyles.panelTitle}>Name, tagline, and browser copy</h4>
-                                    <p className={tabStyles.panelDescription}>These settings define the identity seen in the browser tab, navbar, and footer.</p>
+                                    <span className={tabStyles.panelEyebrow}>{tr('Brand Basics', 'មូលដ្ឋានម៉ាក')}</span>
+                                    <h4 className={tabStyles.panelTitle}>{tr('Name, tagline, and browser copy', 'ឈ្មោះ Tagline និងអត្ថបទ Browser')}</h4>
+                                    <p className={tabStyles.panelDescription}>{tr('These settings define the identity seen in the browser tab, navbar, and footer.', 'ការកំណត់ទាំងនេះកំណត់អត្តសញ្ញាណដែលបង្ហាញលើផ្ទាំង Browser Navbar និង Footer។')}</p>
                                 </div>
-                                <span className={tabStyles.panelBadge}>Core copy</span>
+                                <span className={tabStyles.panelBadge}>{tr('Core copy', 'អត្ថបទស្នូល')}</span>
                             </div>
 
                             <div className={tabStyles.formGrid}>
-                                <FormField label="Page Title (Browser Tab)" columns={1}>
+                                <FormField label={tr('Page Title (Browser Tab)', 'ចំណងជើងទំព័រ (ផ្ទាំង Browser)')} columns={1}>
                                     <FormInput
                                         placeholder="Kem Phearum | Portfolio"
                                         value={settingsData.title || ''}
@@ -67,7 +70,7 @@ const IdentitySection = ({
                                     />
                                 </FormField>
 
-                                <FormField label="Site Tagline" columns={1}>
+                                <FormField label={tr('Site Tagline', 'Tagline គេហទំព័រ')} columns={1}>
                                     <FormInput
                                         placeholder="ICT Security & IT Audit Professional"
                                         value={settingsData.tagline || ''}
@@ -77,7 +80,7 @@ const IdentitySection = ({
                             </div>
 
                             <FormRow>
-                                <FormField label="Logo Prefix" columns={1}>
+                                <FormField label={tr('Logo Prefix', 'ផ្នែកដើមឡូហ្គោ')} columns={1}>
                                     <FormInput
                                         placeholder="Kem"
                                         value={settingsData.logoHighlight || ''}
@@ -85,7 +88,7 @@ const IdentitySection = ({
                                     />
                                 </FormField>
 
-                                <FormField label="Logo Suffix" columns={1}>
+                                <FormField label={tr('Logo Suffix', 'ផ្នែកចុងឡូហ្គោ')} columns={1}>
                                     <FormInput
                                         placeholder="Phearum"
                                         value={settingsData.logoText || ''}
@@ -94,7 +97,7 @@ const IdentitySection = ({
                                 </FormField>
                             </FormRow>
 
-                            <FormField label="Footer Copyright Text" columns={1}>
+                            <FormField label={tr('Footer Copyright Text', 'អត្ថបទរក្សាសិទ្ធិ Footer')} columns={1}>
                                 <FormInput
                                     placeholder="(c) 2026 Your Name. All Rights Reserved."
                                     value={settingsData.footerText || ''}
@@ -106,15 +109,15 @@ const IdentitySection = ({
                         <section className={tabStyles.settingsPanel}>
                             <div className={tabStyles.panelHeader}>
                                 <div className={tabStyles.panelTitleGroup}>
-                                    <span className={tabStyles.panelEyebrow}>Collection Filters</span>
-                                    <h4 className={tabStyles.panelTitle}>Project and blog taxonomy</h4>
-                                    <p className={tabStyles.panelDescription}>Keep category names aligned with your published content so filtering feels intentional and predictable.</p>
+                                    <span className={tabStyles.panelEyebrow}>{tr('Collection Filters', 'តម្រងបណ្ដុំ')}</span>
+                                    <h4 className={tabStyles.panelTitle}>{tr('Project and blog taxonomy', 'Taxonomy សម្រាប់ Project និង Blog')}</h4>
+                                    <p className={tabStyles.panelDescription}>{tr('Keep category names aligned with your published content so filtering feels intentional and predictable.', 'រក្សាឈ្មោះប្រភេទឱ្យត្រូវនឹងខ្លឹមសារដែលបានផ្សាយ ដើម្បីឱ្យការតម្រងមានភាពច្បាស់លាស់។')}</p>
                                 </div>
-                                <span className={tabStyles.panelBadge}>Taxonomy</span>
+                                <span className={tabStyles.panelBadge}>{tr('Taxonomy', 'Taxonomy')}</span>
                             </div>
 
                             <div className={tabStyles.identityFilterGrid}>
-                                <FormField label="Project Category Filters" hint="Comma separated" columns={1}>
+                                <FormField label={tr('Project Category Filters', 'តម្រងប្រភេទ Project')} hint={tr('Comma separated', 'បំបែកដោយសញ្ញាក្បៀស')} columns={1}>
                                     <FormInput
                                         placeholder="React, Python, Firebase..."
                                         value={settingsData.projectFilters || ''}
@@ -122,7 +125,7 @@ const IdentitySection = ({
                                     />
                                 </FormField>
 
-                                <FormField label="Blog Tag Filters" hint="Comma separated" columns={1}>
+                                <FormField label={tr('Blog Tag Filters', 'តម្រងស្លាក Blog')} hint={tr('Comma separated', 'បំបែកដោយសញ្ញាក្បៀស')} columns={1}>
                                     <FormInput
                                         placeholder="Tutorial, Tech, Security..."
                                         value={settingsData.blogFilters || ''}
@@ -137,19 +140,19 @@ const IdentitySection = ({
                         <section className={tabStyles.settingsPanel}>
                             <div className={tabStyles.panelHeader}>
                                 <div className={tabStyles.panelTitleGroup}>
-                                    <span className={tabStyles.panelEyebrow}>Browser Asset</span>
-                                    <h4 className={tabStyles.panelTitle}>Favicon uploader</h4>
-                                    <p className={tabStyles.panelDescription}>Use a high-contrast icon so the portfolio reads cleanly in tabs, bookmarks, and shortcuts.</p>
+                                    <span className={tabStyles.panelEyebrow}>{tr('Browser Asset', 'Asset Browser')}</span>
+                                    <h4 className={tabStyles.panelTitle}>{tr('Favicon uploader', 'ការផ្ទុកឡើង Favicon')}</h4>
+                                    <p className={tabStyles.panelDescription}>{tr('Use a high-contrast icon so the portfolio reads cleanly in tabs, bookmarks, and shortcuts.', 'ប្រើរូបតំណាងដែលមានកម្រិតផ្ទុយខ្លាំង ដើម្បីមើលឃើញច្បាស់លើផ្ទាំង Bookmark និង Shortcut។')}</p>
                                 </div>
                                 <span className={tabStyles.panelBadge}>16-256px</span>
                             </div>
 
-                            <FormField label="Browser Favicon" columns={1}>
+                            <FormField label={tr('Browser Favicon', 'Favicon សម្រាប់ Browser')} columns={1}>
                                 <div className={tabStyles.fileInputWrapper}>
                                     {hasFavicon && (
                                         <div className={tabStyles.faviconPreview}>
                                             {(previewBase64 || settingsData.favicon) ? (
-                                                <img src={previewBase64 || settingsData.favicon} alt="Favicon Preview" />
+                                                <img src={previewBase64 || settingsData.favicon} alt={tr('Favicon Preview', 'មើល Favicon ជាមុន')} />
                                             ) : null}
                                         </div>
                                     )}
@@ -167,9 +170,9 @@ const IdentitySection = ({
                                             <Upload size={16} />
                                             <div>
                                                 <span className={tabStyles.fileDropzoneTitle}>
-                                                    {settingsFavicon ? settingsFavicon.name : (settingsData.favicon ? 'Replace current icon' : 'Upload a favicon')}
+                                                    {settingsFavicon ? settingsFavicon.name : (settingsData.favicon ? tr('Replace current icon', 'ជំនួសរូបតំណាងបច្ចុប្បន្ន') : tr('Upload a favicon', 'ផ្ទុកឡើង favicon'))}
                                                 </span>
-                                                <span className={tabStyles.fileDropzoneHint}>PNG, SVG, or ICO. Square artwork works best.</span>
+                                                <span className={tabStyles.fileDropzoneHint}>{tr('PNG, SVG, or ICO. Square artwork works best.', 'PNG, SVG ឬ ICO។ រូបការ៉េអាចប្រើបានល្អបំផុត។')}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -178,11 +181,11 @@ const IdentitySection = ({
                         </section>
 
                         <section className={tabStyles.identityPreviewCard}>
-                            <span className={tabStyles.identityPreviewEyebrow}>Identity preview</span>
+                            <span className={tabStyles.identityPreviewEyebrow}>{tr('Identity preview', 'មើលអត្តសញ្ញាណជាមុន')}</span>
                             <div className={tabStyles.identityPreviewHeader}>
                                 <div className={tabStyles.faviconPreview}>
                                     {(previewBase64 || settingsData.favicon) ? (
-                                        <img src={previewBase64 || settingsData.favicon} alt="Current favicon" />
+                                        <img src={previewBase64 || settingsData.favicon} alt={tr('Current favicon', 'Favicon បច្ចុប្បន្ន')} />
                                     ) : (
                                         <ImagePlus size={20} />
                                     )}
@@ -191,30 +194,30 @@ const IdentitySection = ({
                                     <div className={tabStyles.identityPreviewLogo}>
                                         {settingsData.logoHighlight || 'Kem'} <span>{settingsData.logoText || 'Phearum'}</span>
                                     </div>
-                                    <div className={tabStyles.identityPreviewTitle}>{settingsData.title || 'Kem Phearum | Portfolio'}</div>
+                                    <div className={tabStyles.identityPreviewTitle}>{settingsData.title || tr('Kem Phearum | Portfolio', 'Kem Phearum | ផតហ្វូលីយ៉ូ')}</div>
                                 </div>
                             </div>
                             <p className={tabStyles.identityPreviewTagline}>
-                                {settingsData.tagline || 'ICT Security & IT Audit Professional'}
+                                {settingsData.tagline || tr('ICT Security & IT Audit Professional', 'អ្នកជំនាញសុវត្ថិភាព ICT និងសវនកម្ម IT')}
                             </p>
                             <div className={tabStyles.identityPreviewMetaList}>
                                 <div className={tabStyles.identityPreviewMeta}>
-                                    <span>Footer copy</span>
-                                    <strong>{settingsData.footerText || '(c) 2026 Your Name. All Rights Reserved.'}</strong>
+                                    <span>{tr('Footer copy', 'អត្ថបទ Footer')}</span>
+                                    <strong>{settingsData.footerText || tr('(c) 2026 Your Name. All Rights Reserved.', '(c) 2026 ឈ្មោះរបស់អ្នក។ រក្សាសិទ្ធិគ្រប់យ៉ាង។')}</strong>
                                 </div>
                                 <div className={tabStyles.identityPreviewMeta}>
-                                    <span>Filter readiness</span>
+                                    <span>{tr('Filter readiness', 'ភាពរួចរាល់នៃតម្រង')}</span>
                                     <strong>
                                         {[settingsData.projectFilters, settingsData.blogFilters].filter(Boolean).length === 2
-                                            ? 'Project and blog filters are configured'
-                                            : 'Finish both filter lists for faster content sorting'}
+                                            ? tr('Project and blog filters are configured', 'បានកំណត់តម្រង Project និង Blog រួចរាល់')
+                                            : tr('Finish both filter lists for faster content sorting', 'បំពេញបញ្ជីតម្រងទាំងពីរ ដើម្បីតម្រៀបខ្លឹមសារបានលឿន')}
                                     </strong>
                                 </div>
                             </div>
                             <ul className={tabStyles.identityChecklist}>
-                                <li>Keep the page title short enough to read in a browser tab.</li>
-                                <li>Use a favicon with strong contrast and minimal detail.</li>
-                                <li>Match category names to the content visitors actually browse.</li>
+                                <li>{tr('Keep the page title short enough to read in a browser tab.', 'រក្សាចំណងជើងទំព័រឱ្យខ្លី ដើម្បីអានងាយលើផ្ទាំង Browser។')}</li>
+                                <li>{tr('Use a favicon with strong contrast and minimal detail.', 'ប្រើ favicon ដែលមានភាពផ្ទុយខ្លាំង និងមានលម្អិតតិច។')}</li>
+                                <li>{tr('Match category names to the content visitors actually browse.', 'ផ្គូផ្គងឈ្មោះប្រភេទទៅនឹងខ្លឹមសារដែលភ្ញៀវចូលមើលជាក់ស្តែង។')}</li>
                             </ul>
                         </section>
                     </aside>
@@ -226,7 +229,7 @@ const IdentitySection = ({
                         isLoading={loading}
                         className={tabStyles.saveButton}
                     >
-                        <Save size={18} /> Save Identity Changes
+                        <Save size={18} /> {tr('Save Identity Changes', 'រក្សាទុកការផ្លាស់ប្តូរអត្តសញ្ញាណ')}
                     </Button>
                 </div>
             </div>

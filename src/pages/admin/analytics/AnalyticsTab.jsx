@@ -26,6 +26,7 @@ import AnalyticsFilterBar from './components/AnalyticsFilterBar';
 import AnalyticsChart from './components/AnalyticsChart';
 import LoadingOverlay from '../../../shared/components/ui/loading-overlay/LoadingOverlay';
 import EmptyState from '../../../shared/components/ui/empty-state/EmptyState';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 const toDateKey = (value) => {
     if (!value) return null;
@@ -52,7 +53,23 @@ const formatLastUpdated = (value) => {
 };
 
 const AnalyticsTab = ({ userRole, showToast }) => {
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const { trackRead } = useActivity();
+    const formatLastUpdatedLocalized = useCallback((value) => {
+        if (!value) return tr('Not synced yet', 'មិនទាន់បានធ្វើសមកាលកម្ម');
+        const updated = new Date(value);
+        const now = new Date();
+        const deltaSeconds = Math.max(0, Math.floor((now.getTime() - updated.getTime()) / 1000));
+
+        if (deltaSeconds < 60) return tr('Updated just now', 'ទើបធ្វើបច្ចុប្បន្នភាព');
+        if (deltaSeconds < 3600) return tr(`Updated ${Math.floor(deltaSeconds / 60)}m ago`, `បានធ្វើបច្ចុប្បន្នភាព ${Math.floor(deltaSeconds / 60)} នាទីមុន`);
+
+        return tr(
+            `Updated ${updated.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${updated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+            `បានធ្វើបច្ចុប្បន្នភាព ${updated.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} ម៉ោង ${updated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+        );
+    }, [tr]);
     
     // 1. FILTER STATE
     const [analyticsRange, setAnalyticsRange] = useState(() => {
@@ -185,12 +202,12 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
     const handleRefreshAll = useCallback(() => {
         refetchAnalytics();
-        showToast('Analytics data refreshed!', 'success');
-    }, [refetchAnalytics, showToast]);
+        showToast(tr('Analytics data refreshed!', 'បានធ្វើបច្ចុប្បន្នភាពទិន្នន័យវិភាគ!'), 'success');
+    }, [refetchAnalytics, showToast, tr]);
 
     const handleExportCsv = useCallback(() => {
         if (!visits || !visits.length) {
-            showToast('No data to export', 'error');
+            showToast(tr('No data to export', 'មិនមានទិន្នន័យសម្រាប់នាំចេញ'), 'error');
             return;
         }
 
@@ -218,8 +235,8 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        showToast('Analytics exported to CSV', 'success');
-    }, [visits, analyticsRange, showToast]);
+        showToast(tr('Analytics exported to CSV', 'បាននាំចេញទិន្នន័យវិភាគជា CSV'), 'success');
+    }, [visits, analyticsRange, showToast, tr]);
 
     // 4. DERIVED DATA & TRENDS
     const dailyVisits = useMemo(() => {
@@ -238,9 +255,9 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
     const countryData = useMemo(() => {
         const map = {};
-        visits.forEach(v => { const c = v.country || 'Unknown'; map[c] = (map[c] || 0) + 1; });
+        visits.forEach(v => { const c = v.country || tr('Unknown', 'មិនស្គាល់'); map[c] = (map[c] || 0) + 1; });
         return Object.entries(map).sort(([, a], [, b]) => b - a).slice(0, 8).map(([name, value]) => ({ name, value }));
-    }, [visits]);
+    }, [visits, tr]);
 
     const deviceData = useMemo(() => {
         const map = {};
@@ -250,33 +267,33 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
     const cityData = useMemo(() => {
         const map = {};
-        visits.forEach(v => { const c = v.city || 'Unknown'; map[c] = (map[c] || 0) + 1; });
+        visits.forEach(v => { const c = v.city || tr('Unknown', 'មិនស្គាល់'); map[c] = (map[c] || 0) + 1; });
         return Object.entries(map).sort(([, a], [, b]) => b - a).slice(0, 10).map(([name, value]) => ({ name, value }));
-    }, [visits]);
+    }, [visits, tr]);
 
     const referrerData = useMemo(() => {
         const map = {};
-        visits.forEach(v => { const r = v.referrer || 'Direct'; map[r] = (map[r] || 0) + 1; });
+        visits.forEach(v => { const r = v.referrer || tr('Direct', 'ផ្ទាល់'); map[r] = (map[r] || 0) + 1; });
         return Object.entries(map).sort(([, a], [, b]) => b - a).slice(0, 8).map(([name, value]) => ({ name, value }));
-    }, [visits]);
+    }, [visits, tr]);
 
     const browserData = useMemo(() => {
         const map = {};
-        visits.forEach(v => { const b = v.browser || 'Unknown'; map[b] = (map[b] || 0) + 1; });
+        visits.forEach(v => { const b = v.browser || tr('Unknown', 'មិនស្គាល់'); map[b] = (map[b] || 0) + 1; });
         return Object.entries(map).sort(([, a], [, b]) => b - a).map(([name, value]) => ({ name, value }));
-    }, [visits]);
+    }, [visits, tr]);
 
     const osData = useMemo(() => {
         const map = {};
-        visits.forEach(v => { const o = v.os || 'Unknown'; map[o] = (map[o] || 0) + 1; });
+        visits.forEach(v => { const o = v.os || tr('Unknown', 'មិនស្គាល់'); map[o] = (map[o] || 0) + 1; });
         return Object.entries(map).sort(([, a], [, b]) => b - a).map(([name, value]) => ({ name, value }));
-    }, [visits]);
+    }, [visits, tr]);
 
     const retentionData = useMemo(() => {
         let n = 0, r = 0;
         visits.forEach(v => { if (v.isReturning) r++; else n++; });
-        return [{ name: 'New', value: n }, { name: 'Returning', value: r }];
-    }, [visits]);
+        return [{ name: tr('New', 'ថ្មី'), value: n }, { name: tr('Returning', 'ត្រឡប់មកវិញ'), value: r }];
+    }, [visits, tr]);
 
     const topPages = useMemo(() => {
         const map = {};
@@ -296,19 +313,19 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         const topCountryItem = countryData[0];
         const topSourceItem = referrerData[0];
         const topPageItem = topPages[0];
-        const returningCount = retentionData.find((entry) => entry.name === 'Returning')?.value || 0;
+        const returningCount = retentionData.find((entry) => entry.name === tr('Returning', 'ត្រឡប់មកវិញ'))?.value || 0;
         const returningRate = visits.length ? Math.round((returningCount / visits.length) * 100) : 0;
 
         return {
-            rangeText: start && end ? `${formatShortDate(start)} to ${formatShortDate(end)}` : 'Custom range',
+            rangeText: start && end ? `${formatShortDate(start)} ${tr('to', 'ដល់')} ${formatShortDate(end)}` : tr('Custom range', 'រយៈពេលផ្ទាល់ខ្លួន'),
             rangeDays,
-            topCountry: topCountryItem ? `${topCountryItem.name} (${topCountryItem.value})` : 'No country data yet',
-            topSource: topSourceItem ? `${topSourceItem.name} (${topSourceItem.value})` : 'No source data yet',
-            topPage: topPageItem ? `${topPageItem.path} (${topPageItem.count})` : 'No page data yet',
+            topCountry: topCountryItem ? `${topCountryItem.name} (${topCountryItem.value})` : tr('No country data yet', 'មិនទាន់មានទិន្នន័យប្រទេស'),
+            topSource: topSourceItem ? `${topSourceItem.name} (${topSourceItem.value})` : tr('No source data yet', 'មិនទាន់មានទិន្នន័យប្រភព'),
+            topPage: topPageItem ? `${topPageItem.path} (${topPageItem.count})` : tr('No page data yet', 'មិនទាន់មានទិន្នន័យទំព័រ'),
             returningRate,
-            freshnessLabel: formatLastUpdated(dataUpdatedAt)
+            freshnessLabel: formatLastUpdatedLocalized(dataUpdatedAt)
         };
-    }, [analyticsRange.end, analyticsRange.start, countryData, dataUpdatedAt, referrerData, retentionData, topPages, visits.length]);
+    }, [analyticsRange.end, analyticsRange.start, countryData, dataUpdatedAt, formatLastUpdatedLocalized, referrerData, retentionData, topPages, visits.length, tr]);
 
     const summaryStats = useMemo(() => {
         const calculateStats = (data) => {
@@ -348,37 +365,37 @@ const AnalyticsTab = ({ userRole, showToast }) => {
             total: {
                 value: current.total.toLocaleString(),
                 trend: calculateTrend(current.total, previous.total),
-                subtitle: `vs prev. ${analyticsRange.preset || 'period'}`
+                subtitle: tr(`vs prev. ${analyticsRange.preset || 'period'}`, `ធៀបនឹងមុន ${analyticsRange.preset || 'រយៈពេល'}`)
             },
             unique: {
                 value: current.unique.toLocaleString(),
                 trend: calculateTrend(current.unique, previous.unique),
-                subtitle: `vs prev. ${analyticsRange.preset || 'period'}`
+                subtitle: tr(`vs prev. ${analyticsRange.preset || 'period'}`, `ធៀបនឹងមុន ${analyticsRange.preset || 'រយៈពេល'}`)
             },
             duration: {
                 value: `${Math.floor(current.avgDuration / 60)}m ${current.avgDuration % 60}s`,
                 trend: calculateTrend(current.avgDuration, previous.avgDuration),
-                subtitle: `vs prev. ${analyticsRange.preset || 'period'}`
+                subtitle: tr(`vs prev. ${analyticsRange.preset || 'period'}`, `ធៀបនឹងមុន ${analyticsRange.preset || 'រយៈពេល'}`)
             },
             bounce: {
                 value: `${current.bounceRate}%`,
                 trend: bounceTrend,
-                subtitle: `vs prev. ${analyticsRange.preset || 'period'}`
+                subtitle: tr(`vs prev. ${analyticsRange.preset || 'period'}`, `ធៀបនឹងមុន ${analyticsRange.preset || 'រយៈពេល'}`)
             }
         };
-    }, [visits, prevVisits, analyticsRange.preset]);
+    }, [visits, prevVisits, analyticsRange.preset, tr]);
 
     // 5. RENDER
     return (
         <div className="admin-analytics-container">
             <LoadingOverlay 
                 active={analyticsLoading && !visits.length} 
-                message="Loading analytics..." 
+                message={tr('Loading analytics...', 'កំពុងផ្ទុកទិន្នន័យវិភាគ...')} 
             />
             
             <SectionHeader
-                title="Analytics Dashboard"
-                description="Track traffic quality, audience behavior, and acquisition signals for your portfolio."
+                title={tr('Analytics Dashboard', 'ផ្ទាំងវិភាគ')}
+                description={tr('Track traffic quality, audience behavior, and acquisition signals for your portfolio.', 'តាមដានគុណភាពចរាចរណ៍ ឥរិយាបថអ្នកទស្សនា និងប្រភពចូលមើលសម្រាប់ Portfolio របស់អ្នក។')}
                 icon={TrendingUp}
                 rightElement={
                     <AnalyticsFilterBar 
@@ -397,8 +414,8 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 <div className="admin-alert admin-alert-warning" style={{ marginBottom: '2rem' }}>
                     <Activity size={20} />
                     <div>
-                        <strong>Firestore Quota Exceeded</strong>
-                        <p>The daily free tier limit has been reached. Some data may be missing.</p>
+                        <strong>{tr('Firestore Quota Exceeded', 'Firestore Quota លើសកំណត់')}</strong>
+                        <p>{tr('The daily free tier limit has been reached. Some data may be missing.', 'បានដល់កំណត់ឥតគិតថ្លៃប្រចាំថ្ងៃ។ ទិន្នន័យខ្លះអាចបាត់។')}</p>
                     </div>
                 </div>
             )}
@@ -406,8 +423,8 @@ const AnalyticsTab = ({ userRole, showToast }) => {
             {!analyticsLoading && visits.length === 0 && !quotaExceeded && (
                 <EmptyState 
                     icon={TrendingUp}
-                    title="No Analytics Data"
-                    description="No data available for the selected range. Try a different date range."
+                    title={tr('No Analytics Data', 'មិនមានទិន្នន័យវិភាគ')}
+                    description={tr('No data available for the selected range. Try a different date range.', 'មិនមានទិន្នន័យសម្រាប់រយៈពេលដែលបានជ្រើស។ សូមសាកល្បងរយៈពេលផ្សេង។')}
                 />
             )}
 
@@ -415,28 +432,28 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                 <>
                     <section className="ui-analytics-workspace" aria-live="polite">
                         <div className="ui-analytics-workspace__overview">
-                            <span className="ui-analytics-workspace__eyebrow">Traffic Overview</span>
-                            <h3>Performance for {workspaceSummary.rangeText}</h3>
+                            <span className="ui-analytics-workspace__eyebrow">{tr('Traffic Overview', 'ទិដ្ឋភាពទូទៅចរាចរណ៍')}</span>
+                            <h3>{tr('Performance for', 'លទ្ធផលសម្រាប់')} {workspaceSummary.rangeText}</h3>
                             <p>
-                                Monitoring {visits.length.toLocaleString()} tracked sessions over {workspaceSummary.rangeDays} day{workspaceSummary.rangeDays === 1 ? '' : 's'}.
-                                {' '}{analyticsFetching ? 'Refreshing now...' : workspaceSummary.freshnessLabel}.
+                                {tr('Monitoring', 'កំពុងតាមដាន')} {visits.length.toLocaleString()} {tr('tracked sessions over', 'សម័យក្នុងរយៈពេល')} {workspaceSummary.rangeDays} {tr(`day${workspaceSummary.rangeDays === 1 ? '' : 's'}`, workspaceSummary.rangeDays === 1 ? 'ថ្ងៃ' : 'ថ្ងៃ')}.
+                                {' '}{analyticsFetching ? tr('Refreshing now...', 'កំពុងធ្វើបច្ចុប្បន្នភាព...') : workspaceSummary.freshnessLabel}.
                             </p>
                         </div>
                         <div className="ui-analytics-workspace__meta">
                             <article className="ui-analytics-workspace__metaItem">
-                                <span className="ui-analytics-workspace__metaLabel">Top Country</span>
+                                <span className="ui-analytics-workspace__metaLabel">{tr('Top Country', 'ប្រទេសកំពូល')}</span>
                                 <strong>{workspaceSummary.topCountry}</strong>
                             </article>
                             <article className="ui-analytics-workspace__metaItem">
-                                <span className="ui-analytics-workspace__metaLabel">Top Source</span>
+                                <span className="ui-analytics-workspace__metaLabel">{tr('Top Source', 'ប្រភពកំពូល')}</span>
                                 <strong>{workspaceSummary.topSource}</strong>
                             </article>
                             <article className="ui-analytics-workspace__metaItem">
-                                <span className="ui-analytics-workspace__metaLabel">Top Page</span>
+                                <span className="ui-analytics-workspace__metaLabel">{tr('Top Page', 'ទំព័រកំពូល')}</span>
                                 <strong>{workspaceSummary.topPage}</strong>
                             </article>
                             <article className="ui-analytics-workspace__metaItem">
-                                <span className="ui-analytics-workspace__metaLabel">Returning Share</span>
+                                <span className="ui-analytics-workspace__metaLabel">{tr('Returning Share', 'ភាគរយត្រឡប់មកវិញ')}</span>
                                 <strong>{workspaceSummary.returningRate}%</strong>
                             </article>
                         </div>
@@ -446,7 +463,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                         <StatCard
                             icon={EyeIcon}
                             value={summaryStats.total.value}
-                            label="Page Views"
+                            label={tr('Page Views', 'ចំនួនមើលទំព័រ')}
                             color="#64ffda"
                             trend={summaryStats.total.trend.type}
                             trendValue={summaryStats.total.trend.value}
@@ -456,7 +473,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                         <StatCard
                             icon={Users}
                             value={summaryStats.unique.value}
-                            label="Unique Visitors"
+                            label={tr('Unique Visitors', 'អ្នកទស្សនាមិនស្ទួន')}
                             color="#7c4dff"
                             trend={summaryStats.unique.trend.type}
                             trendValue={summaryStats.unique.trend.value}
@@ -466,7 +483,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                         <StatCard
                             icon={Clock}
                             value={summaryStats.duration.value}
-                            label="Avg. Session"
+                            label={tr('Avg. Session', 'មធ្យមក្នុងមួយសម័យ')}
                             color="#ff6090"
                             trend={summaryStats.duration.trend.type}
                             trendValue={summaryStats.duration.trend.value}
@@ -476,7 +493,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                         <StatCard
                             icon={Activity}
                             value={summaryStats.bounce.value}
-                            label="Bounce Rate"
+                            label={tr('Bounce Rate', 'អត្រាចាកចេញ')}
                             color="#ffab40"
                             trend={summaryStats.bounce.trend.type}
                             trendValue={summaryStats.bounce.trend.value}
@@ -486,7 +503,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                     </div>
 
                     <AnalyticsChart
-                        title="Visits Over Time"
+                        title={tr('Visits Over Time', 'ចំនួនចូលមើលតាមពេលវេលា')}
                         icon={TrendingUp}
                         type="line"
                         data={dailyVisits}
@@ -500,7 +517,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
                     <div className="admin-analytics-row admin-grid-2">
                         <AnalyticsChart
-                            title="Visitors by Country"
+                            title={tr('Visitors by Country', 'អ្នកទស្សនាតាមប្រទេស')}
                             icon={Globe}
                             type="pie"
                             data={countryData}
@@ -510,7 +527,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                             onViewDetails={() => handleAnalyticsDetail('countries')}
                         />
                         <AnalyticsChart
-                            title="Device Breakdown"
+                            title={tr('Device Breakdown', 'បែងចែកតាមឧបករណ៍')}
                             icon={Monitor}
                             type="pie"
                             data={deviceData}
@@ -523,7 +540,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
                     <div className="admin-analytics-row admin-grid-2">
                         <AnalyticsChart
-                            title="Top Cities"
+                            title={tr('Top Cities', 'ទីក្រុងកំពូល')}
                             icon={MapPin}
                             type="bar"
                             data={cityData.slice(0, 6)}
@@ -533,7 +550,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                             onViewDetails={() => handleAnalyticsDetail('cities')}
                         />
                         <AnalyticsChart
-                            title="Traffic Sources"
+                            title={tr('Traffic Sources', 'ប្រភពចរាចរណ៍')}
                             icon={Share2}
                             type="pie"
                             data={referrerData}
@@ -546,7 +563,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
                     <div className="admin-analytics-row admin-grid-auto">
                         <AnalyticsChart
-                            title="Top Browsers"
+                            title={tr('Top Browsers', 'Browser កំពូល')}
                             icon={FileText}
                             type="pie"
                             data={browserData}
@@ -556,7 +573,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                             onViewDetails={() => handleAnalyticsDetail('browsers')}
                         />
                         <AnalyticsChart
-                            title="Operating Systems"
+                            title={tr('Operating Systems', 'ប្រព័ន្ធប្រតិបត្តិការ')}
                             icon={Monitor}
                             type="pie"
                             data={osData}
@@ -566,7 +583,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                             onViewDetails={() => handleAnalyticsDetail('os')}
                         />
                          <AnalyticsChart
-                            title="Visitor Retention"
+                            title={tr('Visitor Retention', 'ការត្រឡប់មកវិញរបស់អ្នកទស្សនា')}
                             icon={Users}
                             type="pie"
                             data={retentionData}
@@ -580,7 +597,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
                     <div className="admin-analytics-row">
                         <AnalyticsChart
-                            title="Top Visited Pages"
+                            title={tr('Top Visited Pages', 'ទំព័រដែលចូលមើលច្រើនបំផុត')}
                             icon={FileText}
                             type="bar"
                             data={topPages}

@@ -20,7 +20,7 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { getLanguageValue, getLocalizedField } from '../../../utils/localization';
 
 const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
-  const { language } = useTranslation();
+  const { language, t } = useTranslation();
   // State
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -47,14 +47,14 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
     showToast,
-    successMessage: selectedPost ? 'Post updated successfully' : 'Post created successfully',
+    successMessage: selectedPost ? t('admin.blog.messages.updated') : t('admin.blog.messages.created'),
     invalidateKeys: [['posts']],
     onSuccess: () => setIsFormOpen(false)
   });
 
   const { loading: deleteLoading, execute: executeDelete } = useAsyncAction({
     showToast,
-    successMessage: 'Post deleted successfully',
+    successMessage: t('admin.blog.messages.deleted'),
     invalidateKeys: [['posts']],
     onSuccess: () => setIsDeleteOpen(false)
   });
@@ -109,27 +109,27 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const draftPostsCount = posts.length - visiblePostsCount;
   const workspaceStats = [
     {
-      label: 'On This Page',
+      label: t('admin.common.stats.onThisPage.label'),
       value: posts.length,
-      hint: 'Loaded in the current result set',
+      hint: t('admin.common.stats.onThisPage.hint'),
       icon: FileText
     },
     {
-      label: 'Published',
+      label: t('admin.common.stats.published.label'),
       value: visiblePostsCount,
-      hint: 'Publicly visible posts',
+      hint: t('admin.blog.stats.published.hint'),
       icon: Globe2
     },
     {
-      label: 'Featured',
+      label: t('admin.common.stats.featured.label'),
       value: featuredPostsCount,
-      hint: 'Pinned to homepage surfaces',
+      hint: t('admin.blog.stats.featured.hint'),
       icon: Sparkles
     },
     {
-      label: 'Drafts',
+      label: t('admin.blog.stats.drafts.label'),
       value: draftPostsCount,
-      hint: 'Hidden from visitors',
+      hint: t('admin.blog.stats.drafts.hint'),
       icon: PenSquare
     }
   ];
@@ -142,7 +142,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleCreate = () => {
     if (!canCreate) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     setSelectedPost(null);
     setIsFormOpen(true);
@@ -150,7 +150,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleEdit = (post) => {
     if (!isActionAllowed('edit', 'blog')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     const source = post.__raw || post;
     setSelectedPost({
@@ -162,7 +162,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleDelete = (post) => {
     if (!isActionAllowed('delete', 'blog')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     setSelectedPost(post.__raw || post);
     setIsDeleteOpen(true);
@@ -217,7 +217,11 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
     onSuccess: (_, variables) => {
-      showToast(`Post ${!variables.currentVisible ? 'published' : 'hidden'} successfully`);
+      showToast(
+        !variables.currentVisible
+          ? t('admin.blog.messages.published')
+          : t('admin.blog.messages.hidden')
+      );
     }
   });
 
@@ -248,17 +252,21 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
     onSuccess: (_, variables) => {
-      showToast(`Post ${!variables.currentFeatured ? 'featured' : 'removed from featured'} successfully`);
+      showToast(
+        !variables.currentFeatured
+          ? t('admin.blog.messages.featured')
+          : t('admin.blog.messages.unfeatured')
+      );
     }
   });
 
   const handleToggleVisibility = (id, currentVisible) => {
-    if (!canEdit) return showToast("You do not have permission to edit blog posts.", "error");
+    if (!canEdit) return showToast(t('admin.common.noPermissionAction'), "error");
     visibilityMutation.mutate({ id, currentVisible });
   };
 
   const handleToggleFeatured = (id, currentFeatured) => {
-    if (!canEdit) return showToast("You do not have permission to edit blog posts.", "error");
+    if (!canEdit) return showToast(t('admin.common.noPermissionAction'), "error");
     featuredMutation.mutate({ id, currentFeatured });
   };
 
@@ -266,7 +274,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const bulkDeleteMutation = useMutation({
     mutationFn: (ids) => BlogService.batchDeletePosts(userRole, ids, trackDelete),
     onSuccess: (_, ids) => {
-      showToast(`Deleted ${ids.length} posts.`);
+      showToast(t('admin.blog.messages.deletedMany', { count: ids.length }));
       setSelectedPosts([]);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
@@ -276,7 +284,11 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const bulkVisibilityMutation = useMutation({
     mutationFn: ({ ids, visible }) => BlogService.batchUpdatePostsVisibility(userRole, ids, visible, trackWrite),
     onSuccess: (_, { ids, visible }) => {
-      showToast(`${ids.length} posts ${visible ? 'published' : 'hidden'}.`);
+      showToast(
+        visible
+          ? t('admin.blog.messages.publishedMany', { count: ids.length })
+          : t('admin.blog.messages.hiddenMany', { count: ids.length })
+      );
       setSelectedPosts([]);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
@@ -286,7 +298,11 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const bulkFeaturedMutation = useMutation({
     mutationFn: ({ ids, featured }) => BlogService.batchUpdatePostsFeatured(userRole, ids, featured, trackWrite),
     onSuccess: (_, { ids, featured }) => {
-      showToast(`${ids.length} posts ${featured ? 'featured' : 'unfeatured'}.`);
+      showToast(
+        featured
+          ? t('admin.blog.messages.featuredMany', { count: ids.length })
+          : t('admin.blog.messages.unfeaturedMany', { count: ids.length })
+      );
       setSelectedPosts([]);
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
@@ -318,7 +334,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleFormSubmit = async (formData) => {
     if (!isActionAllowed(selectedPost ? 'edit' : 'create', 'blog')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     
     await executeForm(async () => {
@@ -384,7 +400,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleImportPosts = async (file) => {
     if (!canCreate && !canEdit) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
 
     try {
@@ -471,7 +487,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         skippedCount: 0
       });
       showToast(
-        `Import complete: ${created} created, ${updated} updated, ${skipped} skipped, ${failed} failed.`,
+        t('admin.blog.messages.importComplete', { created, updated, skipped, failed }),
         failed > 0 || skipped > 0 ? 'warning' : 'success'
       );
     } catch (error) {
@@ -483,16 +499,16 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleExportSelectedPosts = () => {
     if (selectedPosts.length === 0) {
-      return showToast('Please select posts to export.', 'warning');
+      return showToast(t('admin.blog.messages.selectToExport'), 'warning');
     }
 
     const selected = posts.filter(post => selectedPosts.includes(post.id));
     if (selected.length === 0) {
-      return showToast('Selected posts are not in the current page result.', 'warning');
+      return showToast(t('admin.blog.messages.selectedNotInPage'), 'warning');
     }
 
     downloadJson(selected, `blog_export_selected_${new Date().toISOString().split('T')[0]}.json`);
-    showToast(`Exported ${selected.length} selected posts.`);
+    showToast(t('admin.blog.messages.exportedMany', { count: selected.length }));
   };
 
   const handleDownloadBlogJsonTemplate = () => {
@@ -538,7 +554,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const handleConfirmDelete = async () => {
     if (!selectedPost?.id) return;
     if (!isActionAllowed('delete', 'blog')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
 
     await executeDelete(async () => {
@@ -577,27 +593,27 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
               {selectedPosts.length}
             </div>
             <span className="ui-bulk-actions-text">
-              Posts Selected
+              {t('admin.blog.bulk.selected')}
             </span>
           </div>
 
           <div className="ui-bulk-actions-controls">
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title="Publish Selected">
-              <Eye size={16} style={{ marginRight: '0.4rem' }} /> Publish
+            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title={t('admin.blog.bulk.publishSelected')}>
+              <Eye size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.publish')}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title="Hide Selected">
-              <EyeOff size={16} style={{ marginRight: '0.4rem' }} /> Hide
-            </Button>
-            <div className="ui-bulk-divider" />
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title="Feature Selected">
-              <Star size={16} style={{ marginRight: '0.4rem' }} /> Feature
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title="Unfeature Selected">
-              <StarOff size={16} style={{ marginRight: '0.4rem' }} /> Unfeature
+            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title={t('admin.blog.bulk.hideSelected')}>
+              <EyeOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.hide')}
             </Button>
             <div className="ui-bulk-divider" />
-            <Button variant="danger" size="sm" onClick={handleBulkDelete} title="Delete Selected">
-              <Trash2 size={16} style={{ marginRight: '0.4rem' }} /> Delete
+            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title={t('admin.blog.bulk.featureSelected')}>
+              <Star size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.feature')}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title={t('admin.blog.bulk.unfeatureSelected')}>
+              <StarOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.unfeature')}
+            </Button>
+            <div className="ui-bulk-divider" />
+            <Button variant="danger" size="sm" onClick={handleBulkDelete} title={t('admin.blog.bulk.deleteSelected')}>
+              <Trash2 size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.common.delete')}
             </Button>
           </div>
         </div>
@@ -649,8 +665,10 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         onOpenChange={setIsDeleteOpen}
         onConfirm={handleConfirmDelete}
         loading={deleteLoading}
-        title="Delete Post"
-        message={`Are you sure you want to delete "${getLocalizedField(selectedPost?.title, language)}"? This action cannot be undone.`}
+        title={t('admin.blog.dialogs.deleteTitle')}
+        message={t('admin.blog.dialogs.deleteMessage', {
+          title: getLocalizedField(selectedPost?.title, language)
+        })}
       />
 
       <DeleteConfirmDialog 
@@ -661,8 +679,8 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
             setBulkConfirm({ ...bulkConfirm, isOpen: false });
         }}
         loading={bulkDeleteMutation.isPending}
-        title="Delete Multiple Posts"
-        message={`Are you sure you want to delete ${bulkConfirm.ids.length} selected posts? This action cannot be undone.`}
+        title={t('admin.blog.dialogs.deleteManyTitle')}
+        message={t('admin.blog.dialogs.deleteManyMessage', { count: bulkConfirm.ids.length })}
       />
 
       <ImportConfirmDialog
@@ -679,20 +697,20 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         })}
         onConfirm={handleConfirmImportPosts}
         loading={importLoading}
-        title="Import Blog Posts"
-        description="Review the file before running a bulk import. Existing posts with matching slugs will be updated."
+        title={t('admin.blog.import.title')}
+        description={t('admin.blog.import.description')}
         fileName={importDialog.fileName}
         format={importDialog.format}
         stats={[
-          { label: 'Rows found', value: importDialog.totalCount },
-          { label: 'Ready to import', value: importDialog.validCount },
-          { label: 'Skipped', value: importDialog.skippedCount }
+          { label: t('admin.common.import.rowsFound'), value: importDialog.totalCount },
+          { label: t('admin.common.import.readyToImport'), value: importDialog.validCount },
+          { label: t('admin.common.import.skipped'), value: importDialog.skippedCount }
         ]}
         notes={[
-          'Rows without a title are skipped automatically.',
-          'Import keeps slug-based updates and creates new posts when no match is found.'
+          t('admin.blog.import.noteMissingTitle'),
+          t('admin.blog.import.noteSlug')
         ]}
-        confirmText="Run Import"
+        confirmText={t('admin.common.import.runImport')}
       />
 
       <HistoryModal

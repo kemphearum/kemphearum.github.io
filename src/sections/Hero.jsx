@@ -15,6 +15,7 @@ import { Download, Send } from 'lucide-react';
 const Hero = () => {
     const { trackEvent } = useAnalytics();
     const { language, t } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const navigate = useNavigate();
 
     const handleSectionLinkClick = (e, target) => {
@@ -156,7 +157,7 @@ const Hero = () => {
                         {(content.profileImageUrl || loading) && (
                             <img
                                 src={content.profileImageUrl || "https://ui-avatars.com/api/?name=Kem+Phearum&background=6C63FF&color=fff&size=350"}
-                                alt="Profile"
+                                alt={tr('Profile', 'ប្រវត្តិរូប')}
                                 className={styles.profileImage}
                                 width="320"
                                 height="320"

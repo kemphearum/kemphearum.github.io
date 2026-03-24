@@ -6,6 +6,7 @@ import { RefreshCw, Globe, Type, Eye, Trash2, AlertCircle, Activity } from 'luci
 import ImageProcessingService from '../../../services/ImageProcessingService';
 import tabStyles from './SettingsTab.module.scss';
 import axios from 'axios';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 // Shared UI components
 import { Button, Dialog, Tabs } from '@/shared/components/ui';
@@ -17,6 +18,8 @@ import VisualsSection from './components/VisualsSection';
 import SyncSection from './components/SyncSection';
 
 const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, sidebarPersistent, setSidebarPersistent, showToast }) => {
+    const { t, language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const queryClient = useQueryClient();
     const { data: metadata } = useQuery({
     staleTime: 60000,
@@ -54,10 +57,10 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     const [activeSubTab, setActiveSubTab] = useState('identity');
 
     const subTabs = [
-        { id: 'identity', label: 'Identity', description: 'Browser title, logo system, filters, and favicon.', icon: Globe },
-        { id: 'typography', label: 'Typography', description: 'Font roles, presets, previews, and admin override.', icon: Type },
-        { id: 'visuals', label: 'Visuals', description: 'Background motion, particle tuning, and interface behavior.', icon: Eye },
-        { id: 'sync', label: 'Site Sync', description: 'Mirrors, GitHub token, and manual rebuild control.', icon: RefreshCw }
+        { id: 'identity', label: t('admin.settings.subTabs.identity.label'), description: t('admin.settings.subTabs.identity.description'), icon: Globe },
+        { id: 'typography', label: t('admin.settings.subTabs.typography.label'), description: t('admin.settings.subTabs.typography.description'), icon: Type },
+        { id: 'visuals', label: t('admin.settings.subTabs.visuals.label'), description: t('admin.settings.subTabs.visuals.description'), icon: Eye },
+        { id: 'sync', label: t('admin.settings.subTabs.sync.label'), description: t('admin.settings.subTabs.sync.description'), icon: RefreshCw }
     ];
 
     // Custom Confirmation Dialog State
@@ -66,7 +69,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         title: '',
         message: '',
         onConfirm: null,
-        confirmText: 'Confirm',
+        confirmText: tr('Confirm', 'បញ្ជាក់'),
         type: 'warning'
     });
 
@@ -169,9 +172,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                 setRebuildStatus(prev => ({
                     ...prev,
                     state: newState,
-                    message: newState === 'success' ? 'Build successful! Your site is updated.' :
-                        newState === 'error' ? `Build failed: ${run.conclusion}` :
-                            `Current Status: ${run.status.replace('_', ' ')}...`
+                    message: newState === 'success' ? tr('Build successful! Your site is updated.', 'ការបង្កើតបានជោគជ័យ! គេហទំព័ររបស់អ្នកត្រូវបានធ្វើបច្ចុប្បន្នភាព។') :
+                        newState === 'error' ? `${tr('Build failed', 'ការបង្កើតបរាជ័យ')}: ${run.conclusion}` :
+                            `${tr('Current Status', 'ស្ថានភាពបច្ចុប្បន្ន')}: ${run.status.replace('_', ' ')}...`
                 }));
 
                 if (run.status === 'completed') {
@@ -201,21 +204,21 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
 
     const handleTriggerRebuild = async () => {
         if (!githubToken) {
-            showToast('Please enter your GitHub Personal Access Token first.', 'error');
+            showToast(tr('Please enter your GitHub Personal Access Token first.', 'សូមបញ្ចូល GitHub Personal Access Token ជាមុនសិន។'), 'error');
             return;
         }
 
         setConfirmDialog({
             isOpen: true,
-            title: 'Trigger Site Rebuild',
-            message: 'This will trigger a full site rebuild and deployment. You can track the progress in real-time below.\n\nContinue?',
-            confirmText: 'Rebuild Now',
+            title: tr('Trigger Site Rebuild', 'ចាប់ផ្តើមបង្កើតគេហទំព័រឡើងវិញ'),
+            message: tr('This will trigger a full site rebuild and deployment. You can track the progress in real-time below.\n\nContinue?', 'វានឹងចាប់ផ្តើមបង្កើត និងដាក់ប្រើគេហទំព័រឡើងវិញទាំងស្រុង។ អ្នកអាចតាមដានវឌ្ឍនភាពបានភ្លាមៗខាងក្រោម។\n\nបន្តទេ?'),
+            confirmText: tr('Rebuild Now', 'បង្កើតឡើងវិញឥឡូវនេះ'),
             type: 'warning',
             onConfirm: async () => {
                 const startTime = Date.now();
                 setRebuildStatus({
                     state: 'loading',
-                    message: 'Initializing sync with GitHub...',
+                    message: tr('Initializing sync with GitHub...', 'កំពុងចាប់ផ្ដើមសមកាលកម្មជាមួយ GitHub...'),
                     runId: null,
                     startTime
                 });
@@ -240,9 +243,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     setRebuildStatus(prev => ({
                         ...prev,
                         state: 'requested',
-                        message: 'Request sent! Waiting for GitHub to start the build...'
+                        message: tr('Request sent! Waiting for GitHub to start the build...', 'បានផ្ញើសំណើរួច! កំពុងរង់ចាំ GitHub ចាប់ផ្តើមបង្កើត...')
                     }));
-                    showToast('Rebuild request sent successfully!');
+                    showToast(tr('Rebuild request sent successfully!', 'បានផ្ញើសំណើបង្កើតឡើងវិញដោយជោគជ័យ!'));
                 });
 
                 if (error) {
@@ -250,9 +253,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     let errMsg = error;
                     // axios error handling
                     if (error.response?.status === 401 || error.response?.status === 403) {
-                        errMsg = 'Invalid or expired GitHub Token. Please check your token settings.';
+                        errMsg = tr('Invalid or expired GitHub Token. Please check your token settings.', 'GitHub Token មិនត្រឹមត្រូវ ឬផុតកំណត់។ សូមពិនិត្យការកំណត់ token របស់អ្នក។');
                     } else if (error.response?.data?.message) {
-                        errMsg = `GitHub Error: ${error.response.data.message}`;
+                        errMsg = `${tr('GitHub Error', 'កំហុស GitHub')}: ${error.response.data.message}`;
                     }
 
                     setRebuildStatus({
@@ -286,15 +289,15 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     const handleInitializeMetadata = async () => {
         setConfirmDialog({
             isOpen: true,
-            title: 'Initialize Typography Metadata',
-            message: 'This will push the default typography options (Fonts, Categories, Defaults) to your database. This is usually only needed once or when adding new fonts to the system.\n\nContinue?',
-            confirmText: 'Initialize Now',
+            title: tr('Initialize Typography Metadata', 'ចាប់ផ្តើម Typography Metadata'),
+            message: tr('This will push the default typography options (Fonts, Categories, Defaults) to your database. This is usually only needed once or when adding new fonts to the system.\n\nContinue?', 'វានឹងបញ្ចូលជម្រើស typography លំនាំដើម (ពុម្ពអក្សរ ប្រភេទ និងលំនាំដើម) ទៅកាន់មូលដ្ឋានទិន្នន័យ។ ជាទូទៅត្រូវធ្វើតែម្តង ឬពេលបន្ថែមពុម្ពអក្សរថ្មីទៅប្រព័ន្ធ។\n\nបន្តទេ?'),
+            confirmText: tr('Initialize Now', 'ចាប់ផ្តើមឥឡូវនេះ'),
             type: 'info',
             onConfirm: async () => {
                 const { error } = await BaseService.safe(async () => {
                     await SettingsService.updateTypographyMetadata(SettingsService.constructor.DEFAULT_TYPOGRAPHY_METADATA);
                     queryClient.invalidateQueries({ queryKey: ['settings', 'metadata', 'typography'] });
-                    showToast('Typography metadata initialized successfully!');
+                    showToast(tr('Typography metadata initialized successfully!', 'បានចាប់ផ្តើម Typography metadata ដោយជោគជ័យ!'));
                 });
                 if (error) {
                     console.error("Failed to initialize metadata:", error);
@@ -332,14 +335,14 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
 
 
     if (!typographyMetadata) {
-        return <div className="ui-spinnerContainer">Loading Typography Settings...</div>;
+        return <div className="ui-spinnerContainer">{tr('Loading Typography Settings...', 'កំពុងផ្ទុកការកំណត់ Typography...')}</div>;
     }
 
     const backgroundLabelMap = {
-        plexus: 'Plexus',
-        particles: 'Particles',
-        geometry: 'Geometry',
-        aurora: 'Aurora'
+        plexus: t('admin.settings.sectionMeta.visuals.backgroundStyles.plexus'),
+        particles: t('admin.settings.sectionMeta.visuals.backgroundStyles.particles'),
+        geometry: t('admin.settings.sectionMeta.visuals.backgroundStyles.geometry'),
+        aurora: t('admin.settings.sectionMeta.visuals.backgroundStyles.aurora')
     };
 
     const identityFields = [
@@ -360,31 +363,39 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         settingsData[category.italicField]
     ).length;
     const syncStatusLabel = rebuildStatus.state === 'idle'
-        ? 'Ready'
+        ? t('admin.settings.syncStatus.ready')
         : rebuildStatus.state === 'loading'
-            ? 'Syncing'
+            ? t('admin.settings.syncStatus.syncing')
             : rebuildStatus.state === 'requested'
-                ? 'Queued'
+                ? t('admin.settings.syncStatus.queued')
                 : rebuildStatus.state === 'success'
-                    ? 'Healthy'
-                    : 'Attention';
+                    ? t('admin.settings.syncStatus.healthy')
+                    : t('admin.settings.syncStatus.attention');
     const tokenReady = githubToken.trim().length > 0;
     const sectionMeta = {
         identity: {
             count: `${identityFilled}/8`,
-            hint: settingsData.favicon ? 'Favicon configured' : 'Add a favicon'
+            hint: settingsData.favicon
+                ? t('admin.settings.sectionMeta.identity.faviconConfigured')
+                : t('admin.settings.sectionMeta.identity.addFavicon')
         },
         typography: {
-            count: `${fontCategories.length} roles`,
-            hint: metadata ? `${typographyCustomized} customized` : 'Metadata setup available'
+            count: `${fontCategories.length} ${t('admin.settings.sectionMeta.typography.roles')}`,
+            hint: metadata
+                ? `${typographyCustomized} ${t('admin.settings.sectionMeta.typography.customized')}`
+                : t('admin.settings.sectionMeta.typography.metadataSetupAvailable')
         },
         visuals: {
-            count: backgroundLabelMap[settingsData.bgStyle || 'plexus'] || 'Plexus',
-            hint: settingsData.bgInteractive ?? true ? 'Interactive motion on' : 'Interactive motion off'
+            count: backgroundLabelMap[settingsData.bgStyle || 'plexus'] || t('admin.settings.sectionMeta.visuals.backgroundStyles.plexus'),
+            hint: settingsData.bgInteractive ?? true
+                ? t('admin.settings.sectionMeta.visuals.interactiveOn')
+                : t('admin.settings.sectionMeta.visuals.interactiveOff')
         },
         sync: {
-            count: `${mirrors.length} mirrors`,
-            hint: tokenReady ? `${syncStatusLabel} for rebuilds` : 'Token needed for rebuilds'
+            count: `${mirrors.length} ${t('admin.settings.sectionMeta.sync.mirrors')}`,
+            hint: tokenReady
+                ? t('admin.settings.sectionMeta.sync.statusForRebuilds', { status: syncStatusLabel })
+                : t('admin.settings.sectionMeta.sync.tokenNeededForRebuilds')
         }
     };
 
@@ -393,25 +404,25 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
             <div className={tabStyles.workspaceShell}>
                 <div className={tabStyles.workspaceIntro}>
                     <div className={tabStyles.workspaceCopy}>
-                        <span className={tabStyles.workspaceEyebrow}>Site Operations</span>
-                        <h2>Control the brand system, motion, and deployment behavior from one calmer workspace.</h2>
-                        <p>Settings now group identity, typography, visuals, and sync into clearer workstreams so you can tune the portfolio without digging through dense forms.</p>
+                        <span className={tabStyles.workspaceEyebrow}>{tr('Site Operations', 'ប្រតិបត្តិការគេហទំព័រ')}</span>
+                        <h2>{tr('Control the brand system, motion, and deployment behavior from one calmer workspace.', 'គ្រប់គ្រងប្រព័ន្ធម៉ាក ចលនា និងឥរិយាបថដាក់ប្រើពី workspace តែមួយដែលស្ងប់ស្ងាត់ជាងមុន។')}</h2>
+                        <p>{tr('Settings now group identity, typography, visuals, and sync into clearer workstreams so you can tune the portfolio without digging through dense forms.', 'ការកំណត់ត្រូវបានបែងចែកជា identity, typography, visuals និង sync ឲ្យច្បាស់ ដើម្បីកែតម្រូវ portfolio បានងាយស្រួល។')}</p>
                     </div>
                     <div className={tabStyles.workspaceStats}>
                         <div className={tabStyles.workspaceStat}>
                             <span className={tabStyles.workspaceStatValue}>4</span>
-                            <span className={tabStyles.workspaceStatLabel}>Workstreams</span>
-                            <span className={tabStyles.workspaceStatHint}>Identity, typography, visuals, and sync</span>
+                            <span className={tabStyles.workspaceStatLabel}>{tr('Workstreams', 'លំហូរការងារ')}</span>
+                            <span className={tabStyles.workspaceStatHint}>{tr('Identity, typography, visuals, and sync', 'Identity, Typography, Visuals និង Sync')}</span>
                         </div>
                         <div className={tabStyles.workspaceStat}>
                             <span className={tabStyles.workspaceStatValue}>{fontCategories.length}</span>
-                            <span className={tabStyles.workspaceStatLabel}>Type Roles</span>
-                            <span className={tabStyles.workspaceStatHint}>Live previews across public and admin UI</span>
+                            <span className={tabStyles.workspaceStatLabel}>{tr('Type Roles', 'តួនាទីអក្សរ')}</span>
+                            <span className={tabStyles.workspaceStatHint}>{tr('Live previews across public and admin UI', 'មើលជាមុនភ្លាមៗលើ UI សាធារណៈ និង Admin')}</span>
                         </div>
                         <div className={tabStyles.workspaceStat}>
                             <span className={tabStyles.workspaceStatValue}>{mirrors.length}</span>
-                            <span className={tabStyles.workspaceStatLabel}>Deploy Targets</span>
-                            <span className={tabStyles.workspaceStatHint}>{tokenReady ? 'GitHub rebuild control is configured' : 'Add a token to trigger rebuilds'}</span>
+                            <span className={tabStyles.workspaceStatLabel}>{tr('Deploy Targets', 'គោលដៅ Deploy')}</span>
+                            <span className={tabStyles.workspaceStatHint}>{tokenReady ? tr('GitHub rebuild control is configured', 'បានកំណត់ការគ្រប់គ្រង rebuild របស់ GitHub') : tr('Add a token to trigger rebuilds', 'បន្ថែម token ដើម្បីចាប់ផ្តើម rebuild')}</span>
                         </div>
                     </div>
                 </div>
@@ -509,7 +520,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         {confirmDialog.message}
                     </Dialog.Body>
                     <Dialog.Footer>
-                        <Button variant="ghost" onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}>Cancel</Button>
+                        <Button variant="ghost" onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}>{tr('Cancel', 'បោះបង់')}</Button>
                         <Button 
                             variant={confirmDialog.type === 'danger' ? 'danger' : 'primary'}
                             onClick={() => { confirmDialog.onConfirm?.(); setConfirmDialog(prev => ({ ...prev, isOpen: false })); }}

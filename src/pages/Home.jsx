@@ -11,6 +11,12 @@ import Footer from '@/sections/Footer';
 import Experience from '@/sections/Experience';
 import SettingsService from '../../src/services/SettingsService';
 import { normalizeSectionTarget, scrollToSectionWithOffset as scrollToSectionOffset } from '../utils/sectionNavigation';
+import { getLocalizedField } from '../utils/localization';
+
+const getMetaLanguage = () => {
+  if (typeof window === 'undefined') return 'en';
+  return localStorage.getItem('portfolio.language') === 'km' ? 'km' : 'en';
+};
 
 export async function loader() {
   try {
@@ -22,9 +28,11 @@ export async function loader() {
 }
 
 export function meta({ data }) {
+  const language = getMetaLanguage();
+  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
   const site = data?.site || data || {};
-  const title = site.pageTitle || site.title || "Kem Phearum | Portfolio";
-  const desc = site.pageDescription || site.description || "ICT Security & IT Audit Professional";
+  const title = getLocalizedField(site.pageTitle || site.title, language) || tr("Kem Phearum | Portfolio", "Kem Phearum | ផតថលីយ៉ូ");
+  const desc = getLocalizedField(site.pageDescription || site.description, language) || tr("ICT Security & IT Audit Professional", "អ្នកជំនាញ ICT Security និង IT Audit");
   
   return [
     { title },

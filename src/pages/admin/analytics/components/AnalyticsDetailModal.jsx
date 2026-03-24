@@ -2,15 +2,16 @@ import React from 'react';
 import { TrendingUp, Globe, Monitor, FileText, MapPin, Share2, RefreshCw, Users, UserCheck, Calendar, Activity } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, CartesianGrid, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { Dialog, Button } from '@/shared/components/ui';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
-const parseBrowser = (ua) => {
-    if (!ua) return 'Unknown';
+const parseBrowser = (ua, tr) => {
+    if (!ua) return tr('Unknown', 'មិនស្គាល់');
     if (ua.includes('Edg/')) return 'Edge';
     if (ua.includes('OPR/') || ua.includes('Opera')) return 'Opera';
     if (ua.includes('Chrome/') && !ua.includes('Edg/')) return 'Chrome';
     if (ua.includes('Firefox/')) return 'Firefox';
     if (ua.includes('Safari/') && !ua.includes('Chrome/')) return 'Safari';
-    return 'Other';
+    return tr('Other', 'ផ្សេងទៀត');
 };
 
 const AnalyticsDetailModal = ({
@@ -25,6 +26,8 @@ const AnalyticsDetailModal = ({
     pageSize = 5,
     enablePagination = false
 }) => {
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     if (!analyticsDetail) return null;
 
     const onClose = () => setAnalyticsDetail(null);
@@ -41,10 +44,10 @@ const AnalyticsDetailModal = ({
                     className="ui-button ui-button--secondary"
                     style={{ margin: 0, padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                 >
-                    Previous
+                    {tr('Previous', 'មុន')}
                 </button>
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    Page {page} of {totalPages}
+                    {tr(`Page ${page} of ${totalPages}`, `ទំព័រ ${page} នៃ ${totalPages}`)}
                 </span>
                 <button 
                     onClick={() => onPageChange(page + 1)} 
@@ -52,7 +55,7 @@ const AnalyticsDetailModal = ({
                     className="ui-secondaryBtn"
                     style={{ margin: 0, padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                 >
-                    Next
+                    {tr('Next', 'បន្ទាប់')}
                 </button>
             </div>
         );
@@ -64,21 +67,21 @@ const AnalyticsDetailModal = ({
                 <Dialog.Header style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <Dialog.Title>
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--primary-color)', margin: 0 }}>
-                            {analyticsDetail === 'visits' && <><TrendingUp size={24} /> Comprehensive Visit Activity History</>}
-                            {analyticsDetail === 'countries' && <><Globe size={24} /> Audience Geographic Distribution</>}
-                            {analyticsDetail === 'devices' && <><Monitor size={24} /> Technical Device Infrastructure</>}
-                            {analyticsDetail === 'pages' && <><FileText size={24} /> Content Performance Metrics</>}
-                            {analyticsDetail === 'cities' && <><MapPin size={24} /> Regional Engagement Breakdown</>}
-                            {analyticsDetail === 'referrers' && <><Share2 size={24} /> Acquisition & Traffic Sources</>}
-                            {analyticsDetail === 'retention' && <><Users size={24} /> Audience Loyalty & Retention Analysis</>}
+                            {analyticsDetail === 'visits' && <><TrendingUp size={24} /> {tr('Comprehensive Visit Activity History', 'ប្រវត្តិសកម្មភាពចូលមើលលម្អិត')}</>}
+                            {analyticsDetail === 'countries' && <><Globe size={24} /> {tr('Audience Geographic Distribution', 'ការចែកចាយភូមិសាស្ត្រអ្នកទស្សនា')}</>}
+                            {analyticsDetail === 'devices' && <><Monitor size={24} /> {tr('Technical Device Infrastructure', 'ហេដ្ឋារចនាសម្ព័ន្ធឧបករណ៍')}</>}
+                            {analyticsDetail === 'pages' && <><FileText size={24} /> {tr('Content Performance Metrics', 'ម៉ែត្រការអនុវត្តខ្លឹមសារ')}</>}
+                            {analyticsDetail === 'cities' && <><MapPin size={24} /> {tr('Regional Engagement Breakdown', 'ការចូលរួមតាមតំបន់')}</>}
+                            {analyticsDetail === 'referrers' && <><Share2 size={24} /> {tr('Acquisition & Traffic Sources', 'ប្រភពទទួលបាន និងចរាចរណ៍')}</>}
+                            {analyticsDetail === 'retention' && <><Users size={24} /> {tr('Audience Loyalty & Retention Analysis', 'វិភាគភាពស្មោះត្រង់ និងការត្រឡប់មកវិញ')}</>}
                         </h3>
                     </Dialog.Title>
                     <Dialog.Description style={{ marginTop: '0.5rem', opacity: 0.7 }}>
-                        Detailed insights based on {analyticsLogsTotal || analyticsLogs.length} tracked interactions
+                        {tr(`Detailed insights based on ${analyticsLogsTotal || analyticsLogs.length} tracked interactions`, `ព័ត៌មានលម្អិតផ្អែកលើអន្តរកម្ម ${analyticsLogsTotal || analyticsLogs.length} ដែលបានតាមដាន`)}
                         {quotaExceeded && (
                             <div style={{ marginTop: '0.5rem', color: '#ffab40', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                                 <Activity size={14} /> 
-                                <span>Firestore quota reached. Showing partial or local data.</span>
+                                <span>{tr('Firestore quota reached. Showing partial or local data.', 'បានដល់កំណត់ Firestore quota។ កំពុងបង្ហាញទិន្នន័យមួយផ្នែក។')}</span>
                             </div>
                         )}
                     </Dialog.Description>
@@ -92,13 +95,13 @@ const AnalyticsDetailModal = ({
                                     <RefreshCw size={60} className="ui-spin" style={{ opacity: 0.1 }} />
                                     <RefreshCw size={30} className="ui-spin" style={{ position: 'absolute', top: '15px', left: '15px', color: 'var(--primary-color)' }} />
                                 </div>
-                                <p className="ui-hint" style={{ letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>Aggregating Analytics Data...</p>
+                                <p className="ui-hint" style={{ letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>{tr('Aggregating Analytics Data...', 'កំពុងប្រមូលទិន្នន័យវិភាគ...')}</p>
                             </div>
                         ) : analyticsDetail === 'visits' ? (
                             <div style={{ padding: '1.5rem 1rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', background: 'rgba(255,255,255,0.05)', padding: '0.4rem 1rem', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                                        Retrieved {analyticsLogs.length} recent sessions
+                                        {tr(`Retrieved ${analyticsLogs.length} recent sessions`, `បានទាញយកសម័យថ្មីៗ ${analyticsLogs.length}`)}
                                     </span>
                                 </div>
                                 <div className="admin-table-wrapper" style={{ borderRadius: '16px', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -106,11 +109,11 @@ const AnalyticsDetailModal = ({
                                         <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
                                             <tr>
                                                 <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>#</th>
-                                                <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>Page Path</th>
-                                                <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>Region</th>
-                                                <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>Platform</th>
-                                                <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>IP Address</th>
-                                                <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'right' }}>Date & Time</th>
+                                                <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>{tr('Page Path', 'ផ្លូវទំព័រ')}</th>
+                                                <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>{tr('Region', 'តំបន់')}</th>
+                                                <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>{tr('Platform', 'វេទិកា')}</th>
+                                                <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>{tr('IP Address', 'អាសយដ្ឋាន IP')}</th>
+                                                <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'right' }}>{tr('Date & Time', 'កាលបរិច្ឆេទ និងម៉ោង')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -119,12 +122,12 @@ const AnalyticsDetailModal = ({
                                                     <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'center', color: 'var(--text-secondary)' }}>{i + 1}</td>
                                                     <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', fontWeight: 600 }}>{v.path || '/'}</td>
                                                     <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                                                        {v.countryCode ? <span title={v.country} style={{ fontWeight: 500 }}>{v.countryCode} {v.city ? <span style={{ opacity: 0.6, fontSize: '0.8rem' }}>• {v.city}</span> : ''}</span> : (v.country || 'Unknown')}
+                                                        {v.countryCode ? <span title={v.country} style={{ fontWeight: 500 }}>{v.countryCode} {v.city ? <span style={{ opacity: 0.6, fontSize: '0.8rem' }}>• {v.city}</span> : ''}</span> : (v.country || tr('Unknown', 'មិនស្គាល់'))}
                                                     </td>
                                                     <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                            <span style={{ textTransform: 'capitalize', fontSize: '0.9rem' }}>{v.device || 'Desktop'}</span>
-                                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{parseBrowser(v.userAgent)}</span>
+                                                            <span style={{ textTransform: 'capitalize', fontSize: '0.9rem' }}>{v.device || tr('Desktop', 'កុំព្យូទ័រ')}</span>
+                                                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{parseBrowser(v.userAgent, tr)}</span>
                                                         </div>
                                                     </td>
                                                     <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.75rem', fontFamily: 'monospace', opacity: 0.7 }}>{v.ip || '-'}</td>
@@ -132,7 +135,7 @@ const AnalyticsDetailModal = ({
                                                         {v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : v.date || '-'}
                                                     </td>
                                                 </tr>
-                                            )) : <tr><td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-secondary)' }}>No visit data for this range.</td></tr>}
+                                            )) : <tr><td colSpan={6} style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-secondary)' }}>{tr('No visit data for this range.', 'មិនមានទិន្នន័យចូលមើលសម្រាប់រយៈពេលនេះទេ។')}</td></tr>}
                                         </tbody>
                                     </table>
                                 </div>
@@ -168,20 +171,20 @@ const AnalyticsDetailModal = ({
                                         <>
                                             <div className="ui-analyticsGrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                                                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><UserCheck size={14} /> Total Returning</div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><UserCheck size={14} /> {tr('Total Returning', 'សរុបត្រឡប់មកវិញ')}</div>
                                                     <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#7c4dff' }}>{totalReturning}</div>
                                                 </div>
                                                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><Users size={14} /> Unique Returnees</div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><Users size={14} /> {tr('Unique Returnees', 'អ្នកត្រឡប់មកវិញមិនស្ទួន')}</div>
                                                     <div style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--primary-color)' }}>{uniqueReturning}</div>
                                                 </div>
                                                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.25rem' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><TrendingUp size={14} /> Avg. Visits / User</div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}><TrendingUp size={14} /> {tr('Avg. Visits / User', 'មធ្យមចូលមើល / អ្នកប្រើ')}</div>
                                                     <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#ff6090' }}>{avgVisits}</div>
                                                 </div>
                                             </div>
 
-                                            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem' }}><Calendar size={18} /> Daily Retention Trends</h4>
+                                            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem' }}><Calendar size={18} /> {tr('Daily Retention Trends', 'និន្នាការត្រឡប់មកវិញប្រចាំថ្ងៃ')}</h4>
                                             <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '1.5rem', marginBottom: '2.5rem' }}>
                                                 <ResponsiveContainer width="100%" height={300}>
                                                     <LineChart data={trends}>
@@ -190,21 +193,21 @@ const AnalyticsDetailModal = ({
                                                         <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} allowDecimals={false} />
                                                         <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px', color: 'var(--text-primary)' }} labelFormatter={(v) => new Date(v + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} />
                                                         <Legend />
-                                                        <Line type="monotone" dataKey="new" stroke="#64ffda" strokeWidth={3} name="New Visitors" dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                                                        <Line type="monotone" dataKey="returning" stroke="#7c4dff" strokeWidth={3} name="Returning Visitors" dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                                        <Line type="monotone" dataKey="new" stroke="#64ffda" strokeWidth={3} name={tr('New Visitors', 'អ្នកទស្សនាថ្មី')} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                                        <Line type="monotone" dataKey="returning" stroke="#7c4dff" strokeWidth={3} name={tr('Returning Visitors', 'អ្នកទស្សនាត្រឡប់មកវិញ')} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                                                     </LineChart>
                                                 </ResponsiveContainer>
                                             </div>
 
-                                            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem' }}><UserCheck size={18} /> Returning Visitor Frequency</h4>
+                                            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', fontSize: '1.1rem' }}><UserCheck size={18} /> {tr('Returning Visitor Frequency', 'ភាពញឹកញាប់នៃអ្នកទស្សនាត្រឡប់មកវិញ')}</h4>
                                             <div className="admin-table-wrapper" style={{ borderRadius: '16px', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)' }}>
                                                 <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
                                                     <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
                                                         <tr>
-                                                            <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>Visitor IP</th>
-                                                            <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>Location</th>
-                                                            <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' }}>Total Visits</th>
-                                                            <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'right' }}>Latest Activity</th>
+                                                            <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>{tr('Visitor IP', 'IP អ្នកទស្សនា')}</th>
+                                                            <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>{tr('Location', 'ទីតាំង')}</th>
+                                                            <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' }}>{tr('Total Visits', 'ចំនួនចូលមើលសរុប')}</th>
+                                                            <th style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'right' }}>{tr('Latest Activity', 'សកម្មភាពចុងក្រោយ')}</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -212,17 +215,17 @@ const AnalyticsDetailModal = ({
                                                             <tr key={pv.ip} style={{ transition: 'background 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                                                                 <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', fontFamily: 'monospace', fontSize: '0.85rem' }}>{pv.ip}</td>
                                                                 <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.85rem' }}>
-                                                                    {pv.city && pv.country ? `${pv.city}, ${pv.country}` : pv.country || 'Unknown'}
+                                                                    {pv.city && pv.country ? `${pv.city}, ${pv.country}` : pv.country || tr('Unknown', 'មិនស្គាល់')}
                                                                 </td>
                                                                 <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'center' }}>
                                                                     <span style={{ background: 'rgba(100, 255, 218, 0.1)', color: 'var(--primary-color)', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: 'bold' }}>{pv.count}</span>
                                                                 </td>
                                                                 <td style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.04)', textAlign: 'right', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                                                    {pv.last?.seconds ? new Date(pv.last.seconds * 1000).toLocaleString() : 'Recent'}
+                                                                    {pv.last?.seconds ? new Date(pv.last.seconds * 1000).toLocaleString() : tr('Recent', 'ថ្មីៗ')}
                                                                 </td>
                                                             </tr>
                                                         )) : (
-                                                            <tr><td colSpan={4} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>No frequent visitors identified in this range.</td></tr>
+                                                            <tr><td colSpan={4} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>{tr('No frequent visitors identified in this range.', 'មិនរកឃើញអ្នកទស្សនាញឹកញាប់ក្នុងរយៈពេលនេះទេ។')}</td></tr>
                                                         )}
                                                     </tbody>
                                                 </table>
@@ -241,14 +244,14 @@ const AnalyticsDetailModal = ({
                                     const total = analyticsLogs.length;
                                     
                                     analyticsLogs.forEach(v => {
-                                        let key = 'Unknown';
-                                        if (analyticsDetail === 'countries') key = v.country || 'Unknown';
-                                        else if (analyticsDetail === 'cities') key = v.city ? `${v.city}, ${v.country || ''}` : v.country || 'Unknown';
+                                        let key = tr('Unknown', 'មិនស្គាល់');
+                                        if (analyticsDetail === 'countries') key = v.country || tr('Unknown', 'មិនស្គាល់');
+                                        else if (analyticsDetail === 'cities') key = v.city ? `${v.city}, ${v.country || ''}` : v.country || tr('Unknown', 'មិនស្គាល់');
                                         else if (analyticsDetail === 'devices') key = (v.device || 'desktop').charAt(0).toUpperCase() + (v.device || 'desktop').slice(1);
                                         else if (analyticsDetail === 'pages') key = v.path || '/';
-                                        else if (analyticsDetail === 'referrers') key = v.referrer || 'Direct';
-                                        else if (analyticsDetail === 'browsers') key = parseBrowser(v.userAgent);
-                                        else if (analyticsDetail === 'os') key = v.os || 'Unknown';
+                                        else if (analyticsDetail === 'referrers') key = v.referrer || tr('Direct', 'ផ្ទាល់');
+                                        else if (analyticsDetail === 'browsers') key = parseBrowser(v.userAgent, tr);
+                                        else if (analyticsDetail === 'os') key = v.os || tr('Unknown', 'មិនស្គាល់');
                                         
                                         dataMap[key] = (dataMap[key] || 0) + 1;
                                     });
@@ -273,7 +276,7 @@ const AnalyticsDetailModal = ({
                                                             <XAxis type="number" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                                                             <YAxis dataKey="name" type="category" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} width={120} />
                                                             <Tooltip contentStyle={{ background: 'var(--card-bg, #1a1a2e)', border: '1px solid var(--glass-border, rgba(255,255,255,0.08))', borderRadius: '8px' }} />
-                                                            <Bar dataKey="value" name="Visits" radius={[0, 4, 4, 0]}>
+                                                            <Bar dataKey="value" name={tr('Visits', 'ចំនួនចូលមើល')} radius={[0, 4, 4, 0]}>
                                                                 {aggregatedData.slice(0, 10).map((entry, i) => <Cell key={`cell-${i}`} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
                                                             </Bar>
                                                         </BarChart>
@@ -294,15 +297,15 @@ const AnalyticsDetailModal = ({
                                                     <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
                                                         <tr>
                                                             <th style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'left' }}>
-                                                                {analyticsDetail === 'countries' ? 'Country' : 
-                                                                 analyticsDetail === 'cities' ? 'City' : 
-                                                                 analyticsDetail === 'devices' ? 'Device' : 
-                                                                 analyticsDetail === 'pages' ? 'Page Path' : 
-                                                                 analyticsDetail === 'referrers' ? 'Source' : 
-                                                                 analyticsDetail === 'browsers' ? 'Browser' : 'Operating System'}
+                                                                {analyticsDetail === 'countries' ? tr('Country', 'ប្រទេស') : 
+                                                                 analyticsDetail === 'cities' ? tr('City', 'ទីក្រុង') : 
+                                                                 analyticsDetail === 'devices' ? tr('Device', 'ឧបករណ៍') : 
+                                                                 analyticsDetail === 'pages' ? tr('Page Path', 'ផ្លូវទំព័រ') : 
+                                                                 analyticsDetail === 'referrers' ? tr('Source', 'ប្រភព') : 
+                                                                 analyticsDetail === 'browsers' ? tr('Browser', 'Browser') : tr('Operating System', 'ប្រព័ន្ធប្រតិបត្តិការ')}
                                                             </th>
-                                                            <th style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'center', width: '100px' }}>Visits</th>
-                                                            <th style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'right', width: '120px' }}>Percentage</th>
+                                                            <th style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'center', width: '100px' }}>{tr('Visits', 'ចំនួនចូលមើល')}</th>
+                                                            <th style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)', textAlign: 'right', width: '120px' }}>{tr('Percentage', 'ភាគរយ')}</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -334,7 +337,7 @@ const AnalyticsDetailModal = ({
 
                 <Dialog.Footer>
                     <Button variant="primary" onClick={onClose} style={{ padding: '0.6rem 1.5rem', margin: 0, fontSize: '0.85rem' }}>
-                        Close
+                        {tr('Close', 'បិទ')}
                     </Button>
                 </Dialog.Footer>
             </Dialog.Content>

@@ -7,8 +7,11 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import DOMPurify from 'dompurify';
 import { Check, Copy } from 'lucide-react';
 import styles from './MarkdownRenderer.module.scss';
+import { useTranslation } from '../hooks/useTranslation';
 
 const CodeBlock = ({ inline, className, children, ...props }) => {
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const match = /language-(\w+)/.exec(className || '');
     const codeString = String(children).replace(/\n$/, '');
     const [copied, setCopied] = useState(false);
@@ -26,11 +29,11 @@ const CodeBlock = ({ inline, className, children, ...props }) => {
                 <button
                     className={styles.copyButton}
                     onClick={handleCopy}
-                    aria-label="Copy code to clipboard"
-                    title="Copy code"
+                    aria-label={tr('Copy code to clipboard', 'ចម្លងកូដទៅក្តារចម្លង')}
+                    title={tr('Copy code', 'ចម្លងកូដ')}
                 >
                     {copied ? <Check size={16} className={styles.checkIcon} /> : <Copy size={16} />}
-                    <span>{copied ? 'Copied!' : 'Copy'}</span>
+                    <span>{copied ? tr('Copied!', 'បានចម្លង!') : tr('Copy', 'ចម្លង')}</span>
                 </button>
             </div>
             <SyntaxHighlighter
@@ -50,6 +53,8 @@ const CodeBlock = ({ inline, className, children, ...props }) => {
 };
 
 const MarkdownRenderer = ({ content }) => {
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const [mounted, setMounted] = useState(false);
     
     useEffect(() => {
@@ -81,7 +86,7 @@ const MarkdownRenderer = ({ content }) => {
                     },
                     img: ({ ...props }) => {
                         if (!props.src) return null;
-                        return <img {...props} loading="lazy" alt={props.alt || 'Content image'} />;
+                        return <img {...props} loading="lazy" alt={props.alt || tr('Content image', 'រូបភាពមាតិកា')} />;
                     },
                     a: ({ ...props }) => {
                         const url = props.href;

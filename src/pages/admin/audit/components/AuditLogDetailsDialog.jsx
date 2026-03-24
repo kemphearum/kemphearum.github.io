@@ -21,28 +21,32 @@ import {
   DialogClose
 } from '../../../../shared/components/ui/dialog/Dialog';
 import styles from '../AuditLogsTab.module.scss';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const AuditLogDetailsDialog = ({ log, open, onOpenChange }) => {
+  const { language } = useTranslation();
+  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+
   if (!log) return null;
 
   const formatDate = (ts) => {
-    if (!ts) return 'Unknown';
+    if (!ts) return tr('Unknown', 'មិនស្គាល់');
     const date = ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts);
     return date.toLocaleString();
   };
 
   const details = [
-    { label: 'Event Status', value: log.status || 'success', icon: Shield, color: log.status === 'failure' ? '#ef4444' : '#10b981' },
-    { label: 'User Email', value: log.user || log.email || 'System', icon: Mail, color: '#38bdf8' },
-    { label: 'IP Address', value: log.ipAddress || 'Unknown', icon: Globe, color: '#a78bfa' },
-    { label: 'Device', value: log.device || 'Desktop', icon: Monitor, color: '#fb923c', isDevice: true },
-    { label: 'Session ID', value: log.sessionId || 'Unknown', icon: Key, color: '#fbbf24' },
-    { label: 'Timestamp', value: formatDate(log.time || log.timestamp), icon: Clock, color: '#64ffda', fullWidth: true },
-    { label: 'User Agent', value: log.userAgent || 'Unknown', icon: Monitor, color: '#94a3b8', fullWidth: true },
+    { label: tr('Event Status', 'ស្ថានភាពព្រឹត្តិការណ៍'), value: log.status || 'success', icon: Shield, color: log.status === 'failure' ? '#ef4444' : '#10b981' },
+    { label: tr('User Email', 'អ៊ីមែលអ្នកប្រើ'), value: log.user || log.email || tr('System', 'ប្រព័ន្ធ'), icon: Mail, color: '#38bdf8' },
+    { label: tr('IP Address', 'អាសយដ្ឋាន IP'), value: log.ipAddress || tr('Unknown', 'មិនស្គាល់'), icon: Globe, color: '#a78bfa' },
+    { label: tr('Device', 'ឧបករណ៍'), value: log.device || tr('Desktop', 'កុំព្យូទ័រ'), icon: Monitor, color: '#fb923c', isDevice: true },
+    { label: tr('Session ID', 'លេខសម្គាល់សម័យ'), value: log.sessionId || tr('Unknown', 'មិនស្គាល់'), icon: Key, color: '#fbbf24' },
+    { label: tr('Timestamp', 'ពេលវេលា'), value: formatDate(log.time || log.timestamp), icon: Clock, color: '#64ffda', fullWidth: true },
+    { label: tr('User Agent', 'ព័ត៌មានកម្មវិធីរុករក'), value: log.userAgent || tr('Unknown', 'មិនស្គាល់'), icon: Monitor, color: '#94a3b8', fullWidth: true },
   ];
 
   if (log.reason) {
-    details.splice(1, 0, { label: 'Failure Reason', value: log.reason, icon: Shield, color: '#ef4444', fullWidth: true });
+    details.splice(1, 0, { label: tr('Failure Reason', 'មូលហេតុបរាជ័យ'), value: log.reason, icon: Shield, color: '#ef4444', fullWidth: true });
   }
 
   return (
@@ -53,7 +57,7 @@ const AuditLogDetailsDialog = ({ log, open, onOpenChange }) => {
             <div className={styles.modalHeaderIcon}>
               <Shield size={20} />
             </div>
-            <DialogTitle>Audit Log Details</DialogTitle>
+            <DialogTitle>{tr('Audit Log Details', 'ព័ត៌មានលម្អិតកំណត់ហេតុសវនកម្ម')}</DialogTitle>
           </div>
           <DialogClose />
         </DialogHeader>
@@ -86,7 +90,7 @@ const AuditLogDetailsDialog = ({ log, open, onOpenChange }) => {
 
           {log.details && (
             <div className={styles.payloadSection}>
-              <header>Event Payload</header>
+              <header>{tr('Event Payload', 'ទិន្នន័យព្រឹត្តិការណ៍')}</header>
               <pre>{JSON.stringify(log.details, null, 2)}</pre>
             </div>
           )}
@@ -97,7 +101,7 @@ const AuditLogDetailsDialog = ({ log, open, onOpenChange }) => {
             className="ui-button ui-ghost" 
             onClick={() => onOpenChange(false)}
           >
-            Close
+            {tr('Close', 'បិទ')}
           </button>
         </DialogFooter>
       </DialogContent>

@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { getLocalizedField } from '../utils/localization';
+
+const getMetaLanguage = () => {
+    if (typeof window === 'undefined') return 'en';
+    return localStorage.getItem('portfolio.language') === 'km' ? 'km' : 'en';
+};
 
 export async function loader() {
     const docRef = doc(db, 'settings', 'global');
@@ -9,11 +15,15 @@ export async function loader() {
 }
 
 export function meta({ data }) {
+    const language = getMetaLanguage();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const site = data?.site || data || {};
-    const title = `Blog | ${site.title || "Kem Phearum"}`;
+    const title = `${tr('Blog', 'ប្លុក')} | ${getLocalizedField(site.title, language) || "Kem Phearum"}`;
+    const description = getLocalizedField(site.blogDescription || site.description, language)
+        || tr("Latest thoughts, tutorials, and project updates.", "គំនិតថ្មីៗ មេរៀន និងបច្ចុប្បន្នភាពគម្រោងចុងក្រោយ។");
     return [
         { title },
-        { name: "description", content: "Latest thoughts, tutorials, and project updates." },
+        { name: "description", content: description },
         { property: "og:title", content: title },
     ];
 }
@@ -28,10 +38,10 @@ import Navbar from '@/sections/Navbar';
 import Footer from '@/sections/Footer';
 import styles from './Blog.module.scss';
 import { useTranslation } from '../hooks/useTranslation';
-import { getLocalizedField } from '../utils/localization';
 
 const Blog = () => {
     const { language, t } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const { data: postsData, isLoading: loadingPosts } = useQuery({
         staleTime: 60000,
         gcTime: 300000,
@@ -238,7 +248,7 @@ const Blog = () => {
                                     className={styles.pageBtn}
                                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                                     disabled={currentPage === 1}
-                                    aria-label="Previous Page"
+                                    aria-label={tr('Previous Page', 'ទំព័រមុន')}
                                 >
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                                 </button>
@@ -259,7 +269,7 @@ const Blog = () => {
                                     className={styles.pageBtn}
                                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                                     disabled={currentPage === totalPages}
-                                    aria-label="Next Page"
+                                    aria-label={tr('Next Page', 'ទំព័របន្ទាប់')}
                                 >
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                                 </button>

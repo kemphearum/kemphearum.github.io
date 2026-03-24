@@ -8,7 +8,7 @@ import { generateMetaTags } from '../utils/SeoHelper';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, ExternalLink, Code, X, Calendar, Clock,
-    Share2, Copy, Check, ArrowLeft, Maximize2, ChevronRight,
+    Copy, Check, ArrowLeft, Maximize2, ChevronRight,
     Facebook, Instagram, Linkedin, Send
 } from 'lucide-react';
 import { calculateReadTime } from '../utils/helpers';
@@ -22,6 +22,11 @@ import { db } from '../firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getLocalizedField } from '../utils/localization';
 import { useTranslation } from '../hooks/useTranslation';
+
+const getMetaLanguage = () => {
+    if (typeof window === 'undefined') return 'en';
+    return localStorage.getItem('portfolio.language') === 'km' ? 'km' : 'en';
+};
 
 export async function loader({ params }) {
     const q = query(collection(db, 'projects'), where("slug", "==", params.slug));
@@ -45,14 +50,16 @@ export async function loader({ params }) {
 }
 
 export function meta({ data }) {
-    if (!data) return [{ title: "Project Not Found | Kem Phearum" }];
+    const language = getMetaLanguage();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    if (!data) return [{ title: `${tr('Project Not Found', 'រកមិនឃើញគម្រោង')} | Kem Phearum` }];
 
-    const title = getLocalizedField(data.title, 'en');
-    const description = getLocalizedField(data.description, 'en');
+    const title = getLocalizedField(data.title, language);
+    const description = getLocalizedField(data.description, language);
 
     return generateMetaTags({
         title,
-        description: description || 'Project details and technical implementation.',
+        description: description || tr('Project details and technical implementation.', 'ព័ត៌មានលម្អិតគម្រោង និងការអនុវត្តបច្ចេកទេស។'),
         image: data.imageUrl,
         type: 'article'
     });
@@ -60,6 +67,7 @@ export function meta({ data }) {
 
 const ProjectDetail = () => {
     const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const { slug } = useParams();
     const loaderData = useLoaderData();
     const [showScrollTop, setShowScrollTop] = useState(false);
@@ -76,7 +84,7 @@ const ProjectDetail = () => {
         queryKey: ['project', slug],
         queryFn: async () => {
             const projectData = await ProjectService.fetchProjectBySlug(slug);
-            if (!projectData) throw new Error('Project not found');
+            if (!projectData) throw new Error(tr('Project not found', 'រកមិនឃើញគម្រោង'));
             trackRead(0, `Viewed project: ${getLocalizedField(projectData.title, 'en')}`);
             return projectData;
         },
@@ -84,7 +92,7 @@ const ProjectDetail = () => {
         retry: false
     });
 
-    const error = isError ? 'Failed to load project details' : null;
+    const error = isError ? tr('Failed to load project details', 'ផ្ទុកព័ត៌មានលម្អិតគម្រោងបរាជ័យ') : null;
     const localizedProject = project ? {
         ...project,
         title: getLocalizedField(project.title, language),
@@ -157,8 +165,8 @@ const ProjectDetail = () => {
     };
 
     const formatDate = (timestamp) => {
-        if (!timestamp?.seconds) return 'Recently Added';
-        return new Date(timestamp.seconds * 1000).toLocaleDateString('en-US', {
+        if (!timestamp?.seconds) return tr('Recently Added', 'ទើបបានបន្ថែម');
+        return new Date(timestamp.seconds * 1000).toLocaleDateString(language === 'km' ? 'km-KH' : 'en-US', {
             year: 'numeric', month: 'long', day: 'numeric'
         });
     };
@@ -187,9 +195,9 @@ const ProjectDetail = () => {
                     <div className={styles.container}>
                         <div className={styles.errorContainer}>
                             <h2>404</h2>
-                            <p>{error || "Project not found"}</p>
+                            <p>{error || tr('Project not found', 'រកមិនឃើញគម្រោង')}</p>
                             <Link to="/projects" className={styles.backBtn}>
-                                <ArrowLeft size={16} /> Back to Projects
+                                <ArrowLeft size={16} /> {tr('Back to Projects', 'ត្រឡប់ទៅគម្រោង')}
                             </Link>
                         </div>
                     </div>
@@ -218,7 +226,7 @@ const ProjectDetail = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <Link to="/projects"><ArrowLeft size={14} /> Projects</Link>
+                        <Link to="/projects"><ArrowLeft size={14} /> {tr('Projects', 'គម្រោង')}</Link>
                         <ChevronRight size={14} className={styles.separator} />
                         <span className={styles.current}>{localizedProject.title}</span>
                     </motion.nav>
@@ -241,7 +249,7 @@ const ProjectDetail = () => {
                         <div className={styles.imageOverlay} />
                         {heroImg && (
                             <span className={styles.viewHint}>
-                                <Maximize2 size={12} /> View
+                                <Maximize2 size={12} /> {tr('View', 'មើល')}
                             </span>
                         )}
                     </motion.div>
@@ -262,7 +270,7 @@ const ProjectDetail = () => {
                             )}
 
                             <div className={styles.markdownBody}>
-                                <MarkdownRenderer content={localizedProject.content || 'No detailed overview provided for this project yet.'} />
+                                <MarkdownRenderer content={localizedProject.content || tr('No detailed overview provided for this project yet.', 'មិនទាន់មានការពិពណ៌នាលម្អិតសម្រាប់គម្រោងនេះនៅឡើយទេ។')} />
                             </div>
 
 
@@ -271,9 +279,9 @@ const ProjectDetail = () => {
                             <RelatedProjects currentProjectId={localizedProject.id} techStack={localizedProject.techStack} />
 
                             <div className={styles.bottomCta}>
-                                <h3>Thanks for checking out this project!</h3>
+                                <h3>{tr('Thanks for checking out this project!', 'អរគុណសម្រាប់ការមើលគម្រោងនេះ!')}</h3>
                                 <Link to="/projects" className={styles.backBtn}>
-                                    <ArrowLeft size={16} /> Browse All Projects
+                                    <ArrowLeft size={16} /> {tr('Browse All Projects', 'មើលគម្រោងទាំងអស់')}
                                 </Link>
                             </div>
                         </motion.div>
@@ -290,22 +298,22 @@ const ProjectDetail = () => {
 
                             {/* Project Info */}
                             <div className={styles.sidebarCard}>
-                                <h4>Project Info</h4>
+                                <h4>{tr('Project Info', 'ព័ត៌មានគម្រោង')}</h4>
                                 <div className={styles.infoList}>
                                     <div className={styles.infoRow}>
-                                        <span className={styles.label}><Calendar size={14} /> Date</span>
+                                        <span className={styles.label}><Calendar size={14} /> {tr('Date', 'កាលបរិច្ឆេទ')}</span>
                                         <span className={styles.value}>{formatDate(localizedProject.createdAt)}</span>
                                     </div>
                                     <div className={styles.infoRow}>
-                                        <span className={styles.label}><Clock size={14} /> Read Time</span>
+                                        <span className={styles.label}><Clock size={14} /> {tr('Read Time', 'ពេលអាន')}</span>
                                         <span className={styles.value}>{calculateReadTime(localizedProject.content || '')}</span>
                                     </div>
                                     <div className={styles.infoRow}>
-                                        <span className={styles.label}>Status</span>
+                                        <span className={styles.label}>{tr('Status', 'ស្ថានភាព')}</span>
                                         {localizedProject.liveUrl ? (
-                                            <span className={styles.statusLive}>Live</span>
+                                            <span className={styles.statusLive}>{tr('Live', 'កំពុងដំណើរការ')}</span>
                                         ) : (
-                                            <span className={styles.value}>{localizedProject.githubUrl ? 'Open Source' : 'In Progress'}</span>
+                                            <span className={styles.value}>{localizedProject.githubUrl ? tr('Open Source', 'ប្រភពបើកចំហ') : tr('In Progress', 'កំពុងអភិវឌ្ឍ')}</span>
                                         )}
                                     </div>
                                 </div>
@@ -314,7 +322,7 @@ const ProjectDetail = () => {
                             {/* Tech Stack */}
                             {localizedProject.techStack && localizedProject.techStack.length > 0 && (
                                 <div className={styles.sidebarCard}>
-                                    <h4>Tech Stack</h4>
+                                    <h4>{tr('Tech Stack', 'បច្ចេកវិទ្យាប្រើប្រាស់')}</h4>
                                     <div className={styles.techTags}>
                                         {localizedProject.techStack.map((tech, idx) => (
                                             <span key={idx} className={styles.techChip}>{tech}</span>
@@ -326,16 +334,16 @@ const ProjectDetail = () => {
                             {/* Actions */}
                             {(localizedProject.liveUrl || localizedProject.githubUrl) && (
                                 <div className={styles.sidebarCard}>
-                                    <h4>Links</h4>
+                                    <h4>{tr('Links', 'តំណភ្ជាប់')}</h4>
                                     <div className={styles.sidebarActions}>
                                         {localizedProject.liveUrl && (
                                             <a href={localizedProject.liveUrl} target="_blank" rel="noopener noreferrer" className={styles.actionBtnPrimary}>
-                                                <ExternalLink size={16} /> Live Demo
+                                                <ExternalLink size={16} /> {tr('Live Demo', 'សាកល្បងផ្ទាល់')}
                                             </a>
                                         )}
                                         {localizedProject.githubUrl && (
                                             <a href={localizedProject.githubUrl} target="_blank" rel="noopener noreferrer" className={styles.actionBtnSecondary}>
-                                                <Code size={16} /> Source Code
+                                                <Code size={16} /> {tr('Source Code', 'កូដប្រភព')}
                                             </a>
                                         )}
                                     </div>
@@ -344,22 +352,26 @@ const ProjectDetail = () => {
 
                             {/* Share */}
                             <div className={styles.sidebarCard}>
-                                <h4>Share Project</h4>
+                                <h4>{tr('Share Project', 'ចែករំលែកគម្រោង')}</h4>
                                 <div className={styles.shareButtons}>
-                                    <button className={`${styles.shareBtn} ${copied ? styles.copied : ''}`} onClick={handleCopyLink}>
-                                        {copied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Link</>}
+                                    <button className={`${styles.shareBtn} ${copied ? styles.copied : ''}`} onClick={handleCopyLink} aria-label={tr('Copy link', 'ចម្លងតំណ')}>
+                                        {copied
+                                            ? <><Check size={14} /> {tr('Copied!', 'បានចម្លង!')}</>
+                                            : <><Copy size={14} /> {tr('Copy Link', 'ចម្លងតំណ')}</>}
                                     </button>
-                                    <button className={`${styles.shareBtn} ${styles.shareFacebook}`} onClick={shareToFacebook}>
-                                        <Facebook size={14} /> Share on Facebook
+                                    <button className={`${styles.shareBtn} ${styles.shareFacebook}`} onClick={shareToFacebook} aria-label={tr('Share on Facebook', 'ចែករំលែកលើ Facebook')}>
+                                        <Facebook size={14} /> {tr('Share on Facebook', 'ចែករំលែកលើ Facebook')}
                                     </button>
-                                    <button className={`${styles.shareBtn} ${styles.shareInstagram} ${instaCopied ? styles.copied : ''}`} onClick={shareToInstagram}>
-                                        {instaCopied ? <><Check size={14} /> Link Copied!</> : <><Instagram size={14} /> Share on Instagram</>}
+                                    <button className={`${styles.shareBtn} ${styles.shareInstagram} ${instaCopied ? styles.copied : ''}`} onClick={shareToInstagram} aria-label={tr('Share on Instagram', 'ចែករំលែកលើ Instagram')}>
+                                        {instaCopied
+                                            ? <><Check size={14} /> {tr('Link Copied!', 'បានចម្លងតំណ!')}</>
+                                            : <><Instagram size={14} /> {tr('Share on Instagram', 'ចែករំលែកលើ Instagram')}</>}
                                     </button>
-                                    <button className={`${styles.shareBtn} ${styles.shareLinkedIn}`} onClick={shareToLinkedIn}>
-                                        <Linkedin size={14} /> Share on LinkedIn
+                                    <button className={`${styles.shareBtn} ${styles.shareLinkedIn}`} onClick={shareToLinkedIn} aria-label={tr('Share on LinkedIn', 'ចែករំលែកលើ LinkedIn')}>
+                                        <Linkedin size={14} /> {tr('Share on LinkedIn', 'ចែករំលែកលើ LinkedIn')}
                                     </button>
-                                    <button className={`${styles.shareBtn} ${styles.shareTelegram}`} onClick={shareToTelegram}>
-                                        <Send size={14} /> Share on Telegram
+                                    <button className={`${styles.shareBtn} ${styles.shareTelegram}`} onClick={shareToTelegram} aria-label={tr('Share on Telegram', 'ចែករំលែកលើ Telegram')}>
+                                        <Send size={14} /> {tr('Share on Telegram', 'ចែករំលែកលើ Telegram')}
                                     </button>
                                 </div>
                             </div>
@@ -374,7 +386,7 @@ const ProjectDetail = () => {
                     <motion.button
                         className={styles.scrollTop}
                         onClick={scrollToTop}
-                        aria-label="Scroll to top"
+                        aria-label={tr('Scroll to top', 'រមូរទៅកំពូល')}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
@@ -395,7 +407,7 @@ const ProjectDetail = () => {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                     >
-                        <button className={styles.lightboxClose} onClick={() => setLightboxOpen(false)} aria-label="Close">
+                        <button className={styles.lightboxClose} onClick={() => setLightboxOpen(false)} aria-label={tr('Close', 'បិទ')}>
                             <X size={22} />
                         </button>
                         <motion.img

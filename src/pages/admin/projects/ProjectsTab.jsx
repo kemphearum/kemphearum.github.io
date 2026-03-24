@@ -20,7 +20,7 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { getLanguageValue, getLocalizedField } from '../../../utils/localization';
 
 const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
-  const { language } = useTranslation();
+  const { language, t } = useTranslation();
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
   const [historyItem, setHistoryItem] = useState(null);
@@ -47,14 +47,14 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
     showToast,
-    successMessage: `Project ${editingItem ? 'updated' : 'created'} successfully.`,
+    successMessage: editingItem ? t('admin.projects.messages.updated') : t('admin.projects.messages.created'),
     invalidateKeys: [['projects']],
     onSuccess: () => setIsFormOpen(false)
   });
 
   const { loading: deleteLoading, execute: executeDelete } = useAsyncAction({
     showToast,
-    successMessage: 'Project deleted successfully.',
+    successMessage: t('admin.projects.messages.deleted'),
     invalidateKeys: [['projects']],
     onSuccess: () => setDeletingItem(null)
   });
@@ -102,27 +102,27 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const linkedProjectsCount = projects.filter((project) => project.liveUrl || project.githubUrl).length;
   const workspaceStats = [
     {
-      label: 'On This Page',
+      label: t('admin.common.stats.onThisPage.label'),
       value: projects.length,
-      hint: 'Loaded in the current result set',
+      hint: t('admin.common.stats.onThisPage.hint'),
       icon: LayoutTemplate
     },
     {
-      label: 'Published',
+      label: t('admin.common.stats.published.label'),
       value: visibleProjectsCount,
-      hint: 'Visible in the public portfolio',
+      hint: t('admin.projects.stats.published.hint'),
       icon: Globe2
     },
     {
-      label: 'Featured',
+      label: t('admin.common.stats.featured.label'),
       value: featuredProjectsCount,
-      hint: 'Highlighted on priority surfaces',
+      hint: t('admin.projects.stats.featured.hint'),
       icon: Sparkles
     },
     {
-      label: 'Linked',
+      label: t('admin.projects.stats.linked.label'),
       value: linkedProjectsCount,
-      hint: 'Have a live demo or repository',
+      hint: t('admin.projects.stats.linked.hint'),
       icon: Link2
     }
   ];
@@ -134,7 +134,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleAdd = () => {
     if (!isActionAllowed('create', 'projects')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     setEditingItem(null);
     setIsFormOpen(true);
@@ -148,7 +148,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleEdit = (item) => {
     if (!isActionAllowed('edit', 'projects')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     const source = item.__raw || item;
     setEditingItem({
@@ -160,7 +160,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleDelete = (item) => {
     if (!isActionAllowed('delete', 'projects')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     setDeletingItem(item.__raw || item);
   };
@@ -193,7 +193,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleSave = async (formData) => {
     if (!isActionAllowed(editingItem ? 'edit' : 'create', 'projects')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     
     await executeForm(async () => {
@@ -262,7 +262,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleImportProjects = async (file) => {
     if (!canCreate && !canEdit) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
 
     try {
@@ -351,7 +351,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         skippedCount: 0
       });
       showToast(
-        `Import complete: ${created} created, ${updated} updated, ${skipped} skipped, ${failed} failed.`,
+        t('admin.projects.messages.importComplete', { created, updated, skipped, failed }),
         failed > 0 || skipped > 0 ? 'warning' : 'success'
       );
     } catch (error) {
@@ -363,16 +363,16 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleExportSelectedProjects = () => {
     if (selectedProjects.length === 0) {
-      return showToast('Please select projects to export.', 'warning');
+      return showToast(t('admin.projects.messages.selectToExport'), 'warning');
     }
 
     const selected = projects.filter(project => selectedProjects.includes(project.id));
     if (selected.length === 0) {
-      return showToast('Selected projects are not in the current page result.', 'warning');
+      return showToast(t('admin.projects.messages.selectedNotInPage'), 'warning');
     }
 
     downloadJson(selected, `projects_export_selected_${new Date().toISOString().split('T')[0]}.json`);
-    showToast(`Exported ${selected.length} selected projects.`);
+    showToast(t('admin.projects.messages.exportedMany', { count: selected.length }));
   };
 
   const handleDownloadProjectJsonTemplate = () => {
@@ -447,7 +447,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
     onSuccess: (_, variables) => {
-      showToast(`Project ${!variables.currentVisible ? 'shown' : 'hidden'}.`);
+      showToast(!variables.currentVisible ? t('admin.projects.messages.shown') : t('admin.projects.messages.hidden'));
     }
   });
 
@@ -478,20 +478,24 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
     onSuccess: (_, variables) => {
-      showToast(`Project ${!variables.currentFeatured ? 'featured' : 'removed from featured'}.`);
+      showToast(
+        !variables.currentFeatured
+          ? t('admin.projects.messages.featured')
+          : t('admin.projects.messages.unfeatured')
+      );
     }
   });
 
   const toggleVisibility = (id, currentVisible) => {
     if (!isActionAllowed('edit', 'projects')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     visibilityMutation.mutate({ id, currentVisible });
   };
 
   const toggleFeatured = (id, currentFeatured) => {
     if (!isActionAllowed('edit', 'projects')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     featuredMutation.mutate({ id, currentFeatured });
   };
@@ -500,7 +504,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const bulkDeleteMutation = useMutation({
     mutationFn: (ids) => ProjectService.batchDeleteProjects(userRole, ids, trackDelete),
     onSuccess: (_, ids) => {
-      showToast(`Deleted ${ids.length} projects.`);
+      showToast(t('admin.projects.messages.deletedMany', { count: ids.length }));
       setSelectedProjects([]);
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
@@ -510,7 +514,11 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const bulkVisibilityMutation = useMutation({
     mutationFn: ({ ids, visible }) => ProjectService.batchUpdateProjectsVisibility(userRole, ids, visible, trackWrite),
     onSuccess: (_, { ids, visible }) => {
-      showToast(`${ids.length} projects ${visible ? 'shown' : 'hidden'}.`);
+      showToast(
+        visible
+          ? t('admin.projects.messages.shownMany', { count: ids.length })
+          : t('admin.projects.messages.hiddenMany', { count: ids.length })
+      );
       setSelectedProjects([]);
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
@@ -520,7 +528,11 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const bulkFeaturedMutation = useMutation({
     mutationFn: ({ ids, featured }) => ProjectService.batchUpdateProjectsFeatured(userRole, ids, featured, trackWrite),
     onSuccess: (_, { ids, featured }) => {
-      showToast(`${ids.length} projects ${featured ? 'featured' : 'unfeatured'}.`);
+      showToast(
+        featured
+          ? t('admin.projects.messages.featuredMany', { count: ids.length })
+          : t('admin.projects.messages.unfeaturedMany', { count: ids.length })
+      );
       setSelectedProjects([]);
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
@@ -549,7 +561,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const confirmDelete = async () => {
     if (!deletingItem) return;
     if (!isActionAllowed('delete', 'projects')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
 
     await executeDelete(async () => {
@@ -588,27 +600,27 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
               {selectedProjects.length}
             </div>
             <span className="ui-bulk-actions-text">
-              Projects Selected
+              {t('admin.projects.bulk.selected')}
             </span>
           </div>
 
           <div className="ui-bulk-actions-controls">
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title="Show Selected">
-              <Eye size={16} style={{ marginRight: '0.4rem' }} /> Show
+            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title={t('admin.projects.bulk.showSelected')}>
+              <Eye size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.show')}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title="Hide Selected">
-              <EyeOff size={16} style={{ marginRight: '0.4rem' }} /> Hide
-            </Button>
-            <div className="ui-bulk-divider" />
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title="Feature Selected">
-              <Star size={16} style={{ marginRight: '0.4rem' }} /> Feature
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title="Unfeature Selected">
-              <StarOff size={16} style={{ marginRight: '0.4rem' }} /> Unfeature
+            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title={t('admin.projects.bulk.hideSelected')}>
+              <EyeOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.hide')}
             </Button>
             <div className="ui-bulk-divider" />
-            <Button variant="danger" size="sm" onClick={handleBulkDelete} title="Delete Selected">
-              <Trash2 size={16} style={{ marginRight: '0.4rem' }} /> Delete
+            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title={t('admin.projects.bulk.featureSelected')}>
+              <Star size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.feature')}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title={t('admin.projects.bulk.unfeatureSelected')}>
+              <StarOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.unfeature')}
+            </Button>
+            <div className="ui-bulk-divider" />
+            <Button variant="danger" size="sm" onClick={handleBulkDelete} title={t('admin.projects.bulk.deleteSelected')}>
+              <Trash2 size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.common.delete')}
             </Button>
           </div>
         </div>
@@ -659,8 +671,10 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         onOpenChange={(open) => !open && setDeletingItem(null)}
         onConfirm={confirmDelete}
         loading={deleteLoading}
-        title="Delete Project"
-        message={`Are you sure you want to delete "${getLocalizedField(deletingItem?.title, language)}"? This action cannot be undone.`}
+        title={t('admin.projects.dialogs.deleteTitle')}
+        message={t('admin.projects.dialogs.deleteMessage', {
+          title: getLocalizedField(deletingItem?.title, language)
+        })}
       />
 
       <DeleteConfirmDialog 
@@ -671,8 +685,8 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
             setBulkConfirm({ ...bulkConfirm, isOpen: false });
         }}
         loading={bulkDeleteMutation.isPending}
-        title="Delete Multiple Projects"
-        message={`Are you sure you want to delete ${bulkConfirm.ids.length} selected projects? This action cannot be undone.`}
+        title={t('admin.projects.dialogs.deleteManyTitle')}
+        message={t('admin.projects.dialogs.deleteManyMessage', { count: bulkConfirm.ids.length })}
       />
 
       <ImportConfirmDialog
@@ -689,20 +703,20 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         })}
         onConfirm={handleConfirmImportProjects}
         loading={importLoading}
-        title="Import Projects"
-        description="Review the file before running a bulk import. Existing projects with matching slugs will be updated."
+        title={t('admin.projects.import.title')}
+        description={t('admin.projects.import.description')}
         fileName={importDialog.fileName}
         format={importDialog.format}
         stats={[
-          { label: 'Rows found', value: importDialog.totalCount },
-          { label: 'Ready to import', value: importDialog.validCount },
-          { label: 'Skipped', value: importDialog.skippedCount }
+          { label: t('admin.common.import.rowsFound'), value: importDialog.totalCount },
+          { label: t('admin.common.import.readyToImport'), value: importDialog.validCount },
+          { label: t('admin.common.import.skipped'), value: importDialog.skippedCount }
         ]}
         notes={[
-          'Rows without a title are skipped automatically.',
-          'Import keeps slug-based updates and creates new projects when no match is found.'
+          t('admin.projects.import.noteMissingTitle'),
+          t('admin.projects.import.noteSlug')
         ]}
-        confirmText="Run Import"
+        confirmText={t('admin.common.import.runImport')}
       />
 
       <HistoryModal

@@ -12,8 +12,10 @@ import HomeSection from './components/HomeSection';
 import AboutSection from './components/AboutSection';
 import ContactSection from './components/ContactSection';
 import { getLanguageValue } from '../../../utils/localization';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData }) => {
+    const { t } = useTranslation();
     const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
     const [activeSection, setActiveSection] = useState('home');
     
@@ -110,24 +112,24 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
     const sectionMeta = [
         {
             value: 'home',
-            label: 'Home',
-            description: 'Hero copy, CTA, and portrait',
+            label: t('admin.tabs.homeSection'),
+            description: t('admin.general.sectionDescriptions.home'),
             icon: Home,
             filled: homeFilled,
             total: 12
         },
         {
             value: 'about',
-            label: 'About',
-            description: 'Bio and skills snapshot',
+            label: t('admin.tabs.aboutSection'),
+            description: t('admin.general.sectionDescriptions.about'),
             icon: User,
             filled: aboutFilled,
             total: 3
         },
         {
             value: 'contact',
-            label: 'Contact',
-            description: 'Intro text above the form',
+            label: t('admin.tabs.contactSection'),
+            description: t('admin.general.sectionDescriptions.contact'),
             icon: Mail,
             filled: contactFilled,
             total: 2
@@ -139,20 +141,20 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
             <div className={tabStyles.workspaceShell}>
                 <div className={tabStyles.workspaceIntro}>
                     <div className={tabStyles.workspaceCopy}>
-                        <span className={tabStyles.workspaceEyebrow}>Content Studio</span>
-                        <h2>Manage the core sections visitors read first.</h2>
-                        <p>Update your hero messaging, biography, and contact intro from one place, with clearer section progress and less visual clutter.</p>
+                        <span className={tabStyles.workspaceEyebrow}>{t('admin.general.workspace.eyebrow')}</span>
+                        <h2>{t('admin.general.workspace.title')}</h2>
+                        <p>{t('admin.general.workspace.description')}</p>
                     </div>
                     <div className={tabStyles.workspaceStats}>
                         <div className={tabStyles.workspaceStat}>
                             <span className={tabStyles.workspaceStatValue}>3</span>
-                            <span className={tabStyles.workspaceStatLabel}>Sections</span>
-                            <span className={tabStyles.workspaceStatHint}>Home, About, and Contact</span>
+                            <span className={tabStyles.workspaceStatLabel}>{t('admin.general.workspace.sectionsLabel')}</span>
+                            <span className={tabStyles.workspaceStatHint}>{t('admin.general.workspace.sectionsHint')}</span>
                         </div>
                         <div className={tabStyles.workspaceStat}>
                             <span className={tabStyles.workspaceStatValue}>{totalFilled}/{totalFields}</span>
-                            <span className={tabStyles.workspaceStatLabel}>Fields Filled</span>
-                            <span className={tabStyles.workspaceStatHint}>Quick signal for content completeness</span>
+                            <span className={tabStyles.workspaceStatLabel}>{t('admin.general.workspace.fieldsFilledLabel')}</span>
+                            <span className={tabStyles.workspaceStatHint}>{t('admin.general.workspace.fieldsFilledHint')}</span>
                         </div>
                     </div>
                 </div>

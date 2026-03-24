@@ -9,7 +9,7 @@ import { generateMetaTags } from '../utils/SeoHelper';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, X, Calendar, Clock, Tag,
-    Share2, Copy, Check, ArrowLeft, ChevronRight, Maximize2,
+    Copy, Check, ArrowLeft, ChevronRight, Maximize2,
     Facebook, Instagram, Linkedin, Send
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -23,6 +23,11 @@ import { db } from '../firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getLocalizedField } from '../utils/localization';
 import { useTranslation } from '../hooks/useTranslation';
+
+const getMetaLanguage = () => {
+    if (typeof window === 'undefined') return 'en';
+    return localStorage.getItem('portfolio.language') === 'km' ? 'km' : 'en';
+};
 
 export async function loader({ params }) {
     const q = query(collection(db, 'posts'), where("slug", "==", params.slug));
@@ -46,11 +51,13 @@ export async function loader({ params }) {
 }
 
 export function meta({ data }) {
-    if (!data) return [{ title: "Post Not Found | Kem Phearum" }];
+    const language = getMetaLanguage();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    if (!data) return [{ title: `${tr('Post Not Found', 'រកមិនឃើញអត្ថបទ')} | Kem Phearum` }];
 
-    const title = getLocalizedField(data.title, 'en');
-    const excerpt = getLocalizedField(data.excerpt, 'en');
-    const content = getLocalizedField(data.content, 'en');
+    const title = getLocalizedField(data.title, language);
+    const excerpt = getLocalizedField(data.excerpt, language);
+    const content = getLocalizedField(data.content, language);
 
     return generateMetaTags({
         title,
@@ -62,6 +69,7 @@ export function meta({ data }) {
 
 const BlogPost = () => {
     const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const { slug } = useParams();
     const loaderData = useLoaderData();
     const [showScrollTop, setShowScrollTop] = useState(false);
@@ -78,7 +86,7 @@ const BlogPost = () => {
         queryKey: ['post', slug],
         queryFn: async () => {
             const postData = await BlogService.fetchPostBySlug(slug, trackRead);
-            if (!postData) throw new Error('Post not found');
+            if (!postData) throw new Error(tr('Post not found', 'រកមិនឃើញអត្ថបទ'));
             trackRead(0, `Viewed blog: ${getLocalizedField(postData.title, 'en')}`);
             return postData;
         },
@@ -86,7 +94,7 @@ const BlogPost = () => {
         retry: false
     });
 
-    const error = isError ? 'Failed to load post details' : null;
+    const error = isError ? tr('Failed to load post details', 'ផ្ទុកព័ត៌មានលម្អិតអត្ថបទបរាជ័យ') : null;
     const localizedPost = post ? {
         ...post,
         title: getLocalizedField(post.title, language),
@@ -160,8 +168,8 @@ const BlogPost = () => {
     };
 
     const formatDate = (timestamp) => {
-        if (!timestamp?.seconds) return 'Recently Published';
-        return new Date(timestamp.seconds * 1000).toLocaleDateString('en-US', {
+        if (!timestamp?.seconds) return tr('Recently Published', 'ទើបបានបោះពុម្ព');
+        return new Date(timestamp.seconds * 1000).toLocaleDateString(language === 'km' ? 'km-KH' : 'en-US', {
             year: 'numeric', month: 'long', day: 'numeric'
         });
     };
@@ -190,9 +198,9 @@ const BlogPost = () => {
                     <div className={styles.container}>
                         <div className={styles.errorContainer}>
                             <h2>404</h2>
-                            <p>{error || "Post not found"}</p>
+                            <p>{error || tr('Post not found', 'រកមិនឃើញអត្ថបទ')}</p>
                             <Link to="/blog" className={styles.backBtn}>
-                                <ArrowLeft size={16} /> Back to Blog
+                                <ArrowLeft size={16} /> {tr('Back to Blog', 'ត្រឡប់ទៅប្លុក')}
                             </Link>
                         </div>
                     </div>
@@ -221,7 +229,7 @@ const BlogPost = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <Link to="/blog"><ArrowLeft size={14} /> Blog</Link>
+                        <Link to="/blog"><ArrowLeft size={14} /> {tr('Blog', 'ប្លុក')}</Link>
                         <ChevronRight size={14} className={styles.separator} />
                         <span className={styles.current}>{localizedPost.title}</span>
                     </motion.nav>
@@ -243,7 +251,7 @@ const BlogPost = () => {
                         <div className={styles.imageOverlay} />
                         {coverImg && (
                             <span className={styles.viewHint}>
-                                <Maximize2 size={12} /> View
+                                <Maximize2 size={12} /> {tr('View', 'មើល')}
                             </span>
                         )}
                     </motion.div>
@@ -271,9 +279,9 @@ const BlogPost = () => {
                                 <RelatedArticles currentPostId={localizedPost.id} tags={localizedPost.tags} />
 
                                 <div className={styles.shareCta}>
-                                    <h3>Thanks for reading!</h3>
+                                    <h3>{tr('Thanks for reading!', 'អរគុណសម្រាប់ការអាន!')}</h3>
                                     <Link to="/blog" className={styles.backBtn}>
-                                        <ArrowLeft size={16} /> Read More Articles
+                                        <ArrowLeft size={16} /> {tr('Read More Articles', 'អានអត្ថបទបន្ថែម')}
                                     </Link>
                                 </div>
                             </div>
@@ -291,14 +299,14 @@ const BlogPost = () => {
 
                             {/* Article Info */}
                             <div className={styles.sidebarCard}>
-                                <h4>Article Info</h4>
+                                <h4>{tr('Article Info', 'ព័ត៌មានអត្ថបទ')}</h4>
                                 <div className={styles.infoList}>
                                     <div className={styles.infoRow}>
-                                        <span className={styles.label}><Calendar size={14} /> Published</span>
+                                        <span className={styles.label}><Calendar size={14} /> {tr('Published', 'បានបោះពុម្ព')}</span>
                                         <span className={styles.value}>{formatDate(post.createdAt)}</span>
                                     </div>
                                     <div className={styles.infoRow}>
-                                        <span className={styles.label}><Clock size={14} /> Read Time</span>
+                                        <span className={styles.label}><Clock size={14} /> {tr('Read Time', 'ពេលអាន')}</span>
                                         <span className={styles.value}>{calculateReadTime(localizedPost.content)}</span>
                                     </div>
                                 </div>
@@ -307,7 +315,7 @@ const BlogPost = () => {
                             {/* Tags */}
                             {localizedPost.tags && localizedPost.tags.length > 0 && (
                                 <div className={styles.sidebarCard}>
-                                    <h4>Tags</h4>
+                                    <h4>{tr('Tags', 'ស្លាក')}</h4>
                                     <div className={styles.tagsList}>
                                         {localizedPost.tags.map((tag, idx) => (
                                             <span key={idx} className={styles.tagChip}>#{tag}</span>
@@ -318,42 +326,46 @@ const BlogPost = () => {
 
                             {/* Share */}
                             <div className={styles.sidebarCard}>
-                                <h4>Share Article</h4>
+                                <h4>{tr('Share Article', 'ចែករំលែកអត្ថបទ')}</h4>
                                 <div className={styles.shareButtons}>
                                     <button
                                         className={`${styles.shareBtn} ${copied ? styles.copied : ''}`}
                                         onClick={handleCopyLink}
-                                        aria-label="Copy link"
+                                        aria-label={tr('Copy link', 'ចម្លងតំណ')}
                                     >
-                                        {copied ? <><Check size={14} /> Copied!</> : <><Copy size={14} /> Copy Link</>}
+                                        {copied
+                                            ? <><Check size={14} /> {tr('Copied!', 'បានចម្លង!')}</>
+                                            : <><Copy size={14} /> {tr('Copy Link', 'ចម្លងតំណ')}</>}
                                     </button>
                                     <button
                                         className={`${styles.shareBtn} ${styles.shareFacebook}`}
                                         onClick={shareToFacebook}
-                                        aria-label="Share on Facebook"
+                                        aria-label={tr('Share on Facebook', 'ចែករំលែកលើ Facebook')}
                                     >
-                                        <Facebook size={14} /> Share on Facebook
+                                        <Facebook size={14} /> {tr('Share on Facebook', 'ចែករំលែកលើ Facebook')}
                                     </button>
                                     <button
                                         className={`${styles.shareBtn} ${styles.shareInstagram} ${instaCopied ? styles.copied : ''}`}
                                         onClick={shareToInstagram}
-                                        aria-label="Share on Instagram"
+                                        aria-label={tr('Share on Instagram', 'ចែករំលែកលើ Instagram')}
                                     >
-                                        {instaCopied ? <><Check size={14} /> Link Copied!</> : <><Instagram size={14} /> Share on Instagram</>}
+                                        {instaCopied
+                                            ? <><Check size={14} /> {tr('Link Copied!', 'បានចម្លងតំណ!')}</>
+                                            : <><Instagram size={14} /> {tr('Share on Instagram', 'ចែករំលែកលើ Instagram')}</>}
                                     </button>
                                     <button
                                         className={`${styles.shareBtn} ${styles.shareLinkedIn}`}
                                         onClick={shareToLinkedIn}
-                                        aria-label="Share on LinkedIn"
+                                        aria-label={tr('Share on LinkedIn', 'ចែករំលែកលើ LinkedIn')}
                                     >
-                                        <Linkedin size={14} /> Share on LinkedIn
+                                        <Linkedin size={14} /> {tr('Share on LinkedIn', 'ចែករំលែកលើ LinkedIn')}
                                     </button>
                                     <button
                                         className={`${styles.shareBtn} ${styles.shareTelegram}`}
                                         onClick={shareToTelegram}
-                                        aria-label="Share on Telegram"
+                                        aria-label={tr('Share on Telegram', 'ចែករំលែកលើ Telegram')}
                                     >
-                                        <Send size={14} /> Share on Telegram
+                                        <Send size={14} /> {tr('Share on Telegram', 'ចែករំលែកលើ Telegram')}
                                     </button>
                                 </div>
                             </div>
@@ -368,7 +380,7 @@ const BlogPost = () => {
                     <motion.button
                         className={styles.scrollTopBtn}
                         onClick={scrollToTop}
-                        aria-label="Scroll to top"
+                        aria-label={tr('Scroll to top', 'រមូរទៅកំពូល')}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
@@ -392,7 +404,7 @@ const BlogPost = () => {
                         <button 
                             className={styles.lightboxClose} 
                             onClick={() => setLightboxOpen(false)} 
-                            aria-label="Close"
+                            aria-label={tr('Close', 'បិទ')}
                         >
                             <X size={22} />
                         </button>

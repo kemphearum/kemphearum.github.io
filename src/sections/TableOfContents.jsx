@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { List } from 'lucide-react';
 import styles from './TableOfContents.module.scss';
+import { useTranslation } from '../hooks/useTranslation';
 
 const TableOfContents = ({ content }) => {
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const [headings, setHeadings] = useState([]);
     const [activeId, setActiveId] = useState('');
 
@@ -86,7 +89,7 @@ const TableOfContents = ({ content }) => {
         <div className={styles.tocWrapper}>
             <div className={styles.tocHeader}>
                 <List size={16} />
-                <span>On This Page</span>
+                <span>{tr('On This Page', 'មាតិកានៅទំព័រនេះ')}</span>
             </div>
             <nav className={styles.tocNav}>
                 <ul className={styles.tocList}>

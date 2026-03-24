@@ -1,20 +1,26 @@
 import React from 'react';
 import { Upload, FileText } from 'lucide-react';
 import { Dialog, Button } from '@/shared/components/ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 const ImportConfirmDialog = ({
   open,
   onOpenChange,
   onConfirm,
   loading = false,
-  title = 'Confirm Import',
+  title = '',
   description = '',
   fileName = '',
   format = '',
   stats = [],
   notes = [],
-  confirmText = 'Import'
+  confirmText = ''
 }) => {
+  const { language } = useTranslation();
+  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const resolvedTitle = title || tr('Confirm Import', 'បញ្ជាក់ការនាំចូល');
+  const resolvedConfirmText = confirmText || tr('Import', 'នាំចូល');
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <Dialog.Content maxWidth="560px" className="ui-importConfirmDialog">
@@ -24,7 +30,7 @@ const ImportConfirmDialog = ({
               <Upload size={18} />
             </div>
             <div>
-              <Dialog.Title>{title}</Dialog.Title>
+              <Dialog.Title>{resolvedTitle}</Dialog.Title>
               {description && <Dialog.Description>{description}</Dialog.Description>}
             </div>
           </div>
@@ -34,7 +40,7 @@ const ImportConfirmDialog = ({
         <Dialog.Body className="ui-importConfirmDialog__body">
           <div className="ui-importConfirmDialog__fileMeta">
             <FileText size={16} />
-            <span className="ui-importConfirmDialog__fileName">{fileName || 'Selected file'}</span>
+            <span className="ui-importConfirmDialog__fileName">{fileName || tr('Selected file', 'ឯកសារដែលបានជ្រើស')}</span>
             {format && <span className="ui-importConfirmDialog__format">{format}</span>}
           </div>
 
@@ -60,10 +66,10 @@ const ImportConfirmDialog = ({
 
         <Dialog.Footer className="ui-importConfirmDialog__footer">
           <Button variant="ghost" onClick={() => onOpenChange(false)} type="button">
-            Cancel
+            {tr('Cancel', 'បោះបង់')}
           </Button>
           <Button onClick={onConfirm} isLoading={loading}>
-            {loading ? 'Importing...' : confirmText}
+            {loading ? tr('Importing...', 'កំពុងនាំចូល...') : resolvedConfirmText}
           </Button>
         </Dialog.Footer>
       </Dialog.Content>

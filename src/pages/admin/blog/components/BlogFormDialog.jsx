@@ -8,8 +8,9 @@ import FormSelect from '../../components/FormSelect';
 import FormMarkdownEditor from '../../components/FormMarkdownEditor';
 import FormDropzone from '../../components/FormDropzone';
 import { getLanguageValue } from '../../../../utils/localization';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
-const BlogCoverImageField = ({ currentImageUrl }) => {
+const BlogCoverImageField = ({ currentImageUrl, tr }) => {
     const { control, setValue, watch } = useFormContext();
     const activeImage = watch('coverImage');
 
@@ -28,7 +29,7 @@ const BlogCoverImageField = ({ currentImageUrl }) => {
                     }}
                     currentImageUrl={activeImage || currentImageUrl}
                     onClearExisting={() => setValue('coverImage', '', { shouldDirty: true })}
-                    placeholder="Upload post cover image"
+                    placeholder={tr('Upload post cover image', 'ផ្ទុករូបគម្របអត្ថបទ')}
                     aspectRatio="16 / 7"
                 />
             )}
@@ -36,11 +37,13 @@ const BlogCoverImageField = ({ currentImageUrl }) => {
     );
 };
 
-const BlogLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
+const BlogLocalizedFields = ({ activeLanguage, setActiveLanguage, tr }) => {
     const titleName = activeLanguage === 'en' ? 'titleEn' : 'titleKm';
     const excerptName = activeLanguage === 'en' ? 'excerptEn' : 'excerptKm';
     const contentName = activeLanguage === 'en' ? 'contentEn' : 'contentKm';
-    const languageLabel = activeLanguage === 'en' ? 'English' : 'Khmer';
+    const languageLabel = activeLanguage === 'en'
+        ? tr('English', 'អង់គ្លេស')
+        : tr('Khmer', 'ខ្មែរ');
 
     return (
         <>
@@ -52,31 +55,31 @@ const BlogLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
             </Tabs>
 
             <FormField
-                label={`Post Title (${languageLabel})`}
+                label={`${tr('Post Title', 'ចំណងជើងអត្ថបទ')} (${languageLabel})`}
                 name={titleName}
-                validation={activeLanguage === 'en' ? { required: 'English title is required' } : {}}
-                hint={activeLanguage === 'km' ? 'Optional. Leave blank to fall back to English.' : undefined}
+                validation={activeLanguage === 'en' ? { required: tr('English title is required', 'ត្រូវការចំណងជើងជាភាសាអង់គ្លេស') } : {}}
+                hint={activeLanguage === 'km' ? tr('Optional. Leave blank to fall back to English.', 'ស្រេចចិត្ត។ ទុកទទេ ដើម្បីប្រើអង់គ្លេសជំនួស។') : undefined}
             >
-                <FormInput placeholder={`Enter ${languageLabel.toLowerCase()} title...`} />
+                <FormInput placeholder={activeLanguage === 'en' ? 'Enter english title...' : 'បញ្ចូលចំណងជើងជាភាសាខ្មែរ...'} />
             </FormField>
 
             <FormField
-                label={`Short Excerpt (${languageLabel})`}
+                label={`${tr('Short Excerpt', 'សេចក្តីសង្ខេបខ្លី')} (${languageLabel})`}
                 name={excerptName}
-                hint="Used in cards, previews, and search results."
+                hint={tr('Used in cards, previews, and search results.', 'ប្រើសម្រាប់កាត ការមើលជាមុន និងលទ្ធផលស្វែងរក។')}
             >
-                <FormInput isTextArea rows="4" placeholder={`A short ${languageLabel.toLowerCase()} summary...`} />
+                <FormInput isTextArea rows="4" placeholder={activeLanguage === 'en' ? 'A short english summary...' : 'សេចក្តីសង្ខេបខ្លីជាភាសាខ្មែរ...'} />
             </FormField>
 
             <FormField
-                label={`Content (${languageLabel})`}
+                label={`${tr('Content', 'មាតិកា')} (${languageLabel})`}
                 name={contentName}
-                validation={activeLanguage === 'en' ? { required: 'English content is required' } : {}}
+                validation={activeLanguage === 'en' ? { required: tr('English content is required', 'ត្រូវការមាតិកាជាភាសាអង់គ្លេស') } : {}}
             >
                 <FormMarkdownEditor
                     rows={16}
                     fullWidth={false}
-                    placeholder={`Write the ${languageLabel.toLowerCase()} article in Markdown...`}
+                    placeholder={activeLanguage === 'en' ? 'Write the english article in Markdown...' : 'សរសេរអត្ថបទជាភាសាខ្មែរ (Markdown)...'}
                 />
             </FormField>
         </>
@@ -85,6 +88,8 @@ const BlogLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
 
 const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loading }) => {
     const [activeLanguage, setActiveLanguage] = useState('en');
+    const { language } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
 
     const defaultValues = {
         titleEn: getLanguageValue(initialData?.title, 'en', true),
@@ -106,9 +111,12 @@ const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loadi
             <Dialog.Content maxWidth="1120px" className="ui-blog-dialog">
                 <Dialog.Header className="ui-blog-dialog__header" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <div className="ui-blog-dialog__heading">
-                        <Dialog.Title>{mode === 'create' ? 'Create New Post' : 'Edit Post'}</Dialog.Title>
+                        <Dialog.Title>{mode === 'create' ? tr('Create New Post', 'បង្កើតអត្ថបទថ្មី') : tr('Edit Post', 'កែសម្រួលអត្ថបទ')}</Dialog.Title>
                         <Dialog.Description>
-                            Manage bilingual content in one document. English is required, Khmer is optional and falls back to English.
+                            {tr(
+                                'Manage bilingual content in one document. English is required, Khmer is optional and falls back to English.',
+                                'គ្រប់គ្រងមាតិកាពីរភាសា​ក្នុងឯកសារតែមួយ។ ភាសាអង់គ្លេសត្រូវការ ខណៈភាសាខ្មែរស្រេចចិត្ត និងអាចប្រើអង់គ្លេសជំនួស។'
+                            )}
                         </Dialog.Description>
                     </div>
                     <Dialog.Close />
@@ -124,13 +132,14 @@ const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loadi
                             <div className="ui-blog-formLayout__main">
                                 <div className="ui-blog-formSection">
                                     <div className="ui-blog-formSection__head">
-                                        <h3>Story basics</h3>
-                                        <p>Switch language tabs to edit EN/KM fields without leaving this form.</p>
+                                        <h3>{tr('Story basics', 'មូលដ្ឋានអត្ថបទ')}</h3>
+                                        <p>{tr('Switch language tabs to edit EN/KM fields without leaving this form.', 'ប្ដូរផ្ទាំងភាសា ដើម្បីកែសម្រួល EN/KM ដោយមិនចាកចេញពីសំណុំបែបបទនេះ។')}</p>
                                     </div>
 
                                     <BlogLocalizedFields
                                         activeLanguage={activeLanguage}
                                         setActiveLanguage={setActiveLanguage}
+                                        tr={tr}
                                     />
                                 </div>
                             </div>
@@ -138,12 +147,12 @@ const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loadi
                             <aside className="ui-blog-formLayout__aside">
                                 <div className="ui-blog-formSection">
                                     <div className="ui-blog-formSection__head">
-                                        <h3>Publishing</h3>
-                                        <p>Control visibility, homepage promotion, and the public URL.</p>
+                                        <h3>{tr('Publishing', 'ការបោះពុម្ព')}</h3>
+                                        <p>{tr('Control visibility, homepage promotion, and the public URL.', 'គ្រប់គ្រងការបង្ហាញ ការដាក់លេចធ្លោលើទំព័រដើម និង URL សាធារណៈ។')}</p>
                                     </div>
 
                                     <FormField
-                                        label="Publish Status"
+                                        label={tr('Publish Status', 'ស្ថានភាពបោះពុម្ព')}
                                         name="visible"
                                         validation={{
                                             setValueAs: (value) => value === true || value === 'true'
@@ -151,14 +160,14 @@ const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loadi
                                     >
                                         <FormSelect
                                             options={[
-                                                { label: 'Published (Publicly Visible)', value: true },
-                                                { label: 'Draft (Admin Only)', value: false }
+                                                { label: tr('Published (Publicly Visible)', 'បានបោះពុម្ព (បង្ហាញជាសាធារណៈ)'), value: true },
+                                                { label: tr('Draft (Admin Only)', 'សេចក្តីព្រាង (សម្រាប់ Admin ប៉ុណ្ណោះ)'), value: false }
                                             ]}
                                         />
                                     </FormField>
 
                                     <FormField
-                                        label="Homepage Highlight"
+                                        label={tr('Homepage Highlight', 'លេចធ្លោលើទំព័រដើម')}
                                         name="featured"
                                         validation={{
                                             setValueAs: (value) => value === true || value === 'true'
@@ -166,24 +175,24 @@ const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loadi
                                     >
                                         <FormSelect
                                             options={[
-                                                { label: 'Normal Post', value: false },
-                                                { label: 'Featured on Homepage', value: true }
+                                                { label: tr('Normal Post', 'អត្ថបទធម្មតា'), value: false },
+                                                { label: tr('Featured on Homepage', 'លេចធ្លោលើទំព័រដើម'), value: true }
                                             ]}
                                         />
                                     </FormField>
 
                                     <FormField
-                                        label="Custom Slug"
+                                        label={tr('Custom Slug', 'Slug ផ្ទាល់ខ្លួន')}
                                         name="slug"
-                                        hint="Leave blank to generate the URL automatically from the English title."
+                                        hint={tr('Leave blank to generate the URL automatically from the English title.', 'ទុកទទេ ដើម្បីបង្កើត URL ពីចំណងជើងអង់គ្លេសដោយស្វ័យប្រវត្តិ។')}
                                     >
                                         <FormInput placeholder="e.g. my-blog-post" />
                                     </FormField>
 
                                     <FormField
-                                        label="Tags"
+                                        label={tr('Tags', 'ស្លាក')}
                                         name="tags"
-                                        hint="Separate topics with commas to improve filtering and related-post suggestions."
+                                        hint={tr('Separate topics with commas to improve filtering and related-post suggestions.', 'បំបែកប្រធានបទដោយក្បៀស ដើម្បីជួយការតម្រង និងអត្ថបទពាក់ព័ន្ធ។')}
                                     >
                                         <FormInput placeholder="React, Firebase, Security" />
                                     </FormField>
@@ -191,12 +200,12 @@ const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loadi
 
                                 <div className="ui-blog-formSection">
                                     <div className="ui-blog-formSection__head">
-                                        <h3>Cover image</h3>
-                                        <p>Use a clean, wide image to make the blog list and article header feel polished.</p>
+                                        <h3>{tr('Cover image', 'រូបភាពគម្រប')}</h3>
+                                        <p>{tr('Use a clean, wide image to make the blog list and article header feel polished.', 'ប្រើរូបភាពទូលាយ និងច្បាស់ ដើម្បីឲ្យបញ្ជីប្លុក និងក្បាលអត្ថបទមើលទៅមានគុណភាព។')}</p>
                                     </div>
 
-                                    <FormField label="Cover Image">
-                                        <BlogCoverImageField currentImageUrl={initialData?.coverImage} />
+                                    <FormField label={tr('Cover Image', 'រូបគម្រប')}>
+                                        <BlogCoverImageField currentImageUrl={initialData?.coverImage} tr={tr} />
                                     </FormField>
                                 </div>
                             </aside>
@@ -205,14 +214,17 @@ const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loadi
 
                     <Dialog.Footer className="ui-blog-dialog__footer" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                         <div className="ui-blog-dialog__footerNote">
-                            Both languages are stored in one Firestore document. Khmer can remain empty while content is being translated.
+                            {tr(
+                                'Both languages are stored in one Firestore document. Khmer can remain empty while content is being translated.',
+                                'ទិន្នន័យភាសាទាំងពីរត្រូវបានរក្សាទុកក្នុងឯកសារ Firestore តែមួយ។ ភាសាខ្មែរអាចទុកទទេខណៈពេលកំពុងបកប្រែ។'
+                            )}
                         </div>
                         <div className="ui-blog-dialog__footerActions">
                             <Button variant="ghost" onClick={() => onOpenChange(false)} type="button">
-                                Cancel
+                                {tr('Cancel', 'បោះបង់')}
                             </Button>
                             <Button type="submit" isLoading={loading} className="ui-primary">
-                                {loading ? 'Saving...' : 'Save Blog Post'}
+                                {loading ? tr('Saving...', 'កំពុងរក្សាទុក...') : tr('Save Blog Post', 'រក្សាទុកអត្ថបទប្លុក')}
                             </Button>
                         </div>
                     </Dialog.Footer>

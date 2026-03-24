@@ -65,7 +65,7 @@ const isCurrentRole = (item) => {
 };
 
 const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
-  const { language } = useTranslation();
+  const { language, t } = useTranslation();
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -77,14 +77,14 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
     showToast,
-    successMessage: `Experience ${editingItem ? 'updated' : 'created'} successfully.`,
+    successMessage: editingItem ? t('admin.experience.messages.updated') : t('admin.experience.messages.created'),
     invalidateKeys: [['experience']],
     onSuccess: () => setIsFormOpen(false)
   });
 
   const { loading: deleteLoading, execute: executeDelete } = useAsyncAction({
     showToast,
-    successMessage: 'Experience deleted successfully.',
+    successMessage: t('admin.experience.messages.deleted'),
     invalidateKeys: [['experience']],
     onSuccess: () => setDeletingItem(null)
   });
@@ -155,31 +155,31 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
 
     return [
       {
-        label: 'On This Page',
+        label: t('admin.common.stats.onThisPage.label'),
         value: experiencesByTimeline.length,
-        hint: 'Entries loaded in the current result set',
+        hint: t('admin.common.stats.onThisPage.hint'),
         icon: BriefcaseBusiness
       },
       {
-        label: 'Visible',
+        label: t('admin.experience.stats.visible.label'),
         value: visibleCount,
-        hint: 'Shown in the public experience section',
+        hint: t('admin.experience.stats.visible.hint'),
         icon: Eye
       },
       {
-        label: 'Companies',
+        label: t('admin.experience.stats.companies.label'),
         value: companyCount,
-        hint: 'Distinct organizations represented here',
+        hint: t('admin.experience.stats.companies.hint'),
         icon: Building2
       },
       {
-        label: 'Current Roles',
+        label: t('admin.experience.stats.currentRoles.label'),
         value: currentCount,
-        hint: 'Entries marked as present',
+        hint: t('admin.experience.stats.currentRoles.hint'),
         icon: Clock3
       }
     ];
-  }, [experiencesByTimeline, language]);
+  }, [experiencesByTimeline, language, t]);
 
   // Robust date parser for legacy formats (yyyy-mm)
   const parseLegacyDate = (dateVal, isEnd = false) => {
@@ -224,7 +224,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleAdd = () => {
     if (!canCreate) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     setEditingItem(null);
     setIsFormOpen(true);
@@ -237,7 +237,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleEdit = (exp) => {
     if (!isActionAllowed('edit', 'experience')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     const source = exp.__raw || exp;
     const startVal = source.startMonthYear || source.startDate || source.period;
@@ -255,14 +255,14 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleDelete = (item) => {
     if (!isActionAllowed('delete', 'experience')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     setDeletingItem(item.__raw || item);
   };
 
   const handleSave = async (formData) => {
     if (!isActionAllowed(editingItem ? 'edit' : 'create', 'experience')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     
     await executeForm(async () => {
@@ -289,7 +289,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const confirmDelete = async () => {
     if (!deletingItem) return;
     if (!isActionAllowed('delete', 'experience')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
 
     await executeDelete(async () => {
@@ -332,13 +332,17 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
       queryClient.invalidateQueries({ queryKey: ['experience'] });
     },
     onSuccess: (_, variables) => {
-      showToast(`Experience ${!variables.currentVisible ? 'shown' : 'hidden'} on homepage.`);
+      showToast(
+        !variables.currentVisible
+          ? t('admin.experience.messages.shownOnHomepage')
+          : t('admin.experience.messages.hiddenOnHomepage')
+      );
     }
   });
 
   const toggleVisibility = (id, currentVisible) => {
     if (!isActionAllowed('edit', 'experience')) {
-      return showToast("You do not have permission to perform this action.", "error");
+      return showToast(t('admin.common.noPermissionAction'), "error");
     }
     visibilityMutation.mutate({ id, currentVisible });
   };
@@ -392,8 +396,11 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         onOpenChange={(open) => !open && setDeletingItem(null)}
         onConfirm={confirmDelete}
         loading={deleteLoading}
-        title="Delete Experience"
-        message={`Are you sure you want to delete "${getLocalizedField(deletingItem?.role, language)}" at "${getLocalizedField(deletingItem?.company, language)}"? This action cannot be undone.`}
+        title={t('admin.experience.dialogs.deleteTitle')}
+        message={t('admin.experience.dialogs.deleteMessage', {
+          role: getLocalizedField(deletingItem?.role, language),
+          company: getLocalizedField(deletingItem?.company, language)
+        })}
       />
     </div>
   );

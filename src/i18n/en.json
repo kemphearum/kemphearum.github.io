@@ -12,7 +12,27 @@
       "noPermissionAction": "You do not have permission to perform this action.",
       "settingsSaved": "Settings saved!",
       "sectionSaved": "{{section}} saved!",
-      "saveSectionFailed": "Failed to save {{section}}."
+      "saveSectionFailed": "Failed to save {{section}}.",
+      "save": "Save",
+      "delete": "Delete",
+      "stats": {
+        "onThisPage": {
+          "label": "On This Page",
+          "hint": "Loaded in the current result set"
+        },
+        "published": {
+          "label": "Published"
+        },
+        "featured": {
+          "label": "Featured"
+        }
+      },
+      "import": {
+        "rowsFound": "Rows found",
+        "readyToImport": "Ready to import",
+        "skipped": "Skipped",
+        "runImport": "Run Import"
+      }
     },
     "dashboard": {
       "title": "Dashboard"
@@ -28,7 +48,10 @@
       "audit": "Audit Logs",
       "analytics": "Analytics",
       "profile": "My Profile",
-      "settings": "Settings"
+      "settings": "Settings",
+      "homeSection": "Home",
+      "aboutSection": "About",
+      "contactSection": "Contact"
     },
     "subtitles": {
       "general": "Manage your portfolio primary content",
@@ -100,6 +123,226 @@
       "pending": "Pending",
       "editor": "Editor",
       "admin": "Admin"
+    },
+    "general": {
+      "sectionDescriptions": {
+        "home": "Hero copy, CTA, and portrait",
+        "about": "Bio and skills snapshot",
+        "contact": "Intro text above the form"
+      },
+      "workspace": {
+        "eyebrow": "Content Studio",
+        "title": "Manage the core sections visitors read first.",
+        "description": "Update your hero messaging, biography, and contact intro from one place, with clearer section progress and less visual clutter.",
+        "sectionsLabel": "Sections",
+        "sectionsHint": "Home, About, and Contact",
+        "fieldsFilledLabel": "Fields Filled",
+        "fieldsFilledHint": "Quick signal for content completeness"
+      }
+    },
+    "experience": {
+      "messages": {
+        "created": "Experience created successfully.",
+        "updated": "Experience updated successfully.",
+        "deleted": "Experience deleted successfully.",
+        "shownOnHomepage": "Experience shown on homepage.",
+        "hiddenOnHomepage": "Experience hidden on homepage."
+      },
+      "stats": {
+        "visible": {
+          "label": "Visible",
+          "hint": "Shown in the public experience section"
+        },
+        "companies": {
+          "label": "Companies",
+          "hint": "Distinct organizations represented here"
+        },
+        "currentRoles": {
+          "label": "Current Roles",
+          "hint": "Entries marked as present"
+        }
+      },
+      "dialogs": {
+        "deleteTitle": "Delete Experience",
+        "deleteMessage": "Are you sure you want to delete \"{{role}}\" at \"{{company}}\"? This action cannot be undone."
+      }
+    },
+    "projects": {
+      "stats": {
+        "published": {
+          "hint": "Visible in the public portfolio"
+        },
+        "featured": {
+          "hint": "Highlighted on priority surfaces"
+        },
+        "linked": {
+          "label": "Linked",
+          "hint": "Have a live demo or repository"
+        }
+      },
+      "messages": {
+        "created": "Project created successfully.",
+        "updated": "Project updated successfully.",
+        "deleted": "Project deleted successfully.",
+        "shown": "Project shown.",
+        "hidden": "Project hidden.",
+        "featured": "Project featured.",
+        "unfeatured": "Project removed from featured.",
+        "deletedMany": "Deleted {{count}} projects.",
+        "shownMany": "{{count}} projects shown.",
+        "hiddenMany": "{{count}} projects hidden.",
+        "featuredMany": "{{count}} projects featured.",
+        "unfeaturedMany": "{{count}} projects unfeatured.",
+        "importComplete": "Import complete: {{created}} created, {{updated}} updated, {{skipped}} skipped, {{failed}} failed.",
+        "selectToExport": "Please select projects to export.",
+        "selectedNotInPage": "Selected projects are not in the current page result.",
+        "exportedMany": "Exported {{count}} selected projects."
+      },
+      "bulk": {
+        "selected": "Projects Selected",
+        "show": "Show",
+        "showSelected": "Show Selected",
+        "hide": "Hide",
+        "hideSelected": "Hide Selected",
+        "feature": "Feature",
+        "featureSelected": "Feature Selected",
+        "unfeature": "Unfeature",
+        "unfeatureSelected": "Unfeature Selected",
+        "deleteSelected": "Delete Selected"
+      },
+      "dialogs": {
+        "deleteTitle": "Delete Project",
+        "deleteMessage": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone.",
+        "deleteManyTitle": "Delete Multiple Projects",
+        "deleteManyMessage": "Are you sure you want to delete {{count}} selected projects? This action cannot be undone."
+      },
+      "import": {
+        "title": "Import Projects",
+        "description": "Review the file before running a bulk import. Existing projects with matching slugs will be updated.",
+        "noteMissingTitle": "Rows without a title are skipped automatically.",
+        "noteSlug": "Import keeps slug-based updates and creates new projects when no match is found."
+      }
+    },
+    "blog": {
+      "stats": {
+        "published": {
+          "hint": "Publicly visible posts"
+        },
+        "featured": {
+          "hint": "Pinned to homepage surfaces"
+        },
+        "drafts": {
+          "label": "Drafts",
+          "hint": "Hidden from visitors"
+        }
+      },
+      "messages": {
+        "created": "Post created successfully",
+        "updated": "Post updated successfully",
+        "deleted": "Post deleted successfully",
+        "published": "Post published successfully",
+        "hidden": "Post hidden successfully",
+        "featured": "Post featured successfully",
+        "unfeatured": "Post removed from featured successfully",
+        "deletedMany": "Deleted {{count}} posts.",
+        "publishedMany": "{{count}} posts published.",
+        "hiddenMany": "{{count}} posts hidden.",
+        "featuredMany": "{{count}} posts featured.",
+        "unfeaturedMany": "{{count}} posts unfeatured.",
+        "importComplete": "Import complete: {{created}} created, {{updated}} updated, {{skipped}} skipped, {{failed}} failed.",
+        "selectToExport": "Please select posts to export.",
+        "selectedNotInPage": "Selected posts are not in the current page result.",
+        "exportedMany": "Exported {{count}} selected posts."
+      },
+      "bulk": {
+        "selected": "Posts Selected",
+        "publish": "Publish",
+        "publishSelected": "Publish Selected",
+        "hide": "Hide",
+        "hideSelected": "Hide Selected",
+        "feature": "Feature",
+        "featureSelected": "Feature Selected",
+        "unfeature": "Unfeature",
+        "unfeatureSelected": "Unfeature Selected",
+        "deleteSelected": "Delete Selected"
+      },
+      "dialogs": {
+        "deleteTitle": "Delete Post",
+        "deleteMessage": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone.",
+        "deleteManyTitle": "Delete Multiple Posts",
+        "deleteManyMessage": "Are you sure you want to delete {{count}} selected posts? This action cannot be undone."
+      },
+      "import": {
+        "title": "Import Blog Posts",
+        "description": "Review the file before running a bulk import. Existing posts with matching slugs will be updated.",
+        "noteMissingTitle": "Rows without a title are skipped automatically.",
+        "noteSlug": "Import keeps slug-based updates and creates new posts when no match is found."
+      }
+    },
+    "settings": {
+      "subTabs": {
+        "identity": {
+          "label": "Identity",
+          "description": "Browser title, logo system, filters, and favicon."
+        },
+        "typography": {
+          "label": "Typography",
+          "description": "Font roles, presets, previews, and admin override."
+        },
+        "visuals": {
+          "label": "Visuals",
+          "description": "Background motion, particle tuning, and interface behavior."
+        },
+        "sync": {
+          "label": "Site Sync",
+          "description": "Mirrors, GitHub token, and manual rebuild control."
+        }
+      },
+      "syncStatus": {
+        "ready": "Ready",
+        "syncing": "Syncing",
+        "queued": "Queued",
+        "healthy": "Healthy",
+        "attention": "Attention"
+      },
+      "sectionMeta": {
+        "identity": {
+          "faviconConfigured": "Favicon configured",
+          "addFavicon": "Add a favicon"
+        },
+        "typography": {
+          "roles": "roles",
+          "customized": "customized",
+          "metadataSetupAvailable": "Metadata setup available"
+        },
+        "visuals": {
+          "interactiveOn": "Interactive motion on",
+          "interactiveOff": "Interactive motion off",
+          "backgroundStyles": {
+            "plexus": "Plexus",
+            "particles": "Particles",
+            "geometry": "Geometry",
+            "aurora": "Aurora"
+          }
+        },
+        "sync": {
+          "mirrors": "mirrors",
+          "statusForRebuilds": "{{status}} for rebuilds",
+          "tokenNeededForRebuilds": "Token needed for rebuilds"
+        }
+      }
+    },
+    "profile": {
+      "title": "Edit Profile",
+      "displayName": "Display Name",
+      "displayNamePlaceholder": "Kem Phearum",
+      "displayNameHint": "This name will be displayed in the Admin sidebar instead of your email address.",
+      "emailAddress": "Email Address",
+      "saving": "Saving...",
+      "messages": {
+        "noChanges": "No profile changes to save.",
+        "saved": "Profile saved!"
+      }
     }
   },
   "nav": {

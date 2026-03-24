@@ -45,10 +45,11 @@ const RelatedProjects = ({ currentProjectId, techStack }) => {
             </div>
 
             <Link to="/projects" className={styles.viewAllLink}>
-                {t('related.viewAllProjects')} <span>→</span>
+                {t('related.viewAllProjects')} <span>-&gt;</span>
             </Link>
         </div>
     );
 };
 
 export default RelatedProjects;
+

@@ -2,13 +2,7 @@ import React from 'react';
 import { Edit, Key, Trash2, UserPlus, Users } from 'lucide-react';
 import DataTable from '../../../../shared/components/ui/data-table/DataTable';
 import { Button, Badge } from '../../../../shared/components/ui';
-
-const ROLE_LABELS = {
-  superadmin: 'Super Admin',
-  admin: 'Admin',
-  editor: 'Editor',
-  pending: 'Pending',
-};
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 
 const UsersTable = ({ 
@@ -32,10 +26,19 @@ const UsersTable = ({
   onPageChange,
   paginationVariant = 'cursor'
 }) => {
+  const { language } = useTranslation();
+  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const roleLabels = {
+    superadmin: tr('Super Admin', 'អ្នកគ្រប់គ្រងកំពូល'),
+    admin: tr('Admin', 'អ្នកគ្រប់គ្រង'),
+    editor: tr('Editor', 'អ្នកកែសម្រួល'),
+    pending: tr('Pending', 'រង់ចាំ'),
+  };
+
   const columns = [
     {
       key: 'email',
-      header: 'User',
+      header: tr('User', 'អ្នកប្រើ'),
       sortable: true,
       render: (user) => {
         const initials = (user.displayName || user.email || '??')
@@ -88,8 +91,8 @@ const UsersTable = ({
         if (user.isActive === false || user.disabled === true) {
           return (
             <div className="ui-user-roleCell">
-              <Badge variant="ghost">Disabled</Badge>
-              <span className="ui-user-roleCell__note">Login blocked</span>
+              <Badge variant="ghost">{tr('Disabled', 'បានបិទ')}</Badge>
+              <span className="ui-user-roleCell__note">{tr('Login blocked', 'បានទប់ស្កាត់ការចូល')}</span>
             </div>
           );
         }
@@ -97,16 +100,16 @@ const UsersTable = ({
         return (
           <div className="ui-user-roleCell">
             <Badge variant={roleVariants[user.role] || 'ghost'}>
-              {ROLE_LABELS[user.role] || user.role}
+              {roleLabels[user.role] || user.role}
             </Badge>
-            <span className="ui-user-roleCell__note">Role assignment</span>
+            <span className="ui-user-roleCell__note">{tr('Role assignment', 'ការកំណត់តួនាទី')}</span>
           </div>
         );
       }
     },
     {
       key: 'createdAt',
-      header: 'Registered',
+      header: tr('Registered', 'បានចុះឈ្មោះ'),
       sortable: true,
       render: (user) => {
         const registeredAt = user.createdAt?.seconds
@@ -116,10 +119,10 @@ const UsersTable = ({
         return (
           <div className="ui-user-dateCell">
             <span className="ui-user-dateCell__day">
-              {registeredAt ? registeredAt.toLocaleDateString() : 'Unknown'}
+              {registeredAt ? registeredAt.toLocaleDateString() : tr('Unknown', 'មិនស្គាល់')}
             </span>
             <span className="ui-user-dateCell__time">
-              {registeredAt ? registeredAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No timestamp'}
+              {registeredAt ? registeredAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : tr('No timestamp', 'គ្មានពេលវេលា')}
             </span>
           </div>
         );
@@ -127,11 +130,11 @@ const UsersTable = ({
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: tr('Actions', 'សកម្មភាព'),
       className: 'ui-table-actions',
       render: (user) => {
         if (user.email === currentUser?.email) {
-          return <Badge variant="primary">You</Badge>;
+          return <Badge variant="primary">{tr('You', 'អ្នក')}</Badge>;
         }
 
         return (
@@ -140,7 +143,7 @@ const UsersTable = ({
               variant="ghost" 
               size="sm" 
               onClick={(event) => { event.stopPropagation(); onEdit(user); }}
-              title="Edit Profile"
+              title={tr('Edit Profile', 'កែសម្រួលប្រវត្តិរូប')}
             >
               <Edit size={16} />
             </Button>
@@ -148,7 +151,7 @@ const UsersTable = ({
               variant="ghost" 
               size="sm" 
               onClick={(event) => { event.stopPropagation(); onResetPassword(user); }}
-              title="Send Password Reset"
+              title={tr('Send Password Reset', 'ផ្ញើការកំណត់ពាក្យសម្ងាត់ឡើងវិញ')}
             >
               <Key size={16} />
             </Button>
@@ -157,7 +160,7 @@ const UsersTable = ({
               size="sm" 
               onClick={(event) => { event.stopPropagation(); onDelete(user); }}
               disabled={userRole !== 'superadmin' || user.role === 'superadmin'}
-              title="Disable User"
+              title={tr('Disable User', 'បិទអ្នកប្រើ')}
             >
               <Trash2 size={16} />
             </Button>
@@ -170,11 +173,11 @@ const UsersTable = ({
   const emptyState = searchQuery
     ? {
         icon: Users,
-        title: 'No matching users',
-        description: `No accounts matched "${searchQuery}". Try another email or role filter.`,
+        title: tr('No matching users', 'មិនមានអ្នកប្រើត្រូវគ្នា'),
+        description: `${tr('No accounts matched', 'មិនមានគណនីត្រូវគ្នា')} "${searchQuery}". ${tr('Try another email or role filter.', 'សូមសាកល្បងអ៊ីមែល ឬតម្រងតួនាទីផ្សេងទៀត។')}`,
         action: onClearSearch
           ? {
-              label: 'Clear Search',
+              label: tr('Clear Search', 'សម្អាតការស្វែងរក'),
               onClick: onClearSearch,
               variant: 'ghost',
             }
@@ -182,11 +185,11 @@ const UsersTable = ({
       }
     : {
         icon: Users,
-        title: 'No users yet',
-        description: 'Invite your first teammate to start assigning access and tracking account activity.',
+        title: tr('No users yet', 'មិនទាន់មានអ្នកប្រើ'),
+        description: tr('Invite your first teammate to start assigning access and tracking account activity.', 'អញ្ជើញមិត្តរួមការងារដំបូង ដើម្បីចាប់ផ្តើមកំណត់សិទ្ធិ និងតាមដានសកម្មភាពគណនី។'),
         action: onCreate
           ? {
-              label: 'Add User',
+              label: tr('Add User', 'បន្ថែមអ្នកប្រើ'),
               onClick: onCreate,
               icon: UserPlus,
             }

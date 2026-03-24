@@ -11,6 +11,8 @@ import { getLocalizedField } from '../utils/localization';
 
 const Projects = () => {
     const { language, t } = useTranslation();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const ALL_FILTER = '__all__';
     const { data: projectsData, isLoading: loadingProjects } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
@@ -36,7 +38,7 @@ const Projects = () => {
         content: getLocalizedField(project.content, language)
     }));
     const loading = loadingProjects;
-    const [filter, setFilter] = useState('All');
+    const [filter, setFilter] = useState(ALL_FILTER);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Pagination definitions
@@ -78,7 +80,7 @@ const Projects = () => {
             p.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (Array.isArray(p.techStack) && p.techStack.some(t => t.toLowerCase().includes(searchTerm.toLowerCase())));
 
-        const matchesFilter = filter === 'All' ||
+        const matchesFilter = filter === ALL_FILTER ||
             (Array.isArray(p.techStack) && p.techStack.some(t => t.trim() === filter));
 
         return matchesSearch && matchesFilter;
@@ -134,8 +136,8 @@ const Projects = () => {
                         transition={{ delay: 0.2 }}
                     >
                         <button
-                            className={`${styles.filterBtn} ${filter === 'All' ? styles.active : ''}`}
-                            onClick={() => handleFilterChange('All')}
+                            className={`${styles.filterBtn} ${filter === ALL_FILTER ? styles.active : ''}`}
+                            onClick={() => handleFilterChange(ALL_FILTER)}
                         >
                             {t('projects.filterAll')}
                         </button>
@@ -208,7 +210,7 @@ const Projects = () => {
                             className={styles.pageBtn}
                             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                             disabled={currentPage === 1}
-                            aria-label="Previous Page"
+                            aria-label={tr('Previous Page', 'ទំព័រមុន')}
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
@@ -229,7 +231,7 @@ const Projects = () => {
                             className={styles.pageBtn}
                             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                             disabled={currentPage === totalPages}
-                            aria-label="Next Page"
+                            aria-label={tr('Next Page', 'ទំព័របន្ទាប់')}
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </button>

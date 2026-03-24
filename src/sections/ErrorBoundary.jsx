@@ -19,8 +19,6 @@ class ErrorBoundary extends React.Component {
         if (this.state.hasError) {
             return (
                 <MaintenancePage 
-                    title="Component Error"
-                    message="We hit a snag loading a part of this page. You can try refreshing to fix it."
                     error={this.state.error}
                     resetErrorBoundary={() => this.setState({ hasError: false, error: null })}
                 />
