@@ -19,6 +19,15 @@ const SyncSection = ({
     onSave,
     loading
 }) => {
+    const updateMirrorField = (index, field, value) => {
+        const sourceMirrors = (Array.isArray(settingsData.mirrors) && settingsData.mirrors.length > 0)
+            ? settingsData.mirrors
+            : mirrors;
+        const nextMirrors = [...sourceMirrors];
+        nextMirrors[index] = { ...nextMirrors[index], [field]: value };
+        setSettingsData({ ...settingsData, mirrors: nextMirrors });
+    };
+
     return (
         <form onSubmit={onSave} className={tabStyles.tabContentFadeIn}>
             <div className="ui-card">
@@ -64,11 +73,7 @@ const SyncSection = ({
                                     <FormField label="Mirror Name">
                                         <Input
                                             value={mirror.name}
-                                            onChange={(e) => { 
-                                                const newMirrors = [...settingsData.mirrors]; 
-                                                newMirrors[index].name = e.target.value; 
-                                                setSettingsData({ ...settingsData, mirrors: newMirrors }); 
-                                            }}
+                                            onChange={(e) => updateMirrorField(index, 'name', e.target.value)}
                                             placeholder='e.g. GitHub Pages'
                                             className={tabStyles.mirrorInput}
                                         />
@@ -77,11 +82,7 @@ const SyncSection = ({
                                         <div className={tabStyles.tokenInputContainer}>
                                             <Input
                                                 value={mirror.url}
-                                                onChange={(e) => { 
-                                                    const newMirrors = [...settingsData.mirrors]; 
-                                                    newMirrors[index].url = e.target.value; 
-                                                    setSettingsData({ ...settingsData, mirrors: newMirrors }); 
-                                                }}
+                                                onChange={(e) => updateMirrorField(index, 'url', e.target.value)}
                                                 placeholder='https://github.com/user/repo'
                                                 className={tabStyles.mirrorInputWithIcon}
                                             />

@@ -28,6 +28,39 @@ service cloud.firestore {
       return isSignedIn() && (getRole() == 'editor' || isAdmin());
     }
 
+    function isVisitPayloadValid() {
+      return request.resource.data.keys().hasOnly([
+        'sessionId', 'path', 'date', 'userAgent', 'device', 'browser', 'os',
+        'isReturning', 'country', 'countryCode', 'city', 'ip', 'referrer',
+        'duration', 'timestamp'
+      ])
+      && request.resource.data.path is string
+      && request.resource.data.path.size() > 0
+      && request.resource.data.path.size() <= 512
+      && request.resource.data.timestamp is timestamp;
+    }
+
+    function isDailyUsagePayloadValid() {
+      return request.resource.data.keys().hasOnly(['reads', 'writes', 'deletes', 'lastUpdated'])
+      && request.resource.data.reads is int
+      && request.resource.data.writes is int
+      && request.resource.data.deletes is int
+      && request.resource.data.reads >= 0
+      && request.resource.data.writes >= 0
+      && request.resource.data.deletes >= 0
+      && request.resource.data.lastUpdated is timestamp;
+    }
+
+    function isActivityLogPayloadValid() {
+      return request.resource.data.keys().hasOnly(['type', 'label', 'count', 'user', 'time', 'details'])
+      && request.resource.data.type is string
+      && request.resource.data.label is string
+      && request.resource.data.count is int
+      && request.resource.data.count >= 0
+      && request.resource.data.user is string
+      && request.resource.data.time is timestamp;
+    }
+
     // Allow public read for content, projects, experience, and posts
     match /content/{document=**} { 
       allow read; 
@@ -100,30 +133,32 @@ service cloud.firestore {
       allow read, write: if isSuperAdmin();
     }
 
-    // Analytics/Visits Tracking: Anyone can log a visit, only admin can read
+    // Analytics/Visits Tracking: write access restricted to trusted admin roles.
     match /visits/{document=**} {
-      allow create;
-      allow read, delete, update: if isAdmin();
+      allow create: if isAdmin() && isVisitPayloadValid();
+      allow read, update, delete: if isAdmin();
     }
 
     // Global Activity Tracker
     match /dailyUsage/{date} {
-      allow read, create: if true;
-      allow update: if true 
+      allow read: if isAdmin();
+      allow create: if isAdmin() && isDailyUsagePayloadValid();
+      allow update: if isAdmin()
+                    && isDailyUsagePayloadValid()
                     && request.resource.data.diff(resource.data).affectedKeys()
                         .hasOnly(['reads', 'writes', 'deletes', 'lastUpdated']);
-      allow delete: if isAdmin();
+      allow delete: if isSuperAdmin();
       
       match /logs/{logId} {
         allow read, delete: if isAdmin();
-        allow create: if true;
+        allow create: if isAdmin() && isActivityLogPayloadValid();
       }
     }
       
     // Logs Collection Group
     match /{path=**}/logs/{logId} {
       allow read, delete: if isAdmin();
-      allow create: if true;
+      allow create: if isAdmin() && isActivityLogPayloadValid();
     }
   }
 }

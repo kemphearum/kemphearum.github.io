@@ -360,6 +360,78 @@
     }
 }
 
+// BULK ACTIONS
+.ui-bulk-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba($primary-color, 0.25);
+    background: rgba($primary-color, 0.08);
+    animation: ui-fade-in 0.2s ease-out;
+    flex-wrap: wrap;
+}
+
+.ui-bulk-actions-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: auto;
+}
+
+.ui-bulk-actions-count {
+    min-width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--primary-color);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0 0.35rem;
+}
+
+.ui-bulk-actions-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.ui-bulk-actions-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ui-bulk-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--divider);
+    margin: 0 0.25rem;
+}
+
+@media (max-width: 768px) {
+    .ui-bulk-actions-bar {
+        align-items: flex-start;
+        padding: 0.75rem;
+    }
+
+    .ui-bulk-actions-summary {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .ui-bulk-actions-controls {
+        width: 100%;
+    }
+}
+
 // STAT CARDS
 .ui-statCard {
     @include glass;

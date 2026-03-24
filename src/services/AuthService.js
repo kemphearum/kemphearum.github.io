@@ -1,4 +1,3 @@
-import BaseService from './BaseService';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 
@@ -10,9 +9,7 @@ class AuthService {
      * @returns {Promise<import('firebase/auth').UserCredential>}
      */
     async login(email, password) {
-        return BaseService.safe(async () => {
-            return await signInWithEmailAndPassword(auth, email, password);
-        });
+        return signInWithEmailAndPassword(auth, email, password);
     }
 
     /**
@@ -22,9 +19,7 @@ class AuthService {
      * @returns {Promise<import('firebase/auth').UserCredential>}
      */
     async register(email, password) {
-        return BaseService.safe(async () => {
-            return await createUserWithEmailAndPassword(auth, email, password);
-        });
+        return createUserWithEmailAndPassword(auth, email, password);
     }
 
     /**
@@ -32,9 +27,7 @@ class AuthService {
      * @returns {Promise<void>}
      */
     async logout() {
-        return BaseService.safe(async () => {
-            return await signOut(auth);
-        });
+        return signOut(auth);
     }
 
     /**

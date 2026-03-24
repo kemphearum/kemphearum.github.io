@@ -14,16 +14,14 @@ class ContentService extends BaseService {
      * @returns {Promise<Object|null>} Database document data or null
      */
     async fetchSection(sectionName, trackRead) {
-        return BaseService.safe(async () => {
-            const docRef = doc(db, this.collectionName, sectionName);
-            const docSnap = await getDoc(docRef);
+        const docRef = doc(db, this.collectionName, sectionName);
+        const docSnap = await getDoc(docRef);
 
-            if (trackRead) {
-                trackRead(1, `Fetched ${sectionName} content`);
-            }
+        if (trackRead) {
+            trackRead(1, `Fetched ${sectionName} content`);
+        }
 
-            return docSnap.exists() ? docSnap.data() : null;
-        });
+        return docSnap.exists() ? docSnap.data() : null;
     }
 
     /**
@@ -38,21 +36,19 @@ class ContentService extends BaseService {
      * @returns {Promise<Object>} The saved data
      */
     async saveSection(sectionName, data, trackWrite, options = {}) {
-        return BaseService.safe(async () => {
-            const docRef = doc(db, this.collectionName, sectionName);
-            await setDoc(docRef, data, { merge: true });
+        const docRef = doc(db, this.collectionName, sectionName);
+        await setDoc(docRef, data, { merge: true });
 
-            // Store in audit history subcollection
-            if (this.useHistory && !options.skipHistory) {
-                await this._saveHistory(sectionName, 'updated', data);
-            }
+        // Store in audit history subcollection
+        if (this.useHistory && !options.skipHistory) {
+            await this._saveHistory(sectionName, 'updated', data);
+        }
 
-            if (trackWrite) {
-                trackWrite(1, `Saved ${sectionName} content`, data);
-            }
+        if (trackWrite) {
+            trackWrite(1, `Saved ${sectionName} content`, data);
+        }
 
-            return data;
-        });
+        return data;
     }
 }
 

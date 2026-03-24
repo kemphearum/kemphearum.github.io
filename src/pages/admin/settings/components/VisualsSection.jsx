@@ -66,8 +66,8 @@ const VisualsSection = ({
                         />
                     </FormField>
                     
-                    <div className={`${tabStyles.inputGroup} tabStyles.inputGroupRow`}>
-                        <label className={tabStyles.inline}>
+                    <div className={`${tabStyles.inputGroup} ${tabStyles.inputGroupRow} ${tabStyles.inline}`}>
+                        <label>
                             <input
                                 type="checkbox"
                                 checked={settingsData.bgInteractive ?? true}
@@ -82,8 +82,8 @@ const VisualsSection = ({
                         </p>
                     </div>
                     
-                    <div className={`${tabStyles.inputGroup} tabStyles.inputGroupRow`}>
-                        <label className={tabStyles.inline}>
+                    <div className={`${tabStyles.inputGroup} ${tabStyles.inputGroupRow} ${tabStyles.inline}`}>
+                        <label>
                             <input
                                 type="checkbox"
                                 checked={settingsData.notificationsEnabled ?? true}
@@ -98,8 +98,8 @@ const VisualsSection = ({
                         </p>
                     </div>
                     
-                    <div className={`${tabStyles.inputGroup} tabStyles.inputGroupRow`}>
-                        <label className={tabStyles.inline}>
+                    <div className={`${tabStyles.inputGroup} ${tabStyles.inputGroupRow} ${tabStyles.inline}`}>
+                        <label>
                             <input
                                 type="checkbox"
                                 checked={sidebarPersistent}

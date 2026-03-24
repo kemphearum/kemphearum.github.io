@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { Eye, EyeOff, Star, StarOff, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Eye, EyeOff, Star, StarOff, Trash2 } from 'lucide-react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
@@ -302,52 +302,31 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       />
 
       {selectedProjects.length > 0 && (
-        <div className="ui-bulk-actions-bar" style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '1rem', 
-          padding: '0.75rem 1.25rem', 
-          background: 'rgba(99, 102, 241, 0.08)', 
-          borderRadius: '12px', 
-          marginBottom: '1rem',
-          border: '1px solid rgba(99, 102, 241, 0.2)',
-          animation: 'ui-fade-in 0.2s ease-out'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: 'auto' }}>
-            <div style={{ 
-              width: '24px', 
-              height: '24px', 
-              borderRadius: '6px', 
-              background: 'var(--primary-color)', 
-              color: 'white', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              fontSize: '0.75rem',
-              fontWeight: 'bold'
-            }}>
+        <div className="ui-bulk-actions-bar">
+          <div className="ui-bulk-actions-summary">
+            <div className="ui-bulk-actions-count">
               {selectedProjects.length}
             </div>
-            <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+            <span className="ui-bulk-actions-text">
               Projects Selected
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="ui-bulk-actions-controls">
             <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title="Show Selected">
               <Eye size={16} style={{ marginRight: '0.4rem' }} /> Show
             </Button>
             <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title="Hide Selected">
               <EyeOff size={16} style={{ marginRight: '0.4rem' }} /> Hide
             </Button>
-            <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 0.25rem' }} />
+            <div className="ui-bulk-divider" />
             <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title="Feature Selected">
               <Star size={16} style={{ marginRight: '0.4rem' }} /> Feature
             </Button>
             <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title="Unfeature Selected">
               <StarOff size={16} style={{ marginRight: '0.4rem' }} /> Unfeature
             </Button>
-            <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 0.25rem' }} />
+            <div className="ui-bulk-divider" />
             <Button variant="danger" size="sm" onClick={handleBulkDelete} title="Delete Selected">
               <Trash2 size={16} style={{ marginRight: '0.4rem' }} /> Delete
             </Button>

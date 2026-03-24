@@ -59,18 +59,61 @@ const BOT_USER_AGENTS = [
     'skypeuripreview', 'embedly', 'outbrain'
 ];
 
+const DEFAULT_PUBLIC_HOST = 'phearum-info.web.app';
+const ALLOWED_PUBLIC_HOSTS = new Set([
+    DEFAULT_PUBLIC_HOST,
+    'phearum-info.firebaseapp.com',
+    'kemphearum.github.io',
+    'www.kemphearum.github.io'
+]);
+
+function normalizeHost(rawHost = '') {
+    return String(rawHost)
+        .split(',')[0]
+        .trim()
+        .toLowerCase()
+        .replace(/:\d+$/, '');
+}
+
+function getSafeHost(req) {
+    const requestedHost = normalizeHost(req.headers['x-forwarded-host'] || req.hostname || DEFAULT_PUBLIC_HOST);
+    return ALLOWED_PUBLIC_HOSTS.has(requestedHost) ? requestedHost : DEFAULT_PUBLIC_HOST;
+}
+
+function escapeHtml(value = '') {
+    return String(value).replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
+}
+
+function sanitizePublicUrl(value, fallback) {
+    try {
+        const url = new URL(value, `https://${DEFAULT_PUBLIC_HOST}`);
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+            return url.href;
+        }
+    } catch {
+        // Fall through to fallback.
+    }
+    return fallback;
+}
+
 exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
     try {
         const userAgent = (req.headers['user-agent'] || '').toLowerCase();
         const isBot = BOT_USER_AGENTS.some(bot => userAgent.includes(bot));
 
-        const host = req.headers['x-forwarded-host'] || req.hostname || 'phearum-info.web.app';
-        const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-        const fullUrl = `${protocol}://${host}${req.path}`;
+        const host = getSafeHost(req);
+        const protocol = host === 'localhost' ? 'http' : 'https';
+        const fullUrl = sanitizePublicUrl(`${protocol}://${host}${req.originalUrl || req.path || '/'}`, `https://${DEFAULT_PUBLIC_HOST}/`);
         
         let html = '';
         try {
-            const fetchRes = await fetch(`https://${host}/index.html`);
+            const fetchRes = await fetch(`${protocol}://${host}/index.html`);
             if (fetchRes.ok) {
                 html = await fetchRes.text();
             }
@@ -91,7 +134,12 @@ exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
         if (pathSegments.length >= 2) {
             const type = pathSegments[0]; // 'blog' or 'projects'
             const slug = pathSegments[1];
-            
+
+            if (type !== 'blog' && type !== 'projects') {
+                res.set('Cache-Control', 'public, max-age=300, s-maxage=600');
+                return res.status(200).send(html);
+            }
+
             const collectionName = type === 'blog' ? 'posts' : 'projects';
             
             let title = 'Kem Phearum - Portfolio & Blog';
@@ -114,18 +162,23 @@ exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
                 }
             }
 
+            const safeTitle = escapeHtml(title);
+            const safeDescription = escapeHtml(description);
+            const safeImageUrl = escapeHtml(sanitizePublicUrl(imageUrl, 'https://kemphearum.github.io/og-image.jpg'));
+            const safeFullUrl = escapeHtml(fullUrl);
+
             const metaTags = `
-                <title>${title} | Kem Phearum</title>
-                <meta name="description" content="${description}" />
-                <meta property="og:title" content="${title} | Kem Phearum" />
-                <meta property="og:description" content="${description}" />
-                <meta property="og:image" content="${imageUrl}" />
+                <title>${safeTitle} | Kem Phearum</title>
+                <meta name="description" content="${safeDescription}" />
+                <meta property="og:title" content="${safeTitle} | Kem Phearum" />
+                <meta property="og:description" content="${safeDescription}" />
+                <meta property="og:image" content="${safeImageUrl}" />
                 <meta property="og:type" content="article" />
-                <meta property="og:url" content="${fullUrl}" />
+                <meta property="og:url" content="${safeFullUrl}" />
                 <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content="${title} | Kem Phearum" />
-                <meta name="twitter:description" content="${description}" />
-                <meta name="twitter:image" content="${imageUrl}" />
+                <meta name="twitter:title" content="${safeTitle} | Kem Phearum" />
+                <meta name="twitter:description" content="${safeDescription}" />
+                <meta name="twitter:image" content="${safeImageUrl}" />
             `;
 
             html = html.replace(/<title>.*?<\/title>/i, '');

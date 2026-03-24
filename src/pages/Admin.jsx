@@ -12,6 +12,7 @@ import { useActivity } from '../hooks/useActivity';
 import { useAsyncAction } from '../hooks/useAsyncAction';
 import { getSessionId, getDeviceType } from '../hooks/useAnalytics';
 import { useQueryClient } from '@tanstack/react-query';
+import { serverTimestamp } from 'firebase/firestore';
 import SettingsService from '../services/SettingsService';
 import AuthService from '../services/AuthService';
 import AuditLogService from '../services/AuditLogService';

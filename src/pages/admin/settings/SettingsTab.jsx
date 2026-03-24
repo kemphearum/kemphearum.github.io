@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import SettingsService from '../../../services/SettingsService';
 import BaseService from '../../../services/BaseService';
-import { Save, RefreshCw, Globe, Type, Eye, Trash2, AlertCircle, Activity } from 'lucide-react';
+import { RefreshCw, Globe, Type, Eye, Trash2, AlertCircle, Activity } from 'lucide-react';
 import ImageProcessingService from '../../../services/ImageProcessingService';
 import tabStyles from './SettingsTab.module.scss';
 import axios from 'axios';
@@ -15,8 +15,6 @@ import IdentitySection from './components/IdentitySection';
 import TypographySection from './components/TypographySection';
 import VisualsSection from './components/VisualsSection';
 import SyncSection from './components/SyncSection';
-
-const getFontWeight = (key, defaultWeight) => key === 'kantumruy-pro-medium' ? 500 : defaultWeight;
 
 const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, sidebarPersistent, setSidebarPersistent, showToast }) => {
     const queryClient = useQueryClient();
@@ -31,13 +29,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     // Use metadata from query or fallback to defaults from service
     const typographyMetadata = metadata || SettingsService.constructor?.DEFAULT_TYPOGRAPHY_METADATA || {};
 
-    const { 
-        fontOptions = [], 
-        sizeOptions = [], 
-        weightOptions = [], 
-        fontCategories = [], 
-        fontCSS = {}, 
-        presets = [] 
+    const {
+        fontCategories = [],
+        fontCSS = {}
     } = typographyMetadata;
 
     const [settingsFavicon, setSettingsFavicon] = useState(null);
@@ -306,11 +300,6 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         });
     };
 
-    const getFont = (field) => settingsData[field] || 'inter';
-    const getFontSize = (field, fallback) => settingsData[field] || fallback;
-    const size = settingsData.fontSize || 'default';
-    const adminOverride = settingsData.adminFontOverride ?? true;
-
     // Default mirrors if none exist
     const defaultMirrors = [
         { name: 'GitHub Pages', url: 'https://kemphearum.github.io/' },
@@ -320,8 +309,12 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         { name: 'Firebase Mirror', url: 'https://kem-phearum.web.app/' }
     ];
 
+    const mirrors = Array.isArray(settingsData.mirrors) && settingsData.mirrors.length > 0
+        ? settingsData.mirrors
+        : defaultMirrors;
+
     const addMirror = () => {
-        const currentMirrors = settingsData.mirrors || [];
+        const currentMirrors = mirrors;
         setSettingsData({
             ...settingsData,
             mirrors: [...currentMirrors, { name: '', url: '' }]
@@ -329,11 +322,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     };
 
     const removeMirror = (index) => {
-        const newMirrors = settingsData.mirrors.filter((_, i) => i !== index);
+        const newMirrors = mirrors.filter((_, i) => i !== index);
         setSettingsData({ ...settingsData, mirrors: newMirrors });
     };
-
-    const mirrors = settingsData.mirrors || defaultMirrors;
 
 
     if (!typographyMetadata) {
@@ -343,12 +334,12 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     return (
         <div className={tabStyles.tabContentFadeIn}>
             <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className={tabStyles.subTabNav}>
-                <Tabs.List className={tabStyles.subtabsList}>
+                <Tabs.List className={`${tabStyles.subtabsList} ui-subTabNav`}>
                     {subTabs.map((tab) => (
                         <Tabs.Trigger
                             key={tab.id}
                             value={tab.id}
-                            className={tabStyles.subTabTrigger}
+                            className={`${tabStyles.subTabTrigger} ui-subTabBtn`}
                         >
                             {tab.icon}
                             {tab.label}

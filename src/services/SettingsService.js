@@ -11,14 +11,12 @@ class SettingsService extends BaseService {
 
     /**
      * Fetch the unified global settings document
-     * @returns {Promise<Object|null>} Safe result containing site settings
+     * @returns {Promise<Object|null>} Global settings document or null
      */
     async fetchGlobalSettings() {
-        return BaseService.safe(async () => {
-            const docRef = doc(db, this.collectionName, this.documentId);
-            const snap = await getDoc(docRef);
-            return snap.exists() ? snap.data() : null;
-        });
+        const docRef = doc(db, this.collectionName, this.documentId);
+        const snap = await getDoc(docRef);
+        return snap.exists() ? snap.data() : null;
     }
 
     /**
@@ -26,11 +24,9 @@ class SettingsService extends BaseService {
      * @returns {Promise<Object|null>} Typography configuration object
      */
     async fetchTypographyMetadata() {
-        return BaseService.safe(async () => {
-            const docRef = doc(db, this.collectionName, 'metadata');
-            const snap = await getDoc(docRef);
-            return snap.exists() ? snap.data().typography : null;
-        });
+        const docRef = doc(db, this.collectionName, 'metadata');
+        const snap = await getDoc(docRef);
+        return snap.exists() ? snap.data().typography : null;
     }
 
     /**
@@ -40,24 +36,22 @@ class SettingsService extends BaseService {
      * @returns {Promise<Object>} The updated payload
      */
     async updateGlobalSettings(updates, trackWrite) {
-        return BaseService.safe(async () => {
-            const docRef = doc(db, this.collectionName, this.documentId);
-            const payload = {
-                ...updates,
-                updatedAt: serverTimestamp(),
-                updatedBy: AuthService.getCurrentUser()?.email || 'Anonymous'
-            };
+        const docRef = doc(db, this.collectionName, this.documentId);
+        const payload = {
+            ...updates,
+            updatedAt: serverTimestamp(),
+            updatedBy: AuthService.getCurrentUser()?.email || 'Anonymous'
+        };
 
-            await setDoc(docRef, payload, { merge: true });
+        await setDoc(docRef, payload, { merge: true });
 
-            if (trackWrite) {
-                Object.keys(updates).forEach(key => {
-                    trackWrite(1, `Updated ${key} settings`, updates[key]);
-                });
-            }
+        if (trackWrite) {
+            Object.keys(updates).forEach(key => {
+                trackWrite(1, `Updated ${key} settings`, updates[key]);
+            });
+        }
 
-            return payload;
-        });
+        return payload;
     }
 
     /**
@@ -71,23 +65,19 @@ class SettingsService extends BaseService {
      * Full document set (used for migration)
      */
     async setFullSettings(payload) {
-        return BaseService.safe(async () => {
-            const docRef = doc(db, this.collectionName, this.documentId);
-            await setDoc(docRef, {
-                ...payload,
-                updatedAt: serverTimestamp()
-            }, { merge: true });
-        });
+        const docRef = doc(db, this.collectionName, this.documentId);
+        await setDoc(docRef, {
+            ...payload,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
     }
 
     /**
      * Update typography metadata
      */
     async updateTypographyMetadata(metadata) {
-        return BaseService.safe(async () => {
-            const docRef = doc(db, this.collectionName, 'metadata');
-            await setDoc(docRef, { typography: metadata }, { merge: true });
-        });
+        const docRef = doc(db, this.collectionName, 'metadata');
+        await setDoc(docRef, { typography: metadata }, { merge: true });
     }
 
     // Default metadata used for initialization or fallback

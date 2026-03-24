@@ -1,10 +1,11 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Eye, EyeOff, Star, StarOff, Trash2 } from 'lucide-react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import BlogService from '../../../services/BlogService';
 import BaseService from '../../../services/BaseService';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
+import { Button } from '@/shared/components/ui';
 import BlogToolbar from './components/BlogToolbar';
 import BlogFormDialog from './components/BlogFormDialog';
 import BlogTable from './components/BlogTable';
@@ -44,6 +45,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   // Reset page on search
   const handleSearch = (val) => {
     setSearchQuery(val);
+    pagination.reset();
   };
 
   // Queries
@@ -51,7 +53,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['posts', searchQuery, pagination.cursor],
+    queryKey: ['posts', searchQuery, pagination.cursor, pagination.limit],
     queryFn: async () => {
       const result = await BaseService.safe(() => BlogService.fetchPaginated({
         lastDoc: pagination.cursor,
@@ -132,10 +134,10 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
       BlogService.toggleVisibility(userRole, id, currentVisible, trackWrite),
     onMutate: async ({ id, currentVisible }) => {
       await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previousPosts = queryClient.getQueryData(['posts', searchQuery, pagination.cursor]);
+      const previousPosts = queryClient.getQueryData(['posts', searchQuery, pagination.cursor, pagination.limit]);
       
       if (previousPosts) {
-        queryClient.setQueryData(['posts', searchQuery, pagination.cursor], {
+        queryClient.setQueryData(['posts', searchQuery, pagination.cursor, pagination.limit], {
           ...previousPosts,
           data: previousPosts.data.map(p => 
             p.id === id ? { ...p, visible: !currentVisible } : p
@@ -146,7 +148,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     },
     onError: (err, variables, context) => {
       if (context?.previousPosts) {
-        queryClient.setQueryData(['posts', searchQuery, pagination.cursor], context.previousPosts);
+        queryClient.setQueryData(['posts', searchQuery, pagination.cursor, pagination.limit], context.previousPosts);
       }
       showToast(err?.message || 'Failed to update visibility', 'error');
     },
@@ -163,10 +165,10 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
       BlogService.toggleFeatured(userRole, id, currentFeatured, trackWrite),
     onMutate: async ({ id, currentFeatured }) => {
       await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previousPosts = queryClient.getQueryData(['posts', searchQuery, pagination.cursor]);
+      const previousPosts = queryClient.getQueryData(['posts', searchQuery, pagination.cursor, pagination.limit]);
       
       if (previousPosts) {
-        queryClient.setQueryData(['posts', searchQuery, pagination.cursor], {
+        queryClient.setQueryData(['posts', searchQuery, pagination.cursor, pagination.limit], {
           ...previousPosts,
           data: previousPosts.data.map(p => 
             p.id === id ? { ...p, featured: !currentFeatured } : p
@@ -177,7 +179,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     },
     onError: (err, variables, context) => {
       if (context?.previousPosts) {
-        queryClient.setQueryData(['posts', searchQuery, pagination.cursor], context.previousPosts);
+        queryClient.setQueryData(['posts', searchQuery, pagination.cursor, pagination.limit], context.previousPosts);
       }
       showToast(err?.message || 'Failed to update featured status', 'error');
     },
@@ -189,14 +191,14 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     }
   });
 
-  const handleToggleVisibility = (post) => {
+  const handleToggleVisibility = (id, currentVisible) => {
     if (!canEdit) return showToast("You do not have permission to edit blog posts.", "error");
-    visibilityMutation.mutate({ id: post.id, currentVisible: post.visible });
+    visibilityMutation.mutate({ id, currentVisible });
   };
 
-  const handleToggleFeatured = (post) => {
+  const handleToggleFeatured = (id, currentFeatured) => {
     if (!canEdit) return showToast("You do not have permission to edit blog posts.", "error");
-    featuredMutation.mutate({ id: post.id, currentFeatured: post.featured });
+    featuredMutation.mutate({ id, currentFeatured });
   };
 
   // Bulk Actions Mutations
@@ -299,52 +301,31 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
       />
 
       {selectedPosts.length > 0 && (
-        <div className="ui-bulk-actions-bar" style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '1rem', 
-          padding: '0.75rem 1.25rem', 
-          background: 'rgba(99, 102, 241, 0.08)', 
-          borderRadius: '12px', 
-          marginBottom: '1rem',
-          border: '1px solid rgba(99, 102, 241, 0.2)',
-          animation: 'ui-fade-in 0.2s ease-out'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: 'auto' }}>
-            <div style={{ 
-              width: '24px', 
-              height: '24px', 
-              borderRadius: '6px', 
-              background: 'var(--primary-color)', 
-              color: 'white', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              fontSize: '0.75rem',
-              fontWeight: 'bold'
-            }}>
+        <div className="ui-bulk-actions-bar">
+          <div className="ui-bulk-actions-summary">
+            <div className="ui-bulk-actions-count">
               {selectedPosts.length}
             </div>
-            <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+            <span className="ui-bulk-actions-text">
               Posts Selected
             </span>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="ui-bulk-actions-controls">
             <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title="Publish Selected">
               <Eye size={16} style={{ marginRight: '0.4rem' }} /> Publish
             </Button>
             <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title="Hide Selected">
               <EyeOff size={16} style={{ marginRight: '0.4rem' }} /> Hide
             </Button>
-            <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 0.25rem' }} />
+            <div className="ui-bulk-divider" />
             <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title="Feature Selected">
               <Star size={16} style={{ marginRight: '0.4rem' }} /> Feature
             </Button>
             <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title="Unfeature Selected">
               <StarOff size={16} style={{ marginRight: '0.4rem' }} /> Unfeature
             </Button>
-            <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 0.25rem' }} />
+            <div className="ui-bulk-divider" />
             <Button variant="danger" size="sm" onClick={handleBulkDelete} title="Delete Selected">
               <Trash2 size={16} style={{ marginRight: '0.4rem' }} /> Delete
             </Button>
@@ -354,6 +335,10 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
       <BlogTable
         posts={posts}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onToggleVisibility={handleToggleVisibility}
+        onToggleFeatured={handleToggleFeatured}
         onViewHistory={handleViewHistory}
         canEdit={canEdit}
         canDelete={canDelete}

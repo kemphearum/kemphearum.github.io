@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getAnalytics } from "firebase/analytics";
@@ -7,8 +7,8 @@ const getEnv = (key) => {
   if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
     return import.meta.env[key];
   }
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    return process.env[key];
+  if (typeof globalThis !== 'undefined' && globalThis.process?.env?.[key]) {
+    return globalThis.process.env[key];
   }
   return undefined;
 };
@@ -23,39 +23,24 @@ const firebaseConfig = {
   measurementId: getEnv('VITE_FIREBASE_MEASUREMENT_ID')
 };
 
-let app;
-try {
-  app = initializeApp(firebaseConfig);
-} catch (error) {
-  console.error("Firebase Initialization Error:", error);
-  // Create a dummy app to avoid crashing subsequent calls
-  app = { name: '[DEFAULT]', options: {}, automaticDataCollectionEnabled: false };
+const hasCoreConfig = !!(firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId);
+if (!hasCoreConfig) {
+  console.error("Firebase config is missing required values (apiKey/projectId/appId). Check your .env file.");
 }
 
-export let analytics = null;
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let analytics = null;
 if (typeof window !== 'undefined') {
   try {
     analytics = getAnalytics(app);
   } catch (err) {
-    console.error("Analytics init failed:", err);
+    // Analytics can fail in local/dev or unsupported browsers; this should not block Firestore/Auth.
+    console.warn("Analytics init skipped:", err?.message || err);
   }
 }
 
-export let db;
-export let auth;
-
-try {
-  db = getFirestore(app);
-} catch (error) {
-  console.error("Firestore Initialization Error:", error);
-  db = {}; // Fallback dummy object
-}
-
-try {
-  auth = getAuth(app);
-} catch (error) {
-  console.error("Auth Initialization Error:", error);
-  auth = {}; // Fallback dummy object
-}
-
+export { app, db, auth, analytics };
 export default app;

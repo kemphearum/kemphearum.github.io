@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Dialog, EmptyState, Tabs } from '@/shared/components/ui';
+import BaseService from '../../../services/BaseService';
 import UserService from '../../../services/UserService';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';

@@ -5,6 +5,7 @@ import { EmptyState } from '@/shared/components/ui';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import { useActivity } from '../../../hooks/useActivity';
 import { useDebounce } from '../../../hooks/useDebounce';
+import BaseService from '../../../services/BaseService';
 import AuditLogService from '../../../services/AuditLogService';
 import SectionHeader from '../components/SectionHeader';
 import AuditMetrics from './components/AuditMetrics';

@@ -18,7 +18,7 @@ export const getSessionId = () => {
             sessionStorage.setItem('analytics_session_id', sessionId);
         }
         return sessionId;
-    } catch (e) {
+    } catch {
         return 'no-session-support';
     }
 };
@@ -39,8 +39,7 @@ export const getDeviceType = () => {
 export const useAnalytics = () => {
     const location = useLocation();
     const { trackWrite } = useActivity();
-    const hasLogFired = useRef({});
-    const startTimeRef = useRef(Date.now());
+    const startTimeRef = useRef(0);
 
     useEffect(() => {
         const path = location.pathname;
@@ -56,10 +55,6 @@ export const useAnalytics = () => {
 
         // --- 2. CUSTOM FIRESTORE TRACKING (For Admin Dashboard) ---
         const logVisitToFirestore = async () => {
-            // Prevent strict-mode double-firing on the exact same path
-            if (hasLogFired.current[path]) return;
-            hasLogFired.current[path] = true;
-
             try {
                 const sessionId = getSessionId();
                 const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
@@ -71,6 +66,8 @@ export const useAnalytics = () => {
                     const diffMinutes = (Date.now() - parseInt(lastLogged, 10)) / (1000 * 60);
                     if (diffMinutes < 30) return; // Don't re-log within 30 minutes
                 }
+                // Mark immediately to avoid strict-mode double invokes racing before the request finishes.
+                sessionStorage.setItem(dedupKey, Date.now().toString());
 
                 // Fetch geo-data and UA details
                 const geoData = await fetchGeoData();
@@ -107,10 +104,9 @@ export const useAnalytics = () => {
                     sessionStorage.setItem(`last_visit_id_${path}`, visitId);
                 }
 
-                // Mark as logged in sessionStorage
-                sessionStorage.setItem(dedupKey, Date.now().toString());
-
             } catch (error) {
+                // Allow retry on next navigation if this attempt failed.
+                sessionStorage.removeItem(`visit_${path}`);
                 console.error("Error logging visit to Firestore:", error);
             }
         };
@@ -133,7 +129,7 @@ export const useAnalytics = () => {
                 sessionStorage.removeItem(`last_visit_id_${path}`);
             }
         };
-    }, [location.pathname, location.search]);
+    }, [location.pathname, location.search, trackWrite]);
 
     const trackEvent = (eventName, eventParams = {}) => {
         if (analytics) {
