@@ -10,6 +10,7 @@ const Navbar = () => {
     const [scrolled, setScrolled] = useState(false);
     const location = useLocation();
     const isHome = location.pathname === '/';
+    const currentHash = (location.hash || '').replace('#', '');
     const { theme, toggleTheme } = useTheme();
 
     const { data: globalConfig } = useQuery({
@@ -52,6 +53,17 @@ const Navbar = () => {
         return () => { document.body.style.overflow = ''; };
     }, [isOpen]);
 
+    useEffect(() => {
+        if (!isOpen) return undefined;
+
+        const handleEscape = (event) => {
+            if (event.key === 'Escape') setIsOpen(false);
+        };
+
+        window.addEventListener('keydown', handleEscape);
+        return () => window.removeEventListener('keydown', handleEscape);
+    }, [isOpen]);
+
     const scrollToSection = (id) => {
         setIsOpen(false);
         if (!isHome) return;
@@ -65,6 +77,18 @@ const Navbar = () => {
     };
 
     const navItems = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
+    const isItemActive = (item) => {
+        if (item === 'blog') {
+            return location.pathname === '/blog' || location.pathname.startsWith('/blog/');
+        }
+        if (item === 'projects') {
+            return location.pathname === '/projects' || location.pathname.startsWith('/projects/');
+        }
+        if (location.pathname !== '/') {
+            return currentHash === item;
+        }
+        return currentHash ? currentHash === item : item === 'home';
+    };
 
     return (
         <nav className={`${styles.navbar} ${scrolled ? styles.scrolled : ''}`}>
@@ -76,26 +100,42 @@ const Navbar = () => {
                 </div>
 
                 <div className={styles.navRight}>
-                    <ul className={`${styles.navLinks} ${isOpen ? styles.active : ''}`}>
-                        {navItems.map(item => (
+                    <ul id="primary-navigation" className={`${styles.navLinks} ${isOpen ? styles.active : ''}`} aria-label="Primary">
+                        {navItems.map((item) => {
+                            const active = isItemActive(item);
+                            return (
                             <li key={item}>
                                 {item === 'blog' || item === 'projects' ? (
-                                    <Link to={`/${item}`} onClick={() => setIsOpen(false)}>
+                                    <Link
+                                        to={`/${item}`}
+                                        onClick={() => setIsOpen(false)}
+                                        className={active ? styles.activeNav : ''}
+                                        aria-current={active ? 'page' : undefined}
+                                    >
                                         {item.charAt(0).toUpperCase() + item.slice(1)}
                                     </Link>
                                 ) : (
                                     isHome ? (
-                                        <button onClick={() => scrollToSection(item)}>
+                                        <button
+                                            onClick={() => scrollToSection(item)}
+                                            className={active ? styles.activeNav : ''}
+                                            aria-current={active ? 'page' : undefined}
+                                        >
                                             {item.charAt(0).toUpperCase() + item.slice(1)}
                                         </button>
                                     ) : (
-                                        <Link to={`/#${item}`}>
+                                        <Link
+                                            to={`/#${item}`}
+                                            onClick={() => setIsOpen(false)}
+                                            className={active ? styles.activeNav : ''}
+                                            aria-current={active ? 'page' : undefined}
+                                        >
                                             {item.charAt(0).toUpperCase() + item.slice(1)}
                                         </Link>
                                     )
                                 )}
                             </li>
-                        ))}
+                        )})}
                     </ul>
 
                     <button
@@ -123,15 +163,29 @@ const Navbar = () => {
                         )}
                     </button>
 
-                    <div className={`${styles.hamburger} ${isOpen ? styles.hamburgerOpen : ''}`} onClick={() => setIsOpen(!isOpen)}>
+                    <button
+                        type="button"
+                        className={`${styles.hamburger} ${isOpen ? styles.hamburgerOpen : ''}`}
+                        onClick={() => setIsOpen(!isOpen)}
+                        aria-expanded={isOpen}
+                        aria-controls="primary-navigation"
+                        aria-label={isOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                    >
                         <span />
                         <span />
                         <span />
-                    </div>
+                    </button>
                 </div>
 
                 {/* Backdrop for mobile */}
-                {isOpen && <div className={styles.backdrop} onClick={() => setIsOpen(false)} />}
+                {isOpen && (
+                    <button
+                        type="button"
+                        className={styles.backdrop}
+                        onClick={() => setIsOpen(false)}
+                        aria-label="Close navigation menu"
+                    />
+                )}
             </div>
         </nav>
     );

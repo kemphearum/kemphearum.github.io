@@ -92,7 +92,7 @@ const Projects = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                 >
-                    Featured Projects
+                    All Projects
                 </motion.h2>
 
                 {/* Search Bar */}
@@ -105,9 +105,12 @@ const Projects = () => {
                 >
                     <input
                         type="text"
+                        id="projects-search"
+                        name="projects-search"
                         placeholder="Search projects..."
                         value={searchTerm}
                         onChange={(e) => handleSearchChange(e.target.value)}
+                        aria-label="Search projects"
                     />
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>

@@ -1,0 +1,19 @@
+@use '../styles/variables' as *;
+
+.projectsPage {
+    min-height: 100vh;
+    padding-top: $nav-height;
+    background-color: $background-color;
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba($primary-color, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba($secondary-color, 0.05) 0%, transparent 40%);
+}
+
+.main {
+    min-height: calc(100vh - #{$nav-height});
+    padding-bottom: 4rem;
+}
+
+.content {
+    padding-top: 2rem;
+}

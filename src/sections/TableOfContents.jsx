@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { List } from 'lucide-react';
 import styles from './TableOfContents.module.scss';
 
@@ -12,21 +11,38 @@ const TableOfContents = ({ content }) => {
             setHeadings([]);
             return;
         }
-        // Simple regex to extract H2 and H3 headings from markdown
-        const headingRegex = /^##\s+(.*)$|^###\s+(.*)$/gm;
-        const matches = [];
-        let match;
 
-        while ((match = headingRegex.exec(content)) !== null) {
-            const level = match[1] ? 2 : 3;
-            const text = match[1] || match[2];
-            // rehype-slug format: lowercase, replace spaces with dashes, remove special chars
-            const id = text.toLowerCase()
-                .replace(/\s+/g, '-')
-                .replace(/[^\w-]/g, '');
-            
-            matches.push({ id, text, level });
-        }
+        const seenIds = new Map();
+        const matches = content
+            .split(/\r?\n/)
+            .reduce((acc, line, index) => {
+                const headingMatch = line.match(/^(##|###)\s+(.+?)\s*#*\s*$/);
+                if (!headingMatch) return acc;
+
+                const level = headingMatch[1].length;
+                const text = headingMatch[2].trim();
+                if (!text) return acc;
+
+                let baseId = text
+                    .normalize('NFKD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .replace(/[^\p{L}\p{N}\s-]/gu, '')
+                    .trim()
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-');
+
+                if (!baseId) {
+                    baseId = `section-${level}-${index}`;
+                }
+
+                const count = seenIds.get(baseId) || 0;
+                seenIds.set(baseId, count + 1);
+                const id = count === 0 ? baseId : `${baseId}-${count}`;
+
+                acc.push({ id, text, level });
+                return acc;
+            }, []);
 
         setHeadings(matches);
     }, [content]);
@@ -54,10 +70,7 @@ const TableOfContents = ({ content }) => {
         const element = document.getElementById(id);
         if (element) {
             const offset = 100; // Account for fixed header
-            const bodyRect = document.body.getBoundingClientRect().top;
-            const elementRect = element.getBoundingClientRect().top;
-            const elementPosition = elementRect - bodyRect;
-            const offsetPosition = elementPosition - offset;
+            const offsetPosition = element.getBoundingClientRect().top + window.scrollY - offset;
 
             window.scrollTo({
                 top: offsetPosition,

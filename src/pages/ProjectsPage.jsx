@@ -20,7 +20,7 @@ export function meta({ data }) {
 import Navbar from '@/sections/Navbar';
 import Footer from '@/sections/Footer';
 import Projects from '@/sections/Projects';
-import styles from './Blog.module.scss'; // Reuse background and layouts
+import styles from './ProjectsPage.module.scss';
 
 const ProjectsPage = () => {
     // Scroll to top on mount
@@ -29,10 +29,10 @@ const ProjectsPage = () => {
     }, []);
 
     return (
-        <div className={styles.blogPage}>
+        <div className={styles.projectsPage}>
             <Navbar />
-            <main style={{ minHeight: 'calc(100vh - 80px)', paddingBottom: '4rem' }}>
-                <div style={{ paddingTop: '2rem' }}>
+            <main className={styles.main}>
+                <div className={styles.content}>
                     <Projects />
                 </div>
             </main>

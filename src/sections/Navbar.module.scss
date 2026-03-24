@@ -105,6 +105,13 @@
                 background: rgba($primary-color, 0.06);
             }
 
+            &:focus-visible {
+                color: $primary-color;
+                background: rgba($primary-color, 0.1);
+                outline: 2px solid rgba($primary-color, 0.55);
+                outline-offset: 2px;
+            }
+
             &::after {
                 content: '';
                 position: absolute;
@@ -122,6 +129,15 @@
                 width: 60%;
             }
         }
+    }
+}
+
+.activeNav {
+    color: $primary-color !important;
+    background: rgba($primary-color, 0.08) !important;
+
+    &::after {
+        width: 60% !important;
     }
 }
 
@@ -148,6 +164,13 @@
         transform: rotate(15deg);
     }
 
+    &:focus-visible {
+        color: $primary-color;
+        border-color: rgba($primary-color, 0.55);
+        outline: 2px solid rgba($primary-color, 0.55);
+        outline-offset: 2px;
+    }
+
     svg {
         transition: transform 0.3s ease;
     }
@@ -163,6 +186,8 @@
     height: 20px;
     z-index: 1002;
     padding: 0;
+    background: transparent;
+    border: none;
 
     span {
         width: 100%;
@@ -171,6 +196,12 @@
         transition: all 0.3s ease;
         border-radius: 2px;
         transform-origin: center;
+    }
+
+    &:focus-visible {
+        outline: 2px solid rgba($primary-color, 0.55);
+        outline-offset: 4px;
+        border-radius: 6px;
     }
 }
 
@@ -194,6 +225,8 @@
 /* Mobile backdrop */
 .backdrop {
     display: none;
+    border: none;
+    padding: 0;
 }
 
 /* Responsive Mobile Styles */

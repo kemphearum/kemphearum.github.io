@@ -91,6 +91,7 @@ const Contact = () => {
                     <motion.form
                         className={styles.form}
                         onSubmit={handleSubmit}
+                        aria-busy={status === 'sending'}
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ type: "spring", duration: 0.8, delay: 0.3 }}
@@ -162,6 +163,8 @@ const Contact = () => {
                             {status === 'success' && (
                                 <motion.div
                                     className={styles.success}
+                                    role="status"
+                                    aria-live="polite"
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
@@ -175,6 +178,8 @@ const Contact = () => {
                             {status === 'error' && (
                                 <motion.div
                                     className={styles.error}
+                                    role="alert"
+                                    aria-live="assertive"
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
@@ -185,6 +190,8 @@ const Contact = () => {
                             {status === 'rate_limited' && (
                                 <motion.div
                                     className={styles.error}
+                                    role="alert"
+                                    aria-live="assertive"
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
