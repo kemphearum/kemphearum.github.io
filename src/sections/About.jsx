@@ -2,10 +2,14 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ContentService from '../services/ContentService';
 import styles from './About.module.scss';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
+import { useTranslation } from '../hooks/useTranslation';
+import { getLocalizedField } from '../utils/localization';
 
 const About = () => {
+    const { language, t } = useTranslation();
     const { data, isLoading: loading } = useQuery({
         staleTime: 60000,
         gcTime: 300000,
@@ -14,9 +18,14 @@ const About = () => {
         queryFn: () => ContentService.fetchSection('about')
     });
 
-    const content = data || {
+    const rawContent = data || {
         bio: "",
         skills: []
+    };
+
+    const content = {
+        ...rawContent,
+        bio: getLocalizedField(rawContent.bio, language)
     };
 
     const containerVariants = {
@@ -41,7 +50,7 @@ const About = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                 >
-                    About Me
+                    {t('about.title')}
                 </motion.h2>
                 <div className={styles.content}>
                     {loading ? (
@@ -66,7 +75,7 @@ const About = () => {
                             <div className={styles.bioText}>
                                 <MarkdownRenderer content={content.bio} />
                             </div>
-                            <p className={styles.subtext}>Technologies & Skills</p>
+                            <p className={styles.subtext}>{t('about.skills')}</p>
                             <motion.div
                                 className={styles.skillsList}
                                 variants={containerVariants}

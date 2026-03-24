@@ -18,6 +18,8 @@ import AdminLayout from './admin/components/AdminLayout';
 import { Spinner } from '../shared/components/ui';
 import AnimatedBackground from '@/sections/AnimatedBackground';
 import { isActionAllowed, ACTIONS } from '../utils/permissions';
+import { useTranslation } from '../hooks/useTranslation';
+import LanguageSwitcher from '../shared/components/LanguageSwitcher';
 
 // Tab components
 const GeneralTab = lazy(() => import('./admin/general/GeneralTab'));
@@ -35,18 +37,24 @@ const AnalyticsTab = lazy(() => import('./admin/analytics/AnalyticsTab'));
 // ============================================================
 // Icons removed - now handled in modular components
 // ============================================================
-const tabLabels = {
-    general: 'General Content',
-    experience: 'Experience',
-    projects: 'Projects',
-    blog: 'Blog',
-    messages: 'Messages',
-    database: 'Database',
-    users: 'User Management',
-    audit: 'Audit Logs',
-    analytics: 'Analytics',
-    profile: 'My Profile',
-    settings: 'Settings'
+const tabLabelKeys = {
+    general: 'admin.tabs.general',
+    experience: 'admin.tabs.experience',
+    projects: 'admin.tabs.projects',
+    blog: 'admin.tabs.blog',
+    messages: 'admin.tabs.messages',
+    database: 'admin.tabs.database',
+    users: 'admin.tabs.users',
+    audit: 'admin.tabs.audit',
+    analytics: 'admin.tabs.analytics',
+    profile: 'admin.tabs.profile',
+    settings: 'admin.tabs.settings'
+};
+
+const tabSubtitleKeys = {
+    general: 'admin.subtitles.general',
+    profile: 'admin.subtitles.profile',
+    settings: 'admin.subtitles.settings'
 };
 
 // ============================================================
@@ -76,44 +84,45 @@ const Toast = ({ message, type, onClose }) => {
 
 const AUTH_REMEMBER_EMAIL_KEY = 'adminRememberedEmail';
 
-const formatAuthErrorMessage = (error, fallback = 'Unable to authenticate. Please try again.') => {
+const formatAuthErrorMessage = (error, t, fallback) => {
+    const defaultFallback = fallback || t('admin.auth.errors.default');
     const code = error?.code || '';
-    const message = typeof error === 'string' ? error : (error?.message || fallback);
+    const message = typeof error === 'string' ? error : (error?.message || defaultFallback);
 
     if (message.includes('disabled by an administrator')) {
-        return 'Your account has been disabled by an administrator.';
+        return t('admin.auth.errors.disabledByAdmin');
     }
 
     switch (code) {
         case 'auth/invalid-credential':
         case 'auth/wrong-password':
         case 'auth/user-not-found':
-            return 'Incorrect email or password.';
+            return t('admin.auth.errors.invalidCredential');
         case 'auth/too-many-requests':
-            return 'Too many attempts. Please wait a moment and try again.';
+            return t('admin.auth.errors.tooManyRequests');
         case 'auth/network-request-failed':
-            return 'Network error. Check your connection and try again.';
+            return t('admin.auth.errors.network');
         case 'auth/invalid-email':
-            return 'Please enter a valid email address.';
+            return t('admin.auth.errors.invalidEmail');
         case 'auth/weak-password':
-            return 'Password must be at least 6 characters.';
+            return t('admin.auth.errors.weakPassword');
         case 'auth/email-already-in-use':
-            return 'This email is already registered.';
+            return t('admin.auth.errors.emailInUse');
         default:
             break;
     }
 
     if (message.includes('INVALID_LOGIN_CREDENTIALS')) {
-        return 'Incorrect email or password.';
+        return t('admin.auth.errors.invalidCredential');
     }
     if (message.includes('EMAIL_EXISTS')) {
-        return 'This email is already registered.';
+        return t('admin.auth.errors.emailInUse');
     }
     if (message.includes('WEAK_PASSWORD')) {
-        return 'Password must be at least 6 characters.';
+        return t('admin.auth.errors.weakPassword');
     }
 
-    return message || fallback;
+    return message || defaultFallback;
 };
 
 // ============================================================
@@ -123,6 +132,7 @@ const Admin = () => {
     // ====== 1. React & Custom Hooks (Top Level Only) ======
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { t } = useTranslation();
     const { theme, toggleTheme } = useTheme();
     const { trackRead, trackWrite } = useActivity();
     const { loading, execute } = useAsyncAction();
@@ -266,7 +276,7 @@ const Admin = () => {
 
     const saveSectionData = useCallback(async (section, data) => {
         if (!checkActionAllowed(ACTIONS.EDIT, section)) {
-            return showToast("You do not have permission to perform this action.", "error");
+            return showToast(t('admin.common.noPermissionAction'), "error");
         }
 
         await execute(async () => {
@@ -301,10 +311,12 @@ const Admin = () => {
             }
         }, {
             showToast,
-            successMessage: section === 'settings' ? 'Settings saved!' : `${section.charAt(0).toUpperCase() + section.slice(1)} saved!`,
-            errorMessage: `Failed to save ${section}.`
+            successMessage: section === 'settings'
+                ? t('admin.common.settingsSaved')
+                : t('admin.common.sectionSaved', { section: section.charAt(0).toUpperCase() + section.slice(1) }),
+            errorMessage: t('admin.common.saveSectionFailed', { section })
         });
-    }, [showToast, trackWrite, queryClient, execute, checkActionAllowed]);
+    }, [showToast, trackWrite, queryClient, execute, checkActionAllowed, t]);
 
     const unreadMessagesCount = useMemo(() => messages.filter(m => !m.isRead).length, [messages]);
 
@@ -379,7 +391,7 @@ const Admin = () => {
                         if (userData.isActive === false) {
                             await AuthService.logout();
                             setUser(null); setUserRole(null); setUserId(null); setUserDisplayName('');
-                            showToast("Your account has been disabled by an administrator.", "error");
+                            showToast(t('admin.auth.errors.disabledByAdmin'), "error");
                             setIsAuthLoading(false);
                             return;
                         }
@@ -411,7 +423,7 @@ const Admin = () => {
         });
         return () => unsubscribe();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [showToast]);
+    }, [showToast, t]);
 
     useEffect(() => {
         if (!isAuthLoading && userRole && !isTabAllowed(activeTab, userRole, rolePermissions)) {
@@ -520,15 +532,15 @@ const Admin = () => {
 
         const normalizedEmail = email.trim().toLowerCase();
         if (!normalizedEmail) {
-            setAuthError('Please enter your email address.');
+            setAuthError(t('admin.auth.errors.emailRequired'));
             return;
         }
         if (!password) {
-            setAuthError('Please enter your password.');
+            setAuthError(t('admin.auth.errors.passwordRequired'));
             return;
         }
         if (isRegistering && password.length < 6) {
-            setAuthError('Password must be at least 6 characters.');
+            setAuthError(t('admin.auth.errors.weakPassword'));
             return;
         }
 
@@ -581,7 +593,7 @@ const Admin = () => {
                     trackRead(1, 'Verified user status on login');
                     if (userDoc && userDoc.isActive === false) {
                         await AuthService.logout();
-                        throw new Error("Your account has been disabled by an administrator.");
+                        throw new Error(t('admin.auth.errors.disabledByAdmin'));
                     }
 
                     // Success Log for Login
@@ -594,11 +606,11 @@ const Admin = () => {
             }
         }, {
             showToast,
-            successMessage: isRegistering ? 'Account created! You are now logged in.' : undefined
+            successMessage: isRegistering ? t('admin.auth.accountCreated') : undefined
         });
 
         if (!result?.success) {
-            setAuthError(formatAuthErrorMessage(result?.error));
+            setAuthError(formatAuthErrorMessage(result?.error, t));
             return;
         }
 
@@ -678,21 +690,24 @@ const Admin = () => {
                 />
                 {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
                 <div className="ui-loginCard">
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+                        <LanguageSwitcher />
+                    </div>
                     <div className="ui-loginIcon">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                         </svg>
                     </div>
-                    <h2 className="ui-loginTitle">{isRegistering ? 'Create Account' : 'Admin Login'}</h2>
+                    <h2 className="ui-loginTitle">{isRegistering ? t('admin.auth.createAccount') : t('admin.auth.loginTitle')}</h2>
                     <p className="ui-loginSubtitle">
                         {isRegistering
-                            ? 'Register a new admin account for dashboard access.'
-                            : 'Sign in to access analytics, audit logs, and content controls.'}
+                            ? t('admin.auth.registerSubtitle')
+                            : t('admin.auth.signInSubtitle')}
                     </p>
                     <div className="ui-loginHint">
                         <ShieldCheck size={15} />
-                        <span>Protected access for portfolio administration.</span>
+                        <span>{t('admin.auth.protectedHint')}</span>
                     </div>
 
                     <form onSubmit={handleLogin} className="ui-loginForm">
@@ -704,11 +719,11 @@ const Admin = () => {
                         )}
 
                         <div className="ui-formGroup">
-                            <label htmlFor="admin-email">Email</label>
+                            <label htmlFor="admin-email">{t('admin.auth.email')}</label>
                             <input
                                 id="admin-email"
                                 type="email"
-                                placeholder="admin@example.com"
+                                placeholder={t('admin.auth.emailPlaceholder')}
                                 value={email}
                                 onChange={(e) => {
                                     setEmail(e.target.value);
@@ -719,12 +734,12 @@ const Admin = () => {
                             />
                         </div>
                         <div className="ui-formGroup">
-                            <label htmlFor="admin-password">Password</label>
+                            <label htmlFor="admin-password">{t('admin.auth.password')}</label>
                             <div className="ui-passwordField">
                                 <input
                                     id="admin-password"
                                     type={showPassword ? 'text' : 'password'}
-                                    placeholder="********"
+                                    placeholder={t('admin.auth.passwordPlaceholder')}
                                     value={password}
                                     onChange={(e) => {
                                         setPassword(e.target.value);
@@ -740,13 +755,13 @@ const Admin = () => {
                                     type="button"
                                     className="ui-passwordToggle"
                                     onClick={() => setShowPassword((prev) => !prev)}
-                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    aria-label={showPassword ? t('admin.auth.hidePassword') : t('admin.auth.showPassword')}
                                 >
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
                             </div>
-                            {capsLockOn && <p className="ui-loginCaps">Caps Lock is on.</p>}
-                            {isRegistering && <p className="ui-loginRule">Password must be at least 6 characters.</p>}
+                            {capsLockOn && <p className="ui-loginCaps">{t('admin.auth.capsLockOn')}</p>}
+                            {isRegistering && <p className="ui-loginRule">{t('admin.auth.passwordRule')}</p>}
                         </div>
 
                         {!isRegistering && (
@@ -756,22 +771,22 @@ const Admin = () => {
                                     checked={rememberEmail}
                                     onChange={(e) => setRememberEmail(e.target.checked)}
                                 />
-                                <span>Remember this email on this device</span>
+                                <span>{t('admin.auth.rememberEmail')}</span>
                             </label>
                         )}
 
                         <button type="submit" className="ui-loginBtn" disabled={loading}>
                             {loading ? (
-                                <span className="ui-btnLoading"><span className="ui-spinner" /> {isRegistering ? 'Creating...' : 'Signing in...'}</span>
-                            ) : (isRegistering ? 'Create Account' : 'Sign In')}
+                                <span className="ui-btnLoading"><span className="ui-spinner" /> {isRegistering ? t('admin.auth.creating') : t('admin.auth.signingIn')}</span>
+                            ) : (isRegistering ? t('admin.auth.createAccount') : t('admin.auth.signIn'))}
                         </button>
                     </form>
 
                     <div className="ui-loginFooter">
                         <button type="button" onClick={() => setIsRegistering(!isRegistering)} className="ui-linkBtn">
-                            {isRegistering ? 'Back to Login' : 'Need an account? Register'}
+                            {isRegistering ? t('admin.auth.backToLogin') : t('admin.auth.needAccountRegister')}
                         </button>
-                        <button type="button" onClick={() => navigate('/')} className="ui-linkBtn">Back to Site</button>
+                        <button type="button" onClick={() => navigate('/')} className="ui-linkBtn">{t('admin.auth.backToSite')}</button>
                     </div>
                 </div>
             </div>
@@ -794,13 +809,8 @@ const Admin = () => {
             isTabAllowed={isTabAllowed}
             unreadMessagesCount={unreadMessagesCount}
             lastSyncTime={lastSyncTime}
-            title={tabLabels[activeTab] || 'Dashboard'}
-            subtitle={
-                activeTab === 'general' ? 'Manage your portfolio primary content' : 
-                activeTab === 'profile' ? 'Manage your personal profile and account settings' :
-                activeTab === 'settings' ? 'Configure site-wide identity, visual aesthetics, and synchronization' :
-                'Administrator Dashboard'
-            }
+            title={t(tabLabelKeys[activeTab] || 'admin.dashboard.title')}
+            subtitle={t(tabSubtitleKeys[activeTab] || 'admin.subtitles.default')}
             settingsData={settingsData}
         >
             {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}

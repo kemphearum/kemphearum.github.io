@@ -4,6 +4,7 @@ import {
     query, orderBy, serverTimestamp, where, limit as firestoreLimit, startAfter,
     writeBatch, getCountFromServer
 } from 'firebase/firestore';
+import { getLocalizedField } from '../utils/localization';
 
 /**
  * @typedef {Object} ServiceResult
@@ -267,7 +268,12 @@ export default class BaseService {
      */
     async create(data, trackWrite = null) {
         const docRef = await addDoc(this.collectionRef, data);
-        const itemName = data.title || data.role || data.company || data.name || data.label || 'unnamed';
+        const itemName = getLocalizedField(data.title, 'en')
+            || getLocalizedField(data.role, 'en')
+            || getLocalizedField(data.company, 'en')
+            || data.name
+            || data.label
+            || 'unnamed';
         const label = `Created ${this.collectionName}: ${itemName}`;
         if (trackWrite) trackWrite(1, label, data);
         if (this.useHistory) await this._saveHistory(docRef.id, 'created', data);
@@ -295,7 +301,12 @@ export default class BaseService {
 
         const docRef = doc(db, this.collectionName, id);
         await updateDoc(docRef, data);
-        const itemName = data.title || data.role || data.company || data.name || data.label || id;
+        const itemName = getLocalizedField(data.title, 'en')
+            || getLocalizedField(data.role, 'en')
+            || getLocalizedField(data.company, 'en')
+            || data.name
+            || data.label
+            || id;
         const label = `Updated ${this.collectionName}: ${itemName}`;
         if (trackWrite) trackWrite(1, label, data);
         if (this.useHistory) await this._saveHistory(id, 'updated', data, previousData);

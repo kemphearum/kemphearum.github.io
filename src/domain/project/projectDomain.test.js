@@ -10,7 +10,7 @@ describe('projectDomain', () => {
             };
             const result = normalizeProject(rawData);
 
-            expect(result.title).toBe('My Project');
+            expect(result.title).toEqual({ en: 'My Project', km: '' });
             expect(result.techStack).toEqual(['React', 'Vitest', 'CSS']);
             expect(result.slug).toBe('my-project');
             expect(result.visible).toBe(true);
@@ -47,18 +47,18 @@ describe('projectDomain', () => {
 
     describe('validateProject()', () => {
         it('should return null for valid data', () => {
-            const errors = validateProject({ title: 'Valid Project' });
+            const errors = validateProject({ title: { en: 'Valid Project', km: '' } });
             expect(errors).toBeNull();
         });
 
         it('should return error if title is missing', () => {
-            const errors = validateProject({ title: '' });
-            expect(errors.title).toBe('Title is required');
+            const errors = validateProject({ title: { en: '', km: '' } });
+            expect(errors.titleEn).toBe('English title is required');
         });
 
         it('should return error if title is only whitespace', () => {
-            const errors = validateProject({ title: '   ' });
-            expect(errors.title).toBe('Title is required');
+            const errors = validateProject({ title: { en: '   ', km: '' } });
+            expect(errors.titleEn).toBe('English title is required');
         });
     });
 });

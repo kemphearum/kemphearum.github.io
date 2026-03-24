@@ -5,8 +5,11 @@ import styles from './Experience.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
+import { useTranslation } from '../hooks/useTranslation';
+import { getLocalizedField } from '../utils/localization';
 
 const Experience = () => {
+    const { language, t } = useTranslation();
     const { data: experiencesData, isLoading: loading } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
@@ -28,7 +31,14 @@ const Experience = () => {
                 return years ? Math.max(...years.map(Number)) : 0;
             };
             return getYear(b.period) - getYear(a.period);
-        });
+        })
+        .map((exp) => ({
+            ...exp,
+            company: getLocalizedField(exp.company, language),
+            role: getLocalizedField(exp.role, language),
+            description: getLocalizedField(exp.description, language),
+            period: getLocalizedField(exp.period, language) || exp.period
+        }));
 
     const cardVariants = {
         offscreen: { y: 50, opacity: 0 },
@@ -52,7 +62,7 @@ const Experience = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                 >
-                    Work Experience
+                    {t('experience.title')}
                 </motion.h2>
 
                 {loading ? (
@@ -71,7 +81,7 @@ const Experience = () => {
                 ) : (
                     <div className={styles.timeline}>
                         {visibleExperiences.length === 0 ? (
-                            <p className={styles.emptyState}>No experience listed yet.</p>
+                            <p className={styles.emptyState}>{t('experience.empty')}</p>
                         ) : (
                             visibleExperiences.map((exp, index) => (
                                 <motion.div

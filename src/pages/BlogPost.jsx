@@ -21,6 +21,8 @@ import TableOfContents from '@/sections/TableOfContents';
 import styles from './BlogPost.module.scss';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { getLocalizedField } from '../utils/localization';
+import { useTranslation } from '../hooks/useTranslation';
 
 export async function loader({ params }) {
     const q = query(collection(db, 'posts'), where("slug", "==", params.slug));
@@ -46,15 +48,20 @@ export async function loader({ params }) {
 export function meta({ data }) {
     if (!data) return [{ title: "Post Not Found | Kem Phearum" }];
 
+    const title = getLocalizedField(data.title, 'en');
+    const excerpt = getLocalizedField(data.excerpt, 'en');
+    const content = getLocalizedField(data.content, 'en');
+
     return generateMetaTags({
-        title: data.title,
-        description: data.excerpt || data.content?.substring(0, 160).replace(/[#*`]/g, '') + '...',
+        title,
+        description: excerpt || content?.substring(0, 160).replace(/[#*`]/g, '') + '...',
         image: data.coverImage,
         type: 'article'
     });
 }
 
 const BlogPost = () => {
+    const { language } = useTranslation();
     const { slug } = useParams();
     const loaderData = useLoaderData();
     const [showScrollTop, setShowScrollTop] = useState(false);
@@ -72,7 +79,7 @@ const BlogPost = () => {
         queryFn: async () => {
             const postData = await BlogService.fetchPostBySlug(slug, trackRead);
             if (!postData) throw new Error('Post not found');
-            trackRead(0, `Viewed blog: ${postData.title}`);
+            trackRead(0, `Viewed blog: ${getLocalizedField(postData.title, 'en')}`);
             return postData;
         },
         initialData: loaderData || undefined,
@@ -80,6 +87,12 @@ const BlogPost = () => {
     });
 
     const error = isError ? 'Failed to load post details' : null;
+    const localizedPost = post ? {
+        ...post,
+        title: getLocalizedField(post.title, language),
+        excerpt: getLocalizedField(post.excerpt, language),
+        content: getLocalizedField(post.content, language)
+    } : null;
 
     // Scroll tracking
     const handleScroll = useCallback(() => {
@@ -127,7 +140,7 @@ const BlogPost = () => {
         try {
             if (navigator.share) {
                 await navigator.share({
-                    title: post.title,
+                    title: localizedPost.title,
                     url: currentUrl
                 });
             } else {
@@ -143,7 +156,7 @@ const BlogPost = () => {
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`, '_blank');
     };
     const shareToTelegram = () => {
-        window.open(`https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(post.title)}`, '_blank');
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(localizedPost.title)}`, '_blank');
     };
 
     const formatDate = (timestamp) => {
@@ -210,7 +223,7 @@ const BlogPost = () => {
                     >
                         <Link to="/blog"><ArrowLeft size={14} /> Blog</Link>
                         <ChevronRight size={14} className={styles.separator} />
-                        <span className={styles.current}>{post.title}</span>
+                        <span className={styles.current}>{localizedPost.title}</span>
                     </motion.nav>
 
                     <motion.div
@@ -221,10 +234,10 @@ const BlogPost = () => {
                         transition={{ delay: 0.1, duration: 0.5 }}
                     >
                         {coverImg ? (
-                            <img src={coverImg} alt={post.title} width="1200" height="630" />
+                            <img src={coverImg} alt={localizedPost.title} width="1200" height="630" />
                         ) : (
                             <div className={styles.heroPlaceholder}>
-                                <span>{post.title}</span>
+                                <span>{localizedPost.title}</span>
                             </div>
                         )}
                         <div className={styles.imageOverlay} />
@@ -245,17 +258,17 @@ const BlogPost = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2, duration: 0.5 }}
                         >
-                            <h1 className={styles.articleTitle}>{post.title}</h1>
+                            <h1 className={styles.articleTitle}>{localizedPost.title}</h1>
 
                             <div className={styles.markdownBody}>
-                                <MarkdownRenderer content={post.content} />
+                                <MarkdownRenderer content={localizedPost.content} />
                             </div>
 
 
 
                             {/* Related Articles */}
                             <div className={styles.bottomSection}>
-                                <RelatedArticles currentPostId={post.id} tags={post.tags} />
+                                <RelatedArticles currentPostId={localizedPost.id} tags={localizedPost.tags} />
 
                                 <div className={styles.shareCta}>
                                     <h3>Thanks for reading!</h3>
@@ -274,7 +287,7 @@ const BlogPost = () => {
                             transition={{ delay: 0.3, duration: 0.5 }}
                         >
                             {/* Table of Contents */}
-                            <TableOfContents content={post.content} />
+                            <TableOfContents content={localizedPost.content} />
 
                             {/* Article Info */}
                             <div className={styles.sidebarCard}>
@@ -286,17 +299,17 @@ const BlogPost = () => {
                                     </div>
                                     <div className={styles.infoRow}>
                                         <span className={styles.label}><Clock size={14} /> Read Time</span>
-                                        <span className={styles.value}>{calculateReadTime(post.content)}</span>
+                                        <span className={styles.value}>{calculateReadTime(localizedPost.content)}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Tags */}
-                            {post.tags && post.tags.length > 0 && (
+                            {localizedPost.tags && localizedPost.tags.length > 0 && (
                                 <div className={styles.sidebarCard}>
                                     <h4>Tags</h4>
                                     <div className={styles.tagsList}>
-                                        {post.tags.map((tag, idx) => (
+                                        {localizedPost.tags.map((tag, idx) => (
                                             <span key={idx} className={styles.tagChip}>#{tag}</span>
                                         ))}
                                     </div>
@@ -385,7 +398,7 @@ const BlogPost = () => {
                         </button>
                         <motion.img
                             src={coverImg}
-                            alt={post.title}
+                            alt={localizedPost.title}
                             initial={{ scale: 0.9 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0.9 }}

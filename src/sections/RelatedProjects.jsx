@@ -6,12 +6,14 @@ import ProjectService from '../services/ProjectService';
 import { motion } from 'framer-motion';
 import ProjectCard from './ProjectCard';
 import styles from './RelatedProjects.module.scss';
+import { useTranslation } from '../hooks/useTranslation';
 
 const RelatedProjects = ({ currentProjectId, techStack }) => {
+    const { t } = useTranslation();
     const { data: relatedProjectsData, isLoading: loading } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
+        staleTime: 60000,
+        gcTime: 300000,
+        refetchOnWindowFocus: false,
         queryKey: ['relatedProjects', currentProjectId, techStack],
         queryFn: () => ProjectService.fetchRelatedProjects(currentProjectId, techStack, null),
         enabled: !!currentProjectId
@@ -24,7 +26,7 @@ const RelatedProjects = ({ currentProjectId, techStack }) => {
     return (
         <div className={styles.relatedSection}>
             <div className={styles.header}>
-                <h3>Related Projects</h3>
+                <h3>{t('related.projects')}</h3>
                 <div className={styles.divider}></div>
             </div>
 
@@ -43,7 +45,7 @@ const RelatedProjects = ({ currentProjectId, techStack }) => {
             </div>
 
             <Link to="/projects" className={styles.viewAllLink}>
-                View All Projects <span>→</span>
+                {t('related.viewAllProjects')} <span>→</span>
             </Link>
         </div>
     );

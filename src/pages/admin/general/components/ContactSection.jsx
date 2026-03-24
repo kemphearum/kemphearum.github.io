@@ -40,16 +40,29 @@ const ContactSection = ({
                             </div>
 
                             <FormField
-                                label="Contact Form Introduction"
-                                name="introText"
-                                validation={{ required: 'Intro text is required' }}
+                                label="Contact Intro (EN)"
+                                name="introTextEn"
+                                validation={{ required: 'English intro text is required' }}
                             >
                                 <FormMarkdownEditor
-                                    id="contact-intro"
+                                    id="contact-intro-en"
                                     placeholder="The text shown above the contact form..."
                                     isPreviewMode={contactPreview}
                                     onTogglePreview={() => setContactPreview(!contactPreview)}
-                                    rows="6"
+                                    rows="4"
+                                />
+                            </FormField>
+
+                            <FormField
+                                label="Contact Intro (KM)"
+                                name="introTextKm"
+                            >
+                                <FormMarkdownEditor
+                                    id="contact-intro-km"
+                                    placeholder="អត្ថបទជាភាសាខ្មែរខាងលើបែបបទទំនាក់ទំនង..."
+                                    isPreviewMode={contactPreview}
+                                    onTogglePreview={() => setContactPreview(!contactPreview)}
+                                    rows="4"
                                 />
                             </FormField>
                         </div>

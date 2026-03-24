@@ -1,0 +1,180 @@
+{
+  "language": {
+    "label": "Language",
+    "en": "EN",
+    "km": "KM"
+  },
+  "admin": {
+    "common": {
+      "light": "light",
+      "dark": "dark",
+      "loading": "Loading...",
+      "noPermissionAction": "You do not have permission to perform this action.",
+      "settingsSaved": "Settings saved!",
+      "sectionSaved": "{{section}} saved!",
+      "saveSectionFailed": "Failed to save {{section}}."
+    },
+    "dashboard": {
+      "title": "Dashboard"
+    },
+    "tabs": {
+      "general": "General Content",
+      "experience": "Experience",
+      "projects": "Projects",
+      "blog": "Blog",
+      "messages": "Messages",
+      "database": "Database",
+      "users": "User Management",
+      "audit": "Audit Logs",
+      "analytics": "Analytics",
+      "profile": "My Profile",
+      "settings": "Settings"
+    },
+    "subtitles": {
+      "general": "Manage your portfolio primary content",
+      "profile": "Manage your personal profile and account settings",
+      "settings": "Configure site-wide identity, visual aesthetics, and synchronization",
+      "default": "Administrator Dashboard"
+    },
+    "header": {
+      "searchPlaceholder": "Search admin...",
+      "viewLiveSite": "View Live Site",
+      "switchTheme": "Switch to {{mode}} mode",
+      "logout": "Logout"
+    },
+    "sidebar": {
+      "groups": {
+        "main": "MAIN",
+        "management": "MANAGEMENT",
+        "system": "SYSTEM"
+      },
+      "systemStatus": "System Status",
+      "connectedSynced": "Connected & Synced",
+      "syncedAt": "Synced at {{time}}",
+      "never": "Never"
+    },
+    "auth": {
+      "createAccount": "Create Account",
+      "loginTitle": "Admin Login",
+      "registerSubtitle": "Register a new admin account for dashboard access.",
+      "signInSubtitle": "Sign in to access analytics, audit logs, and content controls.",
+      "protectedHint": "Protected access for portfolio administration.",
+      "email": "Email",
+      "emailPlaceholder": "admin@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "********",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "capsLockOn": "Caps Lock is on.",
+      "passwordRule": "Password must be at least 6 characters.",
+      "rememberEmail": "Remember this email on this device",
+      "creating": "Creating...",
+      "signingIn": "Signing in...",
+      "signIn": "Sign In",
+      "backToLogin": "Back to Login",
+      "needAccountRegister": "Need an account? Register",
+      "backToSite": "Back to Site",
+      "accountCreated": "Account created! You are now logged in.",
+      "errors": {
+        "default": "Unable to authenticate. Please try again.",
+        "disabledByAdmin": "Your account has been disabled by an administrator.",
+        "invalidCredential": "Incorrect email or password.",
+        "tooManyRequests": "Too many attempts. Please wait a moment and try again.",
+        "network": "Network error. Check your connection and try again.",
+        "invalidEmail": "Please enter a valid email address.",
+        "weakPassword": "Password must be at least 6 characters.",
+        "emailInUse": "This email is already registered.",
+        "emailRequired": "Please enter your email address.",
+        "passwordRequired": "Please enter your password."
+      }
+    },
+    "rolePermissions": {
+      "title": "Role Permissions",
+      "description": "Control which sidebar tabs each role can access.",
+      "closeEditor": "Close Editor",
+      "configure": "Configure Permissions",
+      "roleSuffix": "Role",
+      "saveForRole": "Save {{role}} permissions"
+    },
+    "roles": {
+      "pending": "Pending",
+      "editor": "Editor",
+      "admin": "Admin"
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "experience": "Experience",
+    "projects": "Projects",
+    "blog": "Blog",
+    "contact": "Contact"
+  },
+  "hero": {
+    "defaultCta": "Get My CV",
+    "contactCta": "Get In Touch"
+  },
+  "about": {
+    "title": "About Me",
+    "skills": "Technologies & Skills"
+  },
+  "experience": {
+    "title": "Work Experience",
+    "empty": "No experience listed yet.",
+    "present": "Present"
+  },
+  "featuredProjects": {
+    "title": "Featured Projects",
+    "empty": "No featured projects found.",
+    "viewAll": "View All Projects ->"
+  },
+  "featuredBlogs": {
+    "title": "Featured Blogs",
+    "empty": "No featured blogs found.",
+    "viewAll": "View All Blogs ->",
+    "readMore": "Read Article ->",
+    "justNow": "Just now"
+  },
+  "projects": {
+    "title": "All Projects",
+    "searchPlaceholder": "Search projects...",
+    "searchAria": "Search projects",
+    "filterAll": "All",
+    "emptyFiltered": "No projects match this filter.",
+    "empty": "No projects found yet.",
+    "hint": "Visit /admin to add projects."
+  },
+  "blog": {
+    "title": "Blog & Insights",
+    "subtitle": "Thoughts on development, security, and tech.",
+    "searchPlaceholder": "Search articles...",
+    "searchAria": "Search blog articles",
+    "filterAll": "All",
+    "emptyTitle": "No posts found",
+    "emptyDescription": "Try adjusting your search terms.",
+    "readMore": "Read Article ->",
+    "justNow": "Just now"
+  },
+  "contact": {
+    "title": "Get In Touch",
+    "name": "Name",
+    "email": "Email",
+    "message": "Message",
+    "namePlaceholder": "Your Name",
+    "emailPlaceholder": "your@email.com",
+    "messagePlaceholder": "How can I help you?",
+    "send": "Send Message",
+    "sending": "Sending...",
+    "success": "Message sent successfully!",
+    "error": "Something went wrong. Please try again.",
+    "rateLimited": "Please wait a few minutes before sending another message."
+  },
+  "footer": {
+    "siteMirrors": "Site Mirrors"
+  },
+  "related": {
+    "projects": "Related Projects",
+    "articles": "Related Articles",
+    "viewAllProjects": "View All Projects"
+  }
+}

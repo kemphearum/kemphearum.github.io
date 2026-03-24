@@ -1,3 +1,5 @@
+import { buildLocalizedFieldFromInput, getLocalizedField } from '../../utils/localization';
+
 /**
  * Formats a YYYY-MM string to MMM YYYY (e.g., "2023-05" -> "May 2023").
  * @param {string} yyyyMm 
@@ -21,17 +23,20 @@ export const formatExperienceDate = (yyyyMm) => {
 export const normalizeExperience = (data) => {
     const startLabel = formatExperienceDate(data.startMonthYear);
     const endLabel = data.current ? 'Present' : formatExperienceDate(data.endMonthYear);
+    const company = buildLocalizedFieldFromInput(data, 'company');
+    const role = buildLocalizedFieldFromInput(data, 'role');
+    const description = buildLocalizedFieldFromInput(data, 'description');
 
     return {
-        company: (data.company || '').trim(),
-        role: (data.role || '').trim(),
+        company,
+        role,
         startDate: startLabel,
         startMonthYear: data.startMonthYear || '',
         endDate: endLabel,
         endMonthYear: data.current ? '' : (data.endMonthYear || ''),
         period: `${startLabel} - ${endLabel}`,
         current: !!data.current,
-        description: (data.description || '').trim(),
+        description,
         visible: data.visible !== false,
         order: Number(data.order) || 0
     };
@@ -44,13 +49,15 @@ export const normalizeExperience = (data) => {
  */
 export const validateExperience = (data) => {
     const errors = {};
+    const company = getLocalizedField(data.company, 'en');
+    const role = getLocalizedField(data.role, 'en');
     
-    if (!data.company || !data.company.trim()) {
-        errors.company = 'Company is required';
+    if (!company || !company.trim()) {
+        errors.companyEn = 'English company is required';
     }
 
-    if (!data.role || !data.role.trim()) {
-        errors.role = 'Role is required';
+    if (!role || !role.trim()) {
+        errors.roleEn = 'English role is required';
     }
 
     if (!data.startMonthYear) {

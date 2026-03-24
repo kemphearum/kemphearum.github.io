@@ -1,6 +1,7 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { toLocalizedField } from '../utils/localization';
 
 class ContentService extends BaseService {
     constructor() {
@@ -13,11 +14,11 @@ class ContentService extends BaseService {
         if (sectionName === 'home') {
             return {
                 ...data,
-                greeting: data.greeting || '',
-                name: data.name || '',
-                subtitle: data.subtitle || '',
-                description: data.description || data.heroDescription || data.introText || '',
-                ctaText: data.ctaText || data.buttonText || '',
+                greeting: toLocalizedField(data.greeting || data.heroGreeting || ''),
+                name: toLocalizedField(data.name || ''),
+                subtitle: toLocalizedField(data.subtitle || ''),
+                description: toLocalizedField(data.description || data.heroDescription || data.introText || ''),
+                ctaText: toLocalizedField(data.ctaText || data.buttonText || ''),
                 ctaLink: data.ctaLink || data.buttonLink || '',
                 profileImageUrl: data.profileImageUrl || data.imageUrl || ''
             };
@@ -26,7 +27,7 @@ class ContentService extends BaseService {
         if (sectionName === 'about') {
             return {
                 ...data,
-                bio: data.bio || data.about || data.aboutText || data.description || '',
+                bio: toLocalizedField(data.bio || data.about || data.aboutText || data.description || ''),
                 skills: Array.isArray(data.skills)
                     ? data.skills
                     : (typeof data.skills === 'string' ? data.skills.split(',').map((s) => s.trim()).filter(Boolean) : [])
@@ -36,7 +37,7 @@ class ContentService extends BaseService {
         if (sectionName === 'contact') {
             return {
                 ...data,
-                introText: data.introText || data.introduction || data.description || data.text || ''
+                introText: toLocalizedField(data.introText || data.introduction || data.description || data.text || '')
             };
         }
 
@@ -74,18 +75,19 @@ class ContentService extends BaseService {
      */
     async saveSection(sectionName, data, trackWrite, options = {}) {
         const docRef = doc(db, this.collectionName, sectionName);
-        await setDoc(docRef, data, { merge: true });
+        const normalizedData = this.normalizeSectionData(sectionName, data);
+        await setDoc(docRef, normalizedData, { merge: true });
 
         // Store in audit history subcollection
         if (this.useHistory && !options.skipHistory) {
-            await this._saveHistory(sectionName, 'updated', data);
+            await this._saveHistory(sectionName, 'updated', normalizedData);
         }
 
         if (trackWrite) {
-            trackWrite(1, `Saved ${sectionName} content`, data);
+            trackWrite(1, `Saved ${sectionName} content`, normalizedData);
         }
 
-        return data;
+        return normalizedData;
     }
 }
 

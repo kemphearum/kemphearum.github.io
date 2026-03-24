@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Eye, EyeOff, Star, StarOff, Trash2, LayoutTemplate, Globe2, Sparkles, Link2 } from 'lucide-react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useActivity } from '../../../hooks/useActivity';
@@ -16,8 +16,11 @@ import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
 import { slugify } from '../../../domain/shared/slugify';
 import ImageProcessingService from '../../../services/ImageProcessingService';
+import { useTranslation } from '../../../hooks/useTranslation';
+import { getLanguageValue, getLocalizedField } from '../../../utils/localization';
 
 const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
+  const { language } = useTranslation();
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
   const [historyItem, setHistoryItem] = useState(null);
@@ -69,7 +72,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         lastDoc: requestCursor,
         limit: pagination.limit,
         search: searchQuery,
-        searchField: 'title',
+        searchField: 'title.en',
         sortBy: "createdAt",
         sortDirection: "desc",
         includeTotal: true,
@@ -87,6 +90,13 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const projects = projectsResult.data;
+  const tableProjects = useMemo(() => projects.map((project) => ({
+    ...project,
+    __raw: project,
+    title: getLocalizedField(project.title, language),
+    description: getLocalizedField(project.description, language),
+    content: getLocalizedField(project.content, language)
+  })), [projects, language]);
   const visibleProjectsCount = projects.filter((project) => project.visible !== false).length;
   const featuredProjectsCount = projects.filter((project) => !!project.featured).length;
   const linkedProjectsCount = projects.filter((project) => project.liveUrl || project.githubUrl).length;
@@ -140,9 +150,10 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     if (!isActionAllowed('edit', 'projects')) {
       return showToast("You do not have permission to perform this action.", "error");
     }
+    const source = item.__raw || item;
     setEditingItem({
-      ...item,
-      techStack: Array.isArray(item.techStack) ? item.techStack.join(', ') : item.techStack || ''
+      ...source,
+      techStack: Array.isArray(source.techStack) ? source.techStack.join(', ') : source.techStack || ''
     });
     setIsFormOpen(true);
   };
@@ -151,11 +162,11 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     if (!isActionAllowed('delete', 'projects')) {
       return showToast("You do not have permission to perform this action.", "error");
     }
-    setDeletingItem(item);
+    setDeletingItem(item.__raw || item);
   };
 
   const handleViewHistory = (item) => {
-    setHistoryItem(item);
+    setHistoryItem(item.__raw || item);
     setIsHistoryOpen(true);
   };
   
@@ -201,7 +212,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
           action,
           module: 'projects',
           entityId: editingItem?.id || 'new',
-          entityName: formData.title
+          entityName: formData.titleEn
         })
       );
     });
@@ -257,7 +268,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     try {
       const content = await readImportFile(file);
       const items = parseImportItems(file.name, content);
-      const validCount = items.filter((item) => item?.title).length;
+      const validCount = items.filter((item) => getLanguageValue(item?.title, 'en', true) || item?.titleEn).length;
       const skippedCount = items.length - validCount;
 
       setImportDialog({
@@ -287,25 +298,34 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
       for (const item of importDialog.items) {
         try {
-          if (!item?.title) {
+          const titleEn = (item?.titleEn || getLanguageValue(item?.title, 'en', true) || '').trim();
+          if (!titleEn) {
             skipped += 1;
             continue;
           }
-          const normalizedSlug = item.slug ? slugify(item.slug) : slugify(item.title);
+          const normalizedSlug = item.slug ? slugify(item.slug) : slugify(titleEn);
           const techStack = Array.isArray(item.techStack)
             ? item.techStack.join(', ')
             : (item.techStack || '');
+          const titleKm = (item?.titleKm || getLanguageValue(item?.title, 'km', false) || '').trim();
+          const descriptionEn = (item?.descriptionEn || getLanguageValue(item?.description, 'en', true) || '').trim();
+          const descriptionKm = (item?.descriptionKm || getLanguageValue(item?.description, 'km', false) || '').trim();
+          const contentEn = (item?.contentEn || getLanguageValue(item?.content, 'en', true) || '').trim();
+          const contentKm = (item?.contentKm || getLanguageValue(item?.content, 'km', false) || '').trim();
 
           const existing = await ProjectService.fetchProjectBySlug(normalizedSlug, null, true);
           const payload = {
             id: existing?.id || null,
-            title: item.title,
-            description: item.description || '',
+            titleEn,
+            titleKm,
+            descriptionEn,
+            descriptionKm,
             techStack,
             githubUrl: item.githubUrl || '',
             liveUrl: item.liveUrl || '',
             slug: normalizedSlug,
-            content: item.content || '',
+            contentEn,
+            contentKm,
             featured: parseBoolean(item.featured, false),
             visible: parseBoolean(item.visible, true),
             imageUrl: item.imageUrl || ''
@@ -357,13 +377,13 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleDownloadProjectJsonTemplate = () => {
     const template = [{
-      title: "Example Project",
-      description: "Short description here",
+      title: { en: 'Example Project', km: '' },
+      description: { en: 'Short description here', km: '' },
       techStack: "React, Firebase",
       githubUrl: "https://github.com/example/repo",
       liveUrl: "https://example.com",
       slug: "example-project",
-      content: "# Markdown Content\\nDetails here...",
+      content: { en: '# Markdown Content\\nDetails here...', km: '' },
       featured: false,
       visible: true
     }];
@@ -373,18 +393,21 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleDownloadProjectCsvTemplate = () => {
     const template = [{
-      title: "Example Project",
-      description: "Short description here",
+      titleEn: "Example Project",
+      titleKm: "",
+      descriptionEn: "Short description here",
+      descriptionKm: "",
       techStack: "React, Firebase",
       githubUrl: "https://github.com/example/repo",
       liveUrl: "https://example.com",
       slug: "example-project",
-      content: "# Markdown Content\\nDetails here...",
+      contentEn: "# Markdown Content\\nDetails here...",
+      contentKm: "",
       featured: "false",
       visible: "true"
     }];
 
-    const csvData = jsonToCsv(template, ["title", "description", "techStack", "githubUrl", "liveUrl", "slug", "content", "featured", "visible"]);
+    const csvData = jsonToCsv(template, ["titleEn", "titleKm", "descriptionEn", "descriptionKm", "techStack", "githubUrl", "liveUrl", "slug", "contentEn", "contentKm", "featured", "visible"]);
     const blob = new Blob([csvData], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -535,7 +558,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
           action: 'deleted',
           module: 'projects',
           entityId: deletingItem.id,
-          entityName: deletingItem.title
+          entityName: getLocalizedField(deletingItem.title, 'en')
         })
       );
     });
@@ -592,7 +615,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       )}
       
       <ProjectsTable
-        projects={projects}
+        projects={tableProjects}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onViewHistory={handleViewHistory}
@@ -637,7 +660,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         onConfirm={confirmDelete}
         loading={deleteLoading}
         title="Delete Project"
-        message={`Are you sure you want to delete "${deletingItem?.title}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${getLocalizedField(deletingItem?.title, language)}"? This action cannot be undone.`}
       />
 
       <DeleteConfirmDialog 
@@ -687,7 +710,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         onClose={() => setIsHistoryOpen(false)}
         recordId={historyItem?.id}
         service={ProjectService}
-        title={historyItem?.title}
+        title={getLocalizedField(historyItem?.title, language)}
       />
     </div>
   );

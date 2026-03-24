@@ -10,6 +10,8 @@ import ExperienceFormDialog from './components/ExperienceFormDialog';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
 import { BriefcaseBusiness, Eye, Building2, Clock3 } from 'lucide-react';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
+import { useTranslation } from '../../../hooks/useTranslation';
+import { getLocalizedField } from '../../../utils/localization';
 
 const normalizeTimelineMonth = (value, isEnd = false) => {
   if (!value) return '';
@@ -63,6 +65,7 @@ const isCurrentRole = (item) => {
 };
 
 const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
+  const { language } = useTranslation();
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -99,7 +102,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         lastDoc: requestCursor,
         limit: pagination.limit || 10,
         search: searchQuery,
-        searchField: 'company',
+        searchField: 'company.en',
         sortBy: "createdAt",
         sortDirection: "desc",
         includeTotal: true,
@@ -137,10 +140,18 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
     });
   }, [experiences]);
 
+  const tableExperiences = useMemo(() => experiencesByTimeline.map((item) => ({
+    ...item,
+    __raw: item,
+    company: getLocalizedField(item.company, language),
+    role: getLocalizedField(item.role, language),
+    description: getLocalizedField(item.description, language)
+  })), [experiencesByTimeline, language]);
+
   const workspaceStats = useMemo(() => {
     const visibleCount = experiencesByTimeline.filter((item) => item.visible !== false).length;
     const currentCount = experiencesByTimeline.filter((item) => isCurrentRole(item)).length;
-    const companyCount = new Set(experiencesByTimeline.map((item) => item.company).filter(Boolean)).size;
+    const companyCount = new Set(experiencesByTimeline.map((item) => getLocalizedField(item.company, language)).filter(Boolean)).size;
 
     return [
       {
@@ -168,7 +179,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         icon: Clock3
       }
     ];
-  }, [experiencesByTimeline]);
+  }, [experiencesByTimeline, language]);
 
   // Robust date parser for legacy formats (yyyy-mm)
   const parseLegacyDate = (dateVal, isEnd = false) => {
@@ -228,12 +239,13 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
     if (!isActionAllowed('edit', 'experience')) {
       return showToast("You do not have permission to perform this action.", "error");
     }
-    const startVal = exp.startMonthYear || exp.startDate || exp.period;
-    const endVal = exp.endMonthYear || exp.endDate || exp.period;
-    const isCurrentlyPresent = exp.current || (typeof endVal === 'string' && endVal.toLowerCase().includes('present'));
+    const source = exp.__raw || exp;
+    const startVal = source.startMonthYear || source.startDate || source.period;
+    const endVal = source.endMonthYear || source.endDate || source.period;
+    const isCurrentlyPresent = source.current || (typeof endVal === 'string' && endVal.toLowerCase().includes('present'));
 
     setEditingItem({
-      ...exp,
+      ...source,
       startDate: parseLegacyDate(startVal, false),
       endDate: isCurrentlyPresent ? '' : parseLegacyDate(endVal, true),
       isPresent: !!isCurrentlyPresent
@@ -245,7 +257,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
     if (!isActionAllowed('delete', 'experience')) {
       return showToast("You do not have permission to perform this action.", "error");
     }
-    setDeletingItem(item);
+    setDeletingItem(item.__raw || item);
   };
 
   const handleSave = async (formData) => {
@@ -268,7 +280,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
           action,
           module: 'experience',
           entityId: editingItem?.id || 'new',
-          entityName: `${formData.role} at ${formData.company}`
+          entityName: `${formData.roleEn} at ${formData.companyEn}`
         })
       );
     });
@@ -286,7 +298,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
           action: 'deleted',
           module: 'experience',
           entityId: deletingItem.id,
-          entityName: `${deletingItem.role} at ${deletingItem.company}`
+          entityName: `${getLocalizedField(deletingItem.role, 'en')} at ${getLocalizedField(deletingItem.company, 'en')}`
         })
       );
     });
@@ -343,7 +355,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
       />
       
       <ExperienceTable
-        experiences={experiencesByTimeline}
+        experiences={tableExperiences}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onToggleVisibility={toggleVisibility}
@@ -381,7 +393,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         onConfirm={confirmDelete}
         loading={deleteLoading}
         title="Delete Experience"
-        message={`Are you sure you want to delete "${deletingItem?.role}" at "${deletingItem?.company}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${getLocalizedField(deletingItem?.role, language)}" at "${getLocalizedField(deletingItem?.company, language)}"? This action cannot be undone.`}
       />
     </div>
   );

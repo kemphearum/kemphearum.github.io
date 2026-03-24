@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Eye, EyeOff, Star, StarOff, Trash2, FileText, Globe2, Sparkles, PenSquare } from 'lucide-react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import BlogService from '../../../services/BlogService';
@@ -16,8 +16,11 @@ import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
 import { slugify } from '../../../domain/shared/slugify';
 import ImageProcessingService from '../../../services/ImageProcessingService';
+import { useTranslation } from '../../../hooks/useTranslation';
+import { getLanguageValue, getLocalizedField } from '../../../utils/localization';
 
 const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
+  const { language } = useTranslation();
   // State
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -76,7 +79,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         lastDoc: requestCursor,
         limit: pagination.limit,
         search: searchQuery,
-        searchField: 'title',
+        searchField: 'title.en',
         sortBy: "createdAt",
         sortDirection: "desc",
         includeTotal: true,
@@ -94,6 +97,13 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const posts = postsResult.data;
+  const tablePosts = useMemo(() => posts.map((post) => ({
+    ...post,
+    __raw: post,
+    title: getLocalizedField(post.title, language),
+    excerpt: getLocalizedField(post.excerpt, language),
+    content: getLocalizedField(post.content, language)
+  })), [posts, language]);
   const visiblePostsCount = posts.filter((post) => post.visible !== false).length;
   const featuredPostsCount = posts.filter((post) => !!post.featured).length;
   const draftPostsCount = posts.length - visiblePostsCount;
@@ -142,9 +152,10 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     if (!isActionAllowed('edit', 'blog')) {
       return showToast("You do not have permission to perform this action.", "error");
     }
+    const source = post.__raw || post;
     setSelectedPost({
-      ...post,
-      tags: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || '')
+      ...source,
+      tags: Array.isArray(source.tags) ? source.tags.join(', ') : (source.tags || '')
     });
     setIsFormOpen(true);
   };
@@ -153,7 +164,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     if (!isActionAllowed('delete', 'blog')) {
       return showToast("You do not have permission to perform this action.", "error");
     }
-    setSelectedPost(post);
+    setSelectedPost(post.__raw || post);
     setIsDeleteOpen(true);
   };
 
@@ -301,7 +312,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleViewHistory = (post) => {
-    setSelectedPost(post);
+    setSelectedPost(post.__raw || post);
     setIsHistoryOpen(true);
   };
 
@@ -323,7 +334,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
           action,
           module: 'blog',
           entityId: selectedPost?.id || 'new',
-          entityName: formData.title
+          entityName: formData.titleEn
         })
       );
     });
@@ -379,7 +390,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     try {
       const content = await readImportFile(file);
       const items = parseImportItems(file.name, content);
-      const validCount = items.filter((item) => item?.title).length;
+      const validCount = items.filter((item) => getLanguageValue(item?.title, 'en', true) || item?.titleEn).length;
       const skippedCount = items.length - validCount;
 
       setImportDialog({
@@ -409,22 +420,31 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
       for (const item of importDialog.items) {
         try {
-          if (!item?.title) {
+          const titleEn = (item?.titleEn || getLanguageValue(item?.title, 'en', true) || '').trim();
+          if (!titleEn) {
             skipped += 1;
             continue;
           }
-          const normalizedSlug = item.slug ? slugify(item.slug) : slugify(item.title);
+          const normalizedSlug = item.slug ? slugify(item.slug) : slugify(titleEn);
           const tags = Array.isArray(item.tags)
             ? item.tags.join(', ')
             : (item.tags || '');
+          const titleKm = (item?.titleKm || getLanguageValue(item?.title, 'km', false) || '').trim();
+          const excerptEn = (item?.excerptEn || getLanguageValue(item?.excerpt, 'en', true) || '').trim();
+          const excerptKm = (item?.excerptKm || getLanguageValue(item?.excerpt, 'km', false) || '').trim();
+          const contentEn = (item?.contentEn || getLanguageValue(item?.content, 'en', true) || '').trim();
+          const contentKm = (item?.contentKm || getLanguageValue(item?.content, 'km', false) || '').trim();
 
           const existing = await BlogService.fetchPostBySlug(normalizedSlug, null, true);
           const payload = {
             id: existing?.id || null,
-            title: item.title,
+            titleEn,
+            titleKm,
             slug: normalizedSlug,
-            excerpt: item.excerpt || '',
-            content: item.content || '',
+            excerptEn,
+            excerptKm,
+            contentEn,
+            contentKm,
             tags,
             coverImage: item.coverImage || '',
             featured: parseBoolean(item.featured, false),
@@ -477,10 +497,10 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleDownloadBlogJsonTemplate = () => {
     const template = [{
-      title: 'Sample Blog Post',
+      title: { en: 'Sample Blog Post', km: '' },
       slug: 'sample-blog-post',
-      excerpt: 'A short summary for the list view.',
-      content: '# Your Content Here\\nThis is sample markdown content.',
+      excerpt: { en: 'A short summary for the list view.', km: '' },
+      content: { en: '# Your Content Here\\nThis is sample markdown content.', km: '' },
       tags: ['React', 'Tutorial'],
       featured: false,
       visible: true
@@ -491,16 +511,19 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleDownloadBlogCsvTemplate = () => {
     const template = [{
-      title: 'Sample Blog Post',
+      titleEn: 'Sample Blog Post',
+      titleKm: '',
       slug: 'sample-blog-post',
-      excerpt: 'A short summary for the list view.',
-      content: '# Your Content Here\\nThis is sample markdown content.',
+      excerptEn: 'A short summary for the list view.',
+      excerptKm: '',
+      contentEn: '# Your Content Here\\nThis is sample markdown content.',
+      contentKm: '',
       tags: 'React, Tutorial',
       featured: 'false',
       visible: 'true'
     }];
 
-    const csvData = jsonToCsv(template, ['title', 'slug', 'excerpt', 'content', 'tags', 'featured', 'visible']);
+    const csvData = jsonToCsv(template, ['titleEn', 'titleKm', 'slug', 'excerptEn', 'excerptKm', 'contentEn', 'contentKm', 'tags', 'featured', 'visible']);
     const blob = new Blob([csvData], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -524,7 +547,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
           action: 'deleted',
           module: 'blog',
           entityId: selectedPost.id,
-          entityName: selectedPost.title
+          entityName: getLocalizedField(selectedPost.title, 'en')
         })
       );
     });
@@ -581,7 +604,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
       )}
 
       <BlogTable
-        posts={posts}
+        posts={tablePosts}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onToggleVisibility={handleToggleVisibility}
@@ -627,7 +650,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         onConfirm={handleConfirmDelete}
         loading={deleteLoading}
         title="Delete Post"
-        message={`Are you sure you want to delete "${selectedPost?.title}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${getLocalizedField(selectedPost?.title, language)}"? This action cannot be undone.`}
       />
 
       <DeleteConfirmDialog 
@@ -677,7 +700,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         onClose={() => setIsHistoryOpen(false)}
         recordId={selectedPost?.id}
         service={BlogService}
-        title={selectedPost?.title}
+        title={getLocalizedField(selectedPost?.title, language)}
       />
     </div>
   );

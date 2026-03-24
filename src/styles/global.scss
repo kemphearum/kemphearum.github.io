@@ -17,6 +17,7 @@ $lg: 1024px;
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
@@ -228,6 +229,25 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
 }
 
+// Ensure Khmer always has glyph coverage even when admin/font settings use Inter.
+html[lang="km"] {
+    --font-display: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+    --font-heading: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+    --font-subheading: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+    --font-logo: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+    --font-nav: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+    --font-body: 'Battambang', 'Kantumruy Pro', 'Noto Sans Khmer', system-ui, sans-serif;
+    --font-ui: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+    --font-footer-title: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+    --font-footer-link: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+    --font-footer-text: 'Battambang', 'Kantumruy Pro', 'Noto Sans Khmer', system-ui, sans-serif;
+    --font-footer-brand: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+    --font-footer-tagline: 'Battambang', 'Kantumruy Pro', 'Noto Sans Khmer', system-ui, sans-serif;
+    --font-admin-brand: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+    --font-admin-menu: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+    --font-admin-tab: 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, sans-serif;
+}
+
 button {
     font-family: var(--font-ui, inherit);
     font-weight: var(--font-weight-ui, 600);
@@ -406,7 +426,7 @@ h6 {
 
     [class*="Admin_"],
     [class*="admin_"] {
-        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+        font-family: 'Inter', 'Kantumruy Pro', 'Noto Sans Khmer', 'Battambang', system-ui, -apple-system, sans-serif !important;
 
         h1,
         h2,

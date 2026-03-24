@@ -3,10 +3,17 @@ import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 import { normalizeProject, validateProject } from '../domain/project/projectDomain';
+import { getLanguageFromStorage, localizeEntityFields } from '../utils/localization';
+
+const PROJECT_LOCALIZED_FIELDS = ['title', 'description', 'content'];
 
 class ProjectService extends BaseService {
     constructor() {
         super('projects');
+    }
+
+    localizeProject(project, lang = getLanguageFromStorage()) {
+        return localizeEntityFields(project, PROJECT_LOCALIZED_FIELDS, lang);
     }
 
     /**
@@ -154,7 +161,7 @@ class ProjectService extends BaseService {
      * @param {boolean} [includeHidden=false] 
      * @returns {Promise<Object|null>}
      */
-    async fetchProjectBySlug(slug, trackRead, includeHidden = false) {
+    async fetchProjectBySlug(slug, trackRead, includeHidden = false, options = {}) {
         let q = query(collection(db, this.collectionName), where("slug", "==", slug));
         let querySnapshot = await getDocs(q);
 
@@ -165,14 +172,15 @@ class ProjectService extends BaseService {
         if (!querySnapshot.empty) {
             const docData = querySnapshot.docs[0].data();
             if (!includeHidden && docData.visible === false) return null;
-            return { id: querySnapshot.docs[0].id, ...docData };
+            const project = { id: querySnapshot.docs[0].id, ...docData };
+            return options.localized ? this.localizeProject(project, options.lang) : project;
         }
 
         // Fallback: Check if the slug is actually an ID
         const docById = await this.getById(slug);
         if (docById) {
             if (!includeHidden && docById.visible === false) return null;
-            return docById;
+            return options.localized ? this.localizeProject(docById, options.lang) : docById;
         }
 
         return null;
@@ -185,7 +193,7 @@ class ProjectService extends BaseService {
      * @param {function(number, string, Object): void} [trackRead] 
      * @returns {Promise<Array<Object>>}
      */
-    async fetchRelatedProjects(currentProjectId, techStack, trackRead) {
+    async fetchRelatedProjects(currentProjectId, techStack, trackRead, options = {}) {
         const q = query(
             collection(db, this.collectionName),
             where("visible", "==", true)
@@ -224,7 +232,9 @@ class ProjectService extends BaseService {
             projectsData = allVisibleProjects.slice(0, 3);
         }
 
-        return projectsData;
+        return options.localized
+            ? projectsData.map((project) => this.localizeProject(project, options.lang))
+            : projectsData;
     }
 }
 

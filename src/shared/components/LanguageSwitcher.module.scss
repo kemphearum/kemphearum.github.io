@@ -1,0 +1,31 @@
+.switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.option {
+    border: 0;
+    border-radius: 999px;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.75);
+    background: transparent;
+    transition: all 0.2s ease;
+}
+
+.option:hover {
+    color: #ffffff;
+}
+
+.active {
+    color: #0e1116;
+    background: #ffffff;
+}

@@ -6,8 +6,11 @@ import ProjectCard from './ProjectCard';
 import styles from './Projects.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import { useTranslation } from '../hooks/useTranslation';
+import { getLocalizedField } from '../utils/localization';
 
 const Projects = () => {
+    const { language, t } = useTranslation();
     const { data: projectsData, isLoading: loadingProjects } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
@@ -26,7 +29,12 @@ const Projects = () => {
 
     const settings = globalConfig?.site || globalConfig;
 
-    const projects = projectsData || [];
+    const projects = (projectsData || []).map((project) => ({
+        ...project,
+        title: getLocalizedField(project.title, language),
+        description: getLocalizedField(project.description, language),
+        content: getLocalizedField(project.content, language)
+    }));
     const loading = loadingProjects;
     const [filter, setFilter] = useState('All');
     const [searchTerm, setSearchTerm] = useState('');
@@ -92,7 +100,7 @@ const Projects = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                 >
-                    All Projects
+                    {t('projects.title')}
                 </motion.h2>
 
                 {/* Search Bar */}
@@ -107,10 +115,10 @@ const Projects = () => {
                         type="text"
                         id="projects-search"
                         name="projects-search"
-                        placeholder="Search projects..."
+                        placeholder={t('projects.searchPlaceholder')}
                         value={searchTerm}
                         onChange={(e) => handleSearchChange(e.target.value)}
-                        aria-label="Search projects"
+                        aria-label={t('projects.searchAria')}
                     />
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -129,7 +137,7 @@ const Projects = () => {
                             className={`${styles.filterBtn} ${filter === 'All' ? styles.active : ''}`}
                             onClick={() => handleFilterChange('All')}
                         >
-                            All
+                            {t('projects.filterAll')}
                         </button>
                         {displayTags.map(tag => (
                             <button
@@ -182,7 +190,7 @@ const Projects = () => {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                             >
-                                <p>No projects match this filter.</p>
+                                <p>{t('projects.emptyFiltered')}</p>
                             </motion.div>
                         )}
                     </motion.div>
@@ -230,8 +238,8 @@ const Projects = () => {
 
                 {!loading && visibleProjects.length === 0 && (
                     <div className={styles.empty}>
-                        <p>No projects found yet.</p>
-                        <p className={styles.hint}>Visit /admin to add projects.</p>
+                        <p>{t('projects.empty')}</p>
+                        <p className={styles.hint}>{t('projects.hint')}</p>
                     </div>
                 )}
             </div>

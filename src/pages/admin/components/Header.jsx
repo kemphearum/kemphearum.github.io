@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import styles from './Header.module.scss';
 import { LogOut, Sun, Moon, ExternalLink, Search } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
+import LanguageSwitcher from '../../../shared/components/LanguageSwitcher';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 const Header = ({ 
     onToggleSidebar, 
@@ -18,6 +20,7 @@ const Header = ({
     onHeightChange
 }) => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const headerRef = useRef(null);
 
     useEffect(() => {
@@ -70,18 +73,28 @@ const Header = ({
             <div className={styles.center}>
                 <div className={styles.searchInputWrapper}>
                     <Search />
-                    <input type="text" placeholder="Search admin..." disabled />
+                    <input type="text" placeholder={t('admin.header.searchPlaceholder')} disabled />
                 </div>
             </div>
 
             <div className={styles.right}>
+                <div className={styles.languageSwitcher}>
+                    <LanguageSwitcher />
+                </div>
+
                 <button onClick={() => navigate('/')} className={styles.viewSiteBtn}>
                     <ExternalLink size={16} />
-                    <span>View Live Site</span>
+                    <span>{t('admin.header.viewLiveSite')}</span>
                 </button>
 
                 <div className={styles.topActions}>
-                    <button onClick={toggleTheme} className={styles.actionBtn} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+                    <button
+                        onClick={toggleTheme}
+                        className={styles.actionBtn}
+                        title={t('admin.header.switchTheme', {
+                            mode: theme === 'dark' ? t('admin.common.light') : t('admin.common.dark')
+                        })}
+                    >
                         {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                     </button>
 
@@ -89,7 +102,7 @@ const Header = ({
                         <button 
                             onClick={onSettingsClick} 
                             className={`${styles.actionBtn} ${currentRoute === 'settings' ? styles['actionBtn--active'] : ''}`} 
-                            title="Settings"
+                            title={t('admin.tabs.settings')}
                         >
                             {icons.settings}
                         </button>
@@ -98,12 +111,12 @@ const Header = ({
                     <button 
                         onClick={onProfileClick} 
                         className={`${styles.actionBtn} ${currentRoute === 'profile' ? styles['actionBtn--active'] : ''}`} 
-                        title="My Profile"
+                        title={t('admin.tabs.profile')}
                     >
                         {icons.profile}
                     </button>
 
-                    <button onClick={onLogout} className={`${styles.actionBtn} ${styles.logoutBtn}`} title="Logout">
+                    <button onClick={onLogout} className={`${styles.actionBtn} ${styles.logoutBtn}`} title={t('admin.header.logout')}>
                         <LogOut size={18} />
                     </button>
                 </div>
@@ -114,7 +127,7 @@ const Header = ({
                     </div>
                     <div className={styles.userText}>
                         <span className={styles.email} title={user?.email}>{userDisplayName || user?.email}</span>
-                        <span className={styles.role}>{userRole || 'Loading...'}</span>
+                        <span className={styles.role}>{userRole || t('admin.common.loading')}</span>
                     </div>
                 </div>
             </div>

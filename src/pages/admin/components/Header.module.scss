@@ -55,6 +55,15 @@
     }
 }
 
+.languageSwitcher {
+    display: inline-flex;
+    align-items: center;
+
+    @media (max-width: 640px) {
+        display: none;
+    }
+}
+
 .menuToggle {
     display: flex;
     flex-direction: column;

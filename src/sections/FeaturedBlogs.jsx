@@ -5,8 +5,11 @@ import styles from '../pages/Blog.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Link } from 'react-router';
+import { useTranslation } from '../hooks/useTranslation';
+import { getLocalizedField } from '../utils/localization';
 
 const FeaturedBlogs = () => {
+    const { language, t } = useTranslation();
     const { data: postsData, isLoading: loading } = useQuery({
         staleTime: 60000,
         gcTime: 300000,
@@ -15,7 +18,12 @@ const FeaturedBlogs = () => {
         queryFn: () => BlogService.getAll('createdAt', 'desc')
     });
 
-    const posts = postsData || [];
+    const posts = (postsData || []).map((post) => ({
+        ...post,
+        title: getLocalizedField(post.title, language),
+        excerpt: getLocalizedField(post.excerpt, language),
+        content: getLocalizedField(post.content, language)
+    }));
 
     // Priority: Items marked as 'featured'
     let featuredList = posts.filter((p) => p.visible !== false && p.featured === true);
@@ -52,7 +60,7 @@ const FeaturedBlogs = () => {
                     viewport={{ once: true }}
                     style={{ textAlign: 'center', marginBottom: '3rem' }}
                 >
-                    Featured Blogs
+                    {t('featuredBlogs.title')}
                 </motion.h2>
 
                 {loading ? (
@@ -85,23 +93,23 @@ const FeaturedBlogs = () => {
                                         </div>
                                         <div className={styles.content}>
                                             <div className={styles.meta}>
-                                                <span className={styles.date}>
-                                                    {post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
-                                                </span>
-                                                {post.tags && post.tags.length > 0 && (
-                                                    <span className={styles.tag}>{post.tags[0]}</span>
-                                                )}
-                                            </div>
-                                            <h3>{post.title}</h3>
-                                            <p>{post.excerpt}</p>
-                                            <span className={styles.readMore}>Read Article -&gt;</span>
+                                                    <span className={styles.date}>
+                                                    {post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000).toLocaleDateString() : t('featuredBlogs.justNow')}
+                                                    </span>
+                                                    {post.tags && post.tags.length > 0 && (
+                                                        <span className={styles.tag}>{post.tags[0]}</span>
+                                                    )}
+                                                </div>
+                                                <h3>{post.title}</h3>
+                                                <p>{post.excerpt}</p>
+                                            <span className={styles.readMore}>{t('featuredBlogs.readMore')}</span>
                                         </div>
                                     </Link>
                                 </motion.article>
                             ))
                         ) : (
                             <div className={styles.emptyState}>
-                                <p>No featured blogs found.</p>
+                                <p>{t('featuredBlogs.empty')}</p>
                             </div>
                         )}
                     </motion.div>
@@ -115,7 +123,7 @@ const FeaturedBlogs = () => {
                         viewport={{ once: true }}
                     >
                         <Link to="/blog" className={styles.viewAllBtn}>
-                            View All Blogs -&gt;
+                            {t('featuredBlogs.viewAll')}
                         </Link>
                     </motion.div>
                 )}

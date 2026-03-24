@@ -5,11 +5,15 @@ import { useQuery } from '@tanstack/react-query';
 import ContentService from '../services/ContentService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Contact.module.scss';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
+import { useTranslation } from '../hooks/useTranslation';
+import { getLocalizedField } from '../utils/localization';
 
 const Contact = () => {
     const { trackEvent } = useAnalytics();
+    const { language, t } = useTranslation();
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
     const [status, setStatus] = useState(null);
 
@@ -21,7 +25,11 @@ const Contact = () => {
         queryFn: () => ContentService.fetchSection('contact')
     });
 
-    const contactContent = data || { introText: '' };
+    const rawContactContent = data || { introText: '' };
+    const contactContent = {
+        ...rawContactContent,
+        introText: getLocalizedField(rawContactContent.introText, language)
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -71,7 +79,7 @@ const Contact = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                 >
-                    Get In Touch
+                    {t('contact.title')}
                 </motion.h2>
                 <div className={styles.content}>
                     {loading ? (
@@ -99,7 +107,7 @@ const Contact = () => {
                     >
                         <div className={styles.formRow}>
                             <div className={styles.inputGroup}>
-                                <label htmlFor="name">Name</label>
+                                <label htmlFor="name">{t('contact.name')}</label>
                                 <input
                                     type="text"
                                     id="name"
@@ -107,11 +115,11 @@ const Contact = () => {
                                     value={formData.name}
                                     onChange={handleChange}
                                     required
-                                    placeholder="Your Name"
+                                    placeholder={t('contact.namePlaceholder')}
                                 />
                             </div>
                             <div className={styles.inputGroup}>
-                                <label htmlFor="email">Email</label>
+                                <label htmlFor="email">{t('contact.email')}</label>
                                 <input
                                     type="email"
                                     id="email"
@@ -119,13 +127,13 @@ const Contact = () => {
                                     value={formData.email}
                                     onChange={handleChange}
                                     required
-                                    placeholder="your@email.com"
+                                    placeholder={t('contact.emailPlaceholder')}
                                 />
                             </div>
                         </div>
 
                         <div className={styles.inputGroup}>
-                            <label htmlFor="message">Message</label>
+                            <label htmlFor="message">{t('contact.message')}</label>
                             <textarea
                                 id="message"
                                 name="message"
@@ -133,7 +141,7 @@ const Contact = () => {
                                 value={formData.message}
                                 onChange={handleChange}
                                 required
-                                placeholder="How can I help you?"
+                                placeholder={t('contact.messagePlaceholder')}
                             ></textarea>
                         </div>
 
@@ -147,11 +155,11 @@ const Contact = () => {
                             {status === 'sending' ? (
                                 <span className={styles.sendingState}>
                                     <span className={styles.spinner} />
-                                    Sending...
+                                    {t('contact.sending')}
                                 </span>
                             ) : (
                                 <span className={styles.btnContent}>
-                                    Send Message
+                                    {t('contact.send')}
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
                                     </svg>
@@ -172,7 +180,7 @@ const Contact = () => {
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                         <polyline points="20 6 9 17 4 12" />
                                     </svg>
-                                    Message sent successfully!
+                                    {t('contact.success')}
                                 </motion.div>
                             )}
                             {status === 'error' && (
@@ -184,7 +192,7 @@ const Contact = () => {
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
                                 >
-                                    Something went wrong. Please try again.
+                                    {t('contact.error')}
                                 </motion.div>
                             )}
                             {status === 'rate_limited' && (
@@ -196,7 +204,7 @@ const Contact = () => {
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
                                 >
-                                    Please wait a few minutes before sending another message.
+                                    {t('contact.rateLimited')}
                                 </motion.div>
                             )}
                         </AnimatePresence>

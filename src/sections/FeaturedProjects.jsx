@@ -6,8 +6,10 @@ import styles from './Projects.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Link } from 'react-router';
+import { useTranslation } from '../hooks/useTranslation';
 
 const FeaturedProjects = () => {
+    const { t } = useTranslation();
     const { data: projectsData, isLoading: loading } = useQuery({
         staleTime: 60000,
         gcTime: 300000,
@@ -52,7 +54,7 @@ const FeaturedProjects = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                 >
-                    Featured Projects
+                    {t('featuredProjects.title')}
                 </motion.h2>
 
                 {loading ? (
@@ -88,7 +90,7 @@ const FeaturedProjects = () => {
                             ))
                         ) : (
                             <div className={styles.empty}>
-                                <p>No featured projects found.</p>
+                                <p>{t('featuredProjects.empty')}</p>
                             </div>
                         )}
                     </motion.div>
@@ -102,7 +104,7 @@ const FeaturedProjects = () => {
                         viewport={{ once: true }}
                     >
                         <Link to="/projects" className={styles.viewAllBtn}>
-                            View All Projects -&gt;
+                            {t('featuredProjects.viewAll')}
                         </Link>
                     </motion.div>
                 )}

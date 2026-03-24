@@ -13,6 +13,7 @@ import MaintenancePage from '@/sections/MaintenancePage';
 import ComponentErrorBoundary from '@/sections/ErrorBoundary';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { ActivityProvider } from '../src/context/ActivityContext';
+import { LanguageProvider } from '../src/context/LanguageContext';
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { queryClient } from '../src/queryClient';
 import React, { useEffect } from 'react';
@@ -46,12 +47,14 @@ export function Layout({ children }) {
       <body>
           <ComponentErrorBoundary>
             <QueryClientProvider client={queryClient}>
-              <ThemeProvider>
-                <ActivityProvider>
-                  {children}
-                  {typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname) && <Analytics />}
-                </ActivityProvider>
-              </ThemeProvider>
+              <LanguageProvider>
+                <ThemeProvider>
+                  <ActivityProvider>
+                    {children}
+                    {typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname) && <Analytics />}
+                  </ActivityProvider>
+                </ThemeProvider>
+              </LanguageProvider>
             </QueryClientProvider>
           </ComponentErrorBoundary>
         <ConditionalScrollRestoration />

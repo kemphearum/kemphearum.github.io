@@ -1,13 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router';
 import { useAnalytics } from '../hooks/useAnalytics';
+import { useTranslation } from '../hooks/useTranslation';
+import { getLocalizedField } from '../utils/localization';
 import styles from './ProjectCard.module.scss';
 
 const ProjectCard = ({ project }) => {
     const { trackEvent } = useAnalytics();
+    const { language } = useTranslation();
+    const title = getLocalizedField(project.title, language);
+    const description = getLocalizedField(project.description, language);
 
     const handleDetailsClick = () => {
-        trackEvent('view_project_details', { project_title: project.title });
+        trackEvent('view_project_details', { project_title: title });
     };
 
     return (
@@ -16,13 +21,13 @@ const ProjectCard = ({ project }) => {
                 {project.imageUrl ? (
                     <img
                         src={project.imageUrl}
-                        alt={project.title}
+                        alt={title}
                         className={styles.image}
                         loading="lazy"
                     />
                 ) : (
                     <div className={styles.placeholderImage}>
-                        <span>{project.title}</span>
+                        <span>{title}</span>
                     </div>
                 )}
                 <div className={styles.imageOverlay}>
@@ -45,8 +50,8 @@ const ProjectCard = ({ project }) => {
                 </div>
             </div>
             <div className={styles.content}>
-                <h3 className={styles.title}>{project.title}</h3>
-                <p className={styles.description}>{project.description}</p>
+                <h3 className={styles.title}>{title}</h3>
+                <p className={styles.description}>{description}</p>
                 <div className={styles.tags}>
                     {project.techStack && project.techStack.map((tech, index) => (
                         <span key={index} className={styles.tag}>{tech}</span>
@@ -58,7 +63,7 @@ const ProjectCard = ({ project }) => {
                             to={`/projects/${project.slug}`}
                             className={`${styles.linkBtn} ${styles.linkBtnAccent}`}
                             onClick={handleDetailsClick}
-                            aria-label={`View details for ${project.title}`}
+                            aria-label={`View details for ${title}`}
                         >
                             View Details -&gt;
                         </Link>
@@ -70,7 +75,7 @@ const ProjectCard = ({ project }) => {
                             rel="noopener noreferrer"
                             className={styles.linkBtn}
                             onClick={() => {
-                                trackEvent('project_github_clicked', { project_title: project.title });
+                                trackEvent('project_github_clicked', { project_title: title });
                             }}
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -86,7 +91,7 @@ const ProjectCard = ({ project }) => {
                             rel="noopener noreferrer"
                             className={styles.linkBtnPrimary}
                             onClick={() => {
-                                trackEvent('project_live_clicked', { project_title: project.title });
+                                trackEvent('project_live_clicked', { project_title: title });
                             }}
                         >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

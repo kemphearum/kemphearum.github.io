@@ -45,25 +45,49 @@ const HomeSection = ({
                             </div>
 
                             <FormRow>
-                                <FormField label="Greeting" name="greeting">
+                                <FormField label="Greeting (EN)" name="greetingEn">
                                     <FormInput placeholder="e.g. Hello, I am" />
                                 </FormField>
-                                <FormField label="Full Name" name="name">
-                                    <FormInput placeholder="Your professional name" />
+                                <FormField label="Greeting (KM)" name="greetingKm">
+                                    <FormInput placeholder="ឧ. សួស្តី ខ្ញុំឈ្មោះ..." />
                                 </FormField>
                             </FormRow>
 
-                            <FormField label="Professional Subtitle" name="subtitle">
-                                <FormInput placeholder="e.g. Senior Software Engineer" />
-                            </FormField>
+                            <FormRow>
+                                <FormField label="Full Name (EN)" name="nameEn">
+                                    <FormInput placeholder="Your professional name" />
+                                </FormField>
+                                <FormField label="Full Name (KM)" name="nameKm">
+                                    <FormInput placeholder="ឈ្មោះអាជីពរបស់អ្នក" />
+                                </FormField>
+                            </FormRow>
 
-                            <FormField label="Hero Description" name="description">
+                            <FormRow>
+                                <FormField label="Professional Subtitle (EN)" name="subtitleEn">
+                                    <FormInput placeholder="e.g. Senior Software Engineer" />
+                                </FormField>
+                                <FormField label="Professional Subtitle (KM)" name="subtitleKm">
+                                    <FormInput placeholder="ឧ. វិស្វករសូហ្វវែរជាន់ខ្ពស់" />
+                                </FormField>
+                            </FormRow>
+
+                            <FormField label="Hero Description (EN)" name="descriptionEn">
                                 <FormMarkdownEditor
-                                    id="home-description"
+                                    id="home-description-en"
                                     placeholder="A brief, impactful introduction..."
                                     isPreviewMode={homePreview}
                                     onTogglePreview={() => setHomePreview(!homePreview)}
-                                    rows="8"
+                                    rows="6"
+                                />
+                            </FormField>
+
+                            <FormField label="Hero Description (KM)" name="descriptionKm">
+                                <FormMarkdownEditor
+                                    id="home-description-km"
+                                    placeholder="សេចក្តីណែនាំខ្លីៗជាភាសាខ្មែរ..."
+                                    isPreviewMode={homePreview}
+                                    onTogglePreview={() => setHomePreview(!homePreview)}
+                                    rows="6"
                                 />
                             </FormField>
                         </div>
@@ -75,9 +99,15 @@ const HomeSection = ({
                             </div>
 
                             <FormRow>
-                                <FormField label="Call to Action Text" name="ctaText">
+                                <FormField label="Call to Action Text (EN)" name="ctaTextEn">
                                     <FormInput placeholder="e.g. View My Work" />
                                 </FormField>
+                                <FormField label="Call to Action Text (KM)" name="ctaTextKm">
+                                    <FormInput placeholder="ឧ. មើលការងាររបស់ខ្ញុំ" />
+                                </FormField>
+                            </FormRow>
+
+                            <FormRow>
                                 <FormField label="CTA Anchor/Link" name="ctaLink">
                                     <FormInput placeholder="e.g. #projects" />
                                 </FormField>

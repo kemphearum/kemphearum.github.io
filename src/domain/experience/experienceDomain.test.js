@@ -25,8 +25,8 @@ describe('experienceDomain', () => {
             };
             const result = normalizeExperience(rawData);
 
-            expect(result.company).toBe('Google');
-            expect(result.role).toBe('Dev');
+            expect(result.company).toEqual({ en: 'Google', km: '' });
+            expect(result.role).toEqual({ en: 'Dev', km: '' });
             expect(result.startDate).toBe('Jan 2020');
             expect(result.endDate).toBe('Jan 2021');
             expect(result.period).toBe('Jan 2020 - Jan 2021');
@@ -58,17 +58,21 @@ describe('experienceDomain', () => {
     describe('validateExperience()', () => {
         it('should return null for valid data', () => {
             const errors = validateExperience({ 
-                company: 'A', 
-                role: 'B', 
+                company: { en: 'A', km: '' }, 
+                role: { en: 'B', km: '' }, 
                 startMonthYear: '2020-01' 
             });
             expect(errors).toBeNull();
         });
 
         it('should return errors for missing fields', () => {
-            const errors = validateExperience({ company: '', role: '', startMonthYear: '' });
-            expect(errors.company).toBe('Company is required');
-            expect(errors.role).toBe('Role is required');
+            const errors = validateExperience({
+                company: { en: '', km: '' },
+                role: { en: '', km: '' },
+                startMonthYear: ''
+            });
+            expect(errors.companyEn).toBe('English company is required');
+            expect(errors.roleEn).toBe('English role is required');
             expect(errors.startMonthYear).toBe('Start date is required');
         });
     });

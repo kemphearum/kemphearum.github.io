@@ -4,7 +4,11 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import SettingsService from '../services/SettingsService';
 import { useTheme } from '../context/ThemeContext';
-import { normalizeSectionTarget, scrollToSectionWithOffset } from '../utils/sectionNavigation';
+import LanguageSwitcher from '../shared/components/LanguageSwitcher';
+import { useTranslation } from '../hooks/useTranslation';
+import { normalizeSectionTarget } from '../utils/sectionNavigation';
+
+const SECTION_IDS = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -12,17 +16,17 @@ const Navbar = () => {
     const [activeSection, setActiveSection] = useState('home');
     const location = useLocation();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const isHome = location.pathname === '/';
     const currentHash = (location.hash || '').replace('#', '');
     const { theme, toggleTheme } = useTheme();
-    const sectionIds = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
     const navItems = [
-        { key: 'home', type: 'section' },
-        { key: 'about', type: 'section' },
-        { key: 'experience', type: 'section' },
-        { key: 'projects', type: 'route', to: '/projects' },
-        { key: 'blog', type: 'route', to: '/blog' },
-        { key: 'contact', type: 'section' }
+        { key: 'home', type: 'section', label: t('nav.home') },
+        { key: 'about', type: 'section', label: t('nav.about') },
+        { key: 'experience', type: 'section', label: t('nav.experience') },
+        { key: 'projects', type: 'route', to: '/projects', label: t('nav.projects') },
+        { key: 'blog', type: 'route', to: '/blog', label: t('nav.blog') },
+        { key: 'contact', type: 'section', label: t('nav.contact') }
     ];
 
     const { data: globalConfig } = useQuery({
@@ -54,7 +58,7 @@ const Navbar = () => {
             const viewportAnchor = window.innerHeight * 0.3;
             let next = 'home';
 
-            for (const id of sectionIds) {
+            for (const id of SECTION_IDS) {
                 const element = document.getElementById(id);
                 if (!element) continue;
                 const rect = element.getBoundingClientRect();
@@ -74,11 +78,6 @@ const Navbar = () => {
             window.removeEventListener('resize', detectActiveSection);
         };
     }, [isHome]);
-
-    useEffect(() => {
-        if (!isHome) return;
-        if (currentHash) setActiveSection(currentHash);
-    }, [isHome, currentHash]);
 
     // Close mobile menu on resize
     useEffect(() => {
@@ -185,7 +184,7 @@ const Navbar = () => {
                                         className={active ? styles.activeNav : ''}
                                         aria-current={active ? 'page' : undefined}
                                     >
-                                        {item.key.charAt(0).toUpperCase() + item.key.slice(1)}
+                                        {item.label}
                                     </Link>
                                 ) : (
                                     <button
@@ -194,18 +193,20 @@ const Navbar = () => {
                                         className={active ? styles.activeNav : ''}
                                         aria-current={active ? 'page' : undefined}
                                     >
-                                        {item.key.charAt(0).toUpperCase() + item.key.slice(1)}
+                                        {item.label}
                                     </button>
                                 )}
                             </li>
                         )})}
                     </ul>
 
+                    <LanguageSwitcher />
+
                     <button
                         className={styles.themeToggle}
                         onClick={toggleTheme}
-                        aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-                        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                     >
                         {theme === 'dark' ? (
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

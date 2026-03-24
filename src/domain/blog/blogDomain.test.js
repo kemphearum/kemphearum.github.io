@@ -10,7 +10,7 @@ describe('blogDomain', () => {
             };
             const result = normalizePost(rawData);
 
-            expect(result.title).toBe('My Post');
+            expect(result.title).toEqual({ en: 'My Post', km: '' });
             expect(result.tags).toEqual(['React', 'Testing', 'CSS']);
             expect(result.slug).toBe('my-post');
             expect(result.visible).toBe(true);
@@ -47,19 +47,28 @@ describe('blogDomain', () => {
 
     describe('validatePost()', () => {
         it('should return null for valid data', () => {
-            const errors = validatePost({ title: 'Valid Blog', content: 'Some content' });
+            const errors = validatePost({
+                title: { en: 'Valid Blog', km: '' },
+                content: { en: 'Some content', km: '' }
+            });
             expect(errors).toBeNull();
         });
 
         it('should return errors for missing required fields', () => {
-            const errors = validatePost({ title: '', content: '' });
-            expect(errors.title).toBe('Title is required');
-            expect(errors.content).toBe('Content is required');
+            const errors = validatePost({
+                title: { en: '', km: '' },
+                content: { en: '', km: '' }
+            });
+            expect(errors.titleEn).toBe('English title is required');
+            expect(errors.contentEn).toBe('English content is required');
         });
 
         it('should return error if content is only whitespace', () => {
-            const errors = validatePost({ title: 'A', content: '   ' });
-            expect(errors.content).toBe('Content is required');
+            const errors = validatePost({
+                title: { en: 'A', km: '' },
+                content: { en: '   ', km: '' }
+            });
+            expect(errors.contentEn).toBe('English content is required');
         });
     });
 });

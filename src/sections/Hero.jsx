@@ -4,13 +4,17 @@ import { Link, useNavigate } from 'react-router';
 import ContentService from '../services/ContentService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Hero.module.scss';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
+import { useTranslation } from '../hooks/useTranslation';
+import { getLocalizedField } from '../utils/localization';
 import { normalizeSectionTarget } from '../utils/sectionNavigation';
 import { Download, Send } from 'lucide-react';
 
 const Hero = () => {
     const { trackEvent } = useAnalytics();
+    const { language, t } = useTranslation();
     const navigate = useNavigate();
 
     const handleSectionLinkClick = (e, target) => {
@@ -41,7 +45,7 @@ const Hero = () => {
         queryFn: () => ContentService.fetchSection('home')
     });
 
-    const content = data || {
+    const rawContent = data || {
         greeting: '',
         name: '',
         subtitle: '',
@@ -49,6 +53,15 @@ const Hero = () => {
         ctaText: '',
         ctaLink: '',
         profileImageUrl: ''
+    };
+
+    const content = {
+        ...rawContent,
+        greeting: getLocalizedField(rawContent.greeting, language),
+        name: getLocalizedField(rawContent.name, language),
+        subtitle: getLocalizedField(rawContent.subtitle, language),
+        description: getLocalizedField(rawContent.description, language),
+        ctaText: getLocalizedField(rawContent.ctaText, language)
     };
 
     const containerVariants = {
@@ -119,7 +132,7 @@ const Hero = () => {
                                     }}
                                     className={styles.ctaButton}
                                 >
-                                    {content.ctaText || 'Get My CV'}
+                                    {content.ctaText || t('hero.defaultCta')}
                                     <Download size={18} />
                                 </Link>
                                 <Link 
@@ -130,7 +143,7 @@ const Hero = () => {
                                     }}
                                     className={styles.ctaSecondary}
                                 >
-                                    Get In Touch
+                                    {t('hero.contactCta')}
                                     <Send size={18} />
                                 </Link>
                             </motion.div>

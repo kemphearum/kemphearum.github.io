@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './Sidebar.module.scss';
 import { FileText, Database, BarChart2 } from 'lucide-react';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 const Sidebar = ({ 
     currentRoute, 
@@ -14,18 +15,20 @@ const Sidebar = ({
     isTabAllowed,
     lastSyncTime 
 }) => {
+    const { t, language } = useTranslation();
+
     const formatSyncTime = (date) => {
-        if (!date) return 'Never';
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        if (!date) return t('admin.sidebar.never');
+        return date.toLocaleTimeString(language === 'km' ? 'km-KH' : 'en-US', { hour: '2-digit', minute: '2-digit' });
     };
 
     const menuGroups = [
         {
-            title: 'MAIN',
+            title: t('admin.sidebar.groups.main'),
             items: [
                 {
                     key: 'general',
-                    label: 'General Content',
+                    label: t('admin.tabs.general'),
                     icon: (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
@@ -34,7 +37,7 @@ const Sidebar = ({
                 },
                 {
                     key: 'experience',
-                    label: 'Experience',
+                    label: t('admin.tabs.experience'),
                     icon: (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
@@ -43,7 +46,7 @@ const Sidebar = ({
                 },
                 {
                     key: 'projects',
-                    label: 'Projects',
+                    label: t('admin.tabs.projects'),
                     icon: (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
@@ -53,16 +56,16 @@ const Sidebar = ({
             ]
         },
         {
-            title: 'MANAGEMENT',
+            title: t('admin.sidebar.groups.management'),
             items: [
                 {
                     key: 'blog',
-                    label: 'Blog',
+                    label: t('admin.tabs.blog'),
                     icon: <FileText size={18} />
                 },
                 {
                     key: 'messages',
-                    label: 'Messages',
+                    label: t('admin.tabs.messages'),
                     icon: (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -72,17 +75,17 @@ const Sidebar = ({
                 },
                 {
                     key: 'database',
-                    label: 'Database',
+                    label: t('admin.tabs.database'),
                     icon: <Database size={18} />
                 }
             ]
         },
         {
-            title: 'SYSTEM',
+            title: t('admin.sidebar.groups.system'),
             items: [
                 {
                     key: 'users',
-                    label: 'User Management',
+                    label: t('admin.tabs.users'),
                     icon: (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
@@ -91,7 +94,7 @@ const Sidebar = ({
                 },
                 {
                     key: 'audit',
-                    label: 'Audit Logs',
+                    label: t('admin.tabs.audit'),
                     icon: (
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -100,7 +103,7 @@ const Sidebar = ({
                 },
                 {
                     key: 'analytics',
-                    label: 'Analytics',
+                    label: t('admin.tabs.analytics'),
                     icon: <BarChart2 size={18} />
                 }
             ]
@@ -152,10 +155,10 @@ const Sidebar = ({
                 </nav>
 
                 <div className={styles.syncStatus}>
-                    <div className={styles.statusLabel}>System Status</div>
+                    <div className={styles.statusLabel}>{t('admin.sidebar.systemStatus')}</div>
                     <div className={styles.statusMain}>
-                        <div className={styles.statusIndicator} title="Connected & Synced" />
-                        <span className={styles.statusTime}>Synced at {formatSyncTime(lastSyncTime)}</span>
+                        <div className={styles.statusIndicator} title={t('admin.sidebar.connectedSynced')} />
+                        <span className={styles.statusTime}>{t('admin.sidebar.syncedAt', { time: formatSyncTime(lastSyncTime) })}</span>
                     </div>
                 </div>
             </aside>

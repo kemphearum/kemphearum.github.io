@@ -45,16 +45,29 @@ const AboutSection = ({
                             </div>
 
                             <FormField
-                                label="Biography"
-                                name="bio"
-                                validation={{ required: 'Bio is required' }}
+                                label="Biography (EN)"
+                                name="bioEn"
+                                validation={{ required: 'English bio is required' }}
                             >
                                 <FormMarkdownEditor
-                                    id="about-bio"
+                                    id="about-bio-en"
                                     placeholder="Write your professional bio..."
                                     isPreviewMode={aboutPreview}
                                     onTogglePreview={() => setAboutPreview(!aboutPreview)}
-                                    rows="12"
+                                    rows="8"
+                                />
+                            </FormField>
+
+                            <FormField
+                                label="Biography (KM)"
+                                name="bioKm"
+                            >
+                                <FormMarkdownEditor
+                                    id="about-bio-km"
+                                    placeholder="សរសេរព័ត៌មានអំពីខ្លួនអ្នកជាភាសាខ្មែរ..."
+                                    isPreviewMode={aboutPreview}
+                                    onTogglePreview={() => setAboutPreview(!aboutPreview)}
+                                    rows="8"
                                 />
                             </FormField>
                         </div>

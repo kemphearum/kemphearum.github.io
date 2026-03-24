@@ -1,4 +1,5 @@
 import { slugify } from '../shared/slugify';
+import { buildLocalizedFieldFromInput, getLocalizedField } from '../../utils/localization';
 
 /**
  * Normalizes project data for Firestore.
@@ -12,15 +13,18 @@ export const normalizeProject = (data) => {
             : data.techStack)
         : [];
     const techStack = [...new Set(rawTechStack)];
+    const title = buildLocalizedFieldFromInput(data, 'title', 'Untitled Project');
+    const description = buildLocalizedFieldFromInput(data, 'description');
+    const content = buildLocalizedFieldFromInput(data, 'content');
 
     return {
-        title: (data.title || 'Untitled Project').trim(),
-        description: (data.description || '').trim(),
+        title,
+        description,
         techStack,
         githubUrl: (data.githubUrl || '').trim(),
         liveUrl: (data.liveUrl || '').trim(),
-        slug: slugify((data.slug || data.title || 'untitled').trim()),
-        content: (data.content || '').trim(),
+        slug: slugify((data.slug || title.en || 'untitled').trim()),
+        content,
         visible: data.visible !== false,
         featured: !!data.featured,
         ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl })
@@ -34,9 +38,10 @@ export const normalizeProject = (data) => {
  */
 export const validateProject = (data) => {
     const errors = {};
+    const title = getLocalizedField(data.title, 'en');
     
-    if (!data.title || !data.title.trim()) {
-        errors.title = 'Title is required';
+    if (!title || !title.trim()) {
+        errors.titleEn = 'English title is required';
     }
 
     return Object.keys(errors).length > 0 ? errors : null;

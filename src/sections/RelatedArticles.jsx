@@ -5,8 +5,11 @@ import BlogService from '../services/BlogService';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import styles from './RelatedArticles.module.scss'; // Reuse blog card styles where possible or create new
+import { useTranslation } from '../hooks/useTranslation';
+import { getLocalizedField } from '../utils/localization';
 
 const RelatedArticles = ({ currentPostId, tags }) => {
+    const { language, t } = useTranslation();
     const { data: relatedPostsData, isLoading: loading } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
@@ -16,14 +19,19 @@ const RelatedArticles = ({ currentPostId, tags }) => {
         enabled: !!currentPostId
     });
 
-    const relatedPosts = relatedPostsData || [];
+    const relatedPosts = (relatedPostsData || []).map((post) => ({
+        ...post,
+        title: getLocalizedField(post.title, language),
+        excerpt: getLocalizedField(post.excerpt, language),
+        content: getLocalizedField(post.content, language)
+    }));
 
     if (loading || relatedPosts.length === 0) return null;
 
     return (
         <div className={styles.relatedSection}>
             <div className={styles.header}>
-                <h3>Related Articles</h3>
+                <h3>{t('related.articles')}</h3>
                 <div className={styles.divider}></div>
             </div>
 

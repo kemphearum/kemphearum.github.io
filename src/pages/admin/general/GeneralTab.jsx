@@ -11,6 +11,7 @@ import Form from '../components/Form';
 import HomeSection from './components/HomeSection';
 import AboutSection from './components/AboutSection';
 import ContactSection from './components/ContactSection';
+import { getLanguageValue } from '../../../utils/localization';
 
 const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData }) => {
     const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
@@ -29,12 +30,26 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
         // Remove the file object before saving to Firestore
         const { image: _image, ...rest } = data;
         await saveSectionData('home', {
-            ...rest,
-            greeting: (rest.greeting || '').trim(),
-            name: (rest.name || '').trim(),
-            subtitle: (rest.subtitle || '').trim(),
-            description: (rest.description || '').trim(),
-            ctaText: (rest.ctaText || '').trim(),
+            greeting: {
+                en: (rest.greetingEn || '').trim(),
+                km: (rest.greetingKm || '').trim()
+            },
+            name: {
+                en: (rest.nameEn || '').trim(),
+                km: (rest.nameKm || '').trim()
+            },
+            subtitle: {
+                en: (rest.subtitleEn || '').trim(),
+                km: (rest.subtitleKm || '').trim()
+            },
+            description: {
+                en: (rest.descriptionEn || '').trim(),
+                km: (rest.descriptionKm || '').trim()
+            },
+            ctaText: {
+                en: (rest.ctaTextEn || '').trim(),
+                km: (rest.ctaTextKm || '').trim()
+            },
             ctaLink: (rest.ctaLink || '').trim(),
             profileImageUrl: imageUrl
         });
@@ -42,36 +57,56 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
 
     const handleSaveAbout = async (data) => {
         const skillsArray = data.skills.split(',').map(s => s.trim()).filter(s => s);
-        await saveSectionData('about', { bio: (data.bio || '').trim(), skills: skillsArray });
+        await saveSectionData('about', {
+            bio: {
+                en: (data.bioEn || '').trim(),
+                km: (data.bioKm || '').trim()
+            },
+            skills: skillsArray
+        });
     };
 
     const handleSaveContact = async (data) => {
-        await saveSectionData('contact', { introText: (data.introText || '').trim() });
+        await saveSectionData('contact', {
+            introText: {
+                en: (data.introTextEn || '').trim(),
+                km: (data.introTextKm || '').trim()
+            }
+        });
     };
 
     const handleOpenHistory = (recordId, title) => {
         setHistoryModal({ isOpen: true, recordId, title });
     };
 
-    const homeFormKey = `home:${homeData.greeting || ''}:${homeData.name || ''}:${homeData.subtitle || ''}:${homeData.description || ''}:${homeData.ctaText || ''}:${homeData.ctaLink || ''}:${homeData.profileImageUrl || ''}`;
-    const aboutFormKey = `about:${aboutData.bio || ''}:${Array.isArray(aboutData.skills) ? aboutData.skills.join(',') : (aboutData.skills || '')}`;
-    const contactFormKey = `contact:${contactData.introText || ''}`;
+    const homeFormKey = `home:${getLanguageValue(homeData.greeting, 'en', true)}:${getLanguageValue(homeData.greeting, 'km', false)}:${getLanguageValue(homeData.name, 'en', true)}:${getLanguageValue(homeData.name, 'km', false)}:${getLanguageValue(homeData.subtitle, 'en', true)}:${getLanguageValue(homeData.subtitle, 'km', false)}:${getLanguageValue(homeData.description, 'en', true)}:${getLanguageValue(homeData.description, 'km', false)}:${getLanguageValue(homeData.ctaText, 'en', true)}:${getLanguageValue(homeData.ctaText, 'km', false)}:${homeData.ctaLink || ''}:${homeData.profileImageUrl || ''}`;
+    const aboutFormKey = `about:${getLanguageValue(aboutData.bio, 'en', true)}:${getLanguageValue(aboutData.bio, 'km', false)}:${Array.isArray(aboutData.skills) ? aboutData.skills.join(',') : (aboutData.skills || '')}`;
+    const contactFormKey = `contact:${getLanguageValue(contactData.introText, 'en', true)}:${getLanguageValue(contactData.introText, 'km', false)}`;
     const homeFilled = [
-        homeData.greeting,
-        homeData.name,
-        homeData.subtitle,
-        homeData.description,
-        homeData.ctaText,
+        getLanguageValue(homeData.greeting, 'en', true),
+        getLanguageValue(homeData.greeting, 'km', false),
+        getLanguageValue(homeData.name, 'en', true),
+        getLanguageValue(homeData.name, 'km', false),
+        getLanguageValue(homeData.subtitle, 'en', true),
+        getLanguageValue(homeData.subtitle, 'km', false),
+        getLanguageValue(homeData.description, 'en', true),
+        getLanguageValue(homeData.description, 'km', false),
+        getLanguageValue(homeData.ctaText, 'en', true),
+        getLanguageValue(homeData.ctaText, 'km', false),
         homeData.ctaLink,
         homeData.profileImageUrl
     ].filter(Boolean).length;
     const aboutFilled = [
-        aboutData.bio,
+        getLanguageValue(aboutData.bio, 'en', true),
+        getLanguageValue(aboutData.bio, 'km', false),
         Array.isArray(aboutData.skills) ? aboutData.skills.length > 0 : aboutData.skills
     ].filter(Boolean).length;
-    const contactFilled = [contactData.introText].filter(Boolean).length;
+    const contactFilled = [
+        getLanguageValue(contactData.introText, 'en', true),
+        getLanguageValue(contactData.introText, 'km', false)
+    ].filter(Boolean).length;
     const totalFilled = homeFilled + aboutFilled + contactFilled;
-    const totalFields = 10;
+    const totalFields = 17;
     const sectionMeta = [
         {
             value: 'home',
@@ -79,7 +114,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
             description: 'Hero copy, CTA, and portrait',
             icon: Home,
             filled: homeFilled,
-            total: 7
+            total: 12
         },
         {
             value: 'about',
@@ -87,7 +122,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
             description: 'Bio and skills snapshot',
             icon: User,
             filled: aboutFilled,
-            total: 2
+            total: 3
         },
         {
             value: 'contact',
@@ -95,7 +130,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
             description: 'Intro text above the form',
             icon: Mail,
             filled: contactFilled,
-            total: 1
+            total: 2
         }
     ];
 
@@ -148,11 +183,16 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                         onSubmit={handleSaveHome}
                         key={homeFormKey}
                         defaultValues={{
-                            greeting: homeData.greeting || '',
-                            name: homeData.name || '',
-                            subtitle: homeData.subtitle || '',
-                            description: homeData.description || '',
-                            ctaText: homeData.ctaText || '',
+                            greetingEn: getLanguageValue(homeData.greeting, 'en', true),
+                            greetingKm: getLanguageValue(homeData.greeting, 'km', false),
+                            nameEn: getLanguageValue(homeData.name, 'en', true),
+                            nameKm: getLanguageValue(homeData.name, 'km', false),
+                            subtitleEn: getLanguageValue(homeData.subtitle, 'en', true),
+                            subtitleKm: getLanguageValue(homeData.subtitle, 'km', false),
+                            descriptionEn: getLanguageValue(homeData.description, 'en', true),
+                            descriptionKm: getLanguageValue(homeData.description, 'km', false),
+                            ctaTextEn: getLanguageValue(homeData.ctaText, 'en', true),
+                            ctaTextKm: getLanguageValue(homeData.ctaText, 'km', false),
                             ctaLink: homeData.ctaLink || '',
                             image: null
                         }}
@@ -172,7 +212,8 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                         onSubmit={handleSaveAbout}
                         key={aboutFormKey}
                         defaultValues={{
-                            bio: aboutData.bio || '',
+                            bioEn: getLanguageValue(aboutData.bio, 'en', true),
+                            bioKm: getLanguageValue(aboutData.bio, 'km', false),
                             skills: Array.isArray(aboutData.skills) ? aboutData.skills.join(', ') : (aboutData.skills || '')
                         }}
                     >
@@ -190,7 +231,8 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                         onSubmit={handleSaveContact}
                         key={contactFormKey}
                         defaultValues={{
-                            introText: contactData.introText || ''
+                            introTextEn: getLanguageValue(contactData.introText, 'en', true),
+                            introTextKm: getLanguageValue(contactData.introText, 'km', false)
                         }}
                     >
                         <ContactSection 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -18,6 +17,7 @@ export function meta({ data }) {
         { property: "og:title", content: title },
     ];
 }
+
 import { useQuery } from '@tanstack/react-query';
 import BlogService from '../services/BlogService';
 import SettingsService from '../services/SettingsService';
@@ -27,36 +27,42 @@ import { Link } from 'react-router';
 import Navbar from '@/sections/Navbar';
 import Footer from '@/sections/Footer';
 import styles from './Blog.module.scss';
+import { useTranslation } from '../hooks/useTranslation';
+import { getLocalizedField } from '../utils/localization';
 
 const Blog = () => {
+    const { language, t } = useTranslation();
     const { data: postsData, isLoading: loadingPosts } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
+        staleTime: 60000,
+        gcTime: 300000,
+        refetchOnWindowFocus: false,
         queryKey: ['posts'],
         queryFn: () => BlogService.getAll("createdAt", "desc")
     });
 
     const { data: globalConfig } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
+        staleTime: 60000,
+        gcTime: 300000,
+        refetchOnWindowFocus: false,
         queryKey: ['settings', 'global'],
         queryFn: () => SettingsService.fetchGlobalSettings()
     });
 
     const settings = globalConfig?.site || globalConfig;
 
-    const posts = postsData || [];
+    const posts = (postsData || []).map((post) => ({
+        ...post,
+        title: getLocalizedField(post.title, language),
+        excerpt: getLocalizedField(post.excerpt, language),
+        content: getLocalizedField(post.content, language)
+    }));
     const loading = loadingPosts;
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedTag, setSelectedTag] = useState(null);
 
-    // Pagination
     const itemsPerPage = 5;
     const [currentPage, setCurrentPage] = useState(1);
 
-    // Extract all unique tags from visible posts
     const allTags = React.useMemo(() => {
         const tags = new Set();
         posts.forEach(post => {
@@ -71,7 +77,6 @@ const Blog = () => {
         ? settings.blogFilters.split(',').map(s => s.trim()).filter(s => s)
         : allTags.slice(0, 8);
 
-    // Filter visible posts by search term and selected tag
     const visiblePosts = posts.filter(post => {
         if (!post.visible) return false;
 
@@ -81,11 +86,9 @@ const Blog = () => {
             post.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
 
         const matchesTag = selectedTag ? post.tags?.includes(selectedTag) : true;
-
         return matchesSearch && matchesTag;
     });
 
-    // Reset pagination when search or filter changes
     const handleSearchChange = (val) => {
         setSearchTerm(val);
         setCurrentPage(1);
@@ -101,7 +104,6 @@ const Blog = () => {
         setCurrentPage(1);
     };
 
-    // Pagination Logic
     const totalPages = Math.ceil(visiblePosts.length / itemsPerPage);
     const paginatedPosts = visiblePosts.slice(
         (currentPage - 1) * itemsPerPage,
@@ -114,18 +116,15 @@ const Blog = () => {
             <main className={styles.blogPage}>
                 <section className={styles.hero}>
                     <div className={styles.container}>
-                        <motion.h1
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                        >
-                            Blog & Insights
+                        <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                            {t('blog.title')}
                         </motion.h1>
                         <motion.p
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
                         >
-                            Thoughts on development, security, and tech.
+                            {t('blog.subtitle')}
                         </motion.p>
 
                         <motion.div
@@ -138,10 +137,10 @@ const Blog = () => {
                                 type="text"
                                 id="blog-search"
                                 name="blog-search"
-                                placeholder="Search articles..."
+                                placeholder={t('blog.searchPlaceholder')}
                                 value={searchTerm}
                                 onChange={(e) => handleSearchChange(e.target.value)}
-                                aria-label="Search blog articles"
+                                aria-label={t('blog.searchAria')}
                             />
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -159,7 +158,7 @@ const Blog = () => {
                                     className={`${styles.filterTag} ${selectedTag === null ? styles.active : ''}`}
                                     onClick={handleAllTags}
                                 >
-                                    All
+                                    {t('blog.filterAll')}
                                 </button>
                                 {displayTags.map(tag => (
                                     <button
@@ -207,7 +206,7 @@ const Blog = () => {
                                             <div className={styles.content}>
                                                 <div className={styles.meta}>
                                                     <span className={styles.date}>
-                                                        {post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000).toLocaleDateString() : 'Just now'}
+                                                        {post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000).toLocaleDateString() : t('blog.justNow')}
                                                     </span>
                                                     {post.tags && post.tags.length > 0 && (
                                                         <span className={styles.tag}>{post.tags[0]}</span>
@@ -215,7 +214,7 @@ const Blog = () => {
                                                 </div>
                                                 <h3>{post.title}</h3>
                                                 <p>{post.excerpt}</p>
-                                                <span className={styles.readMore}>Read Article â†’</span>
+                                                <span className={styles.readMore}>{t('blog.readMore')}</span>
                                             </div>
                                         </Link>
                                     </motion.article>
@@ -223,12 +222,11 @@ const Blog = () => {
                             </div>
                         ) : (
                             <div className={styles.emptyState}>
-                                <h3>No posts found</h3>
-                                <p>Try adjusting your search terms.</p>
+                                <h3>{t('blog.emptyTitle')}</h3>
+                                <p>{t('blog.emptyDescription')}</p>
                             </div>
                         )}
 
-                        {/* Pagination Controls */}
                         {!loading && totalPages > 1 && (
                             <motion.div
                                 className={styles.pagination}
@@ -276,4 +274,3 @@ const Blog = () => {
 };
 
 export default Blog;
-

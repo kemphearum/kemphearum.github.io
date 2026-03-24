@@ -2,10 +2,14 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import SettingsService from '../services/SettingsService';
 import { Github, Globe, Cloud, Activity, Terminal, Triangle, Flame } from 'lucide-react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import styles from './Footer.module.scss';
+import { useTranslation } from '../hooks/useTranslation';
+import { getLocalizedField } from '../utils/localization';
 
 const Footer = () => {
+    const { language, t } = useTranslation();
     const { data: globalConfig } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
@@ -21,11 +25,17 @@ const Footer = () => {
         { name: 'Firebase Mirror', url: 'https://kem-phearum.web.app/' }
     ];
 
-    const settings = globalConfig?.site || globalConfig || {
+    const baseSettings = globalConfig?.site || globalConfig || {
         footerText: '',
         logoHighlight: '',
         logoText: '',
         tagline: ''
+    };
+
+    const settings = {
+        ...baseSettings,
+        footerText: getLocalizedField(baseSettings.footerText, language),
+        tagline: getLocalizedField(baseSettings.tagline, language)
     };
 
     const mirrors = settings.mirrors || DEFAULT_MIRRORS;
@@ -51,7 +61,7 @@ const Footer = () => {
                     </div>
 
                     <div className={styles.mirrorsSection}>
-                        <h5 className={styles.sectionTitle}>Site Mirrors</h5>
+                        <h5 className={styles.sectionTitle}>{t('footer.siteMirrors')}</h5>
                         <div className={styles.mirrorsList}>
                             {mirrors.map((mirror, index) => (
                                 <motion.a 

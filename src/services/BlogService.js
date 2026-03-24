@@ -3,10 +3,17 @@ import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 import { normalizePost, validatePost } from '../domain/blog/blogDomain';
+import { getLanguageFromStorage, localizeEntityFields } from '../utils/localization';
+
+const BLOG_LOCALIZED_FIELDS = ['title', 'excerpt', 'content'];
 
 class BlogService extends BaseService {
     constructor() {
         super('posts');
+    }
+
+    localizePost(post, lang = getLanguageFromStorage()) {
+        return localizeEntityFields(post, BLOG_LOCALIZED_FIELDS, lang);
     }
 
     /**
@@ -106,7 +113,7 @@ class BlogService extends BaseService {
      * @param {boolean} [includeHidden=false] 
      * @returns {Promise<Object|null>}
      */
-    async fetchPostBySlug(slug, trackRead, includeHidden = false) {
+    async fetchPostBySlug(slug, trackRead, includeHidden = false, options = {}) {
         let q = query(collection(db, this.collectionName), where("slug", "==", slug));
         let querySnapshot = await getDocs(q);
 
@@ -117,14 +124,15 @@ class BlogService extends BaseService {
         if (!querySnapshot.empty) {
             const docData = querySnapshot.docs[0].data();
             if (!includeHidden && docData.visible === false) return null;
-            return { id: querySnapshot.docs[0].id, ...docData };
+            const post = { id: querySnapshot.docs[0].id, ...docData };
+            return options.localized ? this.localizePost(post, options.lang) : post;
         }
 
         // Fallback: Check if the slug is actually an ID
         const docById = await this.getById(slug);
         if (docById) {
             if (!includeHidden && docById.visible === false) return null;
-            return docById;
+            return options.localized ? this.localizePost(docById, options.lang) : docById;
         }
 
         return null;
@@ -137,7 +145,7 @@ class BlogService extends BaseService {
      * @param {function(number, string, Object): void} [trackRead] 
      * @returns {Promise<Array<Object>>}
      */
-    async fetchRelatedPosts(currentPostId, tags, trackRead) {
+    async fetchRelatedPosts(currentPostId, tags, trackRead, options = {}) {
         const q = query(
             collection(db, this.collectionName),
             where("visible", "==", true)
@@ -175,7 +183,9 @@ class BlogService extends BaseService {
             postsData = allVisiblePosts.slice(0, 3);
         }
 
-        return postsData;
+        return options.localized
+            ? postsData.map((post) => this.localizePost(post, options.lang))
+            : postsData;
     }
 
     /**

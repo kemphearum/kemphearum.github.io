@@ -1,4 +1,5 @@
 import { slugify } from '../shared/slugify';
+import { buildLocalizedFieldFromInput, getLocalizedField } from '../../utils/localization';
 
 /**
  * Normalizes blog post data for Firestore.
@@ -10,12 +11,15 @@ export const normalizePost = (data) => {
         ? data.tags.split(',').map(t => t.trim()).filter(t => t)
         : (Array.isArray(data.tags) ? data.tags : []);
     const tags = [...new Set(rawTags)];
+    const title = buildLocalizedFieldFromInput(data, 'title', 'Untitled Post');
+    const excerpt = buildLocalizedFieldFromInput(data, 'excerpt');
+    const content = buildLocalizedFieldFromInput(data, 'content');
 
     return {
-        title: (data.title || 'Untitled Post').trim(),
-        slug: slugify((data.slug || data.title || 'untitled').trim()),
-        excerpt: (data.excerpt || '').trim(),
-        content: (data.content || '').trim(),
+        title,
+        slug: slugify((data.slug || title.en || 'untitled').trim()),
+        excerpt,
+        content,
         tags,
         visible: data.visible !== false,
         featured: !!data.featured,
@@ -30,13 +34,15 @@ export const normalizePost = (data) => {
  */
 export const validatePost = (data) => {
     const errors = {};
+    const title = getLocalizedField(data.title, 'en');
+    const content = getLocalizedField(data.content, 'en');
     
-    if (!data.title || !data.title.trim()) {
-        errors.title = 'Title is required';
+    if (!title || !title.trim()) {
+        errors.titleEn = 'English title is required';
     }
 
-    if (!data.content || !data.content.trim()) {
-        errors.content = 'Content is required';
+    if (!content || !content.trim()) {
+        errors.contentEn = 'English content is required';
     }
 
     return Object.keys(errors).length > 0 ? errors : null;

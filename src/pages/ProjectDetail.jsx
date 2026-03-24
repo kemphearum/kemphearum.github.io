@@ -20,6 +20,8 @@ import TableOfContents from '@/sections/TableOfContents';
 import styles from './ProjectDetail.module.scss';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { getLocalizedField } from '../utils/localization';
+import { useTranslation } from '../hooks/useTranslation';
 
 export async function loader({ params }) {
     const q = query(collection(db, 'projects'), where("slug", "==", params.slug));
@@ -45,15 +47,19 @@ export async function loader({ params }) {
 export function meta({ data }) {
     if (!data) return [{ title: "Project Not Found | Kem Phearum" }];
 
+    const title = getLocalizedField(data.title, 'en');
+    const description = getLocalizedField(data.description, 'en');
+
     return generateMetaTags({
-        title: data.title,
-        description: data.description || 'Project details and technical implementation.',
+        title,
+        description: description || 'Project details and technical implementation.',
         image: data.imageUrl,
         type: 'article'
     });
 }
 
 const ProjectDetail = () => {
+    const { language } = useTranslation();
     const { slug } = useParams();
     const loaderData = useLoaderData();
     const [showScrollTop, setShowScrollTop] = useState(false);
@@ -71,7 +77,7 @@ const ProjectDetail = () => {
         queryFn: async () => {
             const projectData = await ProjectService.fetchProjectBySlug(slug);
             if (!projectData) throw new Error('Project not found');
-            trackRead(0, `Viewed project: ${projectData.title}`);
+            trackRead(0, `Viewed project: ${getLocalizedField(projectData.title, 'en')}`);
             return projectData;
         },
         initialData: loaderData || undefined,
@@ -79,6 +85,12 @@ const ProjectDetail = () => {
     });
 
     const error = isError ? 'Failed to load project details' : null;
+    const localizedProject = project ? {
+        ...project,
+        title: getLocalizedField(project.title, language),
+        description: getLocalizedField(project.description, language),
+        content: getLocalizedField(project.content, language)
+    } : null;
 
     // Scroll tracking
     const handleScroll = useCallback(() => {
@@ -125,7 +137,7 @@ const ProjectDetail = () => {
         try {
             if (navigator.share) {
                 await navigator.share({
-                    title: project.title,
+                    title: localizedProject.title,
                     url: currentUrl
                 });
             } else {
@@ -141,7 +153,7 @@ const ProjectDetail = () => {
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`, '_blank');
     };
     const shareToTelegram = () => {
-        window.open(`https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(project.title)}`, '_blank');
+        window.open(`https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(localizedProject.title)}`, '_blank');
     };
 
     const formatDate = (timestamp) => {
@@ -187,7 +199,7 @@ const ProjectDetail = () => {
         );
     }
 
-    const heroImg = project.imageUrl;
+    const heroImg = localizedProject.imageUrl;
 
     return (
         <>
@@ -208,7 +220,7 @@ const ProjectDetail = () => {
                     >
                         <Link to="/projects"><ArrowLeft size={14} /> Projects</Link>
                         <ChevronRight size={14} className={styles.separator} />
-                        <span className={styles.current}>{project.title}</span>
+                        <span className={styles.current}>{localizedProject.title}</span>
                     </motion.nav>
 
                     {/* Contained Featured Image */}
@@ -220,10 +232,10 @@ const ProjectDetail = () => {
                         transition={{ delay: 0.1, duration: 0.5 }}
                     >
                         {heroImg ? (
-                            <img src={heroImg} alt={project.title} width="1200" height="630" />
+                            <img src={heroImg} alt={localizedProject.title} width="1200" height="630" />
                         ) : (
                             <div className={styles.heroPlaceholder}>
-                                <span>{project.title}</span>
+                                <span>{localizedProject.title}</span>
                             </div>
                         )}
                         <div className={styles.imageOverlay} />
@@ -244,19 +256,19 @@ const ProjectDetail = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2, duration: 0.5 }}
                         >
-                            <h1 className={styles.projectTitle}>{project.title}</h1>
-                            {project.description && (
-                                <p className={styles.projectDescription}>{project.description}</p>
+                            <h1 className={styles.projectTitle}>{localizedProject.title}</h1>
+                            {localizedProject.description && (
+                                <p className={styles.projectDescription}>{localizedProject.description}</p>
                             )}
 
                             <div className={styles.markdownBody}>
-                                <MarkdownRenderer content={project.content || 'No detailed overview provided for this project yet.'} />
+                                <MarkdownRenderer content={localizedProject.content || 'No detailed overview provided for this project yet.'} />
                             </div>
 
 
 
                             {/* Related Projects */}
-                            <RelatedProjects currentProjectId={project.id} techStack={project.techStack} />
+                            <RelatedProjects currentProjectId={localizedProject.id} techStack={localizedProject.techStack} />
 
                             <div className={styles.bottomCta}>
                                 <h3>Thanks for checking out this project!</h3>
@@ -274,7 +286,7 @@ const ProjectDetail = () => {
                             transition={{ delay: 0.3, duration: 0.5 }}
                         >
                             {/* Table of Contents */}
-                            <TableOfContents content={project.content} />
+                            <TableOfContents content={localizedProject.content} />
 
                             {/* Project Info */}
                             <div className={styles.sidebarCard}>
@@ -282,29 +294,29 @@ const ProjectDetail = () => {
                                 <div className={styles.infoList}>
                                     <div className={styles.infoRow}>
                                         <span className={styles.label}><Calendar size={14} /> Date</span>
-                                        <span className={styles.value}>{formatDate(project.createdAt)}</span>
+                                        <span className={styles.value}>{formatDate(localizedProject.createdAt)}</span>
                                     </div>
                                     <div className={styles.infoRow}>
                                         <span className={styles.label}><Clock size={14} /> Read Time</span>
-                                        <span className={styles.value}>{calculateReadTime(project.content || '')}</span>
+                                        <span className={styles.value}>{calculateReadTime(localizedProject.content || '')}</span>
                                     </div>
                                     <div className={styles.infoRow}>
                                         <span className={styles.label}>Status</span>
-                                        {project.liveUrl ? (
+                                        {localizedProject.liveUrl ? (
                                             <span className={styles.statusLive}>Live</span>
                                         ) : (
-                                            <span className={styles.value}>{project.githubUrl ? 'Open Source' : 'In Progress'}</span>
+                                            <span className={styles.value}>{localizedProject.githubUrl ? 'Open Source' : 'In Progress'}</span>
                                         )}
                                     </div>
                                 </div>
                             </div>
 
                             {/* Tech Stack */}
-                            {project.techStack && project.techStack.length > 0 && (
+                            {localizedProject.techStack && localizedProject.techStack.length > 0 && (
                                 <div className={styles.sidebarCard}>
                                     <h4>Tech Stack</h4>
                                     <div className={styles.techTags}>
-                                        {project.techStack.map((tech, idx) => (
+                                        {localizedProject.techStack.map((tech, idx) => (
                                             <span key={idx} className={styles.techChip}>{tech}</span>
                                         ))}
                                     </div>
@@ -312,17 +324,17 @@ const ProjectDetail = () => {
                             )}
 
                             {/* Actions */}
-                            {(project.liveUrl || project.githubUrl) && (
+                            {(localizedProject.liveUrl || localizedProject.githubUrl) && (
                                 <div className={styles.sidebarCard}>
                                     <h4>Links</h4>
                                     <div className={styles.sidebarActions}>
-                                        {project.liveUrl && (
-                                            <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className={styles.actionBtnPrimary}>
+                                        {localizedProject.liveUrl && (
+                                            <a href={localizedProject.liveUrl} target="_blank" rel="noopener noreferrer" className={styles.actionBtnPrimary}>
                                                 <ExternalLink size={16} /> Live Demo
                                             </a>
                                         )}
-                                        {project.githubUrl && (
-                                            <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className={styles.actionBtnSecondary}>
+                                        {localizedProject.githubUrl && (
+                                            <a href={localizedProject.githubUrl} target="_blank" rel="noopener noreferrer" className={styles.actionBtnSecondary}>
                                                 <Code size={16} /> Source Code
                                             </a>
                                         )}
@@ -388,7 +400,7 @@ const ProjectDetail = () => {
                         </button>
                         <motion.img
                             src={heroImg}
-                            alt={project.title}
+                            alt={localizedProject.title}
                             initial={{ scale: 0.9 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0.9 }}

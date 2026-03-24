@@ -2,10 +2,17 @@ import BaseService from './BaseService';
 import { serverTimestamp } from 'firebase/firestore';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 import { normalizeExperience, validateExperience } from '../domain/experience/experienceDomain';
+import { getLanguageFromStorage, localizeEntityFields } from '../utils/localization';
+
+const EXPERIENCE_LOCALIZED_FIELDS = ['company', 'role', 'description'];
 
 class ExperienceService extends BaseService {
     constructor() {
         super('experience');
+    }
+
+    localizeExperience(experience, lang = getLanguageFromStorage()) {
+        return localizeEntityFields(experience, EXPERIENCE_LOCALIZED_FIELDS, lang);
     }
 
     async toggleVisibility(userRole, id, currentVisible, trackWrite) {
