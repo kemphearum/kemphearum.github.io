@@ -5,14 +5,11 @@ import {
     Globe, 
     TrendingUp, 
     Monitor, 
-    Smartphone, 
-    Tablet, 
     MapPin, 
     Share2, 
     FileText, 
     Activity, 
-    Clock,
-    RefreshCw
+    Clock
 } from 'lucide-react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
@@ -29,6 +26,30 @@ import AnalyticsFilterBar from './components/AnalyticsFilterBar';
 import AnalyticsChart from './components/AnalyticsChart';
 import LoadingOverlay from '../../../shared/components/ui/loading-overlay/LoadingOverlay';
 import EmptyState from '../../../shared/components/ui/empty-state/EmptyState';
+
+const toDateKey = (value) => {
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    if (value?.seconds) return new Date(value.seconds * 1000).toISOString().split('T')[0];
+    return null;
+};
+
+const formatShortDate = (value) => {
+    if (!value) return 'Unknown';
+    return new Date(`${value}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+const formatLastUpdated = (value) => {
+    if (!value) return 'Not synced yet';
+    const updated = new Date(value);
+    const now = new Date();
+    const deltaSeconds = Math.max(0, Math.floor((now.getTime() - updated.getTime()) / 1000));
+
+    if (deltaSeconds < 60) return 'Updated just now';
+    if (deltaSeconds < 3600) return `Updated ${Math.floor(deltaSeconds / 60)}m ago`;
+
+    return `Updated ${updated.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${updated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+};
 
 const AnalyticsTab = ({ userRole, showToast }) => {
     const { trackRead } = useActivity();
@@ -204,7 +225,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     const dailyVisits = useMemo(() => {
         const map = {};
         visits.forEach(v => {
-            const date = v.timestamp?.seconds ? new Date(v.timestamp.seconds * 1000).toISOString().split('T')[0] : v.date;
+            const date = toDateKey(v.timestamp) || v.date;
             if (!date) return;
             if (!map[date]) map[date] = { date, visits: 0, unique: 0, _ips: new Set() };
             map[date].visits++;
@@ -262,6 +283,32 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         visits.forEach(v => { const p = v.path || '/'; map[p] = (map[p] || 0) + 1; });
         return Object.entries(map).sort(([, a], [, b]) => b - a).slice(0, 10).map(([path, count]) => ({ path, count }));
     }, [visits]);
+
+    const workspaceSummary = useMemo(() => {
+        const start = analyticsRange.start;
+        const end = analyticsRange.end;
+        const startDate = start ? new Date(`${start}T00:00:00`) : null;
+        const endDate = end ? new Date(`${end}T00:00:00`) : null;
+        const rangeDays = (startDate && endDate)
+            ? Math.max(1, Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1)
+            : 0;
+
+        const topCountryItem = countryData[0];
+        const topSourceItem = referrerData[0];
+        const topPageItem = topPages[0];
+        const returningCount = retentionData.find((entry) => entry.name === 'Returning')?.value || 0;
+        const returningRate = visits.length ? Math.round((returningCount / visits.length) * 100) : 0;
+
+        return {
+            rangeText: start && end ? `${formatShortDate(start)} to ${formatShortDate(end)}` : 'Custom range',
+            rangeDays,
+            topCountry: topCountryItem ? `${topCountryItem.name} (${topCountryItem.value})` : 'No country data yet',
+            topSource: topSourceItem ? `${topSourceItem.name} (${topSourceItem.value})` : 'No source data yet',
+            topPage: topPageItem ? `${topPageItem.path} (${topPageItem.count})` : 'No page data yet',
+            returningRate,
+            freshnessLabel: formatLastUpdated(dataUpdatedAt)
+        };
+    }, [analyticsRange.end, analyticsRange.start, countryData, dataUpdatedAt, referrerData, retentionData, topPages, visits.length]);
 
     const summaryStats = useMemo(() => {
         const calculateStats = (data) => {
@@ -331,7 +378,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
             
             <SectionHeader
                 title="Analytics Dashboard"
-                description="Monitor visitor traffic, behavior, and geographical distribution."
+                description="Track traffic quality, audience behavior, and acquisition signals for your portfolio."
                 icon={TrendingUp}
                 rightElement={
                     <AnalyticsFilterBar 
@@ -341,6 +388,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                         onExport={handleExportCsv}
                         isLoading={analyticsFetching}
                         lastUpdated={dataUpdatedAt}
+                        totalRecords={visits.length}
                     />
                 }
             />
@@ -365,6 +413,35 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
             {(visits.length > 0 || analyticsFetching) && (
                 <>
+                    <section className="ui-analytics-workspace" aria-live="polite">
+                        <div className="ui-analytics-workspace__overview">
+                            <span className="ui-analytics-workspace__eyebrow">Traffic Overview</span>
+                            <h3>Performance for {workspaceSummary.rangeText}</h3>
+                            <p>
+                                Monitoring {visits.length.toLocaleString()} tracked sessions over {workspaceSummary.rangeDays} day{workspaceSummary.rangeDays === 1 ? '' : 's'}.
+                                {' '}{analyticsFetching ? 'Refreshing now...' : workspaceSummary.freshnessLabel}.
+                            </p>
+                        </div>
+                        <div className="ui-analytics-workspace__meta">
+                            <article className="ui-analytics-workspace__metaItem">
+                                <span className="ui-analytics-workspace__metaLabel">Top Country</span>
+                                <strong>{workspaceSummary.topCountry}</strong>
+                            </article>
+                            <article className="ui-analytics-workspace__metaItem">
+                                <span className="ui-analytics-workspace__metaLabel">Top Source</span>
+                                <strong>{workspaceSummary.topSource}</strong>
+                            </article>
+                            <article className="ui-analytics-workspace__metaItem">
+                                <span className="ui-analytics-workspace__metaLabel">Top Page</span>
+                                <strong>{workspaceSummary.topPage}</strong>
+                            </article>
+                            <article className="ui-analytics-workspace__metaItem">
+                                <span className="ui-analytics-workspace__metaLabel">Returning Share</span>
+                                <strong>{workspaceSummary.returningRate}%</strong>
+                            </article>
+                        </div>
+                    </section>
+
                     <div className="admin-analytics-grid">
                         <StatCard
                             icon={EyeIcon}
@@ -374,6 +451,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                             trend={summaryStats.total.trend.type}
                             trendValue={summaryStats.total.trend.value}
                             description={summaryStats.total.subtitle}
+                            onClick={() => handleAnalyticsDetail('visits')}
                         />
                         <StatCard
                             icon={Users}
@@ -383,6 +461,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                             trend={summaryStats.unique.trend.type}
                             trendValue={summaryStats.unique.trend.value}
                             description={summaryStats.unique.subtitle}
+                            onClick={() => handleAnalyticsDetail('retention')}
                         />
                         <StatCard
                             icon={Clock}
@@ -392,6 +471,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                             trend={summaryStats.duration.trend.type}
                             trendValue={summaryStats.duration.trend.value}
                             description={summaryStats.duration.subtitle}
+                            onClick={() => handleAnalyticsDetail('visits')}
                         />
                         <StatCard
                             icon={Activity}
@@ -401,6 +481,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
                             trend={summaryStats.bounce.trend.type}
                             trendValue={summaryStats.bounce.trend.value}
                             description={summaryStats.bounce.subtitle}
+                            onClick={() => handleAnalyticsDetail('pages')}
                         />
                     </div>
 

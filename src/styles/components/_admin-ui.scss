@@ -90,6 +90,20 @@
     line-height: 1.5;
 }
 
+.ui-headerActions {
+    margin-left: auto;
+    max-width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+    .ui-headerActions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
 // USAGE BAR
 .admin-usage-container {
     display: flex;
@@ -1076,6 +1090,12 @@
 
     &.ui-clickableStat {
         cursor: pointer;
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+
+        &:focus-visible {
+            outline: 2px solid rgba($primary-color, 0.55);
+            outline-offset: 2px;
+        }
 
         &:hover {
             transform: translateY(-6px);
@@ -1171,6 +1191,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 0.75rem;
         padding: 1.25rem 1.5rem;
         border-bottom: 1px solid var(--divider);
         background: var(--glass-surface);
@@ -1190,6 +1212,8 @@
         display: flex;
         align-items: center;
         gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
     .ui-chartBody {
@@ -1317,6 +1341,21 @@
     border-top: 1px solid var(--divider);
     flex-wrap: wrap;
     gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .ui-chartCard .ui-chartHeader {
+        padding: 1rem;
+    }
+
+    .ui-chartCard .ui-chartActions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .ui-chartCard .ui-chartBody {
+        padding: 1rem;
+    }
 }
 
 .ui-pagination {

@@ -3,9 +3,7 @@ import UserService from '../services/UserService';
 import MessageService from '../services/MessageService';
 import ContentService from '../services/ContentService';
 import { useNavigate } from 'react-router-dom';
-import {
-    LogOut, ChevronLeft, ChevronRight, ExternalLink, FileText, Database, User, BarChart2, Sun, Moon
-} from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { fetchGeoData } from '../utils/geoUtils';
 import { useTheme } from '../context/ThemeContext';
 import { useActivity } from '../hooks/useActivity';
@@ -48,7 +46,7 @@ const tabLabels = {
     audit: 'Audit Logs',
     analytics: 'Analytics',
     profile: 'My Profile',
-    settings: '⚙️ Settings'
+    settings: 'Settings'
 };
 
 // ============================================================
@@ -60,23 +58,62 @@ const Toast = ({ message, type, onClose }) => {
         return () => clearTimeout(timer);
     }, [onClose, message]);
 
-    const getIcon = () => {
-        switch (type) {
-            case 'success': return '✓';
-            case 'error': return '✕';
-            case 'warning': return '⚠️';
-            case 'info': return 'ℹ️';
-            default: return '•';
-        }
-    };
+    const getIcon = () => ({
+        success: 'OK',
+        error: 'X',
+        warning: '!',
+        info: 'i'
+    }[type] || '*');
 
     return (
         <div className={`ui-toast ui-${type}`}>
             <span style={{ fontWeight: 'bold' }}>{getIcon()}</span>
             <p>{message}</p>
-            <button onClick={onClose} className="ui-toastClose">×</button>
+            <button onClick={onClose} className="ui-toastClose">x</button>
         </div>
     );
+};
+
+const AUTH_REMEMBER_EMAIL_KEY = 'adminRememberedEmail';
+
+const formatAuthErrorMessage = (error, fallback = 'Unable to authenticate. Please try again.') => {
+    const code = error?.code || '';
+    const message = typeof error === 'string' ? error : (error?.message || fallback);
+
+    if (message.includes('disabled by an administrator')) {
+        return 'Your account has been disabled by an administrator.';
+    }
+
+    switch (code) {
+        case 'auth/invalid-credential':
+        case 'auth/wrong-password':
+        case 'auth/user-not-found':
+            return 'Incorrect email or password.';
+        case 'auth/too-many-requests':
+            return 'Too many attempts. Please wait a moment and try again.';
+        case 'auth/network-request-failed':
+            return 'Network error. Check your connection and try again.';
+        case 'auth/invalid-email':
+            return 'Please enter a valid email address.';
+        case 'auth/weak-password':
+            return 'Password must be at least 6 characters.';
+        case 'auth/email-already-in-use':
+            return 'This email is already registered.';
+        default:
+            break;
+    }
+
+    if (message.includes('INVALID_LOGIN_CREDENTIALS')) {
+        return 'Incorrect email or password.';
+    }
+    if (message.includes('EMAIL_EXISTS')) {
+        return 'This email is already registered.';
+    }
+    if (message.includes('WEAK_PASSWORD')) {
+        return 'Password must be at least 6 characters.';
+    }
+
+    return message || fallback;
 };
 
 // ============================================================
@@ -97,9 +134,19 @@ const Admin = () => {
     const [userId, setUserId] = useState(null);
     const [userRole, setUserRole] = useState(null);
     const [userDisplayName, setUserDisplayName] = useState('');
-    const [email, setEmail] = useState('');
+    const [email, setEmail] = useState(() => {
+        if (typeof window === 'undefined') return '';
+        return localStorage.getItem(AUTH_REMEMBER_EMAIL_KEY) || '';
+    });
     const [password, setPassword] = useState('');
     const [isRegistering, setIsRegistering] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [capsLockOn, setCapsLockOn] = useState(false);
+    const [authError, setAuthError] = useState('');
+    const [rememberEmail, setRememberEmail] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return Boolean(localStorage.getItem(AUTH_REMEMBER_EMAIL_KEY));
+    });
     const [lastSyncTime, setLastSyncTime] = useState(new Date());
 
     // UI & Tabs
@@ -272,6 +319,17 @@ const Admin = () => {
     // ====== Persistence ======
     useEffect(() => { localStorage.setItem('adminActiveTab', activeTab); }, [activeTab]);
     useEffect(() => { localStorage.setItem('adminSidebarPersistent', JSON.stringify(sidebarPersistent)); }, [sidebarPersistent]);
+    useEffect(() => {
+        if (!rememberEmail && typeof window !== 'undefined') {
+            localStorage.removeItem(AUTH_REMEMBER_EMAIL_KEY);
+        }
+    }, [rememberEmail]);
+    useEffect(() => {
+        setAuthError('');
+        setShowPassword(false);
+        setCapsLockOn(false);
+        setPassword('');
+    }, [isRegistering]);
 
     // ====== Auth ======
     useEffect(() => {
@@ -458,14 +516,29 @@ const Admin = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        
+        setAuthError('');
+
+        const normalizedEmail = email.trim().toLowerCase();
+        if (!normalizedEmail) {
+            setAuthError('Please enter your email address.');
+            return;
+        }
+        if (!password) {
+            setAuthError('Please enter your password.');
+            return;
+        }
+        if (isRegistering && password.length < 6) {
+            setAuthError('Password must be at least 6 characters.');
+            return;
+        }
+
         // Pre-fetch geo data to ensure it's available for logging (fast)
         const geoPromise = fetchGeoData().catch(() => ({ ip: 'Unknown', country_name: 'Unknown', city: 'Unknown' }));
 
-        await execute(async () => {
+        const result = await execute(async () => {
             const geoData = await geoPromise;
             const logBase = {
-                email,
+                email: normalizedEmail,
                 ipAddress: geoData.ip,
                 country: geoData.country_name,
                 city: geoData.city,
@@ -477,27 +550,27 @@ const Admin = () => {
             try {
                 let authUser;
                 if (isRegistering) {
-                    const credential = await AuthService.register(email, password);
+                    const credential = await AuthService.register(normalizedEmail, password);
                     authUser = credential.user;
                     
                     const userDoc = await UserService.fetchUserById(authUser.uid);
                     trackRead(1, 'Checked user existence on registration');
                     
                     if (!userDoc) {
-                        await UserService.createUserDoc({ email, role: 'pending', isActive: true }, authUser.uid);
+                        await UserService.createUserDoc({ email: normalizedEmail, role: 'pending', isActive: true }, authUser.uid);
                         trackWrite(1, 'Created user record');
                     }
                     
                     // Success Log for Registration
                     await AuditLogService.addAuditLog(logBase, 'success', 'User Registered', trackWrite);
                 } else {
-                    const credential = await AuthService.login(email, password);
+                    const credential = await AuthService.login(normalizedEmail, password);
                     authUser = credential.user;
                     
                     let userDoc = await UserService.fetchUserById(authUser.uid);
                     
                     if (!userDoc) {
-                        userDoc = await UserService.fetchUserByEmail(email);
+                        userDoc = await UserService.fetchUserByEmail(normalizedEmail);
                         if (userDoc) {
                             const { id, ...data } = userDoc;
                             await UserService.createUserDoc(data, authUser.uid);
@@ -523,7 +596,29 @@ const Admin = () => {
             showToast,
             successMessage: isRegistering ? 'Account created! You are now logged in.' : undefined
         });
+
+        if (!result?.success) {
+            setAuthError(formatAuthErrorMessage(result?.error));
+            return;
+        }
+
+        if (!isRegistering) {
+            if (rememberEmail) {
+                localStorage.setItem(AUTH_REMEMBER_EMAIL_KEY, normalizedEmail);
+            } else {
+                localStorage.removeItem(AUTH_REMEMBER_EMAIL_KEY);
+            }
+        }
+
+        setEmail(rememberEmail ? normalizedEmail : '');
+        setPassword('');
+        setShowPassword(false);
+        setCapsLockOn(false);
     };
+
+    const handlePasswordKeyState = useCallback((event) => {
+        setCapsLockOn(Boolean(event.getModifierState?.('CapsLock')));
+    }, []);
 
     // ============================================================
     // Tab Renderer
@@ -585,21 +680,86 @@ const Admin = () => {
                 <div className="ui-loginCard">
                     <div className="ui-loginIcon">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                         </svg>
                     </div>
                     <h2 className="ui-loginTitle">{isRegistering ? 'Create Account' : 'Admin Login'}</h2>
-                    <p className="ui-loginSubtitle">{isRegistering ? 'Register a new admin account' : 'Sign in to manage your portfolio'}</p>
+                    <p className="ui-loginSubtitle">
+                        {isRegistering
+                            ? 'Register a new admin account for dashboard access.'
+                            : 'Sign in to access analytics, audit logs, and content controls.'}
+                    </p>
+                    <div className="ui-loginHint">
+                        <ShieldCheck size={15} />
+                        <span>Protected access for portfolio administration.</span>
+                    </div>
 
                     <form onSubmit={handleLogin} className="ui-loginForm">
+                        {authError && (
+                            <div className="ui-loginError" role="alert">
+                                <AlertCircle size={15} />
+                                <span>{authError}</span>
+                            </div>
+                        )}
+
                         <div className="ui-formGroup">
-                            <label>Email</label>
-                            <input type="email" placeholder="admin@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                            <label htmlFor="admin-email">Email</label>
+                            <input
+                                id="admin-email"
+                                type="email"
+                                placeholder="admin@example.com"
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    if (authError) setAuthError('');
+                                }}
+                                autoComplete="email"
+                                required
+                            />
                         </div>
                         <div className="ui-formGroup">
-                            <label>Password</label>
-                            <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                            <label htmlFor="admin-password">Password</label>
+                            <div className="ui-passwordField">
+                                <input
+                                    id="admin-password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="********"
+                                    value={password}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (authError) setAuthError('');
+                                    }}
+                                    onKeyUp={handlePasswordKeyState}
+                                    onKeyDown={handlePasswordKeyState}
+                                    onBlur={() => setCapsLockOn(false)}
+                                    autoComplete={isRegistering ? 'new-password' : 'current-password'}
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="ui-passwordToggle"
+                                    onClick={() => setShowPassword((prev) => !prev)}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                >
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                            {capsLockOn && <p className="ui-loginCaps">Caps Lock is on.</p>}
+                            {isRegistering && <p className="ui-loginRule">Password must be at least 6 characters.</p>}
                         </div>
+
+                        {!isRegistering && (
+                            <label className="ui-loginRemember">
+                                <input
+                                    type="checkbox"
+                                    checked={rememberEmail}
+                                    onChange={(e) => setRememberEmail(e.target.checked)}
+                                />
+                                <span>Remember this email on this device</span>
+                            </label>
+                        )}
+
                         <button type="submit" className="ui-loginBtn" disabled={loading}>
                             {loading ? (
                                 <span className="ui-btnLoading"><span className="ui-spinner" /> {isRegistering ? 'Creating...' : 'Signing in...'}</span>
@@ -608,16 +768,15 @@ const Admin = () => {
                     </form>
 
                     <div className="ui-loginFooter">
-                        <button onClick={() => setIsRegistering(!isRegistering)} className="ui-linkBtn">
-                            {isRegistering ? '← Back to Login' : 'Need an account? Register'}
+                        <button type="button" onClick={() => setIsRegistering(!isRegistering)} className="ui-linkBtn">
+                            {isRegistering ? 'Back to Login' : 'Need an account? Register'}
                         </button>
-                        <button onClick={() => navigate('/')} className="ui-linkBtn">← Back to Site</button>
+                        <button type="button" onClick={() => navigate('/')} className="ui-linkBtn">Back to Site</button>
                     </div>
                 </div>
             </div>
         );
     }
-
     // ============================================================
     // Admin Dashboard
     // ============================================================

@@ -75,6 +75,21 @@
     margin: 0.45rem 0 1.25rem;
     color: var(--text-secondary);
     font-size: 0.92rem;
+    line-height: 1.6;
+}
+
+.ui-loginHint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 1rem;
+    padding: 0.4rem 0.72rem;
+    border-radius: 999px;
+    background: rgba($primary-color, 0.14);
+    border: 1px solid rgba($primary-color, 0.26);
+    color: var(--text-primary);
+    font-size: 0.76rem;
+    font-weight: 600;
 }
 
 .ui-loginForm {
@@ -113,6 +128,74 @@
     gap: 0.5rem;
 }
 
+.ui-loginError {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fecaca;
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.ui-passwordField {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    input {
+        padding-right: 2.6rem !important;
+    }
+}
+
+.ui-passwordToggle {
+    position: absolute;
+    right: 0.35rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, color 0.2s ease;
+
+    &:hover {
+        background: rgba($primary-color, 0.18);
+        color: var(--text-primary);
+    }
+}
+
+.ui-loginCaps,
+.ui-loginRule {
+    margin: 0.35rem 0 0;
+    font-size: 0.74rem;
+    line-height: 1.5;
+}
+
+.ui-loginCaps {
+    color: #fca5a5;
+}
+
+.ui-loginRule {
+    color: var(--text-secondary);
+}
+
+.ui-loginRemember {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+
+    input {
+        accent-color: $primary-color;
+    }
+}
+
 .ui-loginFooter {
     margin-top: 1rem;
     display: flex;
@@ -141,5 +224,10 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 0.55rem;
+    }
+
+    .ui-loginHint {
+        width: 100%;
+        justify-content: center;
     }
 }
