@@ -38,7 +38,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
         const end = new Date();
         const start = new Date();
         // Default to last 7 days for better initial view
-        start.setDate(end.getDate() - 7);
+        start.setDate(end.getDate() - 6);
         return { 
             start: start.toISOString().split('T')[0], 
             end: end.toISOString().split('T')[0], 

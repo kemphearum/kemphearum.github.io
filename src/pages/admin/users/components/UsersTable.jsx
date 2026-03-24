@@ -1,7 +1,14 @@
 import React from 'react';
-import { Edit, Key, Trash2, Users } from 'lucide-react';
+import { Edit, Key, Trash2, UserPlus, Users } from 'lucide-react';
 import DataTable from '../../../../shared/components/ui/data-table/DataTable';
 import { Button, Badge } from '../../../../shared/components/ui';
+
+const ROLE_LABELS = {
+  superadmin: 'Super Admin',
+  admin: 'Admin',
+  editor: 'Editor',
+  pending: 'Pending',
+};
 
 
 const UsersTable = ({ 
@@ -12,6 +19,9 @@ const UsersTable = ({
   onResetPassword, 
   onDelete,
   loading,
+  searchQuery = '',
+  onClearSearch,
+  onCreate,
   page,
   pageSize = 10,
   hasMore,
@@ -42,7 +52,7 @@ const UsersTable = ({
           pending: 'linear-gradient(135deg, #ef4444, #dc2626)' 
         };
 
-        const isUserDisabled = user.disabled === true;
+        const isUserDisabled = user.isActive === false || user.disabled === true;
 
         return (
           <div className="ui-user-identity">
@@ -67,13 +77,6 @@ const UsersTable = ({
       header: 'Role',
       sortable: true,
       render: (user) => {
-        const roleLabels = { 
-          superadmin: '⭐ Super Admin', 
-          admin: '🛡️ Admin', 
-          editor: '✍️ Editor', 
-          pending: '⏳ Pending' 
-        };
-        
         const roleVariants = {
           superadmin: 'success',
           admin: 'primary',
@@ -81,14 +84,22 @@ const UsersTable = ({
           pending: 'error'
         };
 
-        if (user.disabled === true) {
-          return <Badge variant="ghost">🚫 Disabled</Badge>;
+        if (user.isActive === false || user.disabled === true) {
+          return (
+            <div className="ui-user-roleCell">
+              <Badge variant="ghost">Disabled</Badge>
+              <span className="ui-user-roleCell__note">Login blocked</span>
+            </div>
+          );
         }
 
         return (
-          <Badge variant={roleVariants[user.role] || 'ghost'}>
-            {roleLabels[user.role] || user.role}
-          </Badge>
+          <div className="ui-user-roleCell">
+            <Badge variant={roleVariants[user.role] || 'ghost'}>
+              {ROLE_LABELS[user.role] || user.role}
+            </Badge>
+            <span className="ui-user-roleCell__note">Role assignment</span>
+          </div>
         );
       }
     },
@@ -96,11 +107,22 @@ const UsersTable = ({
       key: 'createdAt',
       header: 'Registered',
       sortable: true,
-      render: (user) => (
-        <span className="ui-user-meta">
-          {user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'Unknown'}
-        </span>
-      )
+      render: (user) => {
+        const registeredAt = user.createdAt?.seconds
+          ? new Date(user.createdAt.seconds * 1000)
+          : null;
+
+        return (
+          <div className="ui-user-dateCell">
+            <span className="ui-user-dateCell__day">
+              {registeredAt ? registeredAt.toLocaleDateString() : 'Unknown'}
+            </span>
+            <span className="ui-user-dateCell__time">
+              {registeredAt ? registeredAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No timestamp'}
+            </span>
+          </div>
+        );
+      }
     },
     {
       key: 'actions',
@@ -108,15 +130,15 @@ const UsersTable = ({
       className: 'ui-table-actions',
       render: (user) => {
         if (user.email === currentUser?.email) {
-          return <Badge variant="primary">✓ You</Badge>;
+          return <Badge variant="primary">You</Badge>;
         }
 
         return (
-          <div className="ui-table-action-group">
+          <div className="ui-table-action-group ui-user-actions">
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => onEdit(user)}
+              onClick={(event) => { event.stopPropagation(); onEdit(user); }}
               title="Edit Profile"
             >
               <Edit size={16} />
@@ -124,7 +146,7 @@ const UsersTable = ({
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => onResetPassword(user)}
+              onClick={(event) => { event.stopPropagation(); onResetPassword(user); }}
               title="Send Password Reset"
             >
               <Key size={16} />
@@ -132,7 +154,7 @@ const UsersTable = ({
             <Button 
               variant="danger" 
               size="sm" 
-              onClick={() => onDelete(user)}
+              onClick={(event) => { event.stopPropagation(); onDelete(user); }}
               disabled={userRole !== 'superadmin' || user.role === 'superadmin'}
               title="Disable User"
             >
@@ -143,6 +165,32 @@ const UsersTable = ({
       }
     }
   ];
+
+  const emptyState = searchQuery
+    ? {
+        icon: Users,
+        title: 'No matching users',
+        description: `No accounts matched "${searchQuery}". Try another email or role filter.`,
+        action: onClearSearch
+          ? {
+              label: 'Clear Search',
+              onClick: onClearSearch,
+              variant: 'ghost',
+            }
+          : null,
+      }
+    : {
+        icon: Users,
+        title: 'No users yet',
+        description: 'Invite your first teammate to start assigning access and tracking account activity.',
+        action: onCreate
+          ? {
+              label: 'Add User',
+              onClick: onCreate,
+              icon: UserPlus,
+            }
+          : null,
+      };
 
   return (
     <DataTable 
@@ -160,11 +208,7 @@ const UsersTable = ({
       onNext={onNext}
       onPrevious={onPrevious}
       onPageChange={onPageChange}
-      emptyState={{
-        icon: Users,
-        title: "No Users Found",
-        description: "You haven't added any team members yet."
-      }}
+      emptyState={emptyState}
     />
   );
 };

@@ -3,8 +3,8 @@
 .ui-dialog-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
+    background: rgba(4, 6, 16, 0.72);
+    backdrop-filter: blur(10px);
     z-index: 1000;
     animation: ui-fade-in 0.2s ease-out;
 }
@@ -14,13 +14,13 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 90vw;
+    width: min(92vw, 720px);
     max-width: 500px;
-    max-height: 85vh;
+    max-height: min(88vh, 900px);
     background: var(--bg-card, #0f172a);
-    border: 1px solid var(--border-color, #1e293b);
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(99, 102, 241, 0.22);
+    border-radius: 22px;
+    box-shadow: 0 36px 80px rgba(0, 0, 0, 0.5);
     z-index: 1001;
     overflow-y: auto;
     animation: ui-scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -32,7 +32,7 @@
 
 .ui-dialog-header {
     padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid var(--border-color, #1e293b);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -58,26 +58,109 @@
 
 .ui-dialog-footer {
     padding: 1.25rem 1.5rem;
-    border-top: 1px solid var(--border-color, #1e293b);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
-    background: rgba(255, 255, 255, 0.01);
+    background: rgba(255, 255, 255, 0.02);
 }
 
 .ui-dialog-close {
     color: var(--text-secondary);
-    padding: 0.4rem;
-    border-radius: 6px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 12px;
+    border: 1px solid rgba(99, 102, 241, 0.28);
+    background: rgba(255, 255, 255, 0.02);
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(99, 102, 241, 0.12);
+        border-color: rgba(99, 102, 241, 0.46);
         color: var(--text-primary);
     }
+}
+
+.ui-confirm-dialog {
+    width: min(440px, calc(100vw - 2rem));
+}
+
+.ui-confirm-dialog__header {
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.ui-confirm-dialog__titleWrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    min-width: 0;
+}
+
+.ui-confirm-dialog__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(239, 68, 68, 0.18);
+    background: rgba(239, 68, 68, 0.12);
+    color: #fb7185;
+}
+
+.ui-confirm-dialog__title {
+    margin: 0;
+}
+
+.ui-confirm-dialog__description {
+    margin: 0.3rem 0 0;
+    line-height: 1.55;
+}
+
+.ui-confirm-dialog__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.ui-confirm-dialog__message,
+.ui-confirm-dialog__note {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.ui-confirm-dialog__message {
+    color: var(--text-primary);
+}
+
+.ui-confirm-dialog__note {
+    padding: 0.85rem 0.95rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.025);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+}
+
+.ui-confirm-dialog__footer {
+    justify-content: space-between;
+
+    @media (max-width: 640px) {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+}
+
+.ui-confirm-dialog--primary .ui-confirm-dialog__icon {
+    border-color: rgba(99, 102, 241, 0.18);
+    background: rgba(99, 102, 241, 0.14);
+    color: #a5b4fc;
 }
 
 @keyframes ui-fade-in {

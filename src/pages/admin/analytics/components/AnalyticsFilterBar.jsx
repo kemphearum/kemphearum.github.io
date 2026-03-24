@@ -28,11 +28,11 @@ const AnalyticsFilterBar = ({
         
         switch (preset) {
             case 'today': break;
-            case '7d': start.setDate(end.getDate() - 7); break;
-            case '30d': start.setDate(end.getDate() - 30); break;
-            case '90d': start.setDate(end.getDate() - 90); break;
+            case '7d': start.setDate(end.getDate() - 6); break;
+            case '30d': start.setDate(end.getDate() - 29); break;
+            case '90d': start.setDate(end.getDate() - 89); break;
             case 'all': start.setFullYear(2020); break;
-            default: start.setDate(end.getDate() - 30);
+            default: start.setDate(end.getDate() - 29);
         }
 
         onRangeChange({

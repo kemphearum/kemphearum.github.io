@@ -14,6 +14,7 @@ import ContactSection from './components/ContactSection';
 
 const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData }) => {
     const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
+    const [activeSection, setActiveSection] = useState('home');
     
     // Preview states for Markdown editors
     const [homePreview, setHomePreview] = useState(false);
@@ -55,23 +56,94 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
     const homeFormKey = `home:${homeData.greeting || ''}:${homeData.name || ''}:${homeData.subtitle || ''}:${homeData.description || ''}:${homeData.ctaText || ''}:${homeData.ctaLink || ''}:${homeData.profileImageUrl || ''}`;
     const aboutFormKey = `about:${aboutData.bio || ''}:${Array.isArray(aboutData.skills) ? aboutData.skills.join(',') : (aboutData.skills || '')}`;
     const contactFormKey = `contact:${contactData.introText || ''}`;
+    const homeFilled = [
+        homeData.greeting,
+        homeData.name,
+        homeData.subtitle,
+        homeData.description,
+        homeData.ctaText,
+        homeData.ctaLink,
+        homeData.profileImageUrl
+    ].filter(Boolean).length;
+    const aboutFilled = [
+        aboutData.bio,
+        Array.isArray(aboutData.skills) ? aboutData.skills.length > 0 : aboutData.skills
+    ].filter(Boolean).length;
+    const contactFilled = [contactData.introText].filter(Boolean).length;
+    const totalFilled = homeFilled + aboutFilled + contactFilled;
+    const totalFields = 10;
+    const sectionMeta = [
+        {
+            value: 'home',
+            label: 'Home',
+            description: 'Hero copy, CTA, and portrait',
+            icon: Home,
+            filled: homeFilled,
+            total: 7
+        },
+        {
+            value: 'about',
+            label: 'About',
+            description: 'Bio and skills snapshot',
+            icon: User,
+            filled: aboutFilled,
+            total: 2
+        },
+        {
+            value: 'contact',
+            label: 'Contact',
+            description: 'Intro text above the form',
+            icon: Mail,
+            filled: contactFilled,
+            total: 1
+        }
+    ];
 
     return (
         <div className={tabStyles.tabContentFadeIn}>
-            <Tabs defaultValue="home" className={tabStyles.subTabNav}>
+            <div className={tabStyles.workspaceShell}>
+                <div className={tabStyles.workspaceIntro}>
+                    <div className={tabStyles.workspaceCopy}>
+                        <span className={tabStyles.workspaceEyebrow}>Content Studio</span>
+                        <h2>Manage the core sections visitors read first.</h2>
+                        <p>Update your hero messaging, biography, and contact intro from one place, with clearer section progress and less visual clutter.</p>
+                    </div>
+                    <div className={tabStyles.workspaceStats}>
+                        <div className={tabStyles.workspaceStat}>
+                            <span className={tabStyles.workspaceStatValue}>3</span>
+                            <span className={tabStyles.workspaceStatLabel}>Sections</span>
+                            <span className={tabStyles.workspaceStatHint}>Home, About, and Contact</span>
+                        </div>
+                        <div className={tabStyles.workspaceStat}>
+                            <span className={tabStyles.workspaceStatValue}>{totalFilled}/{totalFields}</span>
+                            <span className={tabStyles.workspaceStatLabel}>Fields Filled</span>
+                            <span className={tabStyles.workspaceStatHint}>Quick signal for content completeness</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <Tabs value={activeSection} onValueChange={setActiveSection} className={tabStyles.subTabNav}>
                 <Tabs.List className={tabStyles.subtabsList}>
-                    <Tabs.Trigger value="home" className={tabStyles.subTabTrigger}>
-                        <Home size={18} /> Home
-                    </Tabs.Trigger>
-                    <Tabs.Trigger value="about" className={tabStyles.subTabTrigger}>
-                        <User size={18} /> About
-                    </Tabs.Trigger>
-                    <Tabs.Trigger value="contact" className={tabStyles.subTabTrigger}>
-                        <Mail size={18} /> Contact
-                    </Tabs.Trigger>
+                    {sectionMeta.map((section) => {
+                        const SectionIcon = section.icon;
+
+                        return (
+                            <Tabs.Trigger key={section.value} value={section.value} className={tabStyles.subTabTrigger}>
+                                <span className={tabStyles.triggerIcon}><SectionIcon size={18} /></span>
+                                <span className={tabStyles.triggerBody}>
+                                    <span className={tabStyles.triggerTitleRow}>
+                                        <strong>{section.label}</strong>
+                                        <span className={tabStyles.triggerCount}>{section.filled}/{section.total}</span>
+                                    </span>
+                                    <span className={tabStyles.triggerDescription}>{section.description}</span>
+                                </span>
+                            </Tabs.Trigger>
+                        );
+                    })}
                 </Tabs.List>
 
-                <Tabs.Content value="home">
+                <Tabs.Content value="home" className={tabStyles.tabPanel}>
                     <Form 
                         onSubmit={handleSaveHome}
                         key={homeFormKey}
@@ -95,7 +167,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                     </Form>
                 </Tabs.Content>
 
-                <Tabs.Content value="about">
+                <Tabs.Content value="about" className={tabStyles.tabPanel}>
                     <Form 
                         onSubmit={handleSaveAbout}
                         key={aboutFormKey}
@@ -113,7 +185,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                     </Form>
                 </Tabs.Content>
 
-                <Tabs.Content value="contact">
+                <Tabs.Content value="contact" className={tabStyles.tabPanel}>
                     <Form 
                         onSubmit={handleSaveContact}
                         key={contactFormKey}

@@ -26,7 +26,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     const { loading: auditLoading, execute: executeAudit } = useAsyncAction({
         showToast,
         errorMessage: 'Failed to update audit setting.',
-        invalidateKeys: [['auditSettings']]
+        invalidateKeys: [['database', 'auditSettings']]
     });
 
     const { loading: backupLoading, execute: executeBackup } = useAsyncAction({

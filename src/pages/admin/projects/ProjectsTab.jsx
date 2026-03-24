@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Star, StarOff, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, Star, StarOff, Trash2, LayoutTemplate, Globe2, Sparkles, Link2 } from 'lucide-react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
@@ -9,6 +9,7 @@ import ProjectsToolbar from './components/ProjectsToolbar';
 import ProjectsTable from './components/ProjectsTable';
 import ProjectsFormDialog from './components/ProjectsFormDialog';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
+import ImportConfirmDialog from '../components/ImportConfirmDialog';
 import { Button } from '@/shared/components/ui';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
@@ -22,6 +23,17 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [bulkConfirm, setBulkConfirm] = useState({ isOpen: false, type: '', ids: [] });
+  const [importDialog, setImportDialog] = useState({
+    isOpen: false,
+    file: null,
+    items: [],
+    fileName: '',
+    format: '',
+    totalCount: 0,
+    validCount: 0,
+    skippedCount: 0
+  });
+  const [importLoading, setImportLoading] = useState(false);
   
   // Cursor pagination hook
   const pagination = useCursorPagination(10, [searchQuery]);
@@ -70,6 +82,35 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const projects = projectsResult.data;
+  const visibleProjectsCount = projects.filter((project) => project.visible !== false).length;
+  const featuredProjectsCount = projects.filter((project) => !!project.featured).length;
+  const linkedProjectsCount = projects.filter((project) => project.liveUrl || project.githubUrl).length;
+  const workspaceStats = [
+    {
+      label: 'On This Page',
+      value: projects.length,
+      hint: 'Loaded in the current result set',
+      icon: LayoutTemplate
+    },
+    {
+      label: 'Published',
+      value: visibleProjectsCount,
+      hint: 'Visible in the public portfolio',
+      icon: Globe2
+    },
+    {
+      label: 'Featured',
+      value: featuredProjectsCount,
+      hint: 'Highlighted on priority surfaces',
+      icon: Sparkles
+    },
+    {
+      label: 'Linked',
+      value: linkedProjectsCount,
+      hint: 'Have a live demo or repository',
+      icon: Link2
+    }
+  ];
 
   // Permission Booleans
   const canCreate = isActionAllowed('create', 'projects');
@@ -86,6 +127,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleSearch = (val) => {
     setSearchQuery(val);
+    setSelectedProjects([]);
     pagination.reset();
   };
 
@@ -134,7 +176,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     }
     
     await executeForm(async () => {
-      let imageUrl = editingItem?.imageUrl || '';
+      let imageUrl = formData.imageUrl || '';
       if (formData.image instanceof File) {
         imageUrl = await ImageProcessingService.compress(formData.image);
       }
@@ -165,6 +207,26 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     return fallback;
   };
 
+  const readImportFile = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => resolve(event.target?.result || '');
+    reader.onerror = () => reject(new Error('Failed to read import file.'));
+    reader.readAsText(file);
+  });
+
+  const parseImportItems = (fileName, content) => {
+    let parsed = [];
+
+    if (fileName.toLowerCase().endsWith('.csv')) {
+      parsed = csvToJson(content);
+    } else {
+      parsed = JSON.parse(content);
+    }
+
+    if (!Array.isArray(parsed)) parsed = [parsed];
+    return parsed;
+  };
+
   const downloadJson = (data, filename) => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -182,64 +244,91 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       return showToast("You do not have permission to perform this action.", "error");
     }
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const content = event.target?.result || '';
-        let imported = [];
+    try {
+      const content = await readImportFile(file);
+      const items = parseImportItems(file.name, content);
+      const validCount = items.filter((item) => item?.title).length;
+      const skippedCount = items.length - validCount;
 
-        if (file.name.toLowerCase().endsWith('.csv')) {
-          imported = csvToJson(content);
-        } else {
-          imported = JSON.parse(content);
-        }
+      setImportDialog({
+        isOpen: true,
+        file,
+        items,
+        fileName: file.name,
+        format: file.name.toLowerCase().endsWith('.csv') ? 'CSV' : 'JSON',
+        totalCount: items.length,
+        validCount,
+        skippedCount
+      });
+    } catch (error) {
+      showToast(error?.message || 'Failed to import projects.', 'error');
+    }
+  };
 
-        if (!Array.isArray(imported)) imported = [imported];
+  const handleConfirmImportProjects = async () => {
+    if (!importDialog.items.length) return;
 
-        let created = 0;
-        let updated = 0;
-        let failed = 0;
+    setImportLoading(true);
+    try {
+      let created = 0;
+      let updated = 0;
+      let skipped = 0;
+      let failed = 0;
 
-        for (const item of imported) {
-          try {
-            if (!item?.title) continue;
-            const normalizedSlug = item.slug ? slugify(item.slug) : slugify(item.title);
-            const techStack = Array.isArray(item.techStack)
-              ? item.techStack.join(', ')
-              : (item.techStack || '');
-
-            const existing = await ProjectService.fetchProjectBySlug(normalizedSlug, null, true);
-            const payload = {
-              id: existing?.id || null,
-              title: item.title,
-              description: item.description || '',
-              techStack,
-              githubUrl: item.githubUrl || '',
-              liveUrl: item.liveUrl || '',
-              slug: normalizedSlug,
-              content: item.content || '',
-              featured: parseBoolean(item.featured, false),
-              visible: parseBoolean(item.visible, true),
-              imageUrl: item.imageUrl || ''
-            };
-
-            await ProjectService.saveProject(userRole, payload, undefined, trackWrite);
-            if (existing?.id) updated += 1;
-            else created += 1;
-          } catch {
-            failed += 1;
+      for (const item of importDialog.items) {
+        try {
+          if (!item?.title) {
+            skipped += 1;
+            continue;
           }
+          const normalizedSlug = item.slug ? slugify(item.slug) : slugify(item.title);
+          const techStack = Array.isArray(item.techStack)
+            ? item.techStack.join(', ')
+            : (item.techStack || '');
+
+          const existing = await ProjectService.fetchProjectBySlug(normalizedSlug, null, true);
+          const payload = {
+            id: existing?.id || null,
+            title: item.title,
+            description: item.description || '',
+            techStack,
+            githubUrl: item.githubUrl || '',
+            liveUrl: item.liveUrl || '',
+            slug: normalizedSlug,
+            content: item.content || '',
+            featured: parseBoolean(item.featured, false),
+            visible: parseBoolean(item.visible, true),
+            imageUrl: item.imageUrl || ''
+          };
+
+          await ProjectService.saveProject(userRole, payload, undefined, trackWrite);
+          if (existing?.id) updated += 1;
+          else created += 1;
+        } catch {
+          failed += 1;
         }
-
-        queryClient.invalidateQueries({ queryKey: ['projects'] });
-        showToast(`Import complete: ${created} created, ${updated} updated, ${failed} failed.`, failed > 0 ? 'warning' : 'success');
-      } catch (error) {
-        showToast(error?.message || 'Failed to import projects.', 'error');
       }
-    };
 
-    reader.onerror = () => showToast('Failed to read import file.', 'error');
-    reader.readAsText(file);
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setImportDialog({
+        isOpen: false,
+        file: null,
+        items: [],
+        fileName: '',
+        format: '',
+        totalCount: 0,
+        validCount: 0,
+        skippedCount: 0
+      });
+      showToast(
+        `Import complete: ${created} created, ${updated} updated, ${skipped} skipped, ${failed} failed.`,
+        failed > 0 || skipped > 0 ? 'warning' : 'success'
+      );
+    } catch (error) {
+      showToast(error?.message || 'Failed to import projects.', 'error');
+    } finally {
+      setImportLoading(false);
+    }
   };
 
   const handleExportSelectedProjects = () => {
@@ -452,6 +541,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         canCreate={canCreate}
         canBulkManage={canCreate || canEdit}
         selectedCount={selectedProjects.length}
+        stats={workspaceStats}
         onImportFile={handleImportProjects}
         onExportSelected={handleExportSelectedProjects}
         onDownloadTemplateCSV={handleDownloadProjectCsvTemplate}
@@ -497,6 +587,8 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         onDelete={handleDelete}
         onToggleVisibility={toggleVisibility}
         onToggleFeatured={toggleFeatured}
+        onCreate={handleAdd}
+        canCreate={canCreate}
         canEdit={canEdit}
         canDelete={canDelete}
         loading={isLoading || bulkDeleteMutation.isPending || bulkVisibilityMutation.isPending || bulkFeaturedMutation.isPending}
@@ -546,6 +638,36 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         loading={bulkDeleteMutation.isPending}
         title="Delete Multiple Projects"
         message={`Are you sure you want to delete ${bulkConfirm.ids.length} selected projects? This action cannot be undone.`}
+      />
+
+      <ImportConfirmDialog
+        open={importDialog.isOpen}
+        onOpenChange={(open) => !open && !importLoading && setImportDialog({
+          isOpen: false,
+          file: null,
+          items: [],
+          fileName: '',
+          format: '',
+          totalCount: 0,
+          validCount: 0,
+          skippedCount: 0
+        })}
+        onConfirm={handleConfirmImportProjects}
+        loading={importLoading}
+        title="Import Projects"
+        description="Review the file before running a bulk import. Existing projects with matching slugs will be updated."
+        fileName={importDialog.fileName}
+        format={importDialog.format}
+        stats={[
+          { label: 'Rows found', value: importDialog.totalCount },
+          { label: 'Ready to import', value: importDialog.validCount },
+          { label: 'Skipped', value: importDialog.skippedCount }
+        ]}
+        notes={[
+          'Rows without a title are skipped automatically.',
+          'Import keeps slug-based updates and creates new projects when no match is found.'
+        ]}
+        confirmText="Run Import"
       />
     </div>
   );

@@ -55,7 +55,7 @@ const RolePermissionsPanel = ({ rolePermissions, onSave }) => {
                   return (
                     <label 
                       key={tab} 
-                      className="ui-tab-label ${checked ? ui-active : }"
+                      className={`ui-tab-label ${checked ? 'ui-active' : ''}`}
                     >
                       <input 
                         type="checkbox" 

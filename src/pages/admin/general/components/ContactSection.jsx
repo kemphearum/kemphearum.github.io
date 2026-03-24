@@ -31,19 +31,39 @@ const ContactSection = ({
                 </Button>
             </div>
             <div className={'ui-form'}>
-                <FormField
-                    label="Contact Form Introduction"
-                    name="introText"
-                    validation={{ required: 'Intro text is required' }}
-                >
-                    <FormMarkdownEditor
-                        id="contact-intro"
-                        placeholder="The text shown above the contact form..."
-                        isPreviewMode={contactPreview}
-                        onTogglePreview={() => setContactPreview(!contactPreview)}
-                        rows="6"
-                    />
-                </FormField>
+                <div className="ui-generalSectionGrid ui-generalSectionGrid--compact">
+                    <div className="ui-generalPrimary">
+                        <div className="ui-generalAsideCard">
+                            <div className="ui-generalAsideCard__head">
+                                <h4>Contact intro</h4>
+                                <p>Set the tone before visitors reach the form so expectations feel clear and welcoming.</p>
+                            </div>
+
+                            <FormField
+                                label="Contact Form Introduction"
+                                name="introText"
+                                validation={{ required: 'Intro text is required' }}
+                            >
+                                <FormMarkdownEditor
+                                    id="contact-intro"
+                                    placeholder="The text shown above the contact form..."
+                                    isPreviewMode={contactPreview}
+                                    onTogglePreview={() => setContactPreview(!contactPreview)}
+                                    rows="6"
+                                />
+                            </FormField>
+                        </div>
+                    </div>
+
+                    <aside className="ui-generalAside">
+                        <div className="ui-generalAsideCard">
+                            <div className="ui-generalAsideCard__head">
+                                <h4>Best practice</h4>
+                                <p>Keep this copy short. It should invite contact, explain what people can reach out about, and reduce friction.</p>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
                 <div className={'ui-formFooter'}>
                     <Button type="submit" isLoading={loading} className="ui-button-block">
                         <Save size={18} /> Save Contact Changes

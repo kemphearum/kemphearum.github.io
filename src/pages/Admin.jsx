@@ -123,8 +123,14 @@ const Admin = () => {
     const [aboutData, setAboutData] = useState({ bio: '', skills: '' });
     const [contactData, setContactData] = useState({ introText: '' });
     const [settingsData, setSettingsData] = useState({ 
-        logoHighlight: '', logoText: '', tagline: '', footerText: '', 
-        projectFilters: '', blogFilters: '', pageTitle: '', pageFaviconUrl: '',
+        title: '',
+        favicon: '',
+        logoHighlight: '',
+        logoText: '',
+        tagline: '',
+        footerText: '',
+        projectFilters: '',
+        blogFilters: '',
         notificationsEnabled: true
     });
 
@@ -186,6 +192,9 @@ const Admin = () => {
                         ...global.typography,
                         ...global.system
                     });
+                    if (typeof global.system?.sidebarPersistent === 'boolean') {
+                        setSidebarPersistent(global.system.sidebarPersistent);
+                    }
                 }
                 if (trackRead) trackRead(1, 'Fetched global settings');
                 return;
@@ -215,15 +224,14 @@ const Admin = () => {
 
         await execute(async () => {
             if (section === 'settings') {
+                const fontCategories = SettingsService.constructor.DEFAULT_TYPOGRAPHY_METADATA?.fontCategories || [];
                 const typographyKeys = [
-                    'fontDisplay', 'fontDisplayWeight', 'fontDisplayItalic', 'fontFontSize',
-                    'fontHeading', 'fontHeadingWeight', 'fontHeadingItalic', 'fontHeadingSize',
-                    'fontSubheading', 'fontSubheadingWeight', 'fontSubheadingItalic', 'fontSubheadingSize',
-                    'fontLogo', 'fontLogoWeight', 'fontLogoItalic', 'fontLogoSize',
-                    'fontNav', 'fontNavWeight', 'fontNavItalic', 'fontNavSize',
-                    'fontBody', 'fontBodyWeight', 'fontBodyItalic', 'fontBodySize',
-                    'fontUI', 'fontUIWeight', 'fontUIItalic', 'fontUISize',
-                    'fontMono', 'fontMonoWeight', 'fontMonoItalic', 'fontMonoSize',
+                    ...fontCategories.flatMap(({ field, sizeField, weightField, italicField }) => [
+                        field,
+                        sizeField,
+                        weightField,
+                        italicField
+                    ]),
                     'fontSize', 'adminFontOverride'
                 ];
                 const systemKeys = ['sidebarPersistent', 'notificationsEnabled'];

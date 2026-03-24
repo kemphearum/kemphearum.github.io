@@ -54,10 +54,10 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     const [activeSubTab, setActiveSubTab] = useState('identity');
 
     const subTabs = [
-        { id: 'identity', label: 'Identity', icon: <Globe size={18} /> },
-        { id: 'typography', label: 'Typography', icon: <Type size={18} /> },
-        { id: 'visuals', label: 'Visuals', icon: <Eye size={18} /> },
-        { id: 'sync', label: 'Site Sync', icon: <RefreshCw size={18} /> }
+        { id: 'identity', label: 'Identity', description: 'Browser title, logo system, filters, and favicon.', icon: Globe },
+        { id: 'typography', label: 'Typography', description: 'Font roles, presets, previews, and admin override.', icon: Type },
+        { id: 'visuals', label: 'Visuals', description: 'Background motion, particle tuning, and interface behavior.', icon: Eye },
+        { id: 'sync', label: 'Site Sync', description: 'Mirrors, GitHub token, and manual rebuild control.', icon: RefreshCw }
     ];
 
     // Custom Confirmation Dialog State
@@ -80,6 +80,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     const handleSaveSettings = async (e) => {
         e.preventDefault();
         const { error } = await BaseService.safe(async () => {
+            const normalizedGithubToken = githubToken.trim();
             let faviconUrl = settingsData.favicon || '';
             if (settingsFavicon) {
                 faviconUrl = await ImageProcessingService.compress(settingsFavicon, { maxSizeMB: 0.05, maxWidthOrHeight: 256 });
@@ -91,6 +92,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                 mirrors: settingsData.mirrors || [],
                 fontSize: settingsData.fontSize || 'default',
                 adminFontOverride: settingsData.adminFontOverride ?? true,
+                sidebarPersistent,
             };
             fontCategories.forEach(c => {
                 payload[c.field] = settingsData[c.field] || 'inter';
@@ -102,8 +104,10 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
             setSettingsFavicon(null);
 
             // Save token separately to localStorage
-            if (githubToken) {
-                localStorage.setItem('github_dispatch_token', githubToken);
+            if (normalizedGithubToken) {
+                localStorage.setItem('github_dispatch_token', normalizedGithubToken);
+            } else {
+                localStorage.removeItem('github_dispatch_token');
             }
         });
 
@@ -331,23 +335,112 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         return <div className="ui-spinnerContainer">Loading Typography Settings...</div>;
     }
 
+    const backgroundLabelMap = {
+        plexus: 'Plexus',
+        particles: 'Particles',
+        geometry: 'Geometry',
+        aurora: 'Aurora'
+    };
+
+    const identityFields = [
+        settingsData.title,
+        settingsData.tagline,
+        settingsData.logoHighlight,
+        settingsData.logoText,
+        settingsData.footerText,
+        settingsData.favicon,
+        settingsData.projectFilters,
+        settingsData.blogFilters
+    ];
+    const identityFilled = identityFields.filter(Boolean).length;
+    const typographyCustomized = fontCategories.filter((category) =>
+        settingsData[category.field] ||
+        settingsData[category.sizeField] ||
+        settingsData[category.weightField] ||
+        settingsData[category.italicField]
+    ).length;
+    const syncStatusLabel = rebuildStatus.state === 'idle'
+        ? 'Ready'
+        : rebuildStatus.state === 'loading'
+            ? 'Syncing'
+            : rebuildStatus.state === 'requested'
+                ? 'Queued'
+                : rebuildStatus.state === 'success'
+                    ? 'Healthy'
+                    : 'Attention';
+    const tokenReady = githubToken.trim().length > 0;
+    const sectionMeta = {
+        identity: {
+            count: `${identityFilled}/8`,
+            hint: settingsData.favicon ? 'Favicon configured' : 'Add a favicon'
+        },
+        typography: {
+            count: `${fontCategories.length} roles`,
+            hint: metadata ? `${typographyCustomized} customized` : 'Metadata setup available'
+        },
+        visuals: {
+            count: backgroundLabelMap[settingsData.bgStyle || 'plexus'] || 'Plexus',
+            hint: settingsData.bgInteractive ?? true ? 'Interactive motion on' : 'Interactive motion off'
+        },
+        sync: {
+            count: `${mirrors.length} mirrors`,
+            hint: tokenReady ? `${syncStatusLabel} for rebuilds` : 'Token needed for rebuilds'
+        }
+    };
+
     return (
         <div className={tabStyles.tabContentFadeIn}>
+            <div className={tabStyles.workspaceShell}>
+                <div className={tabStyles.workspaceIntro}>
+                    <div className={tabStyles.workspaceCopy}>
+                        <span className={tabStyles.workspaceEyebrow}>Site Operations</span>
+                        <h2>Control the brand system, motion, and deployment behavior from one calmer workspace.</h2>
+                        <p>Settings now group identity, typography, visuals, and sync into clearer workstreams so you can tune the portfolio without digging through dense forms.</p>
+                    </div>
+                    <div className={tabStyles.workspaceStats}>
+                        <div className={tabStyles.workspaceStat}>
+                            <span className={tabStyles.workspaceStatValue}>4</span>
+                            <span className={tabStyles.workspaceStatLabel}>Workstreams</span>
+                            <span className={tabStyles.workspaceStatHint}>Identity, typography, visuals, and sync</span>
+                        </div>
+                        <div className={tabStyles.workspaceStat}>
+                            <span className={tabStyles.workspaceStatValue}>{fontCategories.length}</span>
+                            <span className={tabStyles.workspaceStatLabel}>Type Roles</span>
+                            <span className={tabStyles.workspaceStatHint}>Live previews across public and admin UI</span>
+                        </div>
+                        <div className={tabStyles.workspaceStat}>
+                            <span className={tabStyles.workspaceStatValue}>{mirrors.length}</span>
+                            <span className={tabStyles.workspaceStatLabel}>Deploy Targets</span>
+                            <span className={tabStyles.workspaceStatHint}>{tokenReady ? 'GitHub rebuild control is configured' : 'Add a token to trigger rebuilds'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <Tabs value={activeSubTab} onValueChange={setActiveSubTab} className={tabStyles.subTabNav}>
-                <Tabs.List className={`${tabStyles.subtabsList} ui-subTabNav`}>
+                <Tabs.List className={tabStyles.subtabsList}>
                     {subTabs.map((tab) => (
                         <Tabs.Trigger
                             key={tab.id}
                             value={tab.id}
-                            className={`${tabStyles.subTabTrigger} ui-subTabBtn`}
+                            className={tabStyles.subTabTrigger}
                         >
-                            {tab.icon}
-                            {tab.label}
+                            <span className={tabStyles.triggerIcon}>
+                                <tab.icon size={18} />
+                            </span>
+                            <span className={tabStyles.triggerBody}>
+                                <span className={tabStyles.triggerTitleRow}>
+                                    <strong>{tab.label}</strong>
+                                    <span className={tabStyles.triggerCount}>{sectionMeta[tab.id].count}</span>
+                                </span>
+                                <span className={tabStyles.triggerDescription}>{tab.description}</span>
+                                <span className={tabStyles.triggerHint}>{sectionMeta[tab.id].hint}</span>
+                            </span>
                         </Tabs.Trigger>
                     ))}
                 </Tabs.List>
 
-                <Tabs.Content value="identity">
+                <Tabs.Content value="identity" className={tabStyles.tabPanel}>
                     <IdentitySection 
                         settingsData={settingsData}
                         setSettingsData={setSettingsData}
@@ -360,7 +453,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     />
                 </Tabs.Content>
 
-                <Tabs.Content value="typography">
+                <Tabs.Content value="typography" className={tabStyles.tabPanel}>
                     <TypographySection 
                         settingsData={settingsData}
                         setSettingsData={setSettingsData}
@@ -374,7 +467,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     />
                 </Tabs.Content>
 
-                <Tabs.Content value="visuals">
+                <Tabs.Content value="visuals" className={tabStyles.tabPanel}>
                     <VisualsSection 
                         settingsData={settingsData}
                         setSettingsData={setSettingsData}
@@ -385,7 +478,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     />
                 </Tabs.Content>
 
-                <Tabs.Content value="sync">
+                <Tabs.Content value="sync" className={tabStyles.tabPanel}>
                     <SyncSection 
                         settingsData={settingsData}
                         setSettingsData={setSettingsData}
@@ -412,7 +505,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         </Dialog.Title>
                         <Dialog.Close />
                     </Dialog.Header>
-                    <Dialog.Body style={{ color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                    <Dialog.Body className={tabStyles.dialogBody}>
                         {confirmDialog.message}
                     </Dialog.Body>
                     <Dialog.Footer>

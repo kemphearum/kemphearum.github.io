@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
@@ -8,7 +8,7 @@ import ExperienceToolbar from './components/ExperienceToolbar';
 import ExperienceTable from './components/ExperienceTable';
 import ExperienceFormDialog from './components/ExperienceFormDialog';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
-import { Button } from '@/shared/components/ui';
+import { BriefcaseBusiness, Eye, Building2, Clock3 } from 'lucide-react';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 
 const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
@@ -64,6 +64,43 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const experiences = experiencesResult.data;
+
+  const workspaceStats = useMemo(() => {
+    const visibleCount = experiences.filter((item) => item.visible !== false).length;
+    const currentCount = experiences.filter((item) => {
+      if (item.current === true) return true;
+      const rawEnd = `${item.endMonthYear || item.endDate || item.period || ''}`.toLowerCase();
+      return rawEnd.includes('present');
+    }).length;
+    const companyCount = new Set(experiences.map((item) => item.company).filter(Boolean)).size;
+
+    return [
+      {
+        label: 'On This Page',
+        value: experiences.length,
+        hint: 'Entries loaded in the current result set',
+        icon: BriefcaseBusiness
+      },
+      {
+        label: 'Visible',
+        value: visibleCount,
+        hint: 'Shown in the public experience section',
+        icon: Eye
+      },
+      {
+        label: 'Companies',
+        value: companyCount,
+        hint: 'Distinct organizations represented here',
+        icon: Building2
+      },
+      {
+        label: 'Current Roles',
+        value: currentCount,
+        hint: 'Entries marked as present',
+        icon: Clock3
+      }
+    ];
+  }, [experiences]);
 
   // Robust date parser for legacy formats (yyyy-mm)
   const parseLegacyDate = (dateVal, isEnd = false) => {
@@ -234,6 +271,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         searchQuery={searchQuery}
         onSearchChange={handleSearch}
         canCreate={canCreate}
+        stats={workspaceStats}
       />
       
       <ExperienceTable
@@ -241,6 +279,8 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onToggleVisibility={toggleVisibility}
+        onCreate={handleAdd}
+        canCreate={canCreate}
         canEdit={canEdit}
         canDelete={canDelete}
         loading={isLoading}

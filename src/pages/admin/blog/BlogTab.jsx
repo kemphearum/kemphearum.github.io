@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Star, StarOff, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, Star, StarOff, Trash2, FileText, Globe2, Sparkles, PenSquare } from 'lucide-react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import BlogService from '../../../services/BlogService';
 import BaseService from '../../../services/BaseService';
@@ -11,6 +11,7 @@ import BlogFormDialog from './components/BlogFormDialog';
 import BlogTable from './components/BlogTable';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
 import HistoryModal from '../components/HistoryModal';
+import ImportConfirmDialog from '../components/ImportConfirmDialog';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
 import { slugify } from '../../../domain/shared/slugify';
@@ -25,6 +26,17 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [selectedPosts, setSelectedPosts] = useState([]);
   const [bulkConfirm, setBulkConfirm] = useState({ isOpen: false, ids: [] });
+  const [importDialog, setImportDialog] = useState({
+    isOpen: false,
+    file: null,
+    items: [],
+    fileName: '',
+    format: '',
+    totalCount: 0,
+    validCount: 0,
+    skippedCount: 0
+  });
+  const [importLoading, setImportLoading] = useState(false);
   const queryClient = useQueryClient();
   
   // Cursor pagination hook
@@ -48,6 +60,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   // Reset page on search
   const handleSearch = (val) => {
     setSearchQuery(val);
+    setSelectedPosts([]);
     pagination.reset();
   };
 
@@ -79,6 +92,35 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const posts = postsResult.data;
+  const visiblePostsCount = posts.filter((post) => post.visible !== false).length;
+  const featuredPostsCount = posts.filter((post) => !!post.featured).length;
+  const draftPostsCount = posts.length - visiblePostsCount;
+  const workspaceStats = [
+    {
+      label: 'On This Page',
+      value: posts.length,
+      hint: 'Loaded in the current result set',
+      icon: FileText
+    },
+    {
+      label: 'Published',
+      value: visiblePostsCount,
+      hint: 'Publicly visible posts',
+      icon: Globe2
+    },
+    {
+      label: 'Featured',
+      value: featuredPostsCount,
+      hint: 'Pinned to homepage surfaces',
+      icon: Sparkles
+    },
+    {
+      label: 'Drafts',
+      value: draftPostsCount,
+      hint: 'Hidden from visitors',
+      icon: PenSquare
+    }
+  ];
 
   // Handlers
   // Permission Booleans
@@ -267,7 +309,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     }
     
     await executeForm(async () => {
-      let coverImage = selectedPost?.coverImage || '';
+      let coverImage = formData.coverImage || '';
       if (formData.image instanceof File) {
         coverImage = await ImageProcessingService.compress(formData.image);
       }
@@ -295,6 +337,26 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     return fallback;
   };
 
+  const readImportFile = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => resolve(event.target?.result || '');
+    reader.onerror = () => reject(new Error('Failed to read import file.'));
+    reader.readAsText(file);
+  });
+
+  const parseImportItems = (fileName, content) => {
+    let parsed = [];
+
+    if (fileName.toLowerCase().endsWith('.csv')) {
+      parsed = csvToJson(content);
+    } else {
+      parsed = JSON.parse(content);
+    }
+
+    if (!Array.isArray(parsed)) parsed = [parsed];
+    return parsed;
+  };
+
   const downloadJson = (data, filename) => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -312,62 +374,89 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
       return showToast("You do not have permission to perform this action.", "error");
     }
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const content = event.target?.result || '';
-        let imported = [];
+    try {
+      const content = await readImportFile(file);
+      const items = parseImportItems(file.name, content);
+      const validCount = items.filter((item) => item?.title).length;
+      const skippedCount = items.length - validCount;
 
-        if (file.name.toLowerCase().endsWith('.csv')) {
-          imported = csvToJson(content);
-        } else {
-          imported = JSON.parse(content);
-        }
+      setImportDialog({
+        isOpen: true,
+        file,
+        items,
+        fileName: file.name,
+        format: file.name.toLowerCase().endsWith('.csv') ? 'CSV' : 'JSON',
+        totalCount: items.length,
+        validCount,
+        skippedCount
+      });
+    } catch (error) {
+      showToast(error?.message || 'Failed to import posts.', 'error');
+    }
+  };
 
-        if (!Array.isArray(imported)) imported = [imported];
+  const handleConfirmImportPosts = async () => {
+    if (!importDialog.items.length) return;
 
-        let created = 0;
-        let updated = 0;
-        let failed = 0;
+    setImportLoading(true);
+    try {
+      let created = 0;
+      let updated = 0;
+      let skipped = 0;
+      let failed = 0;
 
-        for (const item of imported) {
-          try {
-            if (!item?.title) continue;
-            const normalizedSlug = item.slug ? slugify(item.slug) : slugify(item.title);
-            const tags = Array.isArray(item.tags)
-              ? item.tags.join(', ')
-              : (item.tags || '');
-
-            const existing = await BlogService.fetchPostBySlug(normalizedSlug, null, true);
-            const payload = {
-              id: existing?.id || null,
-              title: item.title,
-              slug: normalizedSlug,
-              excerpt: item.excerpt || '',
-              content: item.content || '',
-              tags,
-              coverImage: item.coverImage || '',
-              featured: parseBoolean(item.featured, false),
-              visible: parseBoolean(item.visible, true)
-            };
-
-            await BlogService.savePost(userRole, payload, trackWrite);
-            if (existing?.id) updated += 1;
-            else created += 1;
-          } catch {
-            failed += 1;
+      for (const item of importDialog.items) {
+        try {
+          if (!item?.title) {
+            skipped += 1;
+            continue;
           }
+          const normalizedSlug = item.slug ? slugify(item.slug) : slugify(item.title);
+          const tags = Array.isArray(item.tags)
+            ? item.tags.join(', ')
+            : (item.tags || '');
+
+          const existing = await BlogService.fetchPostBySlug(normalizedSlug, null, true);
+          const payload = {
+            id: existing?.id || null,
+            title: item.title,
+            slug: normalizedSlug,
+            excerpt: item.excerpt || '',
+            content: item.content || '',
+            tags,
+            coverImage: item.coverImage || '',
+            featured: parseBoolean(item.featured, false),
+            visible: parseBoolean(item.visible, true)
+          };
+
+          await BlogService.savePost(userRole, payload, trackWrite);
+          if (existing?.id) updated += 1;
+          else created += 1;
+        } catch {
+          failed += 1;
         }
-
-        queryClient.invalidateQueries({ queryKey: ['posts'] });
-        showToast(`Import complete: ${created} created, ${updated} updated, ${failed} failed.`, failed > 0 ? 'warning' : 'success');
-      } catch (error) {
-        showToast(error?.message || 'Failed to import posts.', 'error');
       }
-    };
 
-    reader.onerror = () => showToast('Failed to read import file.', 'error');
-    reader.readAsText(file);
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      setImportDialog({
+        isOpen: false,
+        file: null,
+        items: [],
+        fileName: '',
+        format: '',
+        totalCount: 0,
+        validCount: 0,
+        skippedCount: 0
+      });
+      showToast(
+        `Import complete: ${created} created, ${updated} updated, ${skipped} skipped, ${failed} failed.`,
+        failed > 0 || skipped > 0 ? 'warning' : 'success'
+      );
+    } catch (error) {
+      showToast(error?.message || 'Failed to import posts.', 'error');
+    } finally {
+      setImportLoading(false);
+    }
   };
 
   const handleExportSelectedPosts = () => {
@@ -445,9 +534,11 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
       <BlogToolbar
         onCreate={handleCreate}
         onSearch={handleSearch}
+        searchQuery={searchQuery}
         canCreate={canCreate}
         canBulkManage={canCreate || canEdit}
         selectedCount={selectedPosts.length}
+        stats={workspaceStats}
         onImportFile={handleImportPosts}
         onExportSelected={handleExportSelectedPosts}
         onDownloadTemplateCSV={handleDownloadBlogCsvTemplate}
@@ -494,6 +585,8 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         onToggleVisibility={handleToggleVisibility}
         onToggleFeatured={handleToggleFeatured}
         onViewHistory={handleViewHistory}
+        onCreate={handleCreate}
+        canCreate={canCreate}
         canEdit={canEdit}
         canDelete={canDelete}
         loading={isLoading || bulkDeleteMutation.isPending || bulkVisibilityMutation.isPending || bulkFeaturedMutation.isPending}
@@ -544,6 +637,36 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         loading={bulkDeleteMutation.isPending}
         title="Delete Multiple Posts"
         message={`Are you sure you want to delete ${bulkConfirm.ids.length} selected posts? This action cannot be undone.`}
+      />
+
+      <ImportConfirmDialog
+        open={importDialog.isOpen}
+        onOpenChange={(open) => !open && !importLoading && setImportDialog({
+          isOpen: false,
+          file: null,
+          items: [],
+          fileName: '',
+          format: '',
+          totalCount: 0,
+          validCount: 0,
+          skippedCount: 0
+        })}
+        onConfirm={handleConfirmImportPosts}
+        loading={importLoading}
+        title="Import Blog Posts"
+        description="Review the file before running a bulk import. Existing posts with matching slugs will be updated."
+        fileName={importDialog.fileName}
+        format={importDialog.format}
+        stats={[
+          { label: 'Rows found', value: importDialog.totalCount },
+          { label: 'Ready to import', value: importDialog.validCount },
+          { label: 'Skipped', value: importDialog.skippedCount }
+        ]}
+        notes={[
+          'Rows without a title are skipped automatically.',
+          'Import keeps slug-based updates and creates new posts when no match is found.'
+        ]}
+        confirmText="Run Import"
       />
 
       <HistoryModal

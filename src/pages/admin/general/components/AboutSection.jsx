@@ -36,37 +36,57 @@ const AboutSection = ({
                 </Button>
             </div>
             <div className={'ui-form'}>
-                <FormField
-                    label="Biography"
-                    name="bio"
-                    validation={{ required: 'Bio is required' }}
-                >
-                    <FormMarkdownEditor
-                        id="about-bio"
-                        placeholder="Write your professional bio..."
-                        isPreviewMode={aboutPreview}
-                        onTogglePreview={() => setAboutPreview(!aboutPreview)}
-                        rows="12"
-                    />
-                </FormField>
+                <div className="ui-generalSectionGrid">
+                    <div className="ui-generalPrimary">
+                        <div className="ui-generalAsideCard">
+                            <div className="ui-generalAsideCard__head">
+                                <h4>Biography</h4>
+                                <p>Write the narrative that introduces your background, experience, and point of view.</p>
+                            </div>
 
-                <FormField
-                    label="Professional Skills"
-                    name="skills"
-                >
-                    <FormInput
-                        placeholder="React, Python, Firebase, ..."
-                        hint="comma separated"
-                    />
-                </FormField>
-
-                {skills && (
-                    <div className={'ui-skill-preview'}>
-                        {skills.split(',').map((s, i) => s.trim() && (
-                            <span key={`skill-${s.trim()}-${i}`} className={'ui-tech-tag'}>{s.trim()}</span>
-                        ))}
+                            <FormField
+                                label="Biography"
+                                name="bio"
+                                validation={{ required: 'Bio is required' }}
+                            >
+                                <FormMarkdownEditor
+                                    id="about-bio"
+                                    placeholder="Write your professional bio..."
+                                    isPreviewMode={aboutPreview}
+                                    onTogglePreview={() => setAboutPreview(!aboutPreview)}
+                                    rows="12"
+                                />
+                            </FormField>
+                        </div>
                     </div>
-                )}
+
+                    <aside className="ui-generalAside">
+                        <div className="ui-generalAsideCard">
+                            <div className="ui-generalAsideCard__head">
+                                <h4>Skills snapshot</h4>
+                                <p>List the capabilities you want visitors to notice first.</p>
+                            </div>
+
+                            <FormField
+                                label="Professional Skills"
+                                name="skills"
+                            >
+                                <FormInput
+                                    placeholder="React, Python, Firebase, ..."
+                                    hint="comma separated"
+                                />
+                            </FormField>
+
+                            {skills && (
+                                <div className={'ui-skill-preview'}>
+                                    {skills.split(',').map((s, i) => s.trim() && (
+                                        <span key={`skill-${s.trim()}-${i}`} className={'ui-tech-tag'}>{s.trim()}</span>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </aside>
+                </div>
 
                 <div className={'ui-formFooter'}>
                     <Button type="submit" isLoading={loading} className="ui-button-block">

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Dialog, EmptyState, Tabs } from '@/shared/components/ui';
+import { EmptyState } from '@/shared/components/ui';
 import BaseService from '../../../services/BaseService';
 import UserService from '../../../services/UserService';
 import { useActivity } from '../../../hooks/useActivity';
@@ -84,6 +84,34 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   });
 
   const usersList = usersResult.data;
+  const userStats = useMemo(() => {
+    const activeCount = usersList.filter((entry) => entry.isActive !== false && entry.disabled !== true).length;
+    const disabledCount = usersList.length - activeCount;
+    const elevatedCount = usersList.filter((entry) => ['admin', 'superadmin'].includes(entry.role)).length;
+
+    return [
+      {
+        label: searchQuery ? 'Visible results' : 'Users on page',
+        value: usersList.length,
+        meta: searchQuery ? `Filtered by "${searchQuery}"` : 'Current pagination view',
+      },
+      {
+        label: 'Active access',
+        value: activeCount,
+        meta: 'Can sign in today',
+      },
+      {
+        label: 'Elevated roles',
+        value: elevatedCount,
+        meta: 'Admin or super admin',
+      },
+      {
+        label: 'Disabled',
+        value: disabledCount,
+        meta: disabledCount > 0 ? 'Blocked from login' : 'No blocked accounts',
+      },
+    ];
+  }, [searchQuery, usersList]);
 
   const { data: rolePermissions = {} } = useQuery({
     staleTime: 60000,
@@ -167,11 +195,15 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
       return showToast("You do not have permission to perform this action.", "error");
     }
 
-    const newStatus = !deletingUser.disabled;
-    const action = newStatus ? 'disabled' : 'enabled';
+    const isCurrentlyDisabled = deletingUser.isActive === false || deletingUser.disabled === true;
+    const shouldDisable = !isCurrentlyDisabled;
+    const action = shouldDisable ? 'disabled' : 'enabled';
     
     await executeDisable(async () => {
-      await UserService.updateUserField(deletingUser.id, { disabled: newStatus });
+      await UserService.updateUserField(deletingUser.id, {
+        isActive: !shouldDisable,
+        disabled: shouldDisable
+      });
       
       trackWrite(1, `User ${action}`, {
         action,
@@ -183,7 +215,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
       setDeletingUser(null);
       setEditingUser(null);
     }, {
-      successMessage: `User ${deletingUser.email} ${newStatus ? 'disabled' : 'enabled'} successfully.`
+      successMessage: `User ${deletingUser.email} ${shouldDisable ? 'disabled' : 'enabled'} successfully.`
     });
   };
 
@@ -217,6 +249,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
         onCreate={() => setIsFormOpen(true)}
         searchResultCount={usersList.length}
         totalCount={usersList.length}
+        stats={userStats}
       />
 
       <UsersTable 
@@ -226,6 +259,9 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
         onEdit={setEditingUser}
         onResetPassword={handleResetPassword}
         onDelete={setDeletingUser}
+        searchQuery={searchQuery}
+        onClearSearch={() => setSearchQuery('')}
+        onCreate={() => setIsFormOpen(true)}
         loading={usersLoading || usersFetching}
         page={pagination.page}
         pageSize={pagination.limit}
@@ -257,7 +293,6 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
       <UserDetailDialog 
         user={editingUser}
         currentUser={user}
-        userRole={userRole}
         history={userHistory}
         historyLoading={historyLoading}
         onClose={() => setEditingUser(null)}
@@ -271,10 +306,18 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
         onOpenChange={(open) => !open && setDeletingUser(null)}
         onConfirm={handleDisableUser}
         loading={disableLoading}
-        title={deletingUser?.disabled ? "Re-enable User" : "Disable User"}
-        message={deletingUser?.disabled 
+        title={(deletingUser?.isActive === false || deletingUser?.disabled === true) ? "Re-enable User" : "Disable User"}
+        message={(deletingUser?.isActive === false || deletingUser?.disabled === true)
           ? `Are you sure you want to re-enable access for ${deletingUser?.email}?`
           : `Are you sure you want to disable ${deletingUser?.email}? They will no longer be able to log in.`
+        }
+        confirmLabel={(deletingUser?.isActive === false || deletingUser?.disabled === true) ? 'Re-enable User' : 'Disable User'}
+        loadingLabel={(deletingUser?.isActive === false || deletingUser?.disabled === true) ? 'Re-enabling...' : 'Disabling...'}
+        confirmVariant={(deletingUser?.isActive === false || deletingUser?.disabled === true) ? 'primary' : 'danger'}
+        tone={(deletingUser?.isActive === false || deletingUser?.disabled === true) ? 'primary' : 'danger'}
+        note={(deletingUser?.isActive === false || deletingUser?.disabled === true)
+          ? 'The account can sign in again immediately after this change.'
+          : 'The account remains in the system and can be re-enabled later from User Management.'
         }
       />
     </div>

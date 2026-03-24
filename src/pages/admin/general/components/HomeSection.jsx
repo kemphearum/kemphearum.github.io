@@ -36,53 +36,80 @@ const HomeSection = ({
                 </Button>
             </div>
             <div className={'ui-form'}>
-                <FormRow>
-                    <FormField label="Greeting" name="greeting">
-                        <FormInput placeholder="e.g. Hello, I am" />
-                    </FormField>
-                    <FormField label="Full Name" name="name">
-                        <FormInput placeholder="Your professional name" />
-                    </FormField>
-                </FormRow>
+                <div className="ui-generalSectionGrid">
+                    <div className="ui-generalPrimary">
+                        <div className="ui-generalAsideCard">
+                            <div className="ui-generalAsideCard__head">
+                                <h4>Hero copy</h4>
+                                <p>Set the first lines visitors see when they land on the portfolio.</p>
+                            </div>
 
-                <FormField label="Professional Subtitle" name="subtitle">
-                    <FormInput placeholder="e.g. Senior Software Engineer" />
-                </FormField>
+                            <FormRow>
+                                <FormField label="Greeting" name="greeting">
+                                    <FormInput placeholder="e.g. Hello, I am" />
+                                </FormField>
+                                <FormField label="Full Name" name="name">
+                                    <FormInput placeholder="Your professional name" />
+                                </FormField>
+                            </FormRow>
 
-                <FormField label="Hero Description" name="description">
-                    <FormMarkdownEditor
-                        id="home-description"
-                        placeholder="A brief, impactful introduction..."
-                        isPreviewMode={homePreview}
-                        onTogglePreview={() => setHomePreview(!homePreview)}
-                        rows="8"
-                    />
-                </FormField>
+                            <FormField label="Professional Subtitle" name="subtitle">
+                                <FormInput placeholder="e.g. Senior Software Engineer" />
+                            </FormField>
 
-                <FormRow>
-                    <FormField label="Call to Action Text" name="ctaText">
-                        <FormInput placeholder="e.g. View My Work" />
-                    </FormField>
-                    <FormField label="CTA Anchor/Link" name="ctaLink">
-                        <FormInput placeholder="e.g. #projects" />
-                    </FormField>
-                </FormRow>
+                            <FormField label="Hero Description" name="description">
+                                <FormMarkdownEditor
+                                    id="home-description"
+                                    placeholder="A brief, impactful introduction..."
+                                    isPreviewMode={homePreview}
+                                    onTogglePreview={() => setHomePreview(!homePreview)}
+                                    rows="8"
+                                />
+                            </FormField>
+                        </div>
 
-                <FormField label="Profile Portrait" name="image">
-                    <Controller
-                        name="image"
-                        render={({ field }) => (
-                            <FormDropzone
-                                hint="Transparent PNG recommended"
-                                file={field.value}
-                                onFileChange={field.onChange}
-                                currentImageUrl={currentImageUrl}
-                                circular={true}
-                                aspectRatio="1/1"
-                            />
-                        )}
-                    />
-                </FormField>
+                        <div className="ui-generalAsideCard">
+                            <div className="ui-generalAsideCard__head">
+                                <h4>Primary action</h4>
+                                <p>Guide visitors toward the next section or strongest conversion point.</p>
+                            </div>
+
+                            <FormRow>
+                                <FormField label="Call to Action Text" name="ctaText">
+                                    <FormInput placeholder="e.g. View My Work" />
+                                </FormField>
+                                <FormField label="CTA Anchor/Link" name="ctaLink">
+                                    <FormInput placeholder="e.g. #projects" />
+                                </FormField>
+                            </FormRow>
+                        </div>
+                    </div>
+
+                    <aside className="ui-generalAside">
+                        <div className="ui-generalAsideCard">
+                            <div className="ui-generalAsideCard__head">
+                                <h4>Portrait</h4>
+                                <p>Use a clean image that reads well in the hero and keeps attention on the headline.</p>
+                            </div>
+
+                            <FormField label="Profile Portrait" name="image">
+                                <Controller
+                                    name="image"
+                                    render={({ field }) => (
+                                        <FormDropzone
+                                            hint="Transparent PNG recommended"
+                                            file={field.value}
+                                            onFileChange={field.onChange}
+                                            currentImageUrl={currentImageUrl}
+                                            circular={true}
+                                            aspectRatio="1/1"
+                                        />
+                                    )}
+                                />
+                            </FormField>
+                        </div>
+                    </aside>
+                </div>
 
                 <div className={'ui-formFooter'}>
                     <Button type="submit" isLoading={loading} className="ui-button-block">
