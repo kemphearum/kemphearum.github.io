@@ -12,6 +12,8 @@ import BlogTable from './components/BlogTable';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
 import HistoryModal from '../components/HistoryModal';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
+import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
+import { slugify } from '../../../domain/shared/slugify';
 
 const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   // State
@@ -273,6 +275,142 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     });
   };
 
+  const parseBoolean = (value, fallback = false) => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (['true', '1', 'yes', 'y'].includes(normalized)) return true;
+      if (['false', '0', 'no', 'n'].includes(normalized)) return false;
+    }
+    return fallback;
+  };
+
+  const downloadJson = (data, filename) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportPosts = async (file) => {
+    if (!canCreate && !canEdit) {
+      return showToast("You do not have permission to perform this action.", "error");
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result || '';
+        let imported = [];
+
+        if (file.name.toLowerCase().endsWith('.csv')) {
+          imported = csvToJson(content);
+        } else {
+          imported = JSON.parse(content);
+        }
+
+        if (!Array.isArray(imported)) imported = [imported];
+
+        let created = 0;
+        let updated = 0;
+        let failed = 0;
+
+        for (const item of imported) {
+          try {
+            if (!item?.title) continue;
+            const normalizedSlug = item.slug ? slugify(item.slug) : slugify(item.title);
+            const tags = Array.isArray(item.tags)
+              ? item.tags.join(', ')
+              : (item.tags || '');
+
+            const existing = await BlogService.fetchPostBySlug(normalizedSlug, null, true);
+            const payload = {
+              id: existing?.id || null,
+              title: item.title,
+              slug: normalizedSlug,
+              excerpt: item.excerpt || '',
+              content: item.content || '',
+              tags,
+              coverImage: item.coverImage || '',
+              featured: parseBoolean(item.featured, false),
+              visible: parseBoolean(item.visible, true)
+            };
+
+            await BlogService.savePost(userRole, payload, trackWrite);
+            if (existing?.id) updated += 1;
+            else created += 1;
+          } catch {
+            failed += 1;
+          }
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['posts'] });
+        showToast(`Import complete: ${created} created, ${updated} updated, ${failed} failed.`, failed > 0 ? 'warning' : 'success');
+      } catch (error) {
+        showToast(error?.message || 'Failed to import posts.', 'error');
+      }
+    };
+
+    reader.onerror = () => showToast('Failed to read import file.', 'error');
+    reader.readAsText(file);
+  };
+
+  const handleExportSelectedPosts = () => {
+    if (selectedPosts.length === 0) {
+      return showToast('Please select posts to export.', 'warning');
+    }
+
+    const selected = posts.filter(post => selectedPosts.includes(post.id));
+    if (selected.length === 0) {
+      return showToast('Selected posts are not in the current page result.', 'warning');
+    }
+
+    downloadJson(selected, `blog_export_selected_${new Date().toISOString().split('T')[0]}.json`);
+    showToast(`Exported ${selected.length} selected posts.`);
+  };
+
+  const handleDownloadBlogJsonTemplate = () => {
+    const template = [{
+      title: 'Sample Blog Post',
+      slug: 'sample-blog-post',
+      excerpt: 'A short summary for the list view.',
+      content: '# Your Content Here\\nThis is sample markdown content.',
+      tags: ['React', 'Tutorial'],
+      featured: false,
+      visible: true
+    }];
+
+    downloadJson(template, 'blog_template.json');
+  };
+
+  const handleDownloadBlogCsvTemplate = () => {
+    const template = [{
+      title: 'Sample Blog Post',
+      slug: 'sample-blog-post',
+      excerpt: 'A short summary for the list view.',
+      content: '# Your Content Here\\nThis is sample markdown content.',
+      tags: 'React, Tutorial',
+      featured: 'false',
+      visible: 'true'
+    }];
+
+    const csvData = jsonToCsv(template, ['title', 'slug', 'excerpt', 'content', 'tags', 'featured', 'visible']);
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'blog_template.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleConfirmDelete = async () => {
     if (!selectedPost?.id) return;
     if (!isActionAllowed('delete', 'blog')) {
@@ -298,6 +436,12 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         onCreate={handleCreate}
         onSearch={handleSearch}
         canCreate={canCreate}
+        canBulkManage={canCreate || canEdit}
+        selectedCount={selectedPosts.length}
+        onImportFile={handleImportPosts}
+        onExportSelected={handleExportSelectedPosts}
+        onDownloadTemplateCSV={handleDownloadBlogCsvTemplate}
+        onDownloadTemplateJSON={handleDownloadBlogJsonTemplate}
       />
 
       {selectedPosts.length > 0 && (

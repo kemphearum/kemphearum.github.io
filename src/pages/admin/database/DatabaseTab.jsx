@@ -50,6 +50,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     const [restoreFile, setRestoreFile] = useState(null);
     const [restoreProgress, setRestoreProgress] = useState(null);
     const [quotaExceeded, setQuotaExceeded] = useState(false);
+    const [healthFailures, setHealthFailures] = useState({});
     
     const { trackRead, trackWrite, trackDelete } = useActivity();
     const queryClient = useQueryClient();
@@ -60,22 +61,44 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         queryKey: ['database', 'health'],
         queryFn: async () => {
             setQuotaExceeded(false);
-            const result = await BaseService.safe(() => DatabaseService.getHealth(trackRead));
-            if (result.error) {
-                if (result.error === 'QUOTA_EXCEEDED') {
+            setHealthFailures({});
+
+            try {
+                const data = await DatabaseService.getHealth(trackRead);
+                return { ...defaults, ...data, lastUpdated: new Date() };
+            } catch (error) {
+                if (error?.code === 'DATABASE_HEALTH_PARTIAL_FAILURE') {
+                    const failures = error?.failures || {};
+                    const partialCounts = error?.partialCounts || {};
+                    setHealthFailures(failures);
+
+                    const failureCodes = Object.values(failures).map(entry => entry?.code || '').join(' ').toLowerCase();
+                    if (failureCodes.includes('resource-exhausted') || failureCodes.includes('quota')) {
+                        setQuotaExceeded(true);
+                    }
+
+                    showToast(
+                        `Could not load health metrics for: ${Object.keys(failures).join(', ')}`,
+                        'error'
+                    );
+
+                    return { ...defaults, ...partialCounts, lastUpdated: new Date() };
+                }
+
+                if (error?.code === 'resource-exhausted' || `${error?.message || ''}`.toLowerCase().includes('quota')) {
                     setQuotaExceeded(true);
                 } else {
-                    showToast(result.error, 'error');
+                    showToast(error?.message || 'Failed to load database health.', 'error');
                 }
+
                 return { ...defaults };
             }
-            return { ...result.data, lastUpdated: new Date() };
         },
         refetchInterval: 300000,
         refetchOnWindowFocus: false
     });
 
-    const { data: auditSettings = { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false }, isLoading: auditSettingsLoading } = useQuery({
+    const { data: auditSettings = { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false } } = useQuery({
         queryKey: ['database', 'auditSettings'],
         queryFn: async () => {
             const result = await BaseService.safe(() => DatabaseService.getAuditSettings());
@@ -200,7 +223,6 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         });
     };
 
-    const totalDocs = Object.values(dbHealth).reduce((acc, val) => typeof val === 'number' ? acc + val : acc, 0) - (dbHealth.lastUpdated ? 0 : 0);
     // Adjusted totalDocs calculation to be safer
     const calculatedTotal = (dbHealth.posts || 0) + (dbHealth.projects || 0) + (dbHealth.experience || 0) + (dbHealth.content || 0) + (dbHealth.messages || 0) + (dbHealth.auditLogs || 0) + (dbHealth.users || 0) + (dbHealth.rolePermissions || 0) + (dbHealth.settings || 0) + (dbHealth.visits || 0) + (dbHealth.dailyUsage || 0);
 
@@ -210,6 +232,17 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
 
             {quotaExceeded && (
                 <QuotaResilienceBanner onRefresh={() => refetchDbHealth()} />
+            )}
+
+            {Object.keys(healthFailures).length > 0 && (
+                <div className="ui-quota-banner" role="alert">
+                    <div className="ui-quota-banner-content">
+                        <h3>Health Check Incomplete</h3>
+                        <p>
+                            Some collection counts could not be loaded: {Object.keys(healthFailures).join(', ')}.
+                        </p>
+                    </div>
+                </div>
             )}
 
             <SectionHeader
@@ -230,6 +263,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
 
             <DatabaseStats 
                 dbHealth={dbHealth}
+                healthFailures={healthFailures}
                 loading={dbHealthLoading}
                 totalDocs={calculatedTotal}
                 setActiveTab={setActiveTab}

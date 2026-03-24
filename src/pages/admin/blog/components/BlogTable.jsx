@@ -32,16 +32,19 @@ const BlogTable = ({
     {
       key: 'title',
       header: 'Title',
+      sortable: true,
       className: 'ui-table-cell--title'
     },
     {
       key: 'visible',
       header: 'Status',
+      sortable: true,
       render: (row) => renderStatusBadge(row)
     },
     {
       key: 'createdAt',
       header: 'Date',
+      sortable: true,
       render: (row) => (
         row.createdAt?.seconds 
           ? new Date(row.createdAt.seconds * 1000).toLocaleDateString()

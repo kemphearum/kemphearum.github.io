@@ -30,16 +30,19 @@ const ProjectsTable = ({
     {
       key: 'title',
       header: 'Title',
+      sortable: true,
       className: 'ui-table-cell--title'
     },
     {
       key: 'visible',
       header: 'Status',
+      sortable: true,
       render: (row) => renderStatusBadge(row)
     },
     {
       key: 'techStack',
       header: 'Tech Stack',
+      sortable: true,
       render: (row) => renderTags(row, 'techStack')
     },
     {

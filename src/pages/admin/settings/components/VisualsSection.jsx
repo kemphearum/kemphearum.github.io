@@ -4,10 +4,10 @@ import FormSelect from '../../components/FormSelect';
 import FormField from '../../components/FormField';
 import tabStyles from '../SettingsTab.module.scss';
 
-const VisualsSection = ({ 
-    settingsData, 
-    setSettingsData, 
-    sidebarPersistent, 
+const VisualsSection = ({
+    settingsData,
+    setSettingsData,
+    sidebarPersistent,
     setSidebarPersistent,
     onSave,
     loading
@@ -25,10 +25,10 @@ const VisualsSection = ({
                             value={settingsData.bgStyle || 'plexus'}
                             onChange={(e) => setSettingsData({ ...settingsData, bgStyle: e.target.value })}
                             options={[
-                                { value: 'plexus', label: 'ðŸ•¸ï¸ Plexus (Connected Lines)' },
-                                { value: 'particles', label: 'âœ¨ Dust Particles' },
-                                { value: 'geometry', label: 'ðŸ“ Floating Geometry' },
-                                { value: 'aurora', label: 'ðŸŒˆ Aurora Borealis' }
+                                { value: 'plexus', label: 'Plexus (Connected Lines)' },
+                                { value: 'particles', label: 'Dust Particles' },
+                                { value: 'geometry', label: 'Floating Geometry' },
+                                { value: 'aurora', label: 'Aurora Borealis' }
                             ]}
                         />
                     </FormField>
@@ -39,33 +39,33 @@ const VisualsSection = ({
                             min="1"
                             max="100"
                             value={settingsData.bgDensity ?? 50}
-                            onChange={(e) => setSettingsData({ ...settingsData, bgDensity: parseInt(e.target.value) })}
+                            onChange={(e) => setSettingsData({ ...settingsData, bgDensity: parseInt(e.target.value, 10) })}
                             className="ui-range-input"
                         />
                     </FormField>
-                    
+
                     <FormField label={`Animation Speed (${settingsData.bgSpeed ?? 50}%)`}>
                         <input
                             type="range"
                             min="1"
                             max="100"
                             value={settingsData.bgSpeed ?? 50}
-                            onChange={(e) => setSettingsData({ ...settingsData, bgSpeed: parseInt(e.target.value) })}
+                            onChange={(e) => setSettingsData({ ...settingsData, bgSpeed: parseInt(e.target.value, 10) })}
                             className="ui-range-input"
                         />
                     </FormField>
-                    
+
                     <FormField label={`Glow Intensity (${settingsData.bgGlowOpacity ?? 50}%)`}>
                         <input
                             type="range"
                             min="0"
                             max="100"
                             value={settingsData.bgGlowOpacity ?? 50}
-                            onChange={(e) => setSettingsData({ ...settingsData, bgGlowOpacity: parseInt(e.target.value) })}
+                            onChange={(e) => setSettingsData({ ...settingsData, bgGlowOpacity: parseInt(e.target.value, 10) })}
                             className="ui-range-input"
                         />
                     </FormField>
-                    
+
                     <div className={`${tabStyles.inputGroup} ${tabStyles.inputGroupRow} ${tabStyles.inline}`}>
                         <label>
                             <input
@@ -81,7 +81,7 @@ const VisualsSection = ({
                             Background particles respond to mouse movement.
                         </p>
                     </div>
-                    
+
                     <div className={`${tabStyles.inputGroup} ${tabStyles.inputGroupRow} ${tabStyles.inline}`}>
                         <label>
                             <input
@@ -97,7 +97,7 @@ const VisualsSection = ({
                             Show popup alerts in the top right for actions (saving, deleting, etc).
                         </p>
                     </div>
-                    
+
                     <div className={`${tabStyles.inputGroup} ${tabStyles.inputGroupRow} ${tabStyles.inline}`}>
                         <label>
                             <input

@@ -62,10 +62,21 @@ const DataTable = ({
       return data;
     }
 
+    const normalizeSortValue = (value) => {
+      if (value === null || value === undefined) return null;
+      if (typeof value === 'object' && value.seconds !== undefined) {
+        const nanos = value.nanoseconds || 0;
+        return (value.seconds * 1000) + (nanos / 1000000);
+      }
+      if (Array.isArray(value)) return value.join(', ');
+      if (typeof value === 'boolean') return value ? 1 : 0;
+      return value;
+    };
+
     const sortableData = [...data];
     sortableData.sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
+      const aValue = normalizeSortValue(a[sortConfig.key]);
+      const bValue = normalizeSortValue(b[sortConfig.key]);
 
       if (aValue === bValue) return 0;
       

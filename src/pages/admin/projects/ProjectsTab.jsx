@@ -11,6 +11,8 @@ import ProjectsFormDialog from './components/ProjectsFormDialog';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
 import { Button } from '@/shared/components/ui';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
+import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
+import { slugify } from '../../../domain/shared/slugify';
 
 const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const [editingItem, setEditingItem] = useState(null);
@@ -144,6 +146,148 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         })
       );
     });
+  };
+
+  const parseBoolean = (value, fallback = false) => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (['true', '1', 'yes', 'y'].includes(normalized)) return true;
+      if (['false', '0', 'no', 'n'].includes(normalized)) return false;
+    }
+    return fallback;
+  };
+
+  const downloadJson = (data, filename) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportProjects = async (file) => {
+    if (!canCreate && !canEdit) {
+      return showToast("You do not have permission to perform this action.", "error");
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result || '';
+        let imported = [];
+
+        if (file.name.toLowerCase().endsWith('.csv')) {
+          imported = csvToJson(content);
+        } else {
+          imported = JSON.parse(content);
+        }
+
+        if (!Array.isArray(imported)) imported = [imported];
+
+        let created = 0;
+        let updated = 0;
+        let failed = 0;
+
+        for (const item of imported) {
+          try {
+            if (!item?.title) continue;
+            const normalizedSlug = item.slug ? slugify(item.slug) : slugify(item.title);
+            const techStack = Array.isArray(item.techStack)
+              ? item.techStack.join(', ')
+              : (item.techStack || '');
+
+            const existing = await ProjectService.fetchProjectBySlug(normalizedSlug, null, true);
+            const payload = {
+              id: existing?.id || null,
+              title: item.title,
+              description: item.description || '',
+              techStack,
+              githubUrl: item.githubUrl || '',
+              liveUrl: item.liveUrl || '',
+              slug: normalizedSlug,
+              content: item.content || '',
+              featured: parseBoolean(item.featured, false),
+              visible: parseBoolean(item.visible, true),
+              imageUrl: item.imageUrl || ''
+            };
+
+            await ProjectService.saveProject(userRole, payload, undefined, trackWrite);
+            if (existing?.id) updated += 1;
+            else created += 1;
+          } catch {
+            failed += 1;
+          }
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
+        showToast(`Import complete: ${created} created, ${updated} updated, ${failed} failed.`, failed > 0 ? 'warning' : 'success');
+      } catch (error) {
+        showToast(error?.message || 'Failed to import projects.', 'error');
+      }
+    };
+
+    reader.onerror = () => showToast('Failed to read import file.', 'error');
+    reader.readAsText(file);
+  };
+
+  const handleExportSelectedProjects = () => {
+    if (selectedProjects.length === 0) {
+      return showToast('Please select projects to export.', 'warning');
+    }
+
+    const selected = projects.filter(project => selectedProjects.includes(project.id));
+    if (selected.length === 0) {
+      return showToast('Selected projects are not in the current page result.', 'warning');
+    }
+
+    downloadJson(selected, `projects_export_selected_${new Date().toISOString().split('T')[0]}.json`);
+    showToast(`Exported ${selected.length} selected projects.`);
+  };
+
+  const handleDownloadProjectJsonTemplate = () => {
+    const template = [{
+      title: "Example Project",
+      description: "Short description here",
+      techStack: "React, Firebase",
+      githubUrl: "https://github.com/example/repo",
+      liveUrl: "https://example.com",
+      slug: "example-project",
+      content: "# Markdown Content\\nDetails here...",
+      featured: false,
+      visible: true
+    }];
+
+    downloadJson(template, 'projects_template.json');
+  };
+
+  const handleDownloadProjectCsvTemplate = () => {
+    const template = [{
+      title: "Example Project",
+      description: "Short description here",
+      techStack: "React, Firebase",
+      githubUrl: "https://github.com/example/repo",
+      liveUrl: "https://example.com",
+      slug: "example-project",
+      content: "# Markdown Content\\nDetails here...",
+      featured: "false",
+      visible: "true"
+    }];
+
+    const csvData = jsonToCsv(template, ["title", "description", "techStack", "githubUrl", "liveUrl", "slug", "content", "featured", "visible"]);
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'projects_template.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Mutations with Optimistic Updates
@@ -299,6 +443,12 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         searchQuery={searchQuery}
         onSearchChange={handleSearch}
         canCreate={canCreate}
+        canBulkManage={canCreate || canEdit}
+        selectedCount={selectedProjects.length}
+        onImportFile={handleImportProjects}
+        onExportSelected={handleExportSelectedProjects}
+        onDownloadTemplateCSV={handleDownloadProjectCsvTemplate}
+        onDownloadTemplateJSON={handleDownloadProjectJsonTemplate}
       />
 
       {selectedProjects.length > 0 && (

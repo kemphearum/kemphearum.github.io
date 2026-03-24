@@ -1,4 +1,4 @@
-import { Type, RefreshCw, PlusCircle, Minus, Plus, Save } from 'lucide-react';
+﻿import { Type, RefreshCw, PlusCircle, Minus, Plus, Save } from 'lucide-react';
 import { Button, Input } from '../../../../shared/components/ui';
 import FormSelect from '../../components/FormSelect';
 import FormField from '../../components/FormField';
@@ -232,7 +232,7 @@ const TypographySection = ({
                             fontWeight: settingsData.fontDisplayWeight || 800,
                             fontStyle: settingsData.fontDisplayItalic ? 'italic' : 'normal',
                             fontSize: `calc(${getFontSize('fontDisplaySize', '2rem')} * 1.4)`
-                        }}>áž€áž¹áž˜ áž—áž¶ážšáž˜áŸ’áž™</div>
+                        }}>Display Preview</div>
 
                         <div className={tabStyles.livePreviewHeaderGroup}>
                             <div className={tabStyles.livePreviewHeading} style={{
@@ -240,13 +240,13 @@ const TypographySection = ({
                                 fontWeight: settingsData.fontHeadingWeight || 700,
                                 fontStyle: settingsData.fontHeadingItalic ? 'italic' : 'normal',
                                 fontSize: getFontSize('fontHeadingSize', '1.25rem')
-                            }}>Heading â€” áž…áŸ†ážŽáž„áž‡áž¾áž„</div>
+                            }}>Heading - Sample Text</div>
                             <div className={tabStyles.livePreviewSubheading} style={{
                                 fontFamily: fontCSS[getFont('fontSubheading')],
                                 fontWeight: settingsData.fontSubheadingWeight || 600,
                                 fontStyle: settingsData.fontSubheadingItalic ? 'italic' : 'normal',
                                 fontSize: getFontSize('fontSubheadingSize', '1rem')
-                            }}>Sub Heading â€” áž…áŸ†ážŽáž„áž‡áž¾áž„ážšáž„</div>
+                            }}>Subheading - Sample Text</div>
                         </div>
 
                         <div className={tabStyles.livePreviewBodyText} style={{
@@ -355,7 +355,7 @@ const TypographySection = ({
                             fontSize: getFontSize('fontFooterTextSize', '0.68rem'),
                             fontWeight: settingsData.fontFooterTextWeight || 400,
                             fontStyle: settingsData.fontFooterTextItalic ? 'italic' : 'normal'
-                        }}>Â© 2026 {settingsData.logoHighlight || 'Kem'} {settingsData.logoText || 'Phearum'}. All Rights Reserved.</div>
+                        }}>© 2026 {settingsData.logoHighlight || 'Kem'} {settingsData.logoText || 'Phearum'}. All Rights Reserved.</div>
                     </div>
                 </div>
 
@@ -370,7 +370,7 @@ const TypographySection = ({
                                 fontWeight: settingsData.fontAdminBrandWeight || 700,
                                 fontStyle: settingsData.fontAdminBrandItalic ? 'italic' : 'normal'
                             }}>Admin<span>.</span></span>
-                            <div className={tabStyles.livePreviewAdminSettingsIcon}>âš™ï¸</div>
+                            <div className={tabStyles.livePreviewAdminSettingsIcon}>Settings</div>
                         </div>
                         <div className={tabStyles.livePreviewAdminSidebarItem} style={{
                             fontFamily: fontCSS[getFont('fontAdminMenu')],
@@ -408,7 +408,7 @@ const TypographySection = ({
                             <div className={tabStyles.livePreviewAdminStatChange} style={{
                                 fontFamily: fontCSS[getFont('fontUI')]
                             }}>
-                                <span className={tabStyles.livePreviewStatTrend}>â†‘ 12%</span>
+                                <span className={tabStyles.livePreviewStatTrend}>+12%</span>
                                 <span className={tabStyles.livePreviewStatPeriod}>from last week</span>
                             </div>
                         </div>
@@ -430,3 +430,5 @@ const TypographySection = ({
 };
 
 export default TypographySection;
+
+

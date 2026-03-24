@@ -4,7 +4,13 @@ import UsageBar from '../../components/UsageBar';
 import StatCard from '../../components/StatCard';
 import DatabaseService from '../../../../services/DatabaseService';
 
-const DatabaseStats = ({ dbHealth, loading, totalDocs, setActiveTab }) => {
+const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, totalDocs, setActiveTab }) => {
+  const getDisplayValue = (key) => {
+    if (loading) return '...';
+    if (healthFailures[key]) return '!';
+    return dbHealth[key] || 0;
+  };
+
   return (
     <div className={"ui-stats-section"}>
       <h4 className={"ui-header"}>
@@ -24,7 +30,7 @@ const DatabaseStats = ({ dbHealth, loading, totalDocs, setActiveTab }) => {
       <div className={"ui-stats-grid"}>
         <StatCard
           icon={FileText}
-          value={loading ? '...' : (dbHealth.posts || 0)}
+          value={getDisplayValue('posts')}
           label="Posts"
           color="#38bdf8"
           onClick={() => setActiveTab('blog')}
@@ -34,7 +40,7 @@ const DatabaseStats = ({ dbHealth, loading, totalDocs, setActiveTab }) => {
         />
         <StatCard
           icon={Code}
-          value={loading ? '...' : (dbHealth.projects || 0)}
+          value={getDisplayValue('projects')}
           label="Projects"
           color="#a78bfa"
           onClick={() => setActiveTab('projects')}
@@ -44,7 +50,7 @@ const DatabaseStats = ({ dbHealth, loading, totalDocs, setActiveTab }) => {
         />
         <StatCard
           icon={FileText}
-          value={loading ? '...' : (dbHealth.experience || 0)}
+          value={getDisplayValue('experience')}
           label="Experience"
           color="#f472b6"
           onClick={() => setActiveTab('experience')}
@@ -54,7 +60,7 @@ const DatabaseStats = ({ dbHealth, loading, totalDocs, setActiveTab }) => {
         />
         <StatCard
           icon={FileText}
-          value={loading ? '...' : (dbHealth.content || 0)}
+          value={getDisplayValue('content')}
           label="Content"
           color="#2dd4bf"
           onClick={() => setActiveTab('general')}
@@ -64,7 +70,7 @@ const DatabaseStats = ({ dbHealth, loading, totalDocs, setActiveTab }) => {
         />
         <StatCard
           icon={Mail}
-          value={loading ? '...' : (dbHealth.messages || 0)}
+          value={getDisplayValue('messages')}
           label="Messages"
           color="#34d399"
           onClick={() => setActiveTab('messages')}
@@ -74,7 +80,7 @@ const DatabaseStats = ({ dbHealth, loading, totalDocs, setActiveTab }) => {
         />
         <StatCard
           icon={Users}
-          value={loading ? '...' : (dbHealth.users || 0)}
+          value={getDisplayValue('users')}
           label="Users"
           color="#fb923c"
           onClick={() => setActiveTab('users')}

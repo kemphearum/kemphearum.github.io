@@ -810,44 +810,6 @@
     }
 }
 
-// SUB-TAB NAVIGATION
-.ui-subTabNav {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    padding: 0.35rem;
-    background: var(--glass-surface);
-    backdrop-filter: blur(10px);
-    border-radius: 14px;
-    border: 1px solid var(--divider);
-    width: fit-content;
-    max-width: 100%;
-    overflow-x: auto;
-    @include utils.custom-scrollbar;
-}
-
-.ui-subTabBtn {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.5rem 1.15rem;
-    border-radius: 10px;
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 0.82rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-
-    &.ui-active {
-        background: linear-gradient(135deg, rgba($primary-color, 0.15), rgba($primary-color, 0.05));
-        border-color: rgba($primary-color, 0.2);
-        color: $primary-color;
-    }
-}
-
 // USER GRID LAYOUT
 .ui-userGridHeader {
     display: grid;

@@ -15,6 +15,7 @@ class DatabaseService {
     static async getHealth(trackRead) {
         const collections = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'analytics', 'visits', 'dailyUsage'];
         const counts = {};
+        const failures = {};
         const { getCountFromServer } = await import('firebase/firestore');
 
         for (const col of collections) {
@@ -26,9 +27,21 @@ class DatabaseService {
                 counts[col] = count;
             } catch (err) {
                 console.error(`Error counting ${col}:`, err);
-                counts[col] = 0;
+                failures[col] = {
+                    code: err?.code || 'unknown',
+                    message: err?.message || 'Failed to count collection'
+                };
             }
         }
+
+        if (Object.keys(failures).length > 0) {
+            const error = new Error('Database health check failed for one or more collections.');
+            error.code = 'DATABASE_HEALTH_PARTIAL_FAILURE';
+            error.partialCounts = counts;
+            error.failures = failures;
+            throw error;
+        }
+
         return counts;
     }
 
@@ -272,7 +285,7 @@ class DatabaseService {
                         await setDoc(docRef, processedData);
                         completedCount++;
                         if (onProgress) onProgress(completedCount, totalDocs);
-                    } catch (err) {
+                    } catch {
                         failedCollections.add(colName);
                     }
                 }));
