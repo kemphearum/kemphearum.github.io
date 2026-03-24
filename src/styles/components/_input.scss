@@ -5,24 +5,24 @@
     padding: 0.75rem 1rem;
     border-radius: 8px;
     background: var(--input-bg, rgba(0, 0, 0, 0.2));
-    border: 1px solid var(--border-color, #1e293b);
+    border: 1px solid var(--input-border, var(--border-color, #1e293b));
     color: var(--text-primary);
     font-size: 0.9rem;
     transition: all 0.2s ease;
     outline: none;
 
     &::placeholder {
-        color: var(--text-secondary);
-        opacity: 0.5;
+        color: var(--input-placeholder, var(--text-secondary));
+        opacity: 0.9;
     }
 
     &:hover {
-        border-color: rgba(255, 255, 255, 0.15);
+        border-color: rgba(var(--primary-rgb, 47, 109, 246), 0.42);
     }
 
     &:focus {
         border-color: $primary-color;
-        background: var(--input-focus-bg, rgba(0, 0, 0, 0.3));
+        background: var(--input-focus-bg, var(--input-bg));
         box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
     }
 
@@ -39,5 +39,15 @@
     &--lg {
         padding: 1rem 1.25rem;
         font-size: 1rem;
+    }
+}
+
+[data-theme="light"] {
+    .ui-input {
+        box-shadow: 0 1px 2px rgba(16, 33, 61, 0.05);
+
+        &:focus {
+            box-shadow: 0 0 0 3px rgba($primary-color, 0.12);
+        }
     }
 }

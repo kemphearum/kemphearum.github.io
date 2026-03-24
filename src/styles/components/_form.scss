@@ -71,9 +71,7 @@
     border: 1px solid var(--input-border);
     border-radius: 12px;
     overflow: hidden;
-    background:
-        linear-gradient(180deg, rgba($primary-color, 0.04), rgba(255, 255, 255, 0.01)),
-        var(--input-bg);
+    background: var(--input-bg);
     transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 
     &:hover {
@@ -93,7 +91,7 @@
     gap: 0.75rem;
     padding: 0.55rem 0.65rem;
     border-bottom: 1px solid var(--divider);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+    background: var(--editor-toolbar-bg, var(--bg-surface-light));
 }
 
 .ui-toolbar {
@@ -175,7 +173,7 @@
     }
 
     &:focus {
-        background: rgba($primary-color, 0.03) !important;
+        background: var(--card-hover) !important;
     }
 }
 
@@ -184,7 +182,7 @@
     max-height: min(60vh, 700px);
     overflow: auto;
     padding: 1rem;
-    background: rgba(10, 10, 18, 0.24);
+    background: var(--bg-surface-light);
 
     p,
     li {
@@ -202,7 +200,7 @@
     border-top: 1px solid var(--divider);
     color: var(--text-secondary);
     font-size: 0.73rem;
-    background: rgba(255, 255, 255, 0.015);
+    background: var(--bg-surface-light);
 }
 
 .ui-editorHint {

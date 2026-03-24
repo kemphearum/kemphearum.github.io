@@ -59,8 +59,8 @@ $transition: all 0.2s ease-in-out;
 
 @mixin glass {
   background: $glass-bg;
-  backdrop-filter: blur($glass-blur);
-  -webkit-backdrop-filter: blur($glass-blur);
+  backdrop-filter: var(--glass-backdrop-filter, blur($glass-blur));
+  -webkit-backdrop-filter: var(--glass-backdrop-filter, blur($glass-blur));
   border: 1px solid $glass-border;
   box-shadow: var(--glass-shadow);
 }
