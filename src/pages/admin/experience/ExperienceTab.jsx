@@ -11,6 +11,57 @@ import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirm
 import { BriefcaseBusiness, Eye, Building2, Clock3 } from 'lucide-react';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 
+const normalizeTimelineMonth = (value, isEnd = false) => {
+  if (!value) return '';
+
+  let date = null;
+  if (typeof value === 'object') {
+    if (value?.seconds) date = new Date(value.seconds * 1000);
+    else if (typeof value?.toDate === 'function') date = value.toDate();
+    else if (value instanceof Date) date = value;
+  }
+
+  if (date && !Number.isNaN(date.getTime())) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  if (typeof value !== 'string') return '';
+
+  const raw = value.trim();
+  const lower = raw.toLowerCase();
+  if (isEnd && lower === 'present') return '';
+
+  const rangeMatch = raw.split(/\s*(?:-|\u2013|\u2014)\s*/).map((part) => part.trim()).filter(Boolean);
+  if (rangeMatch.length > 1) {
+    const selected = isEnd ? rangeMatch[rangeMatch.length - 1] : rangeMatch[0];
+    if (isEnd && selected.toLowerCase() === 'present') return '';
+    return normalizeTimelineMonth(selected, isEnd);
+  }
+
+  const yyyyMm = raw.match(/^(\d{4})-(\d{2})/);
+  if (yyyyMm) return yyyyMm[0];
+
+  const nativeDate = new Date(raw);
+  if (!Number.isNaN(nativeDate.getTime())) {
+    return `${nativeDate.getFullYear()}-${String(nativeDate.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  return '';
+};
+
+const timelineValue = (value, fallback = 0) => {
+  const normalized = normalizeTimelineMonth(value);
+  if (!normalized) return fallback;
+  const [year, month] = normalized.split('-').map(Number);
+  return (year * 12) + month;
+};
+
+const isCurrentRole = (item) => {
+  if (item.current === true) return true;
+  const rawEnd = `${item.endMonthYear || item.endDate || item.period || ''}`.toLowerCase();
+  return rawEnd.includes('present');
+};
+
 const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
@@ -65,19 +116,34 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const experiences = experiencesResult.data;
 
+  const experiencesByTimeline = useMemo(() => {
+    return [...experiences].sort((a, b) => {
+      const currentDiff = Number(isCurrentRole(b)) - Number(isCurrentRole(a));
+      if (currentDiff !== 0) return currentDiff;
+
+      const startDiff = timelineValue(b.startMonthYear || b.startDate || b.period) - timelineValue(a.startMonthYear || a.startDate || a.period);
+      if (startDiff !== 0) return startDiff;
+
+      const endA = isCurrentRole(a) ? Number.MAX_SAFE_INTEGER : timelineValue(a.endMonthYear || a.endDate || a.period, -1);
+      const endB = isCurrentRole(b) ? Number.MAX_SAFE_INTEGER : timelineValue(b.endMonthYear || b.endDate || b.period, -1);
+      const endDiff = endB - endA;
+      if (endDiff !== 0) return endDiff;
+
+      const createdA = a.createdAt?.seconds || 0;
+      const createdB = b.createdAt?.seconds || 0;
+      return createdB - createdA;
+    });
+  }, [experiences]);
+
   const workspaceStats = useMemo(() => {
-    const visibleCount = experiences.filter((item) => item.visible !== false).length;
-    const currentCount = experiences.filter((item) => {
-      if (item.current === true) return true;
-      const rawEnd = `${item.endMonthYear || item.endDate || item.period || ''}`.toLowerCase();
-      return rawEnd.includes('present');
-    }).length;
-    const companyCount = new Set(experiences.map((item) => item.company).filter(Boolean)).size;
+    const visibleCount = experiencesByTimeline.filter((item) => item.visible !== false).length;
+    const currentCount = experiencesByTimeline.filter((item) => isCurrentRole(item)).length;
+    const companyCount = new Set(experiencesByTimeline.map((item) => item.company).filter(Boolean)).size;
 
     return [
       {
         label: 'On This Page',
-        value: experiences.length,
+        value: experiencesByTimeline.length,
         hint: 'Entries loaded in the current result set',
         icon: BriefcaseBusiness
       },
@@ -100,7 +166,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         icon: Clock3
       }
     ];
-  }, [experiences]);
+  }, [experiencesByTimeline]);
 
   // Robust date parser for legacy formats (yyyy-mm)
   const parseLegacyDate = (dateVal, isEnd = false) => {
@@ -275,7 +341,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
       />
       
       <ExperienceTable
-        experiences={experiences}
+        experiences={experiencesByTimeline}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onToggleVisibility={toggleVisibility}

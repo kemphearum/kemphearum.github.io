@@ -31,7 +31,7 @@
             padding: 0.75rem 0;
             justify-content: center;
 
-            span {
+            .label {
                 opacity: 0;
                 width: 0;
                 display: none;
@@ -129,7 +129,7 @@
         transition: all 0.2s ease;
     }
 
-    span {
+    .label {
         flex: 1;
         transition: opacity 0.2s ease;
     }
@@ -154,6 +154,11 @@
 }
 
 .badge {
+    flex: 0 0 auto;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: linear-gradient(135deg, #6C63FF, #8B83FF);
     color: #fff;
     font-size: 0.65rem;

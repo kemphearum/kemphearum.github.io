@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, ImagePlus, Save, Upload } from 'lucide-react';
+import { ImagePlus, Save, Upload } from 'lucide-react';
 import { Button } from '../../../../shared/components/ui';
 import FormField from '../../components/FormField';
 import FormInput from '../../components/FormInput';
@@ -96,7 +96,7 @@ const IdentitySection = ({
 
                             <FormField label="Footer Copyright Text" columns={1}>
                                 <FormInput
-                                    placeholder="© 2026 Your Name. All Rights Reserved."
+                                    placeholder="(c) 2026 Your Name. All Rights Reserved."
                                     value={settingsData.footerText || ''}
                                     onChange={(e) => setSettingsData({ ...settingsData, footerText: e.target.value })}
                                 />
@@ -200,7 +200,7 @@ const IdentitySection = ({
                             <div className={tabStyles.identityPreviewMetaList}>
                                 <div className={tabStyles.identityPreviewMeta}>
                                     <span>Footer copy</span>
-                                    <strong>{settingsData.footerText || '© 2026 Your Name. All Rights Reserved.'}</strong>
+                                    <strong>{settingsData.footerText || '(c) 2026 Your Name. All Rights Reserved.'}</strong>
                                 </div>
                                 <div className={tabStyles.identityPreviewMeta}>
                                     <span>Filter readiness</span>

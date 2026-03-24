@@ -5,7 +5,7 @@
     align-items: center;
     justify-content: space-between;
     margin-top: 1.5rem;
-    padding: 1.25rem 0.5rem;
+    padding: 1rem 0.75rem 0.25rem;
     border-top: 1px solid var(--glass-border, rgba($primary-color, 0.1));
     flex-wrap: wrap;
     gap: 1rem;
@@ -21,10 +21,11 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba($primary-color, 0.03);
-    padding: 0.25rem 0.5rem 0.25rem 0.75rem;
-    border-radius: 10px;
-    border: 1px solid rgba($primary-color, 0.05);
+    background: linear-gradient(180deg, rgba($primary-color, 0.12), rgba($primary-color, 0.06));
+    padding: 0.35rem 0.5rem 0.35rem 0.75rem;
+    border-radius: 14px;
+    border: 1px solid rgba($primary-color, 0.14);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
 
 .ui-perPageLabel {
@@ -39,9 +40,9 @@
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    padding: 0.25rem 1.5rem 0.25rem 0.5rem;
-    border-radius: 6px;
-    background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%236C63FF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l3 3 3-3'/%3E%3C/svg%3E") no-repeat right 0.2rem center;
+    padding: 0.45rem 1.8rem 0.45rem 0.65rem;
+    border-radius: 10px;
+    background: rgba($primary-color, 0.14) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%236C63FF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l3 3 3-3'/%3E%3C/svg%3E") no-repeat right 0.45rem center;
     color: $primary-color;
     border: none;
     font-size: 0.85rem;
@@ -65,6 +66,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    margin-left: auto;
 }
 
 .ui-pageBtn {
@@ -72,12 +74,12 @@
     align-items: center;
     justify-content: center;
     gap: 0.4rem;
-    min-width: 38px;
-    height: 38px;
+    min-width: 42px;
+    height: 42px;
     padding: 0 0.8rem;
-    border-radius: 12px;
-    border: 1px solid rgba($primary-color, 0.1);
-    background: rgba($primary-color, 0.03);
+    border-radius: 14px;
+    border: 1px solid rgba($primary-color, 0.14);
+    background: linear-gradient(180deg, rgba($primary-color, 0.08), rgba($primary-color, 0.04));
     color: var(--text-secondary);
     font-size: 0.85rem;
     font-weight: 600;
@@ -90,11 +92,11 @@
     }
 
     &:hover:not(:disabled) {
-        background: rgba($primary-color, 0.1);
-        border-color: rgba($primary-color, 0.3);
+        background: linear-gradient(180deg, rgba($primary-color, 0.16), rgba($primary-color, 0.09));
+        border-color: rgba($primary-color, 0.28);
         color: $primary-color;
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba($primary-color, 0.1);
+        box-shadow: 0 10px 24px rgba($primary-color, 0.16);
 
         &.ui-pageBtn--prev svg { transform: translateX(-2px); }
         &.ui-pageBtn--next svg { transform: translateX(2px); }
@@ -105,8 +107,10 @@
     }
 
     &:disabled {
-        opacity: 0.3;
+        opacity: 0.42;
         cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
     }
 
     &--active {
@@ -119,6 +123,14 @@
 }
 
 .ui-pageInfo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.55rem 0.8rem;
+    border-radius: 14px;
+    border: 1px solid rgba($primary-color, 0.1);
+    background: rgba($primary-color, 0.05);
     font-size: 0.85rem;
     color: var(--text-secondary);
     font-weight: 500;
@@ -128,6 +140,18 @@
         color: $primary-color;
         font-weight: 700;
     }
+}
+
+.ui-pageInfo__primary,
+.ui-pageInfo__secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.ui-pageInfo__secondary {
+    color: var(--text-secondary);
+    opacity: 0.88;
 }
 
 .ui-pagination-numbers {
@@ -146,4 +170,37 @@
     animation: ui-pulse 1.5s ease-in-out infinite;
     pointer-events: none;
     opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+    .ui-paginationWrapper {
+        padding: 1rem 0 0.25rem;
+    }
+
+    .ui-paginationLeft {
+        width: 100%;
+        gap: 0.75rem;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .ui-pageInfo {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .ui-pagination {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .ui-pageBtn {
+        flex: 1 1 0;
+    }
+
+    .ui-pagination-numbers {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+    }
 }

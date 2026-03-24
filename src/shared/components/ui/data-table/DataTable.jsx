@@ -99,7 +99,7 @@ const DataTable = ({
 
   // 3. Pagination & Data Slicing Logic
   const totalItems = totalItemsProp !== null ? totalItemsProp : sortedData.length;
-  const totalPages = isCursorMode ? 0 : Math.ceil(totalItems / pageSize);
+  const totalPages = totalItems > 0 ? Math.ceil(totalItems / pageSize) : 0;
   
   const paginatedData = useMemo(() => {
     // In Cursor mode, we NEVER slice data internally. The server handles it.
@@ -109,6 +109,21 @@ const DataTable = ({
     const start = (page - 1) * pageSize;
     return sortedData.slice(start, start + pageSize);
   }, [sortedData, page, pageSize, isCursorMode, manualPagination]);
+
+  const rangeStart = totalItems === 0 ? 0 : ((page - 1) * pageSize) + 1;
+  const rangeEnd = totalItems === 0
+    ? 0
+    : Math.min(rangeStart + Math.max(paginatedData.length - 1, 0), totalItems);
+  const shouldShowPagination = isCursorMode
+    ? loading || paginatedData.length > 0 || page > 1 || hasMore || totalItems > 0
+    : totalPages > 1;
+  const hasKnownTotalPages = isCursorMode && totalItemsProp !== null && totalPages > 0;
+  const previousDisabled = isCursorMode
+    ? loading || isFirstPage
+    : loading || page === 1;
+  const nextDisabled = isCursorMode
+    ? loading || !hasMore || (hasKnownTotalPages && page >= totalPages)
+    : loading || page === totalPages;
 
   // 4. Selection Helpers
   const isAllSelected = useMemo(() => {
@@ -369,7 +384,7 @@ const DataTable = ({
       )}
 
       {/* Pagination Controls */}
-      {(totalPages > 1 || isCursorMode) && (
+      {shouldShowPagination && (
         <div className="ui-paginationWrapper">
           <div className="ui-paginationLeft">
             <div className="ui-perPageControl">
@@ -387,12 +402,22 @@ const DataTable = ({
 
             {!isCursorMode && (
               <span className="ui-pageInfo">
-                <strong>{(page - 1) * pageSize + 1}</strong>–<strong>{Math.min(page * pageSize, totalItems)}</strong> of <strong>{totalItems}</strong>
+                <span className="ui-pageInfo__primary">
+                  <strong>{rangeStart}</strong>-<strong>{Math.min(page * pageSize, totalItems)}</strong> of <strong>{totalItems}</strong>
+                </span>
               </span>
             )}
             {isCursorMode && (
               <span className="ui-pageInfo">
-                Page <strong>{page}</strong>
+                <span className="ui-pageInfo__primary">
+                  Page <strong>{page}</strong>
+                  {hasKnownTotalPages && <> of <strong>{totalPages}</strong></>}
+                </span>
+                {totalItemsProp !== null && totalItems > 0 && (
+                  <span className="ui-pageInfo__secondary">
+                    <strong>{rangeStart}</strong>-<strong>{rangeEnd}</strong> of <strong>{totalItems}</strong>
+                  </span>
+                )}
               </span>
             )}
           </div>
@@ -404,7 +429,7 @@ const DataTable = ({
                 if (isCursorMode) onPrevious?.();
                 else onPageChange?.(page - 1);
               }}
-              disabled={(isCursorMode ? isFirstPage : page === 1) || loading}
+              disabled={previousDisabled}
             >
               <ChevronLeft size={16} /> Prev
             </button>
@@ -437,7 +462,7 @@ const DataTable = ({
                 if (isCursorMode) onNext?.();
                 else onPageChange?.(page + 1);
               }}
-              disabled={(isCursorMode ? !hasMore : page === totalPages) || loading}
+              disabled={nextDisabled}
             >
               Next <ChevronRight size={16} />
             </button>

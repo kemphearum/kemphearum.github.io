@@ -40,7 +40,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const queryClient = useQueryClient();
   
   // Cursor pagination hook
-  const pagination = useCursorPagination(10, [searchQuery]);
+  const pagination = useCursorPagination(5, [searchQuery]);
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
     showToast,
@@ -65,7 +65,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   // Queries
-  const { data: postsResult = { data: [], lastDoc: null, hasMore: false }, isLoading } = useQuery({
+  const { data: postsResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
@@ -78,12 +78,13 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         searchField: 'title',
         sortBy: "createdAt",
         sortDirection: "desc",
+        includeTotal: true,
         trackRead
       }));
 
       if (result.error) {
         showToast(result.error, 'error');
-        return { data: [], lastDoc: null, hasMore: false };
+        return { data: [], lastDoc: null, hasMore: false, totalCount: null };
       }
 
       pagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
@@ -530,7 +531,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
 
   return (
-    <div className={`${'admin-tab-container'} ui-card`}>
+    <div className="admin-tab-container">
       <BlogToolbar
         onCreate={handleCreate}
         onSearch={handleSearch}
@@ -592,6 +593,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         loading={isLoading || bulkDeleteMutation.isPending || bulkVisibilityMutation.isPending || bulkFeaturedMutation.isPending}
         page={pagination.page}
         pageSize={pagination.limit}
+        totalItems={postsResult.totalCount}
         hasMore={pagination.hasMore}
         isFirstPage={pagination.isFirstPage}
         onNext={() => pagination.fetchNext(postsResult.lastDoc)}

@@ -2,7 +2,7 @@ import { db, auth } from '../firebase';
 import { 
     collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, 
     query, orderBy, serverTimestamp, where, limit as firestoreLimit, startAfter,
-    writeBatch
+    writeBatch, getCountFromServer
 } from 'firebase/firestore';
 
 /**
@@ -17,6 +17,7 @@ import {
  * @property {Array<Object>} data - Array of documents
  * @property {import('firebase/firestore').DocumentSnapshot|null} lastDoc - Last visible document for cursor pagination
  * @property {boolean} hasMore - Whether more pages exist
+ * @property {number|null} [totalCount] - Total matching documents when requested
  */
 
 /**
@@ -145,6 +146,7 @@ export default class BaseService {
      * @param {string|null} [options.searchField]
      * @param {string} [options.sortBy='createdAt']
      * @param {'asc'|'desc'} [options.sortDirection='desc']
+     * @param {boolean} [options.includeTotal=false]
      * @param {Function|null} [options.trackRead]
      * @returns {Promise<PaginatedResult>}
      */
@@ -155,6 +157,7 @@ export default class BaseService {
         searchField = null, 
         sortBy = 'createdAt', 
         sortDirection = 'desc', 
+        includeTotal = false,
         trackRead = null 
     }) {
         try {
@@ -168,6 +171,16 @@ export default class BaseService {
                     where(searchField, '>=', searchLower),
                     where(searchField, '<=', searchLower + '\uf8ff')
                 );
+            }
+
+            let totalCount = null;
+            if (includeTotal) {
+                try {
+                    const countSnapshot = await getCountFromServer(baseQuery);
+                    totalCount = countSnapshot.data().count;
+                } catch (countError) {
+                    console.warn(`count() failed in fetchPaginated for ${this.collectionName}:`, countError);
+                }
             }
 
             let constraints = [orderBy(sortBy, sortDirection), firestoreLimit(limit + 1)];
@@ -193,7 +206,8 @@ export default class BaseService {
             return {
                 data,
                 lastDoc: lastVisible,
-                hasMore
+                hasMore,
+                totalCount
             };
         } catch (error) {
             console.error(`Error in fetchPaginated for ${this.collectionName}:`, error);

@@ -1,12 +1,70 @@
 import React from 'react';
-import { Mail, MailOpen, Trash2 } from 'lucide-react';
+import { Eye, Mail, MailOpen, Trash2 } from 'lucide-react';
 import { Button, Badge, DataTable } from '../../../../shared/components/ui';
 
-const MessagesTable = ({ 
-  messages, 
-  onView, 
-  onToggleRead, 
-  onDelete, 
+const getDateFromTimestamp = (timestamp) => {
+  if (!timestamp?.seconds) return null;
+  return new Date(timestamp.seconds * 1000);
+};
+
+const formatAbsoluteDate = (timestamp) => {
+  const date = getDateFromTimestamp(timestamp);
+  return date
+    ? new Intl.DateTimeFormat(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+      }).format(date)
+    : 'Recently';
+};
+
+const formatRelativeDate = (timestamp) => {
+  const date = getDateFromTimestamp(timestamp);
+  if (!date) return 'Just arrived';
+
+  const diffMs = date.getTime() - Date.now();
+  const diffMinutes = Math.abs(diffMs) / 60000;
+  const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+
+  if (diffMinutes < 60) {
+    return formatter.format(Math.round(diffMs / 60000), 'minute');
+  }
+
+  const diffHours = diffMinutes / 60;
+  if (diffHours < 24) {
+    return formatter.format(Math.round(diffMs / 3600000), 'hour');
+  }
+
+  const diffDays = diffHours / 24;
+  if (diffDays < 7) {
+    return formatter.format(Math.round(diffMs / 86400000), 'day');
+  }
+
+  return formatter.format(Math.round(diffMs / 604800000), 'week');
+};
+
+const getInitials = (name = '') => {
+  const cleaned = name.trim();
+  if (!cleaned) return '?';
+  return cleaned
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+};
+
+const buildPreview = (message = '') => {
+  const normalized = message.replace(/\s+/g, ' ').trim();
+  return normalized || 'No message preview available.';
+};
+
+const MessagesTable = ({
+  messages,
+  onView,
+  onToggleRead,
+  onDelete,
   loading = false,
   pageSize = 10,
   page = 1,
@@ -24,33 +82,41 @@ const MessagesTable = ({
       key: 'name',
       header: 'Sender',
       sortable: true,
+      width: '34%',
       render: (row) => (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ 
-            fontWeight: !row.isRead ? 700 : 500,
-            color: !row.isRead ? 'var(--text-primary)' : 'var(--text-secondary)'
-          }}>
-            {row.name}
-          </span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-tertiary, #64748b)' }}>
-            {row.email}
-          </span>
+        <div className="ui-message-rowSender">
+          <div className="ui-message-rowSender__avatar">
+            {getInitials(row.name)}
+          </div>
+          <div className="ui-message-rowSender__meta">
+            <div className="ui-message-rowSender__top">
+              <span className="ui-message-rowSender__name">
+                {row.name || 'Unknown sender'}
+              </span>
+              {!row.isRead && <span className="ui-message-rowSender__dot" aria-hidden="true" />}
+            </div>
+            <span className="ui-message-rowSender__email">
+              {row.email || 'No email provided'}
+            </span>
+          </div>
         </div>
       )
     },
     {
       key: 'message',
-      header: 'Message Preview',
+      header: 'Preview',
+      width: '36%',
       render: (row) => (
-        <div style={{ 
-          maxWidth: '300px', 
-          overflow: 'hidden', 
-          textOverflow: 'ellipsis', 
-          whiteSpace: 'nowrap',
-          color: !row.isRead ? 'var(--text-primary)' : 'var(--text-secondary)',
-          opacity: !row.isRead ? 1 : 0.7
-        }}>
-          {row.message}
+        <div className="ui-message-rowPreview">
+          <p className="ui-message-rowPreview__text">
+            {buildPreview(row.message)}
+          </p>
+          <div className="ui-message-rowPreview__meta">
+            <Badge variant={!row.isRead ? 'primary' : 'default'}>
+              {!row.isRead ? 'Unread' : 'Read'}
+            </Badge>
+            <span>{!row.isRead ? 'Needs a reply check' : 'Open to review details'}</span>
+          </div>
         </div>
       )
     },
@@ -58,40 +124,61 @@ const MessagesTable = ({
       key: 'createdAt',
       header: 'Received',
       sortable: true,
+      width: '18%',
       render: (row) => (
-        <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          {row.createdAt?.seconds 
-            ? new Date(row.createdAt.seconds * 1000).toLocaleString([], { 
-                month: 'short', 
-                day: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              }) 
-            : 'Recently'}
-        </span>
+        <div className="ui-message-rowDate">
+          <span className="ui-message-rowDate__primary">
+            {formatAbsoluteDate(row.createdAt)}
+          </span>
+          <span className="ui-message-rowDate__secondary">
+            {formatRelativeDate(row.createdAt)}
+          </span>
+        </div>
       )
     },
     {
       key: 'actions',
       header: 'Actions',
       className: 'ui-table-cell--actions',
+      width: '12%',
       render: (row) => (
-        <div className="ui-table-actions">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={(e) => { e.stopPropagation(); onToggleRead(row.id, row.isRead); }} 
-            title={row.isRead ? "Mark Unread" : "Mark Read"}
-            style={{ color: !row.isRead ? 'var(--primary-color)' : 'inherit' }}
+        <div className="ui-message-rowActions">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ui-btn-icon-only"
+            onClick={(event) => {
+              event.stopPropagation();
+              onView(row);
+            }}
+            title="Open message"
+            aria-label="Open message"
+          >
+            <Eye size={16} />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ui-btn-icon-only"
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleRead(row.id, row.isRead);
+            }}
+            title={row.isRead ? 'Mark unread' : 'Mark read'}
+            aria-label={row.isRead ? 'Mark unread' : 'Mark read'}
           >
             {row.isRead ? <MailOpen size={16} /> : <Mail size={16} />}
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={(e) => { e.stopPropagation(); onDelete(row.id); }} 
-            title="Delete"
-            style={{ color: 'var(--danger-color, #ef4444)' }}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ui-btn-icon-only ui-message-rowActions__delete"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete(row.id);
+            }}
+            title="Delete message"
+            aria-label="Delete message"
           >
             <Trash2 size={16} />
           </Button>
@@ -101,10 +188,10 @@ const MessagesTable = ({
   ];
 
   return (
-    <DataTable 
-      data={messages} 
-      columns={columns} 
-      keyField="id" 
+    <DataTable
+      data={messages}
+      columns={columns}
+      keyField="id"
       loading={loading}
       pageSize={pageSize}
       page={page}
@@ -118,11 +205,11 @@ const MessagesTable = ({
       isFirstPage={isFirstPage}
       onNext={onNext}
       onPrevious={onPrevious}
-      rowClassName={(row) => !row.isRead ? 'ui-table-row--unread' : ''}
+      rowClassName={(row) => (!row.isRead ? 'ui-table-row--unread ui-message-row--unread' : 'ui-message-row')}
       emptyState={{
         icon: Mail,
-        title: "No messages yet",
-        description: "Incoming inquiries from your portfolio contact form will appear here."
+        title: 'No messages yet',
+        description: 'Incoming inquiries from your portfolio contact form will appear here.'
       }}
     />
   );

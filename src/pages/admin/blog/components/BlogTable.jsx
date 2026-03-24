@@ -21,7 +21,8 @@ const BlogTable = ({
   canDelete = true,
   loading = false,
   page = 1,
-  pageSize = 10,
+  pageSize = 5,
+  totalItems,
   hasMore = false,
   isFirstPage = true,
   onNext,
@@ -159,6 +160,7 @@ const BlogTable = ({
       paginationVariant={paginationVariant}
       page={page}
       pageSize={pageSize}
+      totalItems={totalItems}
       hasMore={hasMore}
       isFirstPage={isFirstPage}
       onNext={onNext}

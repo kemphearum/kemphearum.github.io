@@ -140,7 +140,7 @@ const Sidebar = ({
                                         title={isCollapsed ? item.label : undefined}
                                     >
                                         {item.icon}
-                                        <span>{item.label}</span>
+                                        <span className={styles.label}>{item.label}</span>
                                         {item.badge && (
                                             <span className={styles.badge}>{item.badge}</span>
                                         )}
