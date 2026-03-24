@@ -111,9 +111,6 @@ const DataTable = ({
   }, [sortedData, page, pageSize, isCursorMode, manualPagination]);
 
   const rangeStart = totalItems === 0 ? 0 : ((page - 1) * pageSize) + 1;
-  const rangeEnd = totalItems === 0
-    ? 0
-    : Math.min(rangeStart + Math.max(paginatedData.length - 1, 0), totalItems);
   const shouldShowPagination = isCursorMode
     ? loading || paginatedData.length > 0 || page > 1 || hasMore || totalItems > 0
     : totalPages > 1;
@@ -415,7 +412,7 @@ const DataTable = ({
                 </span>
                 {totalItemsProp !== null && totalItems > 0 && (
                   <span className="ui-pageInfo__secondary">
-                    <strong>{rangeStart}</strong>-<strong>{rangeEnd}</strong> of <strong>{totalItems}</strong>
+                    Total: <strong>{totalItems}</strong>
                   </span>
                 )}
               </span>
