@@ -61,7 +61,7 @@
     justify-content: center;
     background: linear-gradient(135deg,
             rgba($primary-color, 0.12) 0%,
-            rgba(20, 20, 40, 0.95) 50%,
+            var(--bg-surface) 50%,
             rgba($primary-light, 0.08) 100%);
     position: relative;
     overflow: hidden;
@@ -225,6 +225,11 @@
         outline-offset: 2px;
         border-color: rgba($primary-color, 0.55);
     }
+}
+
+.linkBtnAccent {
+    color: $primary-color;
+    font-weight: 700;
 }
 
 .linkBtnPrimary {

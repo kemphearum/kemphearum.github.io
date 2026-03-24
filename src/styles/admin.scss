@@ -23,8 +23,8 @@
     border: 1px solid var(--glass-border);
     background: linear-gradient(
         165deg,
-        rgba(20, 20, 36, 0.92) 0%,
-        rgba(12, 12, 24, 0.96) 100%
+        var(--bg-surface-light) 0%,
+        var(--bg-surface) 100%
     );
     box-shadow:
         0 24px 60px rgba(0, 0, 0, 0.45),
@@ -211,6 +211,24 @@
 
     &:hover {
         color: var(--primary-color);
+    }
+}
+
+[data-theme='light'] {
+    .ui-loginCard {
+        box-shadow:
+            0 24px 56px rgba(16, 33, 61, 0.14),
+            0 0 0 1px rgba(47, 109, 246, 0.08) inset;
+    }
+
+    .ui-loginError {
+        background: rgba(239, 68, 68, 0.12);
+        border-color: rgba(239, 68, 68, 0.22);
+        color: #b91c1c;
+    }
+
+    .ui-loginCaps {
+        color: #b45309;
     }
 }
 

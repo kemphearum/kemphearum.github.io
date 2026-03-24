@@ -24,6 +24,7 @@ export const ThemeProvider = ({ children }) => {
     useEffect(() => {
         if (!mounted) return;
         document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.style.colorScheme = theme;
         localStorage.setItem('portfolio-theme', theme);
     }, [theme, mounted]);
 

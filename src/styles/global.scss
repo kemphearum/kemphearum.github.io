@@ -48,112 +48,138 @@ html {
 }
 
 :root {
-    --primary-hue: 250;
-    --secondary-hue: 330;
-    --bg-color: #0a0a12;
-    --bg-surface: rgba(10, 10, 18, 0.95);
-    --bg-surface-light: rgba(10, 10, 18, 0.85);
-    --text-primary: #f0f0f5;
-    --text-secondary: #a0a0b0;
-    --glass-surface: rgba(255, 255, 255, 0.03);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-    --neon-glow: 0 0 10px rgba(108, 99, 255, 0.4);
-    --card-bg: rgba(255, 255, 255, 0.03);
-    --card-hover: rgba(108, 99, 255, 0.1);
-    --input-bg: rgba(0, 0, 0, 0.2);
-    --input-focus-bg: rgba(0, 0, 0, 0.3);
-    --input-border: rgba(255, 255, 255, 0.12);
-    --input-placeholder: rgba(160, 160, 176, 0.6);
-    --shadow-alpha: 0.4;
-    --bg-gradient-1: rgba(108, 99, 255, 0.15);
-    --bg-gradient-2: rgba(255, 101, 132, 0.1);
-    --skeleton-base: rgba(255, 255, 255, 0.08);
-    --skeleton-shine: rgba(255, 255, 255, 0.15);
-    --divider: rgba(255, 255, 255, 0.05);
-    --backdrop-bg: rgba(0, 0, 0, 0.8);
-    --mobile-menu-bg: #0a0a12;
-    --hero-gradient-start: #f0f0f5;
-    --hero-gradient-end: #6C63FF;
-    --heading-color: #f0f0f5;
-    --card-bg-gradient: linear-gradient(145deg, rgba(20, 20, 35, 0.95) 0%, rgba(10, 10, 20, 0.98) 100%);
-    --primary-color: #6C63FF;
-    --dropdown-bg: #151525;
+    --primary-hue: 218;
+    --secondary-hue: 172;
+    --primary-color: #2f6df6;
+    --primary-rgb: 47, 109, 246;
+    --primary-color-strong: #2459ca;
+    --accent-color: #14b8a6;
+    --bg-color: #090f1d;
+    --bg-surface: rgba(12, 20, 34, 0.9);
+    --bg-surface-light: rgba(14, 24, 40, 0.82);
+    --text-primary: #eaf0ff;
+    --text-secondary: #a7b8d6;
+    --glass-surface: rgba(255, 255, 255, 0.04);
+    --glass-border: rgba(149, 177, 255, 0.22);
+    --glass-shadow: 0 20px 50px rgba(3, 8, 20, 0.45);
+    --neon-glow: 0 0 12px rgba(47, 109, 246, 0.35);
+    --card-bg: rgba(12, 22, 40, 0.88);
+    --card-bg-rgb: 12, 22, 40;
+    --primary-color-rgb: 47, 109, 246;
+    --card-hover: rgba(47, 109, 246, 0.11);
+    --input-bg: rgba(10, 18, 33, 0.75);
+    --input-focus-bg: rgba(12, 23, 40, 0.95);
+    --input-border: rgba(155, 183, 255, 0.28);
+    --input-placeholder: rgba(167, 184, 214, 0.75);
+    --shadow-alpha: 0.5;
+    --bg-gradient-1: rgba(47, 109, 246, 0.16);
+    --bg-gradient-2: rgba(20, 184, 166, 0.11);
+    --skeleton-base: rgba(155, 183, 255, 0.12);
+    --skeleton-shine: rgba(155, 183, 255, 0.24);
+    --divider: rgba(149, 177, 255, 0.17);
+    --backdrop-bg: rgba(2, 6, 16, 0.78);
+    --mobile-menu-bg: rgba(11, 18, 31, 0.96);
+    --hero-gradient-start: #f5f8ff;
+    --hero-gradient-end: #58e1d2;
+    --heading-color: #f5f8ff;
+    --card-bg-gradient: linear-gradient(145deg, rgba(14, 24, 40, 0.96) 0%, rgba(8, 14, 27, 0.98) 100%);
+    --dropdown-bg: #131d30;
     --calendar-icon-filter: invert(1);
 }
 
 [data-theme="light"] {
-    --bg-color: #f4f4fb;
-    --bg-surface: #ffffff;
-    --bg-surface-light: #f8f8fd;
-    --text-primary: #1a1a2e;
-    --text-secondary: #4a4a66;
-    --glass-surface: rgba(255, 255, 255, 0.65);
-    --glass-border: rgba(108, 99, 255, 0.25);
-    --glass-shadow: 0 4px 24px rgba(108, 99, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
-    --neon-glow: 0 0 12px rgba(108, 99, 255, 0.2);
-    --card-bg: rgba(255, 255, 255, 0.75);
-    --card-hover: #fcfcff;
-    --input-bg: rgba(108, 99, 255, 0.04);
-    --input-focus-bg: rgba(108, 99, 255, 0.06);
-    --input-border: rgba(108, 99, 255, 0.3);
-    --input-placeholder: rgba(74, 74, 102, 0.6);
-    --shadow-alpha: 0.12;
-    --bg-gradient-1: rgba(108, 99, 255, 0.1);
-    --bg-gradient-2: rgba(255, 101, 132, 0.05);
-    --skeleton-base: rgba(108, 99, 255, 0.1);
-    --skeleton-shine: rgba(108, 99, 255, 0.2);
-    --divider: rgba(108, 99, 255, 0.15);
+    --bg-color: #eef3fb;
+    --bg-surface: rgba(255, 255, 255, 0.88);
+    --bg-surface-light: rgba(255, 255, 255, 0.96);
+    --text-primary: #10213d;
+    --text-secondary: #4e6386;
+    --glass-surface: rgba(255, 255, 255, 0.78);
+    --glass-border: rgba(47, 109, 246, 0.22);
+    --glass-shadow: 0 18px 40px rgba(26, 52, 95, 0.11), 0 2px 8px rgba(16, 33, 61, 0.06);
+    --neon-glow: 0 0 12px rgba(47, 109, 246, 0.16);
+    --card-bg: rgba(255, 255, 255, 0.88);
+    --card-bg-rgb: 255, 255, 255;
+    --primary-color-rgb: 47, 109, 246;
+    --card-hover: rgba(47, 109, 246, 0.09);
+    --input-bg: rgba(47, 109, 246, 0.05);
+    --input-focus-bg: rgba(47, 109, 246, 0.1);
+    --input-border: rgba(47, 109, 246, 0.32);
+    --input-placeholder: rgba(78, 99, 134, 0.72);
+    --shadow-alpha: 0.16;
+    --bg-gradient-1: rgba(47, 109, 246, 0.1);
+    --bg-gradient-2: rgba(20, 184, 166, 0.08);
+    --skeleton-base: rgba(47, 109, 246, 0.1);
+    --skeleton-shine: rgba(47, 109, 246, 0.2);
+    --divider: rgba(47, 109, 246, 0.18);
     --backdrop-bg: rgba(0, 0, 0, 0.4);
-    --mobile-menu-bg: #ffffff;
-    --hero-gradient-start: #1a1a2e;
-    --hero-gradient-end: #6C63FF;
-    --heading-color: #1a1a2e;
+    --mobile-menu-bg: rgba(245, 249, 255, 0.98);
+    --hero-gradient-start: #10213d;
+    --hero-gradient-end: #2f6df6;
+    --heading-color: #10213d;
     --sidebar-bg: #ffffff;
-    --topnav-bg: rgba(255, 255, 255, 0.98);
-    --card-bg-gradient: linear-gradient(145deg, #ffffff 0%, #f4f4fb 100%);
-    --card-hover: rgba(108, 99, 255, 0.08);
-    --primary-color: #6C63FF;
+    --topnav-bg: rgba(255, 255, 255, 0.96);
+    --card-bg-gradient: linear-gradient(145deg, #ffffff 0%, #eef4ff 100%);
+    --primary-color: #2f6df6;
+    --primary-rgb: 47, 109, 246;
+    --primary-color-strong: #2459ca;
+    --accent-color: #0d9488;
     --dropdown-bg: #ffffff;
-    --editor-toolbar-bg: #f8f8fd;
-    --editor-border: rgba(108, 99, 255, 0.25);
+    --editor-toolbar-bg: #f5f9ff;
+    --editor-border: rgba(47, 109, 246, 0.25);
     --calendar-icon-filter: none;
+}
+
+:root,
+[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+[data-theme="light"] {
+    color-scheme: light;
 }
 
 /* Admin Solid Theme Overrides */
 [data-admin-theme="true"] {
-    --bg-surface: #0a0a12;
-    --bg-surface-light: #121220;
-    --glass-surface: #1a1a2e;
-    --card-bg: #1a1a2e;
-    --card-hover: #252540;
-    --input-bg: #1e1e35;
-    --input-focus-bg: #252545;
-    --input-border: rgba(255, 255, 255, 0.25);
-    --divider: rgba(255, 255, 255, 0.12);
-    --skeleton-base: #1a1a2e;
-    --skeleton-shine: #252538;
-    --card-bg-gradient: linear-gradient(145deg, #1a1a2e 0%, #151525 100%);
+    --bg-surface: #0b1527;
+    --bg-surface-light: #111f37;
+    --glass-surface: #15243d;
+    --card-bg: #16253f;
+    --card-bg-rgb: 22, 37, 63;
+    --card-hover: #1d3153;
+    --input-bg: #13233d;
+    --input-focus-bg: #172944;
+    --input-border: rgba(149, 177, 255, 0.28);
+    --divider: rgba(149, 177, 255, 0.18);
+    --skeleton-base: rgba(149, 177, 255, 0.12);
+    --skeleton-shine: rgba(149, 177, 255, 0.22);
+    --card-bg-gradient: linear-gradient(145deg, rgba(17, 31, 54, 0.96) 0%, rgba(10, 18, 33, 0.98) 100%);
+    --sidebar-bg: linear-gradient(180deg, rgba(16, 30, 52, 0.96) 0%, rgba(9, 17, 31, 0.96) 100%);
+    --topnav-bg: #101d33;
+    --bg-card: var(--card-bg);
 
     &[data-theme="light"],
     &[data-theme="light"] *,
     [data-theme="light"] & {
         --bg-color: #f8f9fa;
         --bg-surface: #ffffff;
-        --bg-surface-light: #f8f8fd;
-        --glass-surface: #ffffff;
+        --bg-surface-light: #f5f9ff;
+        --glass-surface: #f7f9ff;
         --card-bg: #ffffff;
-        --card-hover: #fcfcff;
-        --input-bg: #f5f5fa;
-        --input-focus-bg: #ffffff;
-        --input-border: rgba(108, 99, 255, 0.4);
-        --divider: rgba(108, 99, 255, 0.2);
+        --card-bg-rgb: 255, 255, 255;
+        --card-hover: #edf3ff;
+        --input-bg: rgba(47, 109, 246, 0.06);
+        --input-focus-bg: rgba(47, 109, 246, 0.1);
+        --input-border: rgba(47, 109, 246, 0.36);
+        --divider: rgba(47, 109, 246, 0.2);
         --text-primary: #1f2937;
         --text-secondary: #4b5563;
         --text-tertiary: #9ca3af;
-        --skeleton-base: #f0f0f5;
-        --skeleton-shine: #e5e5f0;
-        --card-bg-gradient: linear-gradient(145deg, #ffffff 0%, #f4f4fb 100%);
+        --skeleton-base: rgba(47, 109, 246, 0.08);
+        --skeleton-shine: rgba(47, 109, 246, 0.16);
+        --card-bg-gradient: linear-gradient(145deg, #ffffff 0%, #eef4ff 100%);
+        --sidebar-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(240, 247, 255, 0.98) 100%);
+        --topnav-bg: #ffffff;
+        --bg-card: var(--card-bg);
     }
 }
 
@@ -350,7 +376,7 @@ h6 {
     }
 }
 
-// Admin font override — keeps admin panel in Inter when enabled
+// Admin font override â€” keeps admin panel in Inter when enabled
 :root[data-admin-font="inter"] {
 
     [class*="Admin_"],
@@ -387,4 +413,4 @@ h6 {
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
-}
+}

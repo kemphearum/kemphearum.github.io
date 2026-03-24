@@ -1,9 +1,9 @@
-/* Color Palette - Vibrant & Modern Light Theme */
+/* Shared design tokens for light and dark themes */
 // Colors
-$primary-color: #6C63FF;
-$primary-light: #8078FF; // lighten($primary-color, 8%) equivalent
-$primary-dark: #5B52E0; // darken($primary-color, 5%) equivalent
-$secondary-color: #FF6584;
+$primary-color: #2f6df6;
+$primary-light: #4a82ff; // slightly brighter primary for gradients
+$primary-dark: #2459ca; // darker primary for hover/pressed states
+$secondary-color: #14b8a6;
 $accent-color: var(--heading-color);
 $text-primary: var(--text-primary);
 $text-secondary: var(--text-secondary);

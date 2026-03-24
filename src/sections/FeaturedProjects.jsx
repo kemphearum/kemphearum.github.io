@@ -9,20 +9,20 @@ import { Link } from 'react-router-dom';
 
 const FeaturedProjects = () => {
     const { data: projectsData, isLoading: loading } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
+        staleTime: 60000,
+        gcTime: 300000,
+        refetchOnWindowFocus: false,
         queryKey: ['projects'],
-        queryFn: () => ProjectService.getAll("createdAt", "desc")
+        queryFn: () => ProjectService.getAll('createdAt', 'desc')
     });
 
     const projects = projectsData || [];
 
     // Priority: Items marked as 'featured'
-    let featuredList = projects.filter(p => p.visible !== false && p.featured === true);
+    let featuredList = projects.filter((p) => p.visible !== false && p.featured === true);
 
     // Filter: Visible projects for the "View All" count
-    const visibleProjects = projects.filter(p => p.visible !== false);
+    const visibleProjects = projects.filter((p) => p.visible !== false);
 
     // Fallback: If no hand-picked featured projects, show the 3 newest visible ones
     if (featuredList.length === 0) {
@@ -75,7 +75,7 @@ const FeaturedProjects = () => {
                 ) : (
                     <motion.div className={styles.grid}>
                         {featuredList.length > 0 ? (
-                            featuredList.map(project => (
+                            featuredList.map((project) => (
                                 <motion.div
                                     key={project.id}
                                     initial={{ opacity: 0, y: 20 }}
@@ -96,22 +96,13 @@ const FeaturedProjects = () => {
 
                 {!loading && visibleProjects.length > 3 && (
                     <motion.div
-                        style={{ display: 'flex', justifyContent: 'center', marginTop: '3rem' }}
+                        className={styles.viewAllWrap}
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true }}
                     >
-                        <Link to="/projects" className={styles.viewAllBtn} style={{
-                            padding: '0.8rem 2rem',
-                            borderRadius: '50px',
-                            background: 'var(--glass-surface)',
-                            border: '1px solid var(--glass-border)',
-                            color: 'white',
-                            textDecoration: 'none',
-                            fontWeight: '500',
-                            transition: 'all 0.3s ease'
-                        }}>
-                            View All Projects →
+                        <Link to="/projects" className={styles.viewAllBtn}>
+                            View All Projects -&gt;
                         </Link>
                     </motion.div>
                 )}
@@ -121,3 +112,4 @@ const FeaturedProjects = () => {
 };
 
 export default FeaturedProjects;
+

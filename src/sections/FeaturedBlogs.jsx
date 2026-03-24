@@ -8,22 +8,22 @@ import { Link } from 'react-router-dom';
 
 const FeaturedBlogs = () => {
     const { data: postsData, isLoading: loading } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
+        staleTime: 60000,
+        gcTime: 300000,
+        refetchOnWindowFocus: false,
         queryKey: ['posts'],
-        queryFn: () => BlogService.getAll("createdAt", "desc")
+        queryFn: () => BlogService.getAll('createdAt', 'desc')
     });
 
     const posts = postsData || [];
 
     // Priority: Items marked as 'featured'
-    let featuredList = posts.filter(p => p.visible !== false && p.featured === true);
+    let featuredList = posts.filter((p) => p.visible !== false && p.featured === true);
 
     // Filter: Visible posts for the "View All" count
-    const visiblePosts = posts.filter(p => p.visible !== false);
+    const visiblePosts = posts.filter((p) => p.visible !== false);
 
-    // Fallback: If no hand-picked featured projects, show the 3 newest visible ones
+    // Fallback: If no hand-picked featured posts, show the 3 newest visible ones
     if (featuredList.length === 0) {
         featuredList = [...visiblePosts].sort((a, b) => {
             const dateA = a.createdAt?.seconds || 0;
@@ -94,7 +94,7 @@ const FeaturedBlogs = () => {
                                             </div>
                                             <h3>{post.title}</h3>
                                             <p>{post.excerpt}</p>
-                                            <span className={styles.readMore}>Read Article →</span>
+                                            <span className={styles.readMore}>Read Article -&gt;</span>
                                         </div>
                                     </Link>
                                 </motion.article>
@@ -109,22 +109,13 @@ const FeaturedBlogs = () => {
 
                 {!loading && visiblePosts.length > 3 && (
                     <motion.div
-                        style={{ display: 'flex', justifyContent: 'center', marginTop: '3rem' }}
+                        className={styles.viewAllWrap}
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
                         viewport={{ once: true }}
                     >
-                        <Link to="/blog" style={{
-                            padding: '0.8rem 2rem',
-                            borderRadius: '50px',
-                            background: 'var(--glass-surface)',
-                            border: '1px solid var(--glass-border)',
-                            color: 'white',
-                            textDecoration: 'none',
-                            fontWeight: '500',
-                            transition: 'all 0.3s ease'
-                        }}>
-                            View All Blogs →
+                        <Link to="/blog" className={styles.viewAllBtn}>
+                            View All Blogs -&gt;
                         </Link>
                     </motion.div>
                 )}
@@ -134,3 +125,4 @@ const FeaturedBlogs = () => {
 };
 
 export default FeaturedBlogs;
+

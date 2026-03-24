@@ -71,7 +71,7 @@ const Experience = () => {
                 ) : (
                     <div className={styles.timeline}>
                         {visibleExperiences.length === 0 ? (
-                            <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No experience listed yet.</p>
+                            <p className={styles.emptyState}>No experience listed yet.</p>
                         ) : (
                             visibleExperiences.map((exp, index) => (
                                 <motion.div

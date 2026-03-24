@@ -135,6 +135,39 @@
     opacity: 0.6;
 }
 
+.viewAllWrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 3rem;
+}
+
+.viewAllBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 2rem;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-surface);
+    color: var(--text-primary);
+    font-size: var(--font-size-ui);
+    font-weight: var(--font-weight-ui, 600);
+    text-decoration: none;
+    transition: all 0.25s ease;
+
+    &:hover {
+        color: $primary-color;
+        border-color: rgba($primary-color, 0.35);
+        background: rgba($primary-color, 0.1);
+        transform: translateY(-2px);
+    }
+
+    &:focus-visible {
+        outline: 2px solid rgba($primary-color, 0.55);
+        outline-offset: 2px;
+    }
+}
+
 // Skeleton
 .skeletonCard {
     @include glass;

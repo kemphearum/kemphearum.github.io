@@ -215,7 +215,7 @@ const Blog = () => {
                                                 </div>
                                                 <h3>{post.title}</h3>
                                                 <p>{post.excerpt}</p>
-                                                <span className={styles.readMore}>Read Article →</span>
+                                                <span className={styles.readMore}>Read Article â†’</span>
                                             </div>
                                         </Link>
                                     </motion.article>
@@ -276,3 +276,4 @@ const Blog = () => {
 };
 
 export default Blog;
+

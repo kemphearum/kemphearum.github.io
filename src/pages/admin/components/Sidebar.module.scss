@@ -5,15 +5,15 @@
     left: 0;
     top: var(--admin-header-height, 56px);
     height: calc(100vh - var(--admin-header-height, 56px));
-    background: var(--sidebar-bg, linear-gradient(180deg, var(--bg-surface-light) 0%, rgba(10, 10, 18, 0.8) 100%));
-    backdrop-filter: blur(25px);
+    background: var(--sidebar-bg, linear-gradient(180deg, var(--bg-surface-light) 0%, var(--bg-surface) 100%));
+    backdrop-filter: none;
     border-right: 1px solid var(--divider);
     display: flex;
     flex-direction: column;
     width: 260px;
     z-index: 200; // Above layout, below header
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.05);
+    box-shadow: 10px 0 30px rgba(2, 8, 20, 0.2);
     overflow: hidden;
 
     &--collapsed {
@@ -136,7 +136,7 @@
 
     &:hover {
         color: var(--text-primary);
-        background: var(--glass-surface);
+        background: var(--card-hover);
     }
 
     &--active {
@@ -159,7 +159,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #6C63FF, #8B83FF);
+    background: linear-gradient(135deg, $primary-color, $primary-light);
     color: #fff;
     font-size: 0.65rem;
     font-weight: 700;
@@ -167,7 +167,7 @@
     border-radius: 50px;
     min-width: 20px;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(108, 99, 255, 0.4);
+    box-shadow: 0 2px 8px rgba($primary-color, 0.4);
     transition: all 0.2s ease;
 }
 
@@ -177,7 +177,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--backdrop-bg);
     backdrop-filter: blur(4px);
     z-index: 1000;
     display: none;

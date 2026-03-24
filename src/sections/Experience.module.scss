@@ -50,6 +50,12 @@
     }
 }
 
+.emptyState {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 1rem 0;
+}
+
 .timelineItem {
     position: relative;
     margin-bottom: 2.5rem;
@@ -176,7 +182,7 @@
             margin-bottom: 0.4rem;
 
             &::before {
-                content: '▹';
+                content: '>';
                 position: absolute;
                 left: 0;
                 top: 2px;

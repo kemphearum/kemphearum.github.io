@@ -229,7 +229,7 @@
     font-size: var(--font-size-ui);
     font-weight: 600;
     color: var(--text-primary);
-    background: transparent;
+    background: var(--card-bg);
     border: 1.5px solid var(--glass-border);
     border-radius: 12px;
     text-decoration: none;
@@ -313,8 +313,8 @@
         box-shadow: 0 0 40px rgba($primary-color, 0.15);
         filter: grayscale(15%);
         transition: all 0.5s ease;
-        background-color: rgba(255, 255, 255, 0.03);
-        border: 3px solid rgba(255, 255, 255, 0.08);
+        background-color: var(--card-bg);
+        border: 3px solid var(--glass-border);
 
         &:hover {
             filter: grayscale(0%);
@@ -374,7 +374,7 @@
 .mouse {
     width: 26px;
     height: 40px;
-    border: 2px solid var(--glass-border);
+    border: 2px solid rgba($primary-color, 0.25);
     border-radius: 20px;
     display: flex;
     justify-content: center;

@@ -135,7 +135,7 @@
     background: rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-surface);
 }
 
 .admin-usage-fill {
@@ -189,7 +189,7 @@
         width: 64px;
         height: 64px;
         border-radius: 20px;
-        background: rgba(255, 255, 255, 0.03);
+        background: var(--glass-surface);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -560,7 +560,7 @@
     padding: 1.1rem 1.1rem 0.35rem;
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--glass-surface);
 }
 
 .ui-blog-formSection--editor {
@@ -648,7 +648,7 @@
     padding: 0.9rem 1rem;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.025);
+    background: var(--glass-surface);
     color: var(--text-secondary);
 }
 
@@ -686,7 +686,7 @@
     padding: 0.95rem 1rem;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.025);
+    background: var(--glass-surface);
 }
 
 .ui-importConfirmDialog__statValue {
@@ -738,7 +738,7 @@
     margin-bottom: 1rem;
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.025);
+    background: var(--glass-surface);
     cursor: pointer;
     transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
 
@@ -818,7 +818,7 @@
     padding: 1rem 1rem 0.35rem;
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--glass-surface);
 }
 
 .ui-generalAsideCard__head {
@@ -849,7 +849,7 @@
     border: 1px solid rgba($primary-color, 0.16);
     background:
         linear-gradient(180deg, rgba($primary-color, 0.08), rgba($primary-color, 0.02)),
-        rgba(255, 255, 255, 0.02);
+        var(--glass-surface);
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
 }
 
@@ -979,7 +979,7 @@
     padding: 0.35rem;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--glass-surface);
 }
 
 .ui-blog-toolbar__create {
@@ -1579,7 +1579,7 @@
     border: 1px solid rgba($primary-color, 0.16);
     background:
         linear-gradient(180deg, rgba($primary-color, 0.07), rgba($primary-color, 0.015)),
-        rgba(255, 255, 255, 0.02);
+        var(--glass-surface);
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
 }
 
@@ -1737,7 +1737,7 @@
     padding: 1.25rem;
     border-radius: 18px;
     border: 1px solid var(--glass-border);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
+    background: linear-gradient(180deg, var(--glass-surface), rgba(255, 255, 255, 0.015));
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
 }
 
@@ -1781,7 +1781,7 @@
 .ui-role-block {
     padding: 1rem;
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.025);
+    background: var(--glass-surface);
     border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -1806,7 +1806,7 @@
     padding: 0.5rem 0.85rem;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.025);
+    background: var(--glass-surface);
     color: var(--text-secondary);
     font-size: 0.78rem;
     font-weight: 600;
@@ -1862,7 +1862,7 @@
 }
 
 .ui-user-profile-dialog__footer {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--glass-surface);
 }
 
 .ui-user-profile-hero {
@@ -1912,7 +1912,7 @@
 .ui-user-profile-panel {
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.025);
+    background: var(--glass-surface);
     padding: 1.1rem;
 }
 
@@ -2103,7 +2103,7 @@
     padding: 1.1rem;
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--glass-surface);
 }
 
 .ui-history-section__head {
@@ -2362,7 +2362,7 @@
 .ui-users-create-aside {
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.025);
+    background: var(--glass-surface);
     padding: 1rem;
 }
 
@@ -2477,7 +2477,7 @@
     border: 1px solid rgba($primary-color, 0.16);
     background:
         linear-gradient(180deg, rgba($primary-color, 0.08), rgba($primary-color, 0.02)),
-        rgba(255, 255, 255, 0.02);
+        var(--glass-surface);
     box-shadow: 0 20px 48px rgba(0, 0, 0, 0.18);
 }
 
@@ -2632,7 +2632,7 @@
     padding: 0.95rem 1rem;
     border-radius: 18px;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.025);
+    background: var(--glass-surface);
 
     strong {
         display: block;
@@ -2860,7 +2860,7 @@
     gap: 1rem;
     background:
         linear-gradient(180deg, rgba($primary-color, 0.08), rgba($primary-color, 0.02)),
-        rgba(255, 255, 255, 0.02);
+        var(--glass-surface);
 }
 
 .ui-message-detail__hero {
@@ -2922,7 +2922,7 @@
     padding: 1.15rem;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.025);
+    background: var(--glass-surface);
 }
 
 .ui-message-detail__panel--message {
@@ -3030,7 +3030,7 @@
 }
 
 .ui-message-detail__footer {
-    background: rgba(255, 255, 255, 0.025);
+    background: var(--glass-surface);
 }
 
 .ui-message-detail__replyLink {

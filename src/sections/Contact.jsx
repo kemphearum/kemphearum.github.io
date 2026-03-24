@@ -189,13 +189,12 @@ const Contact = () => {
                             )}
                             {status === 'rate_limited' && (
                                 <motion.div
-                                    className={styles.error}
+                                    className={`${styles.error} ${styles.rateLimited}`}
                                     role="alert"
                                     aria-live="assertive"
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    style={{ backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba' }}
                                 >
                                     Please wait a few minutes before sending another message.
                                 </motion.div>

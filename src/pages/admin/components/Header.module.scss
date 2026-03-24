@@ -9,8 +9,8 @@
     left: 0;
     width: 100%;
     padding: 0 1.5rem;
-    background: var(--topnav-bg, rgba(10, 10, 18, 0.7));
-    backdrop-filter: blur(25px);
+    background: var(--topnav-bg, rgba(10, 20, 35, 0.82));
+    backdrop-filter: none;
     border-bottom: 1px solid var(--divider);
     height: 56px;
     z-index: 300;
@@ -90,7 +90,7 @@
 .searchInputWrapper {
     display: flex;
     align-items: center;
-    background: var(--card-bg);
+    background: var(--glass-surface);
     border: 1px solid var(--divider);
     border-radius: 8px;
     padding: 0.4rem 0.75rem;
@@ -152,15 +152,15 @@
     height: 44px;
     border-radius: 50%;
     color: var(--text-secondary);
-    background: transparent;
-    border: 1px solid transparent;
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover {
-        background: var(--card-bg);
+        background: var(--card-hover);
         color: $primary-color;
-        border-color: var(--divider);
+        border-color: rgba($primary-color, 0.35);
     }
 
     &--active {
@@ -193,14 +193,14 @@
     font-weight: 600;
     color: var(--text-secondary);
     border: 1px solid var(--divider);
-    background: var(--card-bg);
+    background: var(--glass-surface);
     transition: all 0.3s ease;
     white-space: nowrap;
 
     &:hover {
         color: $primary-color;
         border-color: rgba($primary-color, 0.3);
-        background: rgba($primary-color, 0.06);
+        background: rgba($primary-color, 0.12);
     }
 
     @media (max-width: 768px) {
