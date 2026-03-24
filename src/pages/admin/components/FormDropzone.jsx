@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, X, ImageIcon, Image as ImageIcon2, FolderPlus, Trash2, Eye, XCircle, CheckCircle2, Maximize2 } from 'lucide-react';
-import BaseModal from './BaseModal';
-import styles from '../../Admin.module.scss';
+import { Dialog } from '@/shared/components/ui';
 
 /**
  * FormDropzone component for file uploads with live preview.
@@ -141,28 +140,19 @@ const FormDropzone = ({
     const isNewImage = !!previewUrl && !internalClear;
 
     return (
-        <div className={styles.fileInputGroup}>
-            {label && (
-                <label className={styles.dropzoneLabel}>
-                    <div className={styles.labelTitle}>
-                        {label}
-                        {hint && <span className={styles.hint}> ({hint})</span>}
-                    </div>
-                </label>
-            )}
-
-            <div className={styles.dropzoneRoot}>
+        <div className="ui-fileInputGroup">
+            <div className="ui-dropzoneRoot">
                 <input
                     type="file"
                     ref={fileInputRef}
                     accept={accept}
                     onChange={(e) => handleFileSelect(e.target.files[0])}
-                    className={styles.hiddenInput}
+                    className="ui-hiddenInput"
                 />
 
                 {hasData ? (
                     <div 
-                        className={`${styles.unifiedPreviewDropzone} ${isDragging ? styles.isDragging : ''} ${error ? styles.hasError : ''}`}
+                        className={`ui-unifiedPreviewDropzone ${isDragging ? 'ui-isDragging' : ''} ${error ? 'ui-hasError' : ''}`}
                         onDragEnter={handleDragEnter}
                         onDragLeave={handleDragLeave}
                         onDragOver={handleDragOver}
@@ -170,22 +160,22 @@ const FormDropzone = ({
                         onClick={handleBrowseClick}
                         style={circular ? { width: '200px', height: '200px', margin: '0 auto', aspectRatio: '1/1' } : { aspectRatio }}
                     >
-                        <div className={styles.premiumImageCard} style={circular ? { borderRadius: '50%', height: '100%', overflow: 'visible' } : {}}>
+                        <div className="ui-premiumImageCard" style={circular ? { borderRadius: '50%', height: '100%', overflow: 'visible' } : {}}>
                             <img 
                                 src={previewUrl || currentImageUrl} 
                                 alt="Current" 
-                                className={styles.unifiedPreviewImg} 
+                                className="ui-unifiedPreviewImg" 
                                 style={circular ? { borderRadius: '50%' } : {}}
                             />
                             
                             {/* Floating Control Pill */}
                             <div 
-                                className={`${styles.unifiedControlPill} ${circular ? styles.circularPill : ''}`}
+                                className={`ui-unifiedControlPill ${circular ? 'ui-circularPill' : ''}`}
                                 onClick={(e) => e.stopPropagation()}
                             >
                                 <button 
                                     type="button"
-                                    className={styles.pillActionBtn}
+                                    className="ui-pillActionBtn"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         setIsPreviewModalOpen(true);
@@ -196,11 +186,11 @@ const FormDropzone = ({
                                     {!circular && <span>Preview</span>}
                                 </button>
                                 
-                                <div className={styles.pillDivider} />
+                                <div className="ui-pillDivider" />
                                 
                                 <button 
                                     type="button"
-                                    className={styles.pillActionBtn}
+                                    className="ui-pillActionBtn"
                                     onClick={handleBrowseClick}
                                     title="Change Image"
                                 >
@@ -210,10 +200,10 @@ const FormDropzone = ({
                                 
                                 {onClearExisting && (
                                     <>
-                                        <div className={styles.pillDivider} />
+                                        <div className="ui-pillDivider" />
                                         <button 
                                             type="button"
-                                            className={`${styles.pillActionBtn} ${styles.danger}`}
+                                            className="ui-pillActionBtn ui-danger"
                                             onClick={handleRemove}
                                             title="Clear Image"
                                         >
@@ -225,11 +215,11 @@ const FormDropzone = ({
                             </div>
 
                             {/* Dynamic Status Badge */}
-                            <div className={`${styles.topBadge} ${isNewImage ? styles.newBadge : ''} ${circular ? styles.circularBadge : ''}`}>
+                            <div className={`ui-topBadge ${isNewImage ? 'ui-newBadge' : ''} ${circular ? 'ui-circularBadge' : ''}`}>
                                 {isNewImage ? (
                                     <>
                                         <CheckCircle2 size={12} /> {circular ? 'Ready' : 'Ready to Upload'}
-                                        {file && <span className={styles.fileMetric}>({formatSize(file.size)})</span>}
+                                        {file && <span className="ui-fileMetric">({formatSize(file.size)})</span>}
                                     </>
                                 ) : (
                                     <>
@@ -239,27 +229,27 @@ const FormDropzone = ({
                             </div>
 
                             {/* Hover Help Info */}
-                            <div className={styles.hoverHelp}>
+                            <div className="ui-hoverHelp">
                                 <Upload size={14} /> Click or Drop to Change
                             </div>
 
                             {/* Drop Overlay (only visible on drag) */}
                             {isDragging && (
-                                <div className={styles.dropOverlay}>
+                                <div className="ui-dropOverlay">
                                     <Upload size={32} />
                                     <span>Drop to Replace</span>
                                 </div>
                             )}
                         </div>
                         {error && (
-                            <div className={styles.validationErrorUnified}>
+                            <div className="ui-validationErrorUnified">
                                 <XCircle size={14} /> {error}
                             </div>
                         )}
                     </div>
                 ) : (
                     <div 
-                        className={`${styles.fullDropzone} ${isDragging ? styles.isDragging : ''} ${error ? styles.hasError : ''}`}
+                        className={`ui-fullDropzone ${isDragging ? 'ui-isDragging' : ''} ${error ? 'ui-hasError' : ''}`}
                         onDragEnter={handleDragEnter}
                         onDragLeave={handleDragLeave}
                         onDragOver={handleDragOver}
@@ -267,20 +257,20 @@ const FormDropzone = ({
                         onClick={handleBrowseClick}
                         style={circular ? { width: '200px', height: '200px', margin: '0 auto', borderRadius: '50%' } : { aspectRatio }}
                     >
-                        <div className={styles.fullDropzoneContent}>
-                            <div className={styles.uploadIconCircle}>
+                        <div className="ui-fullDropzoneContent">
+                            <div className="ui-uploadIconCircle">
                                 <Upload size={circular ? 24 : 32} />
                             </div>
-                            <div className={styles.fullUploadText}>
-                                <span className={styles.main} style={circular ? { fontSize: '0.9rem' } : {}}>{placeholder}</span>
-                                {!circular && <span className={styles.sub}>Drag and drop your image here, or click to browse</span>}
-                                <span className={styles.uploadRequirements} style={circular ? { fontSize: '0.7rem' } : {}}>
+                            <div className="ui-fullUploadText">
+                                <span className="ui-main" style={circular ? { fontSize: '0.9rem' } : {}}>{placeholder}</span>
+                                {!circular && <span className="ui-sub">Drag and drop your image here, or click to browse</span>}
+                                <span className="ui-uploadRequirements" style={circular ? { fontSize: '0.7rem' } : {}}>
                                     {circular ? 'Max 1MB' : 'Max 1MB • Recommended: 1920x720 (16:6)'}
                                 </span>
                             </div>
                         </div>
                         {error && (
-                            <div className={styles.validationErrorFull}>
+                            <div className="ui-validationErrorFull">
                                 <XCircle size={16} /> {error}
                             </div>
                         )}
@@ -289,24 +279,24 @@ const FormDropzone = ({
             </div>
 
             {/* Integrated Preview Modal */}
-            <BaseModal
-                isOpen={isPreviewModalOpen}
-                onClose={() => setIsPreviewModalOpen(false)}
-                headerContent={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <ImageIcon2 size={20} className={styles.primaryText} />
-                        <span>Image Preview</span>
-                    </div>
-                }
-                maxWidth="1000px"
-                bodyStyle={{ padding: 0, background: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}
-            >
-                <img 
-                    src={previewUrl || currentImageUrl} 
-                    alt="Preview" 
-                    className={styles.modalPreviewImg} 
-                />
-            </BaseModal>
+            <Dialog open={isPreviewModalOpen} onOpenChange={(open) => !open && setIsPreviewModalOpen(false)}>
+                <Dialog.Content maxWidth="1000px" style={{ padding: 0, background: '#000' }}>
+                    <Dialog.Header>
+                        <Dialog.Title style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <ImageIcon2 size={20} className="ui-primaryText" />
+                            <span>Image Preview</span>
+                        </Dialog.Title>
+                    </Dialog.Header>
+                    
+                    <Dialog.Body style={{ padding: 0, background: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                        <img 
+                            src={previewUrl || currentImageUrl} 
+                            alt="Preview" 
+                            style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }} 
+                        />
+                    </Dialog.Body>
+                </Dialog.Content>
+            </Dialog>
         </div>
     );
 };

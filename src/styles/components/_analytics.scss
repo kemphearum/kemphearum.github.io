@@ -1,7 +1,7 @@
 @use '../variables' as *;
 
 // ANALYTICS HEADER
-.ui-analytics-header {
+.admin-analytics-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -15,7 +15,7 @@
 }
 
 // FILTER BAR
-.ui-analytics-filters {
+.admin-analytics-filters {
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -31,13 +31,13 @@
         align-items: stretch;
     }
 
-    .ui-filter-group {
+    .admin-filter-group {
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
 
-    .ui-filter-label {
+    .admin-filter-label {
         font-size: 0.85rem;
         font-weight: 600;
         color: var(--text-secondary);
@@ -46,7 +46,7 @@
 }
 
 // ANALYTICS GRID
-.ui-analytics-grid {
+.admin-analytics-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 1.25rem;
@@ -54,7 +54,7 @@
 }
 
 // CHART CONTAINER
-.ui-analytics-chart {
+.admin-analytics-chart {
     @include glass;
     border-radius: 20px;
     padding: 1.5rem;
@@ -69,8 +69,22 @@
     }
 }
 
+.admin-analytics-chart-container {
+    height: 350px;
+    width: 100%;
+    position: relative;
+
+    @media (max-width: 768px) {
+        height: 300px;
+    }
+}
+
+.admin-chart-empty {
+    padding: 3rem 0;
+}
+
 // LOADING OVERLAY
-.ui-loading-overlay {
+.admin-loading-overlay {
     position: absolute;
     inset: 0;
     background: rgba(var(--bg-color-rgb), 0.25);
@@ -80,7 +94,7 @@
     justify-content: center;
     z-index: 100;
     border-radius: inherit;
-    animation: ui-fade-in 0.3s ease-out;
+    animation: admin-fade-in 0.3s ease-out;
 
     .ui-spinner {
         @extend .ui-spinner;
@@ -89,7 +103,7 @@
     }
 }
 
-.ui-filter-actions {
+.admin-filter-actions {
     display: flex;
     gap: 1rem;
     align-items: center;
@@ -102,14 +116,14 @@
     }
 }
 
-.ui-last-updated-container {
+.admin-last-updated-container {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     margin-left: 0.5rem;
 }
 
-.ui-last-updated-label {
+.admin-last-updated-label {
     font-size: 0.65rem;
     color: var(--text-tertiary);
     text-transform: uppercase;
@@ -117,23 +131,23 @@
     line-height: 1;
 }
 
-.ui-last-updated-time {
+.admin-last-updated-time {
     font-size: 0.8rem;
     font-weight: 700;
     color: var(--text-secondary);
 }
 
-@keyframes ui-fade-in {
+@keyframes admin-fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
-@keyframes ui-spin {
+@keyframes admin-spin {
     to { transform: rotate(360deg); }
 }
 
 // RANGE PICKER CUSTOMIZATION
-.ui-date-range-picker {
+.admin-date-range-picker {
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -162,14 +176,14 @@
         }
     }
 
-    .ui-date-separator {
+    .admin-date-separator {
         color: var(--text-tertiary);
         font-size: 0.8rem;
     }
 }
 
 // PRESET BUTTONS
-.ui-preset-group {
+.admin-preset-group {
     display: flex;
     gap: 0.5rem;
     padding: 0.25rem;
@@ -177,7 +191,7 @@
     border-radius: 10px;
 }
 
-.ui-preset-btn {
+.admin-preset-btn {
     padding: 0.4rem 0.85rem;
     border-radius: 8px;
     font-size: 0.8rem;
@@ -197,20 +211,20 @@
     }
 }
 
-.ui-analytics-row {
+.admin-analytics-row {
   display: grid;
   gap: 1.25rem;
   margin-top: 1.25rem;
 
-  &.ui-grid-2 {
+  &.admin-grid-2 {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  &.ui-grid-3 {
+  &.admin-grid-3 {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  &.ui-grid-auto {
+  &.admin-grid-auto {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
 
@@ -219,7 +233,7 @@
   }
 }
 
-.ui-alert {
+.admin-alert {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -237,7 +251,7 @@
     opacity: 0.8;
   }
 
-  &.ui-alert-warning {
+  &.admin-alert-warning {
     background: rgba(255, 171, 64, 0.1);
     border: 1px solid rgba(255, 171, 64, 0.3);
     color: #ffab40;

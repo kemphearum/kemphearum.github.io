@@ -2,13 +2,21 @@ import BaseService from './BaseService';
 import { db } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
+import { normalizePost, validatePost } from '../domain/blog/blogDomain';
 
 class BlogService extends BaseService {
     constructor() {
         super('posts');
     }
 
-    // Example of adding specific business logic and role checks
+    /**
+     * Toggles the visibility of a blog post
+     * @param {string} userRole 
+     * @param {string} id 
+     * @param {boolean} currentVisible 
+     * @param {function(number, string): void} [trackWrite] 
+     * @returns {Promise<void>}
+     */
     async toggleVisibility(userRole, id, currentVisible, trackWrite) {
         if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG, userRole)) {
             throw new Error("Unauthorized action");
@@ -16,6 +24,14 @@ class BlogService extends BaseService {
         return this.update(id, { visible: !currentVisible }, trackWrite);
     }
 
+    /**
+     * Toggles the featured status of a blog post
+     * @param {string} userRole 
+     * @param {string} id 
+     * @param {boolean} currentFeatured 
+     * @param {function(number, string): void} [trackWrite] 
+     * @returns {Promise<void>}
+     */
     async toggleFeatured(userRole, id, currentFeatured, trackWrite) {
         if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG, userRole)) {
             throw new Error("Unauthorized action");
@@ -23,6 +39,13 @@ class BlogService extends BaseService {
         return this.update(id, { featured: !currentFeatured }, trackWrite);
     }
 
+    /**
+     * Deletes a blog post
+     * @param {string} userRole 
+     * @param {string} id 
+     * @param {function(number, string, Object): void} [trackDelete] 
+     * @returns {Promise<void>}
+     */
     async deletePost(userRole, id, trackDelete) {
         if (!isActionAllowed(ACTIONS.DELETE, MODULES.BLOG, userRole)) {
             throw new Error("Unauthorized action");
@@ -33,9 +56,54 @@ class BlogService extends BaseService {
     }
 
     /**
+     * Batch delete multiple blog posts.
+     * @param {string} userRole 
+     * @param {Array<string>} ids 
+     * @param {function(number, string): void} [trackDelete] 
+     * @returns {Promise<boolean>}
+     */
+    async batchDeletePosts(userRole, ids, trackDelete) {
+        if (!isActionAllowed(ACTIONS.DELETE, MODULES.BLOG, userRole)) {
+            throw new Error("Unauthorized action");
+        }
+        return this.batchDelete(ids, trackDelete);
+    }
+
+    /**
+     * Batch update visibility for blog posts.
+     * @param {string} userRole 
+     * @param {Array<string>} ids 
+     * @param {boolean} visible 
+     * @param {function(number, string): void} [trackWrite] 
+     * @returns {Promise<boolean>}
+     */
+    async batchUpdatePostsVisibility(userRole, ids, visible, trackWrite) {
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG, userRole)) {
+            throw new Error("Unauthorized action");
+        }
+        return this.batchUpdate(ids, { visible }, trackWrite);
+    }
+
+    /**
+     * Batch update featured status for blog posts.
+     * @param {string} userRole 
+     * @param {Array<string>} ids 
+     * @param {boolean} featured 
+     * @param {function(number, string): void} [trackWrite] 
+     * @returns {Promise<boolean>}
+     */
+    async batchUpdatePostsFeatured(userRole, ids, featured, trackWrite) {
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG, userRole)) {
+            throw new Error("Unauthorized action");
+        }
+        return this.batchUpdate(ids, { featured }, trackWrite);
+    }
+
+    /**
      * Fetch a specific blog post by its slug
      * @param {string} slug 
-     * @param {Function} trackRead 
+     * @param {function(number, string, Object): void} [trackRead] 
+     * @param {boolean} [includeHidden=false] 
      * @returns {Promise<Object|null>}
      */
     async fetchPostBySlug(slug, trackRead, includeHidden = false) {
@@ -66,7 +134,7 @@ class BlogService extends BaseService {
      * Fetch related blog posts based on tags
      * @param {string} currentPostId 
      * @param {Array<string>} tags 
-     * @param {Function} trackRead 
+     * @param {function(number, string, Object): void} [trackRead] 
      * @returns {Promise<Array<Object>>}
      */
     async fetchRelatedPosts(currentPostId, tags, trackRead) {
@@ -112,6 +180,10 @@ class BlogService extends BaseService {
 
     /**
      * Prepares blog post form data for saving to Firestore by formatting tags and slug.
+     * @param {string} userRole 
+     * @param {Object} formData 
+     * @param {function(number, string, Object): void} [trackWrite] 
+     * @returns {Promise<{isNew: boolean, id: string}>}
      */
     async savePost(userRole, formData, trackWrite) {
         const action = formData.id ? ACTIONS.EDIT : ACTIONS.CREATE;
@@ -119,33 +191,22 @@ class BlogService extends BaseService {
             throw new Error("Unauthorized action");
         }
 
-        const tagsArray = typeof formData.tags === 'string'
-            ? formData.tags.split(',').map(t => t.trim()).filter(t => t)
-            : (Array.isArray(formData.tags) ? formData.tags : []);
+        // 1. Normalize
+        const dataToSave = normalizePost(formData);
 
-        const slug = formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        // 2. Validate
+        const errors = validatePost(dataToSave);
+        if (errors) {
+            throw new Error(`Validation failed: ${Object.values(errors).join(', ')}`);
+        }
 
-        // Check for existing post by slug if no ID is provided
+        // 3. Handle duplicates by slug
         let targetId = formData.id;
         if (!targetId) {
-            const existing = await this.fetchPostBySlug(slug, null, true);
+            const existing = await this.fetchPostBySlug(dataToSave.slug, null, true);
             if (existing) {
                 targetId = existing.id;
             }
-        }
-
-        const dataToSave = {
-            title: formData.title || 'Untitled Post',
-            slug,
-            excerpt: formData.excerpt || '',
-            content: formData.content || '',
-            tags: tagsArray,
-            visible: formData.visible !== false, // default true
-            featured: !!formData.featured // default false
-        };
-
-        if (formData.coverImage !== undefined) {
-            dataToSave.coverImage = formData.coverImage || '';
         }
 
         const { serverTimestamp } = await import('firebase/firestore');

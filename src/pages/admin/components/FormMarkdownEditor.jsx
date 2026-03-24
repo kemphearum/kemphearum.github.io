@@ -1,7 +1,6 @@
 import React from 'react';
 import { Bold, Italic, Link as LinkIcon, Code, Eye, Edit2 } from 'lucide-react';
-import styles from '../../Admin.module.scss';
-import MarkdownRenderer from '../../../components/MarkdownRenderer';
+import MarkdownRenderer from '@/sections/MarkdownRenderer';
 
 /**
  * FormMarkdownEditor component with toolbar actions and preview capability.
@@ -54,26 +53,25 @@ const FormMarkdownEditor = ({
     };
 
     return (
-        <div className={styles.inputGroup} style={fullWidth ? { gridColumn: 'span 2' } : {}}>
-            <div className={styles.editorHeader}>
-                {label && <label>{label}</label>}
-                <div className={styles.toolbar}>
+        <div className="ui-formGroup" style={fullWidth ? { gridColumn: 'span 2' } : {}}>
+            <div className="ui-editorHeader">
+                <div className="ui-toolbar">
                     {!isPreviewMode && (
-                        <div className={styles.formatGroup}>
+                        <div className="ui-formatGroup">
                             <button type="button" onClick={() => insertMarkdown('bold')} title="Bold"><Bold size={16} /></button>
                             <button type="button" onClick={() => insertMarkdown('italic')} title="Italic"><Italic size={16} /></button>
                             <button type="button" onClick={() => insertMarkdown('link')} title="Link"><LinkIcon size={16} /></button>
                             <button type="button" onClick={() => insertMarkdown('code')} title="Code Block"><Code size={16} /></button>
                         </div>
                     )}
-                    <button type="button" className={styles.previewToggle} onClick={onTogglePreview}>
+                    <button type="button" className="ui-previewToggle" onClick={onTogglePreview}>
                         {isPreviewMode ? <><Edit2 size={14} /> Edit</> : <><Eye size={14} /> Preview</>}
                     </button>
                 </div>
             </div>
 
             {isPreviewMode ? (
-                <div className={styles.previewBox}>
+                <div className="ui-previewBox">
                     <MarkdownRenderer content={value || '*Nothing to preview...*'} />
                 </div>
             ) : (

@@ -1,5 +1,4 @@
 import React from 'react';
-import styles from '../../Admin.module.scss';
 
 const UsageBar = ({
     label,
@@ -14,24 +13,24 @@ const UsageBar = ({
     const displayColor = color || (displayPercentage > 90 ? '#ef4444' : displayPercentage > 75 ? '#f59e0b' : '#10b981');
 
     return (
-        <div className={styles.usageContainer} style={style}>
-            <div className={styles.usageHeader}>
-                <span className={styles.usageLabel}>{label}</span>
-                <span className={styles.usageStats} style={{ color: displayColor }}>
+        <div className="admin-usage-container" style={style}>
+            <div className="admin-usage-header">
+                <span className="admin-usage-label">{label}</span>
+                <span className="admin-usage-stats" style={{ color: displayColor }}>
                     {displayPercentage.toFixed(displayPercentage < 10 ? 2 : 1)}%
                     ({current?.toLocaleString()} / {total?.toLocaleString()})
                 </span>
             </div>
-            <div className={styles.usageTrack}>
+            <div className="admin-usage-track">
                 <div
-                    className={styles.usageFill}
+                    className="admin-usage-fill"
                     style={{
                         width: `${Math.min(displayPercentage, 100)}%`,
                         background: displayColor
                     }}
                 ></div>
             </div>
-            {hint && <div className={styles.usageHint}>{hint}</div>}
+            {hint && <div className="admin-usage-hint">{hint}</div>}
         </div>
     );
 };

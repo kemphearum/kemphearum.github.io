@@ -32,13 +32,18 @@ const AuditLogDetailsDialog = ({ log, open, onOpenChange }) => {
   };
 
   const details = [
-    { label: 'User Email', value: log.user || 'System', icon: Mail, color: '#38bdf8' },
+    { label: 'Event Status', value: log.status || 'success', icon: Shield, color: log.status === 'failure' ? '#ef4444' : '#10b981' },
+    { label: 'User Email', value: log.user || log.email || 'System', icon: Mail, color: '#38bdf8' },
     { label: 'IP Address', value: log.ipAddress || 'Unknown', icon: Globe, color: '#a78bfa' },
     { label: 'Device', value: log.device || 'Desktop', icon: Monitor, color: '#fb923c', isDevice: true },
     { label: 'Session ID', value: log.sessionId || 'Unknown', icon: Key, color: '#fbbf24' },
     { label: 'Timestamp', value: formatDate(log.time || log.timestamp), icon: Clock, color: '#64ffda', fullWidth: true },
     { label: 'User Agent', value: log.userAgent || 'Unknown', icon: Monitor, color: '#94a3b8', fullWidth: true },
   ];
+
+  if (log.reason) {
+    details.splice(1, 0, { label: 'Failure Reason', value: log.reason, icon: Shield, color: '#ef4444', fullWidth: true });
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

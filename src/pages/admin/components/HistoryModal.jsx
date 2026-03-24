@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Clock, History, AlertCircle, ChevronDown, ChevronRight, PlusCircle, MinusCircle, Edit3 } from 'lucide-react';
-import styles from '../../Admin.module.scss';
 import { useQuery } from '@tanstack/react-query';
 import { diffWordsWithSpace } from 'diff';
-import { Button, Dialog, Spinner } from '../../../shared/components/ui';
+import { Button, Dialog, Spinner } from '@/shared/components/ui';
 
 const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
     const [expandedLogId, setExpandedLogId] = useState(null);
@@ -149,19 +148,19 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
                             <Spinner size="lg" />
                         </div>
                     ) : error ? (
-                        <div className={styles.emptyState} style={{ padding: '3rem 2rem', textAlign: 'center' }}>
+                        <div className="ui-empty-state" style={{ padding: '3rem 2rem', textAlign: 'center' }}>
                             <AlertCircle size={40} style={{ margin: '0 auto 1rem', color: '#ef4444' }} />
-                            <h3 style={{ margin: '0 0 0.5rem 0', color: '#ef4444' }}>Error loading history</h3>
-                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{error.message || 'An unknown error occurred.'}</p>
+                            <h3 className="ui-empty-state-title" style={{ color: '#ef4444' }}>Error loading history</h3>
+                            <p className="ui-empty-state-description">{error.message || 'An unknown error occurred.'}</p>
                         </div>
                     ) : history.length === 0 ? (
-                        <div className={styles.emptyState} style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
+                        <div className="ui-empty-state" style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
                             <Clock size={48} style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }} />
-                            <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>No History Recorded</h3>
-                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem' }}>This record was likely created before history tracking was enabled.</p>
+                            <h3 className="ui-empty-state-title">No History Recorded</h3>
+                            <p className="ui-empty-state-description">This record was likely created before history tracking was enabled.</p>
                         </div>
                     ) : (
-                        <div className={styles.historyTimeline}>
+                        <div className="ui-historyTimeline">
                             <div style={{ position: 'relative' }}>
                                 {/* Timeline line */}
                                 <div style={{ position: 'absolute', left: '23px', top: '15px', bottom: '0', width: '2px', background: 'var(--primary-color)', opacity: 0.25 }}></div>

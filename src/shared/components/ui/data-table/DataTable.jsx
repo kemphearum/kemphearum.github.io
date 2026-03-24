@@ -1,7 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download } from 'lucide-react';
 import EmptyState from '../empty-state/EmptyState';
 import Spinner from '../spinner/Spinner';
+import Skeleton from '../skeleton/Skeleton';
+import { downloadCSV } from '../../../../utils/csvUtils';
 
 /**
  * DataTable Component (Final Premium Version)
@@ -35,7 +37,10 @@ const DataTable = ({
   // Server-side pagination support
   totalItems: totalItemsProp = null,
   manualPagination = false,
-  paginationVariant = 'numbers' // 'numbers', 'simple', or 'cursor'
+  paginationVariant = 'numbers', // 'numbers', 'simple', or 'cursor'
+  // Export
+  showExport = false,
+  exportFileName = 'export.csv'
 }) => {
   const [sortConfig, setSortConfig] = useState(initialSort);
   const [isMobile, setIsMobile] = useState(false);
@@ -111,6 +116,31 @@ const DataTable = ({
     }
     setSortConfig({ key, direction });
   };
+  
+  const handleExport = () => {
+    // 1. Prepare data for export
+    // If we have custom renderers, we should try to use them for simpler values if possible, 
+    // but usually, for CSV we want the raw data or a slightly normalized version.
+    const exportData = paginatedData.map(row => {
+        const normalizedRow = {};
+        columns.forEach(col => {
+            if (col.key && col.key !== 'actions') {
+                const value = row[col.key];
+                // Standard normalization for Firestore timestamps if they exist
+                if (value?.seconds) {
+                    normalizedRow[col.header || col.key] = new Date(value.seconds * 1000).toLocaleString();
+                } else if (typeof value === 'object' && value !== null) {
+                    normalizedRow[col.header || col.key] = JSON.stringify(value);
+                } else {
+                    normalizedRow[col.header || col.key] = value ?? '';
+                }
+            }
+        });
+        return normalizedRow;
+    });
+
+    downloadCSV(exportData, exportFileName);
+  };
 
   const getSortIcon = (col) => {
     if (!col.sortable) return null;
@@ -126,8 +156,8 @@ const DataTable = ({
 
   return (
     <div className={`ui-table-container ${className}`}>
-      {/* Loading Overlay - Unified UI */}
-      {loading && (
+      {/* Table-wide Spinner for re-fetching (when data already exists) */}
+      {loading && paginatedData.length > 0 && (
         <div className="ui-table-loading-overlay">
           <Spinner size="md" />
         </div>
@@ -135,7 +165,32 @@ const DataTable = ({
 
       {isMobile ? (
         <div className="ui-table-mobile-cards">
-          {(paginatedData.length === 0 && !loading) ? (
+          <div className="ui-table-toolbar">
+              {showExport && paginatedData.length > 0 && (
+                  <button 
+                      className="ui-table-export-btn" 
+                      onClick={handleExport}
+                      title="Export to CSV"
+                  >
+                      <Download size={14} /> Export CSV
+                  </button>
+              )}
+          </div>
+          {loading && paginatedData.length === 0 ? (
+            Array.from({ length: pageSize }).map((_, i) => (
+              <div key={`skeleton-${i}`} className="ui-table-card">
+                <div className="ui-table-card-row">
+                  <Skeleton height="1.2rem" width="60%" />
+                </div>
+                <div className="ui-table-card-row">
+                   <Skeleton height="1rem" width="40%" />
+                </div>
+                <div className="ui-table-card-row">
+                   <Skeleton height="1rem" width="80%" />
+                </div>
+              </div>
+            ))
+          ) : (paginatedData.length === 0 && !loading) ? (
             <EmptyState 
               title={emptyState?.title || "No data available"}
               description={emptyState?.description || "There are no records to display at the moment."}
@@ -192,6 +247,21 @@ const DataTable = ({
       ) : (
         <table className="ui-table">
           <thead>
+            {showExport && paginatedData.length > 0 && (
+              <tr className="ui-table-toolbar-row">
+                <th colSpan={columns.length + (selection ? 1 : 0)}>
+                    <div className="ui-table-toolbar">
+                        <button 
+                            className="ui-table-export-btn" 
+                            onClick={handleExport}
+                            title="Export current page to CSV"
+                        >
+                            <Download size={14} /> Export to CSV
+                        </button>
+                    </div>
+                </th>
+              </tr>
+            )}
             <tr>
             {selection && (
               <th className="ui-table-selection-header" style={{ width: '40px' }}>
@@ -219,7 +289,18 @@ const DataTable = ({
           </tr>
         </thead>
         <tbody>
-          {(paginatedData.length === 0 && !loading) ? (
+          {loading && paginatedData.length === 0 ? (
+            Array.from({ length: pageSize }).map((_, i) => (
+              <tr key={`skeleton-row-${i}`} className="ui-table-skeleton-row">
+                {selection && <td><Skeleton width="20px" height="20px" /></td>}
+                {columns.map((col, j) => (
+                  <td key={`skeleton-cell-${j}`} style={col.width ? { width: col.width } : {}}>
+                    <Skeleton width={j === 0 ? "70%" : "90%"} />
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : (paginatedData.length === 0 && !loading) ? (
             <tr>
               <td colSpan={columns.length + (selection ? 1 : 0)} className="ui-table-empty-cell">
                 <EmptyState 
@@ -280,21 +361,34 @@ const DataTable = ({
       {(totalPages > 1 || isCursorMode) && (
         <div className="ui-paginationWrapper">
           <div className="ui-paginationLeft">
+            <div className="ui-perPageControl">
+              <span className="ui-perPageLabel">Show</span>
+              <select 
+                className="ui-perPageSelect"
+                value={pageSize}
+                onChange={(e) => onPageChange?.(1, Number(e.target.value))}
+              >
+                {[5, 10, 25, 50].map(size => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </div>
+
             {!isCursorMode && (
               <span className="ui-pageInfo">
-                Showing <strong>{(page - 1) * pageSize + 1}</strong> to <strong>{Math.min(page * pageSize, totalItems)}</strong> of <strong>{totalItems}</strong> entries
+                <strong>{(page - 1) * pageSize + 1}</strong>–<strong>{Math.min(page * pageSize, totalItems)}</strong> of <strong>{totalItems}</strong>
               </span>
             )}
             {isCursorMode && (
               <span className="ui-pageInfo">
-                Page <strong>{page}</strong> {loading ? '(Loading...)' : ''}
+                Page <strong>{page}</strong>
               </span>
             )}
           </div>
           
           <div className="ui-pagination">
             <button 
-              className="ui-pageBtn" 
+              className={`ui-pageBtn ui-pageBtn--prev ${loading ? 'ui-pageBtn--loading' : ''}`} 
               onClick={() => {
                 if (isCursorMode) onPrevious?.();
                 else onPageChange?.(page - 1);
@@ -312,7 +406,7 @@ const DataTable = ({
                           return (
                               <button 
                                   key={pageNum}
-                                  className={`ui-pageBtn ${page === pageNum ? 'ui-pageBtn--active' : ''}`}
+                                  className={`ui-pageBtn ${page === pageNum ? 'ui-pageBtn--active' : ''} ${loading ? 'ui-pageBtn--loading' : ''}`}
                                   onClick={() => onPageChange?.(pageNum)}
                               >
                                   {pageNum}
@@ -327,7 +421,7 @@ const DataTable = ({
             )}
 
             <button 
-              className="ui-pageBtn" 
+              className={`ui-pageBtn ui-pageBtn--next ${loading ? 'ui-pageBtn--loading' : ''}`} 
               onClick={() => {
                 if (isCursorMode) onNext?.();
                 else onPageChange?.(page + 1);

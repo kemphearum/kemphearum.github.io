@@ -1,8 +1,11 @@
 import React from 'react';
-import { Dialog, Button, Input, TextArea } from '../../../../shared/components/ui';
-import Form from '../../../../shared/components/form/Form';
-import FormField from '../../../../shared/components/form/FormField';
-import FormFileUpload from '../../../../shared/components/form/inputs/FormFileUpload';
+import { Controller } from 'react-hook-form';
+import { Dialog, Button } from '../../../../shared/components/ui';
+import Form from '../../components/Form';
+import FormField from '../../components/FormField';
+import FormInput from '../../components/FormInput';
+import FormSelect from '../../components/FormSelect';
+import FormDropzone from '../../components/FormDropzone';
 
 const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loading }) => {
   return (
@@ -29,12 +32,23 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
           key={open ? 'open' : 'closed'}
         >
           <Dialog.Body>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
               <FormField
                 label="Project Image"
                 name="image"
               >
-                <FormFileUpload accept="image/*" />
+                 <Controller
+                  name="image"
+                  render={({ field }) => (
+                    <FormDropzone 
+                      file={field.value} 
+                      onFileChange={field.onChange}
+                      currentImageUrl={initialData?.imageUrl}
+                      placeholder="Upload project cover image"
+                      aspectRatio="16 / 7"
+                    />
+                  )}
+                />
               </FormField>
 
               <FormField
@@ -42,7 +56,7 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                 name="title"
                 validation={{ required: 'Project title is required' }}
               >
-                <Input placeholder="e.g. Portfolio Website" />
+                <FormInput placeholder="e.g. Portfolio Website" />
               </FormField>
               
               <FormField
@@ -50,7 +64,7 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                 name="description"
                 validation={{ required: 'Description is required' }}
               >
-                <TextArea rows="3" placeholder="Describe what this project does..." />
+                <FormInput isTextArea rows="3" placeholder="Describe what this project does..." />
               </FormField>
 
               <FormField
@@ -58,30 +72,34 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                 name="techStack"
                 validation={{ required: 'Tech stack is required' }}
               >
-                <Input placeholder="e.g. React, Firebase, SCSS (comma separated)" />
+                <FormInput placeholder="e.g. React, Firebase, SCSS (comma separated)" />
               </FormField>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <FormField label="GitHub URL" name="githubUrl">
-                  <Input type="url" placeholder="https://github.com/..." />
+                  <FormInput type="url" placeholder="https://github.com/..." />
                 </FormField>
                 <FormField label="Live Demo URL" name="liveUrl">
-                  <Input type="url" placeholder="https://..." />
+                  <FormInput type="url" placeholder="https://..." />
                 </FormField>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <FormField label="Visibility" name="visible">
-                  <select className="ui-input" style={{ width: '100%' }}>
-                    <option value={true}>Published</option>
-                    <option value={false}>Hidden</option>
-                  </select>
+                  <FormSelect 
+                    options={[
+                      { label: 'Published', value: true },
+                      { label: 'Hidden', value: false }
+                    ]}
+                  />
                 </FormField>
                 <FormField label="Featured" name="featured">
-                  <select className="ui-input" style={{ width: '100%' }}>
-                    <option value={false}>Normal</option>
-                    <option value={true}>Featured</option>
-                  </select>
+                  <FormSelect 
+                    options={[
+                      { label: 'Normal', value: false },
+                      { label: 'Featured', value: true }
+                    ]}
+                  />
                 </FormField>
               </div>
             </div>

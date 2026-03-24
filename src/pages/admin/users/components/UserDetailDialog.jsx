@@ -2,7 +2,6 @@ import React from 'react';
 import { Users, Trash2, Key, History, Clock } from 'lucide-react';
 import { Dialog, Button, Badge } from '../../../../shared/components/ui';
 import FormSelect from '../../components/FormSelect';
-import styles from '../UsersTab.module.scss';
 
 const UserDetailDialog = ({ 
   user, 
@@ -21,115 +20,115 @@ const UserDetailDialog = ({
     <Dialog open={!!user} onOpenChange={onClose}>
       <Dialog.Content maxWidth="650px">
         <Dialog.Header>
-          <Dialog.Title className={styles.dialogTitle}>
-            <Users size={22} className={styles.primaryIcon} /> User Account Profile
+          <Dialog.Title className={"ui-dialog-title"}>
+            <Users size={22} className={"ui-primary-icon"} /> User Account Profile
           </Dialog.Title>
           <Dialog.Close />
         </Dialog.Header>
         
         <Dialog.Body>
-          <div className={styles.detailGrid}>
-            <div className={`${styles.detailItem} ${styles.detailFull}`}>
-              <span className={styles.detailLabel}>Authentication Email</span>
-              <span className={`${styles.detailValue} ${styles.detailValueLarge}`}>
+          <div className={"ui-detail-grid"}>
+            <div className="ui-detail-item ui-detail-full">
+              <span className={"ui-detail-label"}>Authentication Email</span>
+              <span className="ui-detail-value ui-detail-value-large">
                 {user.email}
               </span>
             </div>
             
-            <div className={`${styles.detailItem} ${styles.detailHalf}`}>
-              <span className={styles.detailLabel}>Display Name</span>
-              <span className={styles.detailValue}>
-                {user.displayName || <span className={styles.emptyLabel}>Not set</span>}
+            <div className="ui-detail-item ui-detail-half">
+              <span className={"ui-detail-label"}>Display Name</span>
+              <span className={"ui-detail-value"}>
+                {user.displayName || <span className={"ui-empty-label"}>Not set</span>}
               </span>
             </div>
             
-            <div className={`${styles.detailItem} ${styles.detailThird}`}>
-              <span className={styles.detailLabel}>Status & Security</span>
-              <span className={`${styles.detailValue} ${styles.statusContainer}`}>
+            <div className="ui-detail-item ui-detail-third">
+              <span className={"ui-detail-label"}>Status & Security</span>
+              <span className="ui-detail-value ui-status-container">
                 {user.disabled ? (
-                  <span className={styles.statusDisabled}>● Disabled Account</span>
+                  <span className={"ui-status-disabled"}>● Disabled Account</span>
                 ) : (
-                  <span className={styles.statusActive}>● Active Account</span>
+                  <span className={"ui-status-active"}>● Active Account</span>
                 )}
               </span>
             </div>
             
-            <div className={`${styles.detailItem} ${styles.detailHalf}`}>
-              <span className={styles.detailLabel}>Administrative Role</span>
+            <div className="ui-detail-item ui-detail-half">
+              <span className={"ui-detail-label"}>Administrative Role</span>
               {user.email === currentUser?.email ? (
-                <div className={styles.roleBadgeContainer}>
+                <div className={"ui-role-badge-container"}>
                   <Badge variant="success">
                     {user.role.toUpperCase()} (YOU)
                   </Badge>
                 </div>
               ) : (
-                <div className={styles.roleSelectContainer}>
-                  <select 
-                    className={`ui-input ${styles.roleSelect}`}
+                <div className={"ui-role-select-container"}>
+                  <FormSelect 
                     value={user.role}
                     onChange={(e) => onRoleChange(user.id, e.target.value)}
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="editor">Editor</option>
-                    <option value="admin">Admin</option>
-                    <option value="superadmin">Super Admin</option>
-                  </select>
+                    options={[
+                      { label: 'Pending', value: 'pending' },
+                      { label: 'Editor', value: 'editor' },
+                      { label: 'Admin', value: 'admin' },
+                      { label: 'Super Admin', value: 'superadmin' }
+                    ]}
+                  />
                 </div>
               )}
             </div>
             
-            <div className={`${styles.detailItem} ${styles.detailThird}`}>
-              <span className={styles.detailLabel}>Registration Date</span>
-              <span className={`${styles.detailValue} ${styles.dateValue}`}>
+            <div className="ui-detail-item ui-detail-third">
+              <span className={"ui-detail-label"}>Registration Date</span>
+              <span className="ui-detail-value ui-date-value">
                 {user.createdAt?.seconds ? new Date(user.createdAt.seconds * 1000).toLocaleString() : 'Unknown'}
               </span>
             </div>
             
-            <div className={`${styles.detailItem} ${styles.detailFull}`}>
-              <span className={styles.detailLabel}>System Universal ID (UID)</span>
-              <span className={styles.monoId}>
+            <div className="ui-detail-item ui-detail-full">
+              <span className={"ui-detail-label"}>System Universal ID (UID)</span>
+              <span className={"ui-mono-id"}>
                 {user.id}
               </span>
             </div>
           </div>
 
           {/* Audit History */}
-          <div className={styles.historySection}>
-            <h4 className={styles.historyTitle}>
-              <History size={18} className={styles.primaryIcon} /> Audit & Edit History
+          <div className={"ui-history-section"}>
+            <h4 className={"ui-history-title"}>
+              <History size={18} className={"ui-primary-icon"} /> Audit & Edit History
             </h4>
             
             {historyLoading ? (
-              <div className={styles.historyLoading}>
+              <div className={"ui-history-loading"}>
                 Loading history...
               </div>
             ) : history.length === 0 ? (
-              <div className={styles.emptyHistory}>
+              <div className={"ui-empty-history"}>
                 No edit history recorded yet.
               </div>
             ) : (
-              <div className={styles.historyContainer}>
+              <div className={"ui-history-container"}>
                 {history.map((h, i) => (
-                  <div key={h.id || `history-${i}`} className={styles.historyItem}>
-                    <div className={styles.historyHeader}>
+                  <div key={h.id || `history-${i}`} className={"ui-history-item"}>
+                    <div className={"ui-history-header"}>
                       <Badge variant={h.action === 'created' ? 'success' : h.action === 'deleted' ? 'error' : 'primary'}>
                         {h.action}
                       </Badge>
-                      <span className={styles.historyTime}>
+                      <span className={"ui-history-time"}>
                         <Clock size={12} /> 
                         {h.timestamp?.seconds ? new Date(h.timestamp.seconds * 1000).toLocaleString() : 'Pending...'}
                       </span>
                     </div>
                     
-                    <div className={styles.historyActionText}>
+                    <div className={"ui-history-action-text"}>
                       {h.action === 'updated' && h.newData ? (
-                        <div className={styles.diffContainer}>
+                        <div className={"ui-diff-container"}>
                           {Object.keys(h.newData).map(k => (
-                            <div key={k} className={styles.diffLine}>
-                              <code className={styles.diffKey}>{k}</code>
-                              <span className={styles.diffOld}>{String(h.previousData?.[k])}</span>
-                              <span className={styles.historyArrow}>→</span>
-                              <span className={styles.diffNew}>{String(h.newData[k])}</span>
+                            <div key={k} className={"ui-diff-line"}>
+                              <code className={"ui-diff-key"}>{k}</code>
+                              <span className={"ui-diff-old"}>{String(h.previousData?.[k])}</span>
+                              <span className={"ui-history-arrow"}>→</span>
+                              <span className={"ui-diff-new"}>{String(h.newData[k])}</span>
                             </div>
                           ))}
                         </div>
@@ -137,8 +136,8 @@ const UserDetailDialog = ({
                         <span>Account {h.action}</span>
                       )}
                     </div>
-                    <div className={styles.historyUser}>
-                      by: <span className={styles.historyUserName}>{h.user || 'System'}</span>
+                    <div className={"ui-history-user"}>
+                      by: <span className={"ui-history-user-name"}>{h.user || 'System'}</span>
                     </div>
                   </div>
                 ))}
@@ -148,7 +147,7 @@ const UserDetailDialog = ({
         </Dialog.Body>
         
         <Dialog.Footer>
-          <div className={styles.footerActionsContainer}>
+          <div className={"ui-footer-actions-container"}>
             <div>
               {user.email !== currentUser?.email && (
                 <Button variant="danger" onClick={() => onDisable(user)}>
@@ -156,7 +155,7 @@ const UserDetailDialog = ({
                 </Button>
               )}
             </div>
-            <div className={styles.footerActionsRight}>
+            <div className={"ui-footer-actions-right"}>
               <Button variant="ghost" onClick={() => onResetPassword(user)}>
                 <Key size={16} /> Reset Password
               </Button>

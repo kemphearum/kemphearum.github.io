@@ -1,11 +1,7 @@
 @use 'sass:color';
 @use '../styles/variables' as *;
 
-// This file is now primarily for Admin-specific layout-related global styles (if any)
-// Most UI primitives have been moved to src/styles/components/
+// This file is for Admin-specific layout-related global styles.
+// Most UI primitives and design tokens are in src/styles/components/
 
-// LOGIN PAGE LAYOUT (Keeping as Global for now, but will eventually move back to a module if requested)
-// However, the user wants page-level layouts as Modules.
-// So I will MOVE these back to Admin.module.scss.
-
-/* Admin shared mixins/utilities if any */
+/* Admin shared global styles */

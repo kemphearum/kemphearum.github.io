@@ -1,7 +1,6 @@
 import React from 'react';
 import { Server, Download, Upload, Trash2, ShieldAlert } from 'lucide-react';
 import { Button, Select } from '../../../../shared/components/ui';
-import styles from '../DatabaseTab.module.scss';
 
 const DatabaseActions = ({ 
   loading, 
@@ -14,14 +13,14 @@ const DatabaseActions = ({
   canArchive = true
 }) => {
   return (
-    <div className={styles.actionsSection}>
+    <div className={"ui-actions-section"}>
       <div className="ui-flex-between ui-mb-medium">
         <h4 className="ui-flex-center-gap-small ui-m-0">
           <Server size={18} className="ui-text-accent" /> Database Actions
         </h4>
       </div>
       
-      <div className={styles.grid}>
+      <div className={"ui-grid"}>
         {/* Full Backup */}
         <div className="ui-database-card ui-success ui-hover-bg">
           <div className="ui-flex-column ui-flex-1">

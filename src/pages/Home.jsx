@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
-import Navbar from '../../src/components/Navbar';
-import Hero from '../../src/components/Hero';
-import About from '../../src/components/About';
-import Projects from '../../src/components/Projects';
-import FeaturedProjects from '../../src/components/FeaturedProjects';
-import FeaturedBlogs from '../../src/components/FeaturedBlogs';
-import Contact from '../../src/components/Contact';
-import Footer from '../../src/components/Footer';
-import Experience from '../../src/components/Experience';
+import Navbar from '@/sections/Navbar';
+import Hero from '@/sections/Hero';
+import About from '@/sections/About';
+import Projects from '@/sections/Projects';
+import FeaturedProjects from '@/sections/FeaturedProjects';
+import FeaturedBlogs from '@/sections/FeaturedBlogs';
+import Contact from '@/sections/Contact';
+import Footer from '@/sections/Footer';
+import Experience from '@/sections/Experience';
 import SettingsService from '../../src/services/SettingsService';
 
 export async function loader() {

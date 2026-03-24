@@ -1,24 +1,28 @@
-import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useMemo, useCallback } from 'react';
+import { Eye, EyeOff, Star, StarOff, Trash2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
 import ProjectService from '../../../services/ProjectService';
+import BaseService from '../../../services/BaseService';
 import ProjectsToolbar from './components/ProjectsToolbar';
 import ProjectsTable from './components/ProjectsTable';
 import ProjectsFormDialog from './components/ProjectsFormDialog';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
-import { Button } from '../../../shared/components/ui';
+import { Button } from '@/shared/components/ui';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
-import styles from './ProjectsTab.module.scss';
 
 const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const [editingItem, setEditingItem] = useState(null);
   const [deletingItem, setDeletingItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProjects, setSelectedProjects] = useState([]);
+  const [bulkConfirm, setBulkConfirm] = useState({ isOpen: false, type: '', ids: [] });
   
   // Cursor pagination hook
   const pagination = useCursorPagination(10, [searchQuery]);
+  const queryClient = useQueryClient();
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
     showToast,
@@ -40,19 +44,25 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['projects', searchQuery, pagination.cursor],
+    queryKey: ['projects', searchQuery, pagination.cursor, pagination.limit],
     queryFn: async () => {
-      const result = await ProjectService.fetchPaginated({
+      const result = await BaseService.safe(() => ProjectService.fetchPaginated({
         lastDoc: pagination.cursor,
-        limit: 10,
+        limit: pagination.limit,
         search: searchQuery,
-        searchField: 'title', // Firestore prefix search on title
+        searchField: 'title',
         sortBy: "createdAt",
         sortDirection: "desc",
         trackRead
-      });
-      pagination.updateAfterFetch(result.lastDoc, result.hasMore);
-      return result;
+      }));
+
+      if (result.error) {
+        showToast(result.error, 'error');
+        return { data: [], lastDoc: null, hasMore: false };
+      }
+
+      pagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+      return result.data;
     }
   });
 
@@ -64,7 +74,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const canDelete = isActionAllowed('delete', 'projects');
 
   const handleAdd = () => {
-    if (!canCreate) {
+    if (!isActionAllowed('create', 'projects')) {
       return showToast("You do not have permission to perform this action.", "error");
     }
     setEditingItem(null);
@@ -73,7 +83,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleSearch = (val) => {
     setSearchQuery(val);
-    setPage(1);
+    pagination.reset();
   };
 
   const handleEdit = (item) => {
@@ -92,6 +102,27 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       return showToast("You do not have permission to perform this action.", "error");
     }
     setDeletingItem(item);
+  };
+  
+  // Selection Handlers
+  const handleToggleSelectProject = (id) => {
+    setSelectedProjects(prev =>
+        prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllProjects = () => {
+    const paginatedIds = projects.map(p => p.id);
+    const allSelected = paginatedIds.length > 0 && paginatedIds.every(id => selectedProjects.includes(id));
+    
+    if (allSelected) {
+      setSelectedProjects(prev => prev.filter(id => !paginatedIds.includes(id)));
+    } else {
+      setSelectedProjects(prev => {
+        const newSelections = paginatedIds.filter(id => !prev.includes(id));
+        return [...prev, ...newSelections];
+      });
+    }
   };
 
   const handleSave = async (formData) => {
@@ -115,6 +146,133 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     });
   };
 
+  // Mutations with Optimistic Updates
+  const visibilityMutation = useMutation({
+    mutationFn: ({ id, currentVisible }) => 
+      ProjectService.toggleVisibility(userRole, id, currentVisible, trackWrite),
+    onMutate: async ({ id, currentVisible }) => {
+      await queryClient.cancelQueries({ queryKey: ['projects'] });
+      const previousProjects = queryClient.getQueryData(['projects', searchQuery, pagination.cursor, pagination.limit]);
+      
+      if (previousProjects) {
+        queryClient.setQueryData(['projects', searchQuery, pagination.cursor, pagination.limit], {
+          ...previousProjects,
+          data: previousProjects.data.map(p => 
+            p.id === id ? { ...p, visible: !currentVisible } : p
+          )
+        });
+      }
+      return { previousProjects };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousProjects) {
+        queryClient.setQueryData(['projects', searchQuery, pagination.cursor, pagination.limit], context.previousProjects);
+      }
+      showToast(err?.message || 'Failed to update visibility', 'error');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+    onSuccess: (_, variables) => {
+      showToast(`Project ${!variables.currentVisible ? 'shown' : 'hidden'}.`);
+    }
+  });
+
+  const featuredMutation = useMutation({
+    mutationFn: ({ id, currentFeatured }) => 
+      ProjectService.toggleFeatured(userRole, id, currentFeatured, trackWrite),
+    onMutate: async ({ id, currentFeatured }) => {
+      await queryClient.cancelQueries({ queryKey: ['projects'] });
+      const previousProjects = queryClient.getQueryData(['projects', searchQuery, pagination.cursor, pagination.limit]);
+      
+      if (previousProjects) {
+        queryClient.setQueryData(['projects', searchQuery, pagination.cursor, pagination.limit], {
+          ...previousProjects,
+          data: previousProjects.data.map(p => 
+            p.id === id ? { ...p, featured: !currentFeatured } : p
+          )
+        });
+      }
+      return { previousProjects };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousProjects) {
+        queryClient.setQueryData(['projects', searchQuery, pagination.cursor, pagination.limit], context.previousProjects);
+      }
+      showToast(err?.message || 'Failed to update featured status', 'error');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+    onSuccess: (_, variables) => {
+      showToast(`Project ${!variables.currentFeatured ? 'featured' : 'removed from featured'}.`);
+    }
+  });
+
+  const toggleVisibility = (id, currentVisible) => {
+    if (!isActionAllowed('edit', 'projects')) {
+      return showToast("You do not have permission to perform this action.", "error");
+    }
+    visibilityMutation.mutate({ id, currentVisible });
+  };
+
+  const toggleFeatured = (id, currentFeatured) => {
+    if (!isActionAllowed('edit', 'projects')) {
+      return showToast("You do not have permission to perform this action.", "error");
+    }
+    featuredMutation.mutate({ id, currentFeatured });
+  };
+
+  // Bulk Actions Mutations
+  const bulkDeleteMutation = useMutation({
+    mutationFn: (ids) => ProjectService.batchDeleteProjects(userRole, ids, trackDelete),
+    onSuccess: (_, ids) => {
+      showToast(`Deleted ${ids.length} projects.`);
+      setSelectedProjects([]);
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+    onError: (err) => showToast(err?.message || 'Failed to delete projects', 'error')
+  });
+
+  const bulkVisibilityMutation = useMutation({
+    mutationFn: ({ ids, visible }) => ProjectService.batchUpdateProjectsVisibility(userRole, ids, visible, trackWrite),
+    onSuccess: (_, { ids, visible }) => {
+      showToast(`${ids.length} projects ${visible ? 'shown' : 'hidden'}.`);
+      setSelectedProjects([]);
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+    onError: (err) => showToast(err?.message || 'Failed to update projects', 'error')
+  });
+
+  const bulkFeaturedMutation = useMutation({
+    mutationFn: ({ ids, featured }) => ProjectService.batchUpdateProjectsFeatured(userRole, ids, featured, trackWrite),
+    onSuccess: (_, { ids, featured }) => {
+      showToast(`${ids.length} projects ${featured ? 'featured' : 'unfeatured'}.`);
+      setSelectedProjects([]);
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+    onError: (err) => showToast(err?.message || 'Failed to update projects', 'error')
+  });
+
+  const handleBulkDelete = () => {
+    if (selectedProjects.length === 0) return;
+    setBulkConfirm({
+        isOpen: true,
+        type: 'delete',
+        ids: selectedProjects
+    });
+  };
+
+  const handleBulkVisibility = (visible) => {
+    if (selectedProjects.length === 0) return;
+    bulkVisibilityMutation.mutate({ ids: selectedProjects, visible });
+  };
+
+  const handleBulkFeatured = (featured) => {
+    if (selectedProjects.length === 0) return;
+    bulkFeaturedMutation.mutate({ ids: selectedProjects, featured });
+  };
+
   const confirmDelete = async () => {
     if (!deletingItem) return;
     if (!isActionAllowed('delete', 'projects')) {
@@ -135,26 +293,93 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
 
   return (
-    <div className={styles.container}>
+    <div className={'admin-tab-container'}>
       <ProjectsToolbar 
         onAdd={handleAdd}
         searchQuery={searchQuery}
         onSearchChange={handleSearch}
         canCreate={canCreate}
       />
+
+      {selectedProjects.length > 0 && (
+        <div className="ui-bulk-actions-bar" style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '1rem', 
+          padding: '0.75rem 1.25rem', 
+          background: 'rgba(99, 102, 241, 0.08)', 
+          borderRadius: '12px', 
+          marginBottom: '1rem',
+          border: '1px solid rgba(99, 102, 241, 0.2)',
+          animation: 'ui-fade-in 0.2s ease-out'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: 'auto' }}>
+            <div style={{ 
+              width: '24px', 
+              height: '24px', 
+              borderRadius: '6px', 
+              background: 'var(--primary-color)', 
+              color: 'white', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              fontSize: '0.75rem',
+              fontWeight: 'bold'
+            }}>
+              {selectedProjects.length}
+            </div>
+            <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-primary)' }}>
+              Projects Selected
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title="Show Selected">
+              <Eye size={16} style={{ marginRight: '0.4rem' }} /> Show
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title="Hide Selected">
+              <EyeOff size={16} style={{ marginRight: '0.4rem' }} /> Hide
+            </Button>
+            <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 0.25rem' }} />
+            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title="Feature Selected">
+              <Star size={16} style={{ marginRight: '0.4rem' }} /> Feature
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title="Unfeature Selected">
+              <StarOff size={16} style={{ marginRight: '0.4rem' }} /> Unfeature
+            </Button>
+            <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.1)', margin: '0 0.25rem' }} />
+            <Button variant="danger" size="sm" onClick={handleBulkDelete} title="Delete Selected">
+              <Trash2 size={16} style={{ marginRight: '0.4rem' }} /> Delete
+            </Button>
+          </div>
+        </div>
+      )}
       
       <ProjectsTable
         projects={projects}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onToggleVisibility={toggleVisibility}
+        onToggleFeatured={toggleFeatured}
         canEdit={canEdit}
         canDelete={canDelete}
-        loading={isLoading}
+        loading={isLoading || bulkDeleteMutation.isPending || bulkVisibilityMutation.isPending || bulkFeaturedMutation.isPending}
         page={pagination.page}
+        pageSize={pagination.limit}
         hasMore={pagination.hasMore}
         isFirstPage={pagination.isFirstPage}
         onNext={() => pagination.fetchNext(projectsResult.lastDoc)}
         onPrevious={pagination.fetchPrevious}
+        onPageChange={(page, size) => {
+          if (size !== pagination.limit) {
+            pagination.handlePageSizeChange(size);
+          }
+        }}
+        selection={{
+          selectedIds: selectedProjects,
+          onSelect: handleToggleSelectProject,
+          onSelectAll: handleSelectAllProjects
+        }}
       />
 
       <ProjectsFormDialog 
@@ -173,6 +398,18 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         loading={deleteLoading}
         title="Delete Project"
         message={`Are you sure you want to delete "${deletingItem?.title}"? This action cannot be undone.`}
+      />
+
+      <DeleteConfirmDialog 
+        open={bulkConfirm.isOpen}
+        onOpenChange={(open) => !open && setBulkConfirm({ ...bulkConfirm, isOpen: false })}
+        onConfirm={() => {
+            bulkDeleteMutation.mutate(bulkConfirm.ids);
+            setBulkConfirm({ ...bulkConfirm, isOpen: false });
+        }}
+        loading={bulkDeleteMutation.isPending}
+        title="Delete Multiple Projects"
+        message={`Are you sure you want to delete ${bulkConfirm.ids.length} selected projects? This action cannot be undone.`}
       />
     </div>
   );

@@ -1,9 +1,15 @@
 import { reactRouter } from "@react-router/dev/vite";
 import { defineConfig } from "vite";
 import { vercelPreset } from "@vercel/react-router/vite";
+import { fileURLToPath, URL } from "node:url";
 
 // https://vite.dev/config/
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url))
+    }
+  },
   plugins: [!process.env.VITEST && reactRouter({ presets: [vercelPreset()] })].filter(Boolean),
   ssr: {
     noExternal: [

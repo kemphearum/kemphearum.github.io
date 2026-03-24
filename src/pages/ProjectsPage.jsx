@@ -17,9 +17,9 @@ export function meta({ data }) {
         { property: "og:title", content: title },
     ];
 }
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import Projects from '../components/Projects';
+import Navbar from '@/sections/Navbar';
+import Footer from '@/sections/Footer';
+import Projects from '@/sections/Projects';
 import styles from './Blog.module.scss'; // Reuse background and layouts
 
 const ProjectsPage = () => {

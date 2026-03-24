@@ -10,21 +10,20 @@ class ContentService extends BaseService {
     /**
      * Fetch a specific content section document (e.g. 'home', 'settings')
      * @param {string} sectionName 
-     * @param {Function} trackRead - Optional activity tracker callback
-     * @returns {Promise<Object|null>} The parsed data block, or null.
+     * @param {function(number, string): void} [trackRead] - Optional activity tracker callback
+     * @returns {Promise<Object|null>} Database document data or null
      */
     async fetchSection(sectionName, trackRead) {
-        const docRef = doc(db, this.collectionName, sectionName);
-        const docSnap = await getDoc(docRef);
+        return BaseService.safe(async () => {
+            const docRef = doc(db, this.collectionName, sectionName);
+            const docSnap = await getDoc(docRef);
 
-        if (trackRead) {
-            trackRead(1, `Fetched ${sectionName} content`);
-        }
+            if (trackRead) {
+                trackRead(1, `Fetched ${sectionName} content`);
+            }
 
-        if (docSnap.exists()) {
-            return docSnap.data();
-        }
-        return null; // or `{}` depending on how the UI wants to handle misses
+            return docSnap.exists() ? docSnap.data() : null;
+        });
     }
 
     /**
@@ -33,27 +32,27 @@ class ContentService extends BaseService {
      * Automatically invalidates caching.
      * @param {string} sectionName 
      * @param {Object} data 
-     * @param {Function} trackWrite - Optional activity tracker
-     * @param {Object} options - Optional settings (e.g. { skipHistory: true })
+     * @param {function(number, string, Object): void} [trackWrite] - Optional activity tracker
+     * @param {Object} [options] - Optional settings
+     * @param {boolean} [options.skipHistory] - If true, don't store in audit history
+     * @returns {Promise<Object>} The saved data
      */
     async saveSection(sectionName, data, trackWrite, options = {}) {
-        const docRef = doc(db, this.collectionName, sectionName);
-        await setDoc(docRef, data, { merge: true });
+        return BaseService.safe(async () => {
+            const docRef = doc(db, this.collectionName, sectionName);
+            await setDoc(docRef, data, { merge: true });
 
-        // Store in audit history subcollection
-        if (this.useHistory && !options.skipHistory) {
-            try {
+            // Store in audit history subcollection
+            if (this.useHistory && !options.skipHistory) {
                 await this._saveHistory(sectionName, 'updated', data);
-            } catch (error) {
-                console.error(`Failed to save history for ${sectionName}:`, error);
             }
-        }
 
-        if (trackWrite) {
-            trackWrite(1, `Saved ${sectionName} content`, data);
-        }
+            if (trackWrite) {
+                trackWrite(1, `Saved ${sectionName} content`, data);
+            }
 
-        return data;
+            return data;
+        });
     }
 }
 

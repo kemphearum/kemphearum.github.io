@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Activity, Shield, RefreshCw } from 'lucide-react';
-import { EmptyState } from '../../../shared/components/ui';
+import { EmptyState } from '@/shared/components/ui';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import { useActivity } from '../../../hooks/useActivity';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -12,10 +12,12 @@ import AuditLogsToolbar from './components/AuditLogsToolbar';
 import AuditLogsTable from './components/AuditLogsTable';
 import AuditLogDetailsDialog from './components/AuditLogDetailsDialog';
 import ActivityAuditDialog from './components/ActivityAuditDialog';
+import QuotaResilienceBanner from '../components/QuotaResilienceBanner';
 import styles from './AuditLogsTab.module.scss';
 
 const AuditLogsTab = ({ userRole, showToast }) => {
   const { trackRead, currentDateKey, dailyUsage } = useActivity();
+  const [quotaExceeded, setQuotaExceeded] = useState(false);
   const [activitySearch, setActivitySearch] = useState('');
   const debouncedActivitySearch = useDebounce(activitySearch, 500);
   const [securitySearch, setSecuritySearch] = useState('');
@@ -38,15 +40,27 @@ const AuditLogsTab = ({ userRole, showToast }) => {
   const [activityDetailType, setActivityDetailType] = useState(null); // 'read', 'write', or 'delete'
 
   // 1. Fetch Aggregated Stats
-  const { data: stats = {}, isLoading: statsLoading } = useQuery({
+  const { data: stats = {}, isLoading: statsLoading, refetch: refetchStats } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     queryKey: ['auditLogs', 'stats', activityDateRange],
     queryFn: async () => {
+      setQuotaExceeded(false);
+      let limitVal = 0;
       if (activityDateRange === 'today') return dailyUsage;
-      const limitVal = activityDateRange === '7d' ? 7 : (activityDateRange === '30d' ? 30 : 365);
-      return await AuditLogService.fetchAggregatedHistory(limitVal);
+      limitVal = activityDateRange === '7d' ? 7 : (activityDateRange === '30d' ? 30 : 365);
+      
+      const result = await BaseService.safe(() => AuditLogService.fetchAggregatedHistory(limitVal));
+      if (result.error) {
+        if (result.error === 'QUOTA_EXCEEDED') {
+          setQuotaExceeded(true);
+          return dailyUsage || {};
+        }
+        showToast(result.error, 'error');
+        return dailyUsage || {};
+      }
+      return result.data;
     }
   });
 
@@ -58,16 +72,22 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     queryKey: ['auditLogs', 'security', userRole, debouncedSecuritySearch, securityDateRange, securityPagination.cursor],
     queryFn: async () => {
       if (userRole !== 'superadmin') return { data: [], lastDoc: null, hasMore: false };
-      const result = await AuditLogService.fetchSecurityAuditTrail({
+      const result = await BaseService.safe(() => AuditLogService.fetchSecurityAuditTrail({
         userRole,
         trackRead,
         search: debouncedSecuritySearch,
         dateRange: securityDateRange,
         lastDoc: securityPagination.cursor,
         limit: 15
-      });
-      securityPagination.updateAfterFetch(result.lastDoc, result.hasMore);
-      return result;
+      }));
+
+      if (result.error) {
+        showToast(result.error, 'error');
+        return { data: [], lastDoc: null, hasMore: false };
+      }
+
+      securityPagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+      return result.data;
     },
     enabled: userRole === 'superadmin'
   });
@@ -81,35 +101,47 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     refetchOnWindowFocus: false,
     queryKey: ['auditLogs', 'activity', activityDateRange, activityPagination.cursor, debouncedActivitySearch, activityFilters],
     queryFn: async () => {
-      const result = await AuditLogService.fetchActivityDetails({
+      const result = await BaseService.safe(() => AuditLogService.fetchActivityDetails({
         activityDateRange,
-        operationType: 'write',
+        operationType: 'all',
         currentDateKey,
         lastDoc: activityPagination.cursor,
         limit: 15,
         search: debouncedActivitySearch,
         filters: activityFilters
-      });
-      activityPagination.updateAfterFetch(result.lastDoc, result.hasMore);
-      return result;
+      }));
+
+      if (result.error) {
+        showToast(result.error, 'error');
+        return { data: [], lastDoc: null, hasMore: false };
+      }
+
+      activityPagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+      return result.data;
     }
   });
 
   const activityLogs = activityLogsResult.data;
 
   // 4. Fetch Activity Logs for specific type (Dialog)
-  const { data: detailLogsResult = { data: [], total: 0 }, isLoading: detailLoading } = useQuery({
+  const { data: detailLogsResult = { data: [], lastDoc: null, hasMore: false }, isLoading: detailLoading } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
     queryKey: ['auditLogs', 'activity', activityDateRange, activityDetailType],
     queryFn: async () => {
-      return await AuditLogService.fetchActivityDetails({
+      const result = await BaseService.safe(() => AuditLogService.fetchActivityDetails({
         activityDateRange,
         operationType: activityDetailType,
         currentDateKey,
         limit: 100 // Larger limit for dialog
-      });
+      }));
+
+      if (result.error) {
+        showToast(result.error, 'error');
+        return { data: [], lastDoc: null, hasMore: false };
+      }
+      return result.data;
     },
     enabled: !!activityDetailType
   });
@@ -145,10 +177,11 @@ const AuditLogsTab = ({ userRole, showToast }) => {
   const handleRefresh = useCallback(() => {
     activityPagination.reset();
     securityPagination.reset();
+    refetchStats();
     refetchSecurity();
     refetchActivity();
     showToast('Logs refreshed');
-  }, [refetchSecurity, refetchActivity, showToast, activityPagination, securityPagination]);
+  }, [refetchStats, refetchSecurity, refetchActivity, showToast, activityPagination, securityPagination]);
 
   if (userRole !== 'superadmin') {
     return (
@@ -176,6 +209,10 @@ const AuditLogsTab = ({ userRole, showToast }) => {
           </button>
         }
       />
+
+      {quotaExceeded && (
+        <QuotaResilienceBanner onRefresh={handleRefresh} />
+      )}
 
       <AuditMetrics 
         stats={stats} 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useLoaderData } from 'react-router';
 import BlogService from '../services/BlogService';
 import { useActivity } from '../hooks/useActivity';
-import MarkdownRenderer from '../components/MarkdownRenderer';
+import MarkdownRenderer from '@/sections/MarkdownRenderer';
 import { calculateReadTime } from '../utils/helpers';
 import { generateMetaTags } from '../utils/SeoHelper';
 // eslint-disable-next-line no-unused-vars
@@ -13,11 +13,11 @@ import {
     Facebook, Instagram, Linkedin, Send
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import Navbar from '@/sections/Navbar';
+import Footer from '@/sections/Footer';
 
-import RelatedArticles from '../components/RelatedArticles';
-import TableOfContents from '../components/TableOfContents';
+import RelatedArticles from '@/sections/RelatedArticles';
+import TableOfContents from '@/sections/TableOfContents';
 import styles from './BlogPost.module.scss';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';

@@ -8,15 +8,15 @@ import {
   isRouteErrorResponse,
   useRouteError,
 } from "react-router";
-import MaintenancePage from '../src/components/MaintenancePage';
-import ComponentErrorBoundary from '../src/components/ErrorBoundary';
+import MaintenancePage from '@/sections/MaintenancePage';
+import ComponentErrorBoundary from '@/sections/ErrorBoundary';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { ActivityProvider } from '../src/context/ActivityContext';
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { queryClient } from '../src/queryClient';
 import React, { useEffect } from 'react';
 import SettingsService from '../src/services/SettingsService';
-import AnimatedBackground from '../src/components/AnimatedBackground';
+import AnimatedBackground from '@/sections/AnimatedBackground';
 import '../src/styles/global.scss';
 import { useAnalytics } from '../src/hooks/useAnalytics';
 import { Analytics } from "@vercel/analytics/react";

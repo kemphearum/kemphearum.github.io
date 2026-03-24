@@ -1,5 +1,25 @@
 @use '../variables' as *;
 
+@mixin custom-scrollbar {
+    &::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    }
+}
+
 // LAYOUT UTILITIES
 .ui-flex { display: flex !important; }
 .ui-flex-column { display: flex !important; flex-direction: column !important; }

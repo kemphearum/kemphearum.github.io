@@ -2,7 +2,7 @@ import React from 'react';
 import { Edit, Key, Trash2, Users } from 'lucide-react';
 import DataTable from '../../../../shared/components/ui/data-table/DataTable';
 import { Button, Badge } from '../../../../shared/components/ui';
-import styles from '../UsersTab.module.scss';
+
 
 const UsersTable = ({ 
   data, 
@@ -13,6 +13,7 @@ const UsersTable = ({
   onDelete,
   loading,
   page,
+  pageSize = 10,
   hasMore,
   isFirstPage,
   onNext,
@@ -44,18 +45,18 @@ const UsersTable = ({
         const isUserDisabled = user.disabled === true;
 
         return (
-          <div className={styles.userIdentity}>
+          <div className="ui-user-identity">
             <div 
-              className={styles.userAvatar} 
+              className="ui-user-avatar" 
               style={{ background: avatarColors[user.role] || avatarColors.pending }}
             >
               {initials}
             </div>
-            <div className={styles.userIdentityText}>
-              <span className={styles.userEmailText}>
+            <div className="ui-user-identity-text">
+              <span className="ui-user-email-text">
                 {isUserDisabled ? <strike>{user.email}</strike> : user.email}
               </span>
-              {user.displayName && <span className={styles.userDisplayName}>{user.displayName}</span>}
+              {user.displayName && <span className="ui-user-display-name">{user.displayName}</span>}
             </div>
           </div>
         );
@@ -96,7 +97,7 @@ const UsersTable = ({
       header: 'Registered',
       sortable: true,
       render: (user) => (
-        <span className={styles.userMeta}>
+        <span className="ui-user-meta">
           {user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'Unknown'}
         </span>
       )
@@ -153,6 +154,7 @@ const UsersTable = ({
       manualPagination={true}
       paginationVariant={paginationVariant}
       page={page}
+      pageSize={pageSize}
       hasMore={hasMore}
       isFirstPage={isFirstPage}
       onNext={onNext}

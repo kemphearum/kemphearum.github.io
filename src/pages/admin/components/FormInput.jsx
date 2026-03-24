@@ -1,56 +1,33 @@
-import React from 'react';
-import styles from '../../Admin.module.scss';
-import { Input, TextArea } from '../../../shared/components/ui';
+import React, { forwardRef } from 'react';
+import { Input, TextArea } from '@/shared/components/ui';
 
 /**
  * FormInput component for standard input fields.
+ * Designed to be used inside FormField or as a standalone input.
  */
-const FormInput = ({
-    label,
-    hint,
+const FormInput = forwardRef(({
     type = 'text',
-    value,
-    onChange,
-    required = false,
-    placeholder = '',
-    fullWidth = false,
-    disabled = false,
-    onClick,
     isTextArea = false,
     ...props
-}) => {
+}, ref) => {
+    if (isTextArea) {
+        return (
+            <TextArea
+                ref={ref}
+                {...props}
+            />
+        );
+    }
+
     return (
-        <div className={styles.inputGroup} style={fullWidth ? { gridColumn: 'span 2' } : {}}>
-            {label && (
-                <label>
-                    {label}
-                    {hint && <span className={styles.hint}> ({hint})</span>}
-                </label>
-            )}
-            {isTextArea ? (
-                <TextArea
-                    placeholder={placeholder}
-                    value={value}
-                    onChange={onChange}
-                    required={required}
-                    disabled={disabled}
-                    onClick={onClick}
-                    {...props}
-                />
-            ) : (
-                <Input
-                    type={type}
-                    placeholder={placeholder}
-                    value={value}
-                    onChange={onChange}
-                    required={required}
-                    disabled={disabled}
-                    onClick={onClick}
-                    {...props}
-                />
-            )}
-        </div>
+        <Input
+            ref={ref}
+            type={type}
+            {...props}
+        />
     );
-};
+});
+
+FormInput.displayName = 'FormInput';
 
 export default FormInput;

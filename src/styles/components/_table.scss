@@ -44,6 +44,67 @@
   justify-content: flex-end;
 }
 
+.ui-table-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 34px);
+  gap: 0.5rem;
+  justify-content: flex-end;
+  align-items: center;
+  width: auto;
+
+  button {
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-secondary) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative;
+    overflow: hidden;
+
+    svg {
+      width: 15px;
+      height: 15px;
+      opacity: 0.8;
+      transition: all 0.3s ease;
+    }
+
+    &:hover:not(:disabled) {
+      background: rgba($primary-color, 0.15) !important;
+      border-color: rgba($primary-color, 0.4) !important;
+      color: #7c4dff !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+      svg {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    // Danger specific override
+    &[title*="Delete"]:hover:not(:disabled) {
+      background: rgba(239, 68, 68, 0.15) !important;
+      border-color: rgba(239, 68, 68, 0.5) !important;
+      color: #ef4444 !important;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(2, 34px);
+  }
+}
+
 .ui-table-header-content {
   display: flex;
   align-items: center;
@@ -217,5 +278,59 @@ tr:hover td {
     display: flex;
     justify-content: flex-end;
   }
+}
+
+// TABLE TOOLBAR & EXPORT
+.ui-table-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.ui-table-export-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    background: rgba(108, 99, 255, 0.1);
+    color: var(--primary-color);
+    border: 1px solid rgba(108, 99, 255, 0.2);
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover:not(:disabled) {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(108, 99, 255, 0.2);
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    svg {
+        opacity: 0.9;
+    }
+}
+
+.ui-table-toolbar-row {
+    background: transparent !important;
+    
+    th {
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        border-bottom: 1px solid var(--divider) !important;
+    }
+
+    &:hover td, &:hover th {
+        background: transparent !important;
+    }
 }
 

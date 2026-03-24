@@ -106,6 +106,15 @@ const AuditLogsTable = ({
 
   const securityColumns = [
     {
+      key: 'status',
+      header: 'STATUS',
+      render: (row) => (
+        <span className={`${styles.badge} ${row.status === 'failure' ? styles['badge--delete'] : styles['badge--create']}`}>
+          {row.status || 'success'}
+        </span>
+      )
+    },
+    {
       key: 'user',
       header: 'USER EMAIL',
       sortable: true,

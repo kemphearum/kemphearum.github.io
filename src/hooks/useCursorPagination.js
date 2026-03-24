@@ -8,16 +8,17 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
  * @param {Array} options.dependencies - List of dependencies that should reset the pagination (e.g., search, filters)
  * @returns {Object} { data, cursor, cursorStack, hasMore, fetchNext, fetchPrevious, reset }
  */
-export const useCursorPagination = (limit = 10, dependencies = []) => {
+export const useCursorPagination = (initialLimit = 10, dependencies = []) => {
+  const [limit, setLimit] = useState(initialLimit);
   const [cursor, setCursor] = useState(null);
   const [cursorStack, setCursorStack] = useState([null]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
 
-  // Reset pagination when dependencies change
+  // Reset pagination when dependencies or limit change
   useEffect(() => {
     reset();
-  }, dependencies);
+  }, [...dependencies, limit]);
 
   const reset = useCallback(() => {
     setCursor(null);
@@ -48,7 +49,13 @@ export const useCursorPagination = (limit = 10, dependencies = []) => {
     setPage(prev => Math.max(1, prev - 1));
   }, [cursorStack]);
 
+  const handlePageSizeChange = useCallback((newPageSize) => {
+    setLimit(newPageSize);
+    reset();
+  }, [reset]);
+
   return {
+    limit,
     cursor,
     page,
     hasMore,
@@ -56,6 +63,7 @@ export const useCursorPagination = (limit = 10, dependencies = []) => {
     fetchPrevious,
     reset,
     updateAfterFetch,
+    handlePageSizeChange,
     isFirstPage: cursorStack.length <= 1
   };
 };

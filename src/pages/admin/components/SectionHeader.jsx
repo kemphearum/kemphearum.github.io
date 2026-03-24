@@ -1,5 +1,4 @@
 import React from 'react';
-import styles from '../../Admin.module.scss';
 
 const SectionHeader = ({
     title,
@@ -9,20 +8,20 @@ const SectionHeader = ({
     style
 }) => {
     return (
-        <div className={styles.sectionHeader} style={style}>
-            <div className={styles.headerInfo}>
+        <div className="ui-sectionHeader" style={style}>
+            <div className="ui-headerInfo">
                 {Icon && (
-                    <div className={styles.headerIcon}>
+                    <div className="ui-headerIcon">
                         <Icon size={24} />
                     </div>
                 )}
                 <div>
-                    <h2 className={styles.headerTitle}>{title}</h2>
-                    {description && <p className={styles.headerDescription}>{description}</p>}
+                    <h2 className="ui-headerTitle">{title}</h2>
+                    {description && <p className="ui-headerDescription">{description}</p>}
                 </div>
             </div>
             {rightElement && (
-                <div className={styles.headerActions}>
+                <div className="ui-headerActions">
                     {rightElement}
                 </div>
             )}

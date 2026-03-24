@@ -3,12 +3,23 @@ import { db, auth } from '../firebase';
 import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, orderBy, query, updateDoc, where, serverTimestamp, limit as firestoreLimit, startAfter } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
+import { normalizeUser, validateUser } from '../domain/user/userDomain';
 
 class UserService extends BaseService {
     constructor() {
         super('users');
     }
 
+    /**
+     * Fetch users with pagination and search.
+     * @param {Object} params
+     * @param {string} params.userRole
+     * @param {function(number, string): void} [params.trackRead]
+     * @param {import('firebase/firestore').DocumentSnapshot|null} [params.lastDoc]
+     * @param {number} [params.limit]
+     * @param {string} [params.search]
+     * @returns {Promise<import('./BaseService').PaginatedResult>}
+     */
     async fetchUsers({ userRole, trackRead, lastDoc = null, limit = 20, search = '' }) {
         if (userRole !== 'superadmin') return { data: [], lastDoc: null, hasMore: false };
 
@@ -23,26 +34,60 @@ class UserService extends BaseService {
         });
     }
 
+    /**
+     * Update user role.
+     * @param {string} userRole 
+     * @param {string} userId 
+     * @param {string} newRole 
+     * @param {function(number, string): void} [trackWrite] 
+     * @returns {Promise<void>}
+     */
     async updateRole(userRole, userId, newRole, trackWrite) {
         if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
         return this.update(userId, { role: newRole }, trackWrite);
     }
 
+    /**
+     * Logically remove a user by setting isActive to false.
+     * @param {string} userRole 
+     * @param {string} userId 
+     * @param {function(number, string, Object): void} [trackDelete] 
+     * @returns {Promise<void>}
+     */
     async removeUser(userRole, userId, trackDelete) {
         if (!isActionAllowed(ACTIONS.DELETE, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
         // We use updateDoc to logically disable them
         await this.update(userId, { isActive: false }, trackDelete);
     }
 
+    /**
+     * Send password reset email.
+     * @param {string} userRole 
+     * @param {string} email 
+     * @returns {Promise<void>}
+     */
     async sendPasswordReset(userRole, email) {
         if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
         return sendPasswordResetEmail(auth, email);
     }
 
+    /**
+     * Create a new user with Firebase Auth and Firestore record.
+     * @param {string} userRole 
+     * @param {string} email 
+     * @param {string} password 
+     * @param {string} role 
+     * @param {function(number, string): void} [trackRead] 
+     * @returns {Promise<void>}
+     */
     async createUser(userRole, email, password, role, trackRead) {
         if (!isActionAllowed(ACTIONS.CREATE, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
 
-        const emailLower = email.toLowerCase().trim();
+        const dataToValidate = { email, role };
+        const errors = validateUser(dataToValidate);
+        if (errors) throw new Error(`Validation failed: ${Object.values(errors).join(', ')}`);
+
+        const { email: emailLower } = normalizeUser(dataToValidate);
         const existingQ = query(collection(db, "users"), where("email", "==", emailLower));
         const existingSnap = await getDocs(existingQ);
         if (trackRead) trackRead(existingSnap.size, 'Checked existing user');
@@ -74,11 +119,23 @@ class UserService extends BaseService {
         }, uid);
     }
 
+    /**
+     * Update user profile display name.
+     * @param {string} userId 
+     * @param {string} displayName 
+     * @param {function(number, string): void} [trackWrite] 
+     * @returns {Promise<void>}
+     */
     async updateProfile(userId, displayName, trackWrite) {
         if (!userId) throw new Error("No User ID provided.");
         await this.update(userId, { displayName }, trackWrite);
     }
 
+    /**
+     * Fetch role-based tab permissions.
+     * @param {function(number, string): void} [trackRead] 
+     * @returns {Promise<Record<string, Array<string>>>} Map of roles to allowed tabs
+     */
     async fetchRolePermissions(trackRead) {
         const q = query(collection(db, "rolePermissions"));
         const snap = await getDocs(q);
@@ -89,6 +146,13 @@ class UserService extends BaseService {
         return perms;
     }
 
+    /**
+     * Save role permissions.
+     * @param {string} role 
+     * @param {Array<string>} allowedTabs 
+     * @param {function(number, string): void} [trackWrite] 
+     * @returns {Promise<void>}
+     */
     async saveRolePermissions(role, allowedTabs, trackWrite) {
         const q = query(collection(db, "rolePermissions"), where("role", "==", role));
         const snap = await getDocs(q);
@@ -104,7 +168,8 @@ class UserService extends BaseService {
 
     /**
      * Fetch a user document by email address.
-     * Returns { id, ...data } or null.
+     * @param {string} email
+     * @returns {Promise<Object|null>} Returns { id, ref, ...data } or null.
      */
     async fetchUserByEmail(email) {
         const q = query(collection(db, this.collectionName), where("email", "==", email));
@@ -116,6 +181,8 @@ class UserService extends BaseService {
 
     /**
      * Fetch a user document by its ID (usually Auth UID).
+     * @param {string} docId
+     * @returns {Promise<Object|null>}
      */
     async fetchUserById(docId) {
         const docRef = doc(db, this.collectionName, docId);
@@ -127,10 +194,14 @@ class UserService extends BaseService {
     /**
      * Create a new user document.
      * If docId is provided, it uses that as the document ID (suitable for Auth UID).
+     * @param {Object} data 
+     * @param {string|null} [docId=null] 
+     * @returns {Promise<string>} The new document ID
      */
     async createUserDoc(data, docId = null) {
+        const normalized = normalizeUser(data);
         const payload = {
-            ...data,
+            ...normalized,
             createdAt: serverTimestamp()
         };
 
@@ -146,6 +217,8 @@ class UserService extends BaseService {
 
     /**
      * Delete a user document.
+     * @param {string} docId 
+     * @returns {Promise<void>}
      */
     async deleteUserDoc(docId) {
         await deleteDoc(doc(db, this.collectionName, docId));
@@ -153,6 +226,9 @@ class UserService extends BaseService {
 
     /**
      * Update a specific field on a user document by doc ID.
+     * @param {string} docId 
+     * @param {Object} fieldData 
+     * @returns {Promise<void>}
      */
     async updateUserField(docId, fieldData) {
         await this.update(docId, fieldData);

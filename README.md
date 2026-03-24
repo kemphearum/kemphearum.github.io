@@ -62,6 +62,27 @@ A modern, responsive personal portfolio built with **React**, **Firebase**, and 
 
 ---
 
+## 🏗️ Architecture & Styling Conventions
+
+To maintain codebase sanity as the project scales, please adhere to the following strict conventions:
+
+### 1. Styling Rules (Modules vs. Global)
+- **Public Site (`src/sections/`, `src/pages/Home.jsx`)**: Exclusively use **CSS Modules** (`*.module.scss`). This prevents global style leakage on the public-facing portfolio.
+- **Admin Dashboard (`src/pages/admin/`)**: Exclusively use **Global UI Classes** (e.g., `.ui-card`, `.ui-button` defined in `_admin-ui.scss`), except for entirely unique layout grids. Avoid creating `.module.scss` files for admin components to maintain visual consistency and prevent dead code.
+
+### 2. Component Colocation
+- **Admin Modules**: Keep module-specific components inside their respective feature folders (e.g., `src/pages/admin/audit/components/`). 
+- **Shared Components**: If a component is needed by *multiple* admin modules, hoist it to `src/shared/components/`. Do not cross-import between feature folders (e.g., `projects` should not import from `blog/components`).
+- **Page Sections**: Full-page, single-use segments (like Hero, About, Footer) belong in `src/sections/`, *not* in reusable component folders.
+
+### 3. Type Safety Standard (JSDoc)
+- The project does not use TypeScript to maintain build simplicity, but **strict JSDoc annotations** (`@param`, `@returns`, `@typedef`) are required for all classes and methods in `src/services/`. This ensures full IDE intellisense.
+
+### 4. Testing Requirements
+- All pure functions, utilities (in `src/utils/`), and data validation logic (in `src/domain/`) must be unit-tested using **Vitest**.
+
+---
+
 ## 🚀 Getting Started
 
 ### Installation

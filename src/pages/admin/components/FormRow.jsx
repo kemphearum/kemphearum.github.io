@@ -1,5 +1,4 @@
 import React from 'react';
-import styles from '../../Admin.module.scss';
 
 /**
  * FormRow component for creating grid-based layouts within forms.
@@ -10,7 +9,7 @@ const FormRow = ({ children, label, hint, columns = 2, className = '' }) => {
 
     return (
         <div
-            className={`${columns === 2 ? styles.formGrid : ''} ${className}`}
+            className={`${columns === 2 ? 'ui-formGrid' : ''} ${className}`}
             style={gridStyle}
         >
             {label && (

@@ -1,6 +1,7 @@
 import BaseService from './BaseService';
 import { serverTimestamp } from 'firebase/firestore';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
+import { normalizeExperience, validateExperience } from '../domain/experience/experienceDomain';
 
 class ExperienceService extends BaseService {
     constructor() {
@@ -33,29 +34,14 @@ class ExperienceService extends BaseService {
             throw new Error("Unauthorized action");
         }
 
-        const formatMonthYear = (yyyyMm) => {
-            if (!yyyyMm || typeof yyyMm !== 'string' || !yyyyMm.includes('-')) return yyyyMm || '';
-            const [year, month] = yyyMm.split('-');
-            const date = new Date(year, month - 1);
-            return date.toLocaleString('default', { month: 'short', year: 'numeric' });
-        };
+        // 1. Normalize
+        const dataToSave = normalizeExperience(formData);
 
-        const startLabel = formatMonthYear(formData.startMonthYear);
-        const endLabel = formData.current ? 'Present' : formatMonthYear(formData.endMonthYear);
-
-        const dataToSave = {
-            company: formData.company,
-            role: formData.role,
-            startDate: startLabel,
-            startMonthYear: formData.startMonthYear,
-            endDate: endLabel,
-            endMonthYear: formData.current ? '' : formData.endMonthYear,
-            period: `${startLabel} - ${endLabel}`,
-            current: formData.current,
-            description: formData.description,
-            visible: formData.visible !== false, // Default to true if undefined
-            order: formData.order || 0
-        };
+        // 2. Validate
+        const errors = validateExperience(dataToSave);
+        if (errors) {
+            throw new Error(`Validation failed: ${Object.values(errors).join(', ')}`);
+        }
 
         if (formData.id) {
             await this.update(formData.id, dataToSave, (count, label) => {

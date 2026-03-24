@@ -1,15 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
 import ExperienceService from '../../../services/ExperienceService';
+import BaseService from '../../../services/BaseService';
 import ExperienceToolbar from './components/ExperienceToolbar';
 import ExperienceTable from './components/ExperienceTable';
 import ExperienceFormDialog from './components/ExperienceFormDialog';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
-import { Button } from '../../../shared/components/ui';
+import { Button } from '@/shared/components/ui';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
-import styles from './ExperienceTab.module.scss';
 
 const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const [editingItem, setEditingItem] = useState(null);
@@ -19,6 +19,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   
   // Cursor pagination hook
   const pagination = useCursorPagination(10, [searchQuery]);
+  const queryClient = useQueryClient();
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
     showToast,
@@ -42,17 +43,23 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
     refetchOnWindowFocus: false,
     queryKey: ['experience', searchQuery, pagination.cursor],
     queryFn: async () => {
-      const result = await ExperienceService.fetchPaginated({
+      const result = await BaseService.safe(() => ExperienceService.fetchPaginated({
         lastDoc: pagination.cursor,
-        limit: 10,
+        limit: pagination.limit || 10,
         search: searchQuery,
-        searchField: 'company', // Firestore prefix search on company
+        searchField: 'company',
         sortBy: "createdAt",
         sortDirection: "desc",
         trackRead
-      });
-      pagination.updateAfterFetch(result.lastDoc, result.hasMore);
-      return result;
+      }));
+
+      if (result.error) {
+        showToast(result.error, 'error');
+        return { data: [], lastDoc: null, hasMore: false };
+      }
+
+      pagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+      return result.data;
     }
   });
 
@@ -76,8 +83,8 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
     if (typeof dateVal !== 'string') return '';
 
     // Handle ranges
-    if (dateVal.includes(' — ') || dateVal.includes(' - ')) {
-        const rangeParts = dateVal.split(/[—\-]/).map(p => p.trim());
+    if (dateVal.includes(' â€” ') || dateVal.includes(' - ')) {
+        const rangeParts = dateVal.split(/[â€”\-]/).map(p => p.trim());
         dateVal = isEnd ? rangeParts[rangeParts.length - 1] : rangeParts[0];
         if (isEnd && dateVal.toLowerCase() === 'present') return '';
     }
@@ -108,7 +115,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleSearch = (val) => {
     setSearchQuery(val);
-    setPage(1);
+    pagination.reset();
   };
 
   const handleEdit = (exp) => {
@@ -179,9 +186,48 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
     });
   };
 
+  // Mutations with Optimistic Updates
+  const visibilityMutation = useMutation({
+    mutationFn: ({ id, currentVisible }) => 
+      ExperienceService.toggleVisibility(userRole, id, currentVisible, trackWrite),
+    onMutate: async ({ id, currentVisible }) => {
+      await queryClient.cancelQueries({ queryKey: ['experience'] });
+      const previousExperience = queryClient.getQueryData(['experience', searchQuery, pagination.cursor]);
+      
+      if (previousExperience) {
+        queryClient.setQueryData(['experience', searchQuery, pagination.cursor], {
+          ...previousExperience,
+          data: previousExperience.data.map(exp => 
+            exp.id === id ? { ...exp, visible: !currentVisible } : exp
+          )
+        });
+      }
+      return { previousExperience };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousExperience) {
+        queryClient.setQueryData(['experience', searchQuery, pagination.cursor], context.previousExperience);
+      }
+      showToast(err?.message || 'Failed to update visibility', 'error');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['experience'] });
+    },
+    onSuccess: (_, variables) => {
+      showToast(`Experience ${!variables.currentVisible ? 'shown' : 'hidden'} on homepage.`);
+    }
+  });
+
+  const toggleVisibility = (id, currentVisible) => {
+    if (!isActionAllowed('edit', 'experience')) {
+      return showToast("You do not have permission to perform this action.", "error");
+    }
+    visibilityMutation.mutate({ id, currentVisible });
+  };
+
 
   return (
-    <div className={styles.container}>
+    <div className={'admin-tab-container'}>
       <ExperienceToolbar 
         onAdd={handleAdd}
         searchQuery={searchQuery}
@@ -193,6 +239,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         experiences={experiences}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onToggleVisibility={toggleVisibility}
         canEdit={canEdit}
         canDelete={canDelete}
         loading={isLoading}

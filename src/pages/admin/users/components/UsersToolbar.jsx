@@ -4,18 +4,18 @@ import { Input, Button } from '../../../../shared/components/ui';
 
 const UsersToolbar = ({ search, onSearch, onCreate, searchResultCount, totalCount }) => {
   return (
-    <div className="ui-toolbar">
-      <div className="ui-search-container">
-        <Search size={16} className="ui-search-icon" />
+    <div className="admin-toolbar">
+      <div className="admin-search-container">
+        <Search size={16} className="admin-search-icon" />
         <Input 
           type="text" 
           placeholder="Search by email or role..." 
           value={search} 
           onChange={(e) => onSearch(e.target.value)} 
-          className="ui-search-input"
+          className="admin-search-input"
         />
         {search && (
-          <span className="ui-search-result-count">
+          <span className="admin-search-result-count">
             {searchResultCount} of {totalCount}
           </span>
         )}

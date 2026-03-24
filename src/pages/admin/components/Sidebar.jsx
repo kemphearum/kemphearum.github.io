@@ -11,8 +11,14 @@ const Sidebar = ({
     unreadMessagesCount, 
     userRole, 
     rolePermissions, 
-    isTabAllowed 
+    isTabAllowed,
+    lastSyncTime 
 }) => {
+    const formatSyncTime = (date) => {
+        if (!date) return 'Never';
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
     const menuGroups = [
         {
             title: 'MAIN',
@@ -144,6 +150,14 @@ const Sidebar = ({
                         );
                     })}
                 </nav>
+
+                <div className={styles.syncStatus}>
+                    <div className={styles.statusLabel}>System Status</div>
+                    <div className={styles.statusMain}>
+                        <div className={styles.statusIndicator} title="Connected & Synced" />
+                        <span className={styles.statusTime}>Synced at {formatSyncTime(lastSyncTime)}</span>
+                    </div>
+                </div>
             </aside>
         </>
     );

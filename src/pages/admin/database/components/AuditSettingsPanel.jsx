@@ -1,7 +1,6 @@
 import React from 'react';
 import { Shield, Check, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { Button } from '../../../../shared/components/ui';
-import styles from '../DatabaseTab.module.scss';
 
 const AuditSettingsPanel = ({ auditSettings, onUpdateSetting, canEdit = true }) => {
   const settingsList = [
@@ -12,7 +11,7 @@ const AuditSettingsPanel = ({ auditSettings, onUpdateSetting, canEdit = true }) 
   ];
 
   return (
-    <div className={styles.auditSection}>
+    <div className="ui-audit-settings-section">
       <h4 className="ui-flex-center-gap-small ui-mb-medium">
         <Shield size={20} className="ui-text-accent" /> Audit Log Configuration
       </h4>

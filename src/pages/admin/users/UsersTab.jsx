@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { EmptyState } from '../../../shared/components/ui';
+import { Button, Dialog, EmptyState, Tabs } from '@/shared/components/ui';
 import UserService from '../../../services/UserService';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
@@ -11,7 +11,7 @@ import UsersTable from './components/UsersTable';
 import UsersFormDialog from './components/UsersFormDialog';
 import UserDetailDialog from './components/UserDetailDialog';
 import RolePermissionsPanel from './components/RolePermissionsPanel';
-import styles from './UsersTab.module.scss';
+
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 
 const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
@@ -19,7 +19,6 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
-  const [usersPerPage, setUsersPerPage] = useState(10);
 
   const { loading: createLoading, execute: executeCreate } = useAsyncAction({
     showToast,
@@ -55,24 +54,30 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   const { trackRead, trackWrite, trackDelete } = useActivity();
 
   // cursor pagination hook
-  const pagination = useCursorPagination(usersPerPage, [searchQuery]);
+  const pagination = useCursorPagination(10, [searchQuery]);
 
   // Queries
   const { data: usersResult = { data: [], lastDoc: null, hasMore: false }, isLoading: usersLoading, isFetching: usersFetching } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['users', searchQuery, pagination.cursor, usersPerPage],
+    queryKey: ['users', searchQuery, pagination.cursor, pagination.limit],
     queryFn: async () => {
-      const result = await UserService.fetchUsers({
+      const result = await BaseService.safe(() => UserService.fetchUsers({
         userRole,
         trackRead,
         lastDoc: pagination.cursor,
-        limit: usersPerPage,
+        limit: pagination.limit,
         search: searchQuery
-      });
-      pagination.updateAfterFetch(result.lastDoc, result.hasMore);
-      return result;
+      }));
+
+      if (result.error) {
+        showToast(result.error, 'error');
+        return { data: [], lastDoc: null, hasMore: false };
+      }
+
+      pagination.updateAfterFetch(result.data.lastDoc, result.data.hasMore);
+      return result.data;
     },
     enabled: userRole === 'superadmin'
   });
@@ -84,7 +89,14 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     queryKey: ['rolePermissions'],
-    queryFn: () => UserService.fetchRolePermissions(trackRead),
+    queryFn: async () => {
+      const result = await BaseService.safe(() => UserService.fetchRolePermissions(trackRead));
+      if (result.error) {
+        showToast(result.error, 'error');
+        return {};
+      }
+      return result.data;
+    },
     enabled: userRole === 'superadmin'
   });
 
@@ -192,7 +204,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   }
 
   return (
-    <div className={styles.container}>
+    <div className="admin-tab-container">
       <UsersToolbar 
         search={searchQuery}
         onSearch={setSearchQuery}
@@ -210,10 +222,16 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
         onDelete={setDeletingUser}
         loading={usersLoading || usersFetching}
         page={pagination.page}
+        pageSize={pagination.limit}
         hasMore={pagination.hasMore}
         isFirstPage={pagination.isFirstPage}
         onNext={() => pagination.fetchNext(usersResult.lastDoc)}
         onPrevious={pagination.fetchPrevious}
+        onPageChange={(page, size) => {
+          if (size !== pagination.limit) {
+            pagination.handlePageSizeChange(size);
+          }
+        }}
         paginationVariant="cursor"
       />
 

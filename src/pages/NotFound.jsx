@@ -1,5 +1,5 @@
 import React from 'react';
-import MaintenancePage from '../components/MaintenancePage';
+import MaintenancePage from '@/sections/MaintenancePage';
 
 export function meta() {
   return [

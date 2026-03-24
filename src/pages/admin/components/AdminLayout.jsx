@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import AnimatedBackground from '../../../components/AnimatedBackground';
+import AnimatedBackground from '@/sections/AnimatedBackground';
 import styles from './AdminLayout.module.scss';
 
 const AdminLayout = ({ 
@@ -19,6 +19,7 @@ const AdminLayout = ({
     unreadMessagesCount,
     title,
     subtitle,
+    lastSyncTime,
     settingsData = {}
 }) => {
     // Dual states for sidebar toggle
@@ -73,6 +74,7 @@ const AdminLayout = ({
                 userRole={userRole}
                 rolePermissions={rolePermissions}
                 isTabAllowed={isTabAllowed}
+                lastSyncTime={lastSyncTime}
             />
             
             <main className={`${styles.mainContent} ${isCollapsed ? styles['mainContent--collapsed'] : ''}`}>

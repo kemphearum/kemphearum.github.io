@@ -1,17 +1,22 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
-import { serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
+import { normalizeProject, validateProject } from '../domain/project/projectDomain';
 
 class ProjectService extends BaseService {
     constructor() {
         super('projects');
     }
 
-    generateSlug(title) {
-        return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    }
-
+    /**
+     * Toggles the visibility of a project
+     * @param {string} userRole 
+     * @param {string} id 
+     * @param {boolean} currentVisible 
+     * @param {function(number, string): void} [trackWrite] 
+     * @returns {Promise<void>}
+     */
     async toggleVisibility(userRole, id, currentVisible, trackWrite) {
         if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS, userRole)) {
             throw new Error("Unauthorized action");
@@ -19,6 +24,14 @@ class ProjectService extends BaseService {
         return this.update(id, { visible: !currentVisible }, trackWrite);
     }
 
+    /**
+     * Toggles the featured status of a project
+     * @param {string} userRole 
+     * @param {string} id 
+     * @param {boolean} currentFeatured 
+     * @param {function(number, string): void} [trackWrite] 
+     * @returns {Promise<void>}
+     */
     async toggleFeatured(userRole, id, currentFeatured, trackWrite) {
         if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS, userRole)) {
             throw new Error("Unauthorized action");
@@ -26,6 +39,13 @@ class ProjectService extends BaseService {
         return this.update(id, { featured: !currentFeatured }, trackWrite);
     }
 
+    /**
+     * Deletes a project
+     * @param {string} userRole 
+     * @param {string} id 
+     * @param {function(number, string, Object): void} [trackDelete] 
+     * @returns {Promise<void>}
+     */
     async deleteProject(userRole, id, trackDelete) {
         if (!isActionAllowed(ACTIONS.DELETE, MODULES.PROJECTS, userRole)) {
             throw new Error("Unauthorized action");
@@ -36,7 +56,56 @@ class ProjectService extends BaseService {
     }
 
     /**
+     * Batch delete multiple projects.
+     * @param {string} userRole 
+     * @param {Array<string>} ids 
+     * @param {function(number, string): void} [trackDelete] 
+     * @returns {Promise<boolean>}
+     */
+    async batchDeleteProjects(userRole, ids, trackDelete) {
+        if (!isActionAllowed(ACTIONS.DELETE, MODULES.PROJECTS, userRole)) {
+            throw new Error("Unauthorized action");
+        }
+        return this.batchDelete(ids, trackDelete);
+    }
+
+    /**
+     * Batch update visibility for projects.
+     * @param {string} userRole 
+     * @param {Array<string>} ids 
+     * @param {boolean} visible 
+     * @param {function(number, string): void} [trackWrite] 
+     * @returns {Promise<boolean>}
+     */
+    async batchUpdateProjectsVisibility(userRole, ids, visible, trackWrite) {
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS, userRole)) {
+            throw new Error("Unauthorized action");
+        }
+        return this.batchUpdate(ids, { visible }, trackWrite);
+    }
+
+    /**
+     * Batch update featured status for projects.
+     * @param {string} userRole 
+     * @param {Array<string>} ids 
+     * @param {boolean} featured 
+     * @param {function(number, string): void} [trackWrite] 
+     * @returns {Promise<boolean>}
+     */
+    async batchUpdateProjectsFeatured(userRole, ids, featured, trackWrite) {
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS, userRole)) {
+            throw new Error("Unauthorized action");
+        }
+        return this.batchUpdate(ids, { featured }, trackWrite);
+    }
+
+    /**
      * Prepares project form data for saving to Firestore by formatting techStack and slug.
+     * @param {string} userRole 
+     * @param {Object} formData 
+     * @param {string} imageUrl 
+     * @param {function(number, string, Object): void} [trackWrite] 
+     * @returns {Promise<{isNew: boolean, id: string}>}
      */
     async saveProject(userRole, formData, imageUrl, trackWrite) {
         const action = formData.id ? ACTIONS.EDIT : ACTIONS.CREATE;
@@ -44,37 +113,22 @@ class ProjectService extends BaseService {
             throw new Error("Unauthorized action");
         }
 
-        const techArray = formData.techStack
-            ? (typeof formData.techStack === 'string'
-                ? formData.techStack.split(',').map(t => t.trim()).filter(t => t)
-                : formData.techStack)
-            : [];
+        // 1. Normalize
+        const dataToSave = normalizeProject({ ...formData, imageUrl });
 
-        const slug = formData.slug || this.generateSlug(formData.title);
+        // 2. Validate
+        const errors = validateProject(dataToSave);
+        if (errors) {
+            throw new Error(`Validation failed: ${Object.values(errors).join(', ')}`);
+        }
 
-        // Check for existing project by slug if no ID is provided
+        // 3. Handle duplicates by slug
         let targetId = formData.id;
         if (!targetId) {
-            const existing = await this.fetchProjectBySlug(slug, null, true);
+            const existing = await this.fetchProjectBySlug(dataToSave.slug, null, true);
             if (existing) {
                 targetId = existing.id;
             }
-        }
-
-        const dataToSave = {
-            title: formData.title || 'Untitled Project',
-            description: formData.description || '',
-            techStack: techArray,
-            githubUrl: formData.githubUrl || '',
-            liveUrl: formData.liveUrl || '',
-            slug,
-            content: formData.content || '',
-            visible: formData.visible !== false,
-            featured: !!formData.featured
-        };
-
-        if (imageUrl !== undefined) {
-            dataToSave.imageUrl = imageUrl;
         }
 
         const { serverTimestamp } = await import('firebase/firestore');
@@ -96,7 +150,8 @@ class ProjectService extends BaseService {
     /**
      * Fetch a specific project by its slug
      * @param {string} slug 
-     * @param {Function} trackRead 
+     * @param {function(number, string, Object): void} [trackRead] 
+     * @param {boolean} [includeHidden=false] 
      * @returns {Promise<Object|null>}
      */
     async fetchProjectBySlug(slug, trackRead, includeHidden = false) {
@@ -127,7 +182,7 @@ class ProjectService extends BaseService {
      * Fetch related projects based on tech stack
      * @param {string} currentProjectId 
      * @param {Array<string>} techStack 
-     * @param {Function} trackRead 
+     * @param {function(number, string, Object): void} [trackRead] 
      * @returns {Promise<Array<Object>>}
      */
     async fetchRelatedProjects(currentProjectId, techStack, trackRead) {

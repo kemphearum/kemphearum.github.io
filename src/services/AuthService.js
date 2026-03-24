@@ -1,38 +1,45 @@
+import BaseService from './BaseService';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'firebase/auth';
 
 class AuthService {
     /**
      * Authenticate a user with email and password
-     * @param {string} email 
-     * @param {string} password 
+     * @param {string} email
+     * @param {string} password
      * @returns {Promise<import('firebase/auth').UserCredential>}
      */
-    login(email, password) {
-        return signInWithEmailAndPassword(auth, email, password);
+    async login(email, password) {
+        return BaseService.safe(async () => {
+            return await signInWithEmailAndPassword(auth, email, password);
+        });
     }
 
     /**
      * Create a new user with email and password
-     * @param {string} email 
-     * @param {string} password 
+     * @param {string} email
+     * @param {string} password
      * @returns {Promise<import('firebase/auth').UserCredential>}
      */
-    register(email, password) {
-        return createUserWithEmailAndPassword(auth, email, password);
+    async register(email, password) {
+        return BaseService.safe(async () => {
+            return await createUserWithEmailAndPassword(auth, email, password);
+        });
     }
 
     /**
      * Sign out the current user
      * @returns {Promise<void>}
      */
-    logout() {
-        return signOut(auth);
+    async logout() {
+        return BaseService.safe(async () => {
+            return await signOut(auth);
+        });
     }
 
     /**
      * Subscribe to authentication state changes
-     * @param {Function} callback 
+     * @param {function(import('firebase/auth').User|null): void} callback
      * @returns {import('firebase/auth').Unsubscribe}
      */
     onAuthChange(callback) {
@@ -41,7 +48,7 @@ class AuthService {
 
     /**
      * Get the currently logged in user
-     * @returns {import('firebase/auth').User|null}
+     * @returns {import('firebase/auth').User | null}
      */
     getCurrentUser() {
         return auth.currentUser;

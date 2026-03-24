@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useLoaderData } from 'react-router';
 import ProjectService from '../services/ProjectService';
 import { useActivity } from '../hooks/useActivity';
-import MarkdownRenderer from '../components/MarkdownRenderer';
+import MarkdownRenderer from '@/sections/MarkdownRenderer';
 import { generateMetaTags } from '../utils/SeoHelper';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,10 +13,10 @@ import {
 } from 'lucide-react';
 import { calculateReadTime } from '../utils/helpers';
 import { useQuery } from '@tanstack/react-query';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import RelatedProjects from '../components/RelatedProjects';
-import TableOfContents from '../components/TableOfContents';
+import Navbar from '@/sections/Navbar';
+import Footer from '@/sections/Footer';
+import RelatedProjects from '@/sections/RelatedProjects';
+import TableOfContents from '@/sections/TableOfContents';
 import styles from './ProjectDetail.module.scss';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';

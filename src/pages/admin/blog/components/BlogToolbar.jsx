@@ -4,16 +4,12 @@ import { Button, Input } from '../../../../shared/components/ui';
 
 const BlogToolbar = ({ onCreate, onSearch, canCreate = true }) => {
   return (
-    <div className="ui-toolbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-      <div className="ui-searchWrapper" style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
-        <Search 
-          size={16} 
-          style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', zIndex: 1 }} 
-        />
+    <div className="admin-toolbar">
+      <div className="admin-search-wrapper">
+        <Search size={16} />
         <Input
           placeholder="Search by title..."
           onChange={(e) => onSearch(e.target.value)}
-          style={{ paddingLeft: '36px' }}
         />
       </div>
       

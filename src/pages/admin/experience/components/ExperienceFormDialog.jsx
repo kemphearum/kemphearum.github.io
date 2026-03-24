@@ -1,21 +1,23 @@
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Dialog, Button, Input, TextArea } from '../../../../shared/components/ui';
-import Form from '../../../../shared/components/form/Form';
-import FormField from '../../../../shared/components/form/FormField';
+import { Dialog, Button } from '../../../../shared/components/ui';
+import Form from '../../components/Form';
+import FormField from '../../components/FormField';
+import FormInput from '../../components/FormInput';
+import FormSelect from '../../components/FormSelect';
 
 const ExperienceFormFields = () => {
   const { watch } = useFormContext();
   const isPresent = watch('isPresent');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
       <FormField
         label="Company Name"
         name="company"
         validation={{ required: 'Company name is required' }}
       >
-        <Input placeholder="e.g. Google Inc." />
+        <FormInput placeholder="e.g. Google Inc." />
       </FormField>
       
       <FormField
@@ -23,7 +25,7 @@ const ExperienceFormFields = () => {
         name="role"
         validation={{ required: 'Role is required' }}
       >
-        <Input placeholder="e.g. Senior Developer" />
+        <FormInput placeholder="e.g. Senior Developer" />
       </FormField>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -32,7 +34,7 @@ const ExperienceFormFields = () => {
           name="startDate"
           validation={{ required: 'Start date is required' }}
         >
-          <Input type="month" />
+          <FormInput type="month" />
         </FormField>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -46,7 +48,7 @@ const ExperienceFormFields = () => {
             </label>
           </div>
           <FormField name="endDate" label="" noError validation={{ required: !isPresent ? 'End date is required' : false }}>
-            <Input type="month" disabled={isPresent} />
+            <FormInput type="month" disabled={isPresent} />
           </FormField>
         </div>
       </div>
@@ -56,14 +58,16 @@ const ExperienceFormFields = () => {
         name="description"
         validation={{ required: 'Description is required' }}
       >
-        <TextArea rows="5" placeholder="Describe your responsibilities and achievements..." />
+        <FormInput isTextArea rows="5" placeholder="Describe your responsibilities and achievements..." />
       </FormField>
 
       <FormField label="Visibility" name="visible">
-        <select className="ui-input" style={{ width: '100%' }}>
-          <option value={true}>Visible on Homepage</option>
-          <option value={false}>Hidden</option>
-        </select>
+        <FormSelect 
+          options={[
+            { label: 'Visible on Homepage', value: true },
+            { label: 'Hidden from Public', value: false }
+          ]}
+        />
       </FormField>
     </div>
   );

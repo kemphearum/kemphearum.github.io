@@ -1,12 +1,17 @@
 import React from 'react';
-import { Edit2, Trash2, Briefcase } from 'lucide-react';
-import { Button, Badge } from '../../../../shared/components/ui';
-import DataTable from '../../../../shared/components/ui/data-table/DataTable';
+import { Briefcase } from 'lucide-react';
+import DataTable from '@/shared/components/ui/data-table/DataTable';
+import { renderStatusBadge, renderAdminActions } from '@/shared/components/ui/data-table/DataTableHelpers';
 
+/**
+ * ExperienceTable Component
+ * Refactored to use standardized DataTableHelpers for common column rendering.
+ */
 const ExperienceTable = ({ 
   experiences, 
   onEdit, 
   onDelete,
+  onToggleVisibility,
   canEdit = true,
   canDelete = true,
   loading = false,
@@ -43,39 +48,20 @@ const ExperienceTable = ({
       key: 'visible',
       header: 'Status',
       sortable: true,
-      render: (row) => (
-        <Badge variant={row.visible !== false ? 'success' : 'warning'}>
-          {row.visible !== false ? 'Visible' : 'Hidden'}
-        </Badge>
-      )
+      render: (row) => renderStatusBadge(row)
     },
     {
       key: 'actions',
       header: 'Actions',
       className: 'ui-table-cell--actions',
-      render: (row) => (
-        <div className="ui-table-actions">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => onEdit(row)}
-            disabled={!canEdit}
-            title={canEdit ? "Edit" : "Not authorized"}
-          >
-            <Edit2 size={16} />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => onDelete(row)}
-            disabled={!canDelete}
-            title={canDelete ? "Delete" : "Not authorized"}
-            style={{ color: canDelete ? 'var(--danger-color, #ef4444)' : 'inherit' }}
-          >
-            <Trash2 size={16} />
-          </Button>
-        </div>
-      )
+      render: (row) => renderAdminActions({
+        row,
+        onEdit,
+        onDelete,
+        onToggleVisibility,
+        canEdit,
+        canDelete
+      })
     }
   ];
 
@@ -93,6 +79,8 @@ const ExperienceTable = ({
       onNext={onNext}
       onPrevious={onPrevious}
       onPageChange={onPageChange}
+      showExport={true}
+      exportFileName="experience_export.csv"
       emptyState={{
         icon: Briefcase,
         title: "No Experience Entries",
@@ -102,4 +90,4 @@ const ExperienceTable = ({
   );
 };
 
-export default ExperienceTable;
+export default React.memo(ExperienceTable);

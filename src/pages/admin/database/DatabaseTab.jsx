@@ -4,23 +4,25 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Services & Hooks
 import DatabaseService from '../../../services/DatabaseService';
+import BaseService from '../../../services/BaseService';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
 
 // Components
 import SectionHeader from '../components/SectionHeader';
-import { Button } from '../../../shared/components/ui';
+import { Button } from '@/shared/components/ui';
 import DatabaseStats from './components/DatabaseStats';
 import DatabaseActions from './components/DatabaseActions';
 import RestoreDialog from './components/RestoreDialog';
 import ArchiveDialog from './components/ArchiveDialog';
 import AuditSettingsPanel from './components/AuditSettingsPanel';
 import RestoreProgress from './components/RestoreProgress';
+import QuotaResilienceBanner from '../components/QuotaResilienceBanner';
 
 // Styles
-import styles from './DatabaseTab.module.scss';
 
-const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed }) => {
+
+const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userEmail }) => {
     const { loading: auditLoading, execute: executeAudit } = useAsyncAction({
         showToast,
         errorMessage: 'Failed to update audit setting.',
@@ -47,35 +49,43 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed }) => 
     const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
     const [restoreFile, setRestoreFile] = useState(null);
     const [restoreProgress, setRestoreProgress] = useState(null);
+    const [quotaExceeded, setQuotaExceeded] = useState(false);
     
     const { trackRead, trackWrite, trackDelete } = useActivity();
     const queryClient = useQueryClient();
 
     // Queries
-    const { 
-        data: dbHealth = { posts: 0, projects: 0, experience: 0, content: 0, messages: 0, auditLogs: 0, users: 0, rolePermissions: 0, settings: 0, visits: 0, dailyUsage: 0 }, 
-        isFetching: dbHealthLoading, 
-        refetch: refetchDbHealth 
-    } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-        queryKey: ['dbHealth'],
+    const defaults = { posts: 0, projects: 0, experience: 0, content: 0, messages: 0, auditLogs: 0, users: 0, rolePermissions: 0, settings: 0, visits: 0, dailyUsage: 0 };
+    const { data: dbHealth = { ...defaults }, isLoading: dbHealthLoading, refetch: refetchDbHealth } = useQuery({
+        queryKey: ['database', 'health'],
         queryFn: async () => {
-            const counts = await DatabaseService.getHealth(trackRead);
-            return { ...counts, lastUpdated: new Date() };
-        }
+            setQuotaExceeded(false);
+            const result = await BaseService.safe(() => DatabaseService.getHealth(trackRead));
+            if (result.error) {
+                if (result.error === 'QUOTA_EXCEEDED') {
+                    setQuotaExceeded(true);
+                } else {
+                    showToast(result.error, 'error');
+                }
+                return { ...defaults };
+            }
+            return { ...result.data, lastUpdated: new Date() };
+        },
+        refetchInterval: 300000,
+        refetchOnWindowFocus: false
     });
 
-    const { data: auditSettings = { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false } } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-        queryKey: ['auditSettings'],
+    const { data: auditSettings = { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false }, isLoading: auditSettingsLoading } = useQuery({
+        queryKey: ['database', 'auditSettings'],
         queryFn: async () => {
-            const settings = await DatabaseService.getAuditSettings();
-            return settings || { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false };
-        }
+            const result = await BaseService.safe(() => DatabaseService.getAuditSettings());
+            if (result.error) {
+                showToast(result.error, 'error');
+                return { logAll: true, logReads: true, logWrites: true, logDeletes: true, logAnonymous: false };
+            }
+            return result.data;
+        },
+        refetchOnWindowFocus: false
     });
 
     // Handlers
@@ -89,7 +99,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed }) => 
         }
 
         await executeAudit(async () => {
-            await DatabaseService.updateAuditSettings(userRole, key, value, auditSettings, trackWrite);
+            await DatabaseService.updateAuditSettings(userRole, userEmail, key, value, auditSettings, trackWrite);
         }, {
             successMessage: key === 'logAll' ? `All audit settings ${value ? 'enabled' : 'disabled'}.` : `Audit setting updated: ${key} = ${value}`
         });
@@ -114,11 +124,12 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed }) => 
         showToast("Gathering data to archive...", "info");
 
         await executeArchive(async () => {
-            const result = await DatabaseService.archive(userRole, archiveDays, trackRead, trackDelete);
-            if (result.deleted > 0) {
+            const { data, error } = await BaseService.safe(() => DatabaseService.archive(userRole, archiveDays, trackRead, trackDelete));
+            if (error) throw new Error(error);
+            if (data.deleted > 0) {
                 refetchDbHealth();
             }
-            return result;
+            return data;
         }).then(({ success, data, error }) => {
             if (success) {
                 if (data.deleted === 0) {
@@ -145,8 +156,8 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed }) => 
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = async (event) => {
-                    try {
-                        const result = await DatabaseService.restore(
+                    const { data, error } = await BaseService.safe(async () => {
+                        return await DatabaseService.restore(
                             userRole,
                             event.target.result,
                             trackWrite,
@@ -158,16 +169,20 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed }) => 
                                 });
                             }
                         );
+                    });
 
-                        queryClient.invalidateQueries();
-                        refetchDbHealth();
-                        resolve(result);
-                    } catch (error) {
-                        reject(error);
-                    } finally {
+                    if (error) {
                         setRestoreFile(null);
                         setTimeout(() => setRestoreProgress(null), 3000);
+                        reject(new Error(error));
+                        return;
                     }
+
+                    queryClient.invalidateQueries();
+                    refetchDbHealth();
+                    setRestoreFile(null);
+                    setTimeout(() => setRestoreProgress(null), 3000);
+                    resolve(data);
                 };
                 reader.onerror = () => reject(new Error('Failed to read file.'));
                 reader.readAsText(restoreFile);
@@ -190,8 +205,12 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed }) => 
     const calculatedTotal = (dbHealth.posts || 0) + (dbHealth.projects || 0) + (dbHealth.experience || 0) + (dbHealth.content || 0) + (dbHealth.messages || 0) + (dbHealth.auditLogs || 0) + (dbHealth.users || 0) + (dbHealth.rolePermissions || 0) + (dbHealth.settings || 0) + (dbHealth.visits || 0) + (dbHealth.dailyUsage || 0);
 
     return (
-        <div className={styles.container}>
+        <div className="admin-tab-container">
             <RestoreProgress progress={restoreProgress} />
+
+            {quotaExceeded && (
+                <QuotaResilienceBanner onRefresh={() => refetchDbHealth()} />
+            )}
 
             <SectionHeader
                 title="Database Management"
@@ -204,7 +223,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed }) => 
                         title="Refresh Health"
                         className="ui-btn-icon-only"
                     >
-                        <RefreshCw size={18} className={dbHealthLoading ? styles.spin : ''} />
+                        <RefreshCw size={18} className={dbHealthLoading ? "ui-spin" : ''} />
                     </Button>
                 }
             />

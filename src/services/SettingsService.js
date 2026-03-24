@@ -1,55 +1,63 @@
+import BaseService from './BaseService';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import AuthService from './AuthService';
 
-class SettingsService {
+class SettingsService extends BaseService {
     constructor() {
-        this.collectionName = 'settings';
+        super('settings');
         this.documentId = 'global';
     }
 
     /**
      * Fetch the unified global settings document
-     * @returns {Promise<Object|null>}
+     * @returns {Promise<Object|null>} Safe result containing site settings
      */
     async fetchGlobalSettings() {
-        const docRef = doc(db, this.collectionName, this.documentId);
-        const snap = await getDoc(docRef);
-        return snap.exists() ? snap.data() : null;
+        return BaseService.safe(async () => {
+            const docRef = doc(db, this.collectionName, this.documentId);
+            const snap = await getDoc(docRef);
+            return snap.exists() ? snap.data() : null;
+        });
     }
 
     /**
      * Fetch typography metadata (options, defaults, CSS maps)
-     * @returns {Promise<Object|null>}
+     * @returns {Promise<Object|null>} Typography configuration object
      */
     async fetchTypographyMetadata() {
-        const docRef = doc(db, this.collectionName, 'metadata');
-        const snap = await getDoc(docRef);
-        return snap.exists() ? snap.data().typography : null;
+        return BaseService.safe(async () => {
+            const docRef = doc(db, this.collectionName, 'metadata');
+            const snap = await getDoc(docRef);
+            return snap.exists() ? snap.data().typography : null;
+        });
     }
 
     /**
      * Update multiple sections of the global settings in one atomic operation
      * @param {Object} updates - Object containing 'site', 'typography', and/or 'system' updates
-     * @param {Function} trackWrite - Optional analytics tracker
+     * @param {function(number, string, Object): void} [trackWrite] - Optional analytics tracker
+     * @returns {Promise<Object>} The updated payload
      */
     async updateGlobalSettings(updates, trackWrite) {
-        const docRef = doc(db, this.collectionName, this.documentId);
-        const payload = {
-            ...updates,
-            updatedAt: serverTimestamp(),
-            updatedBy: AuthService.getCurrentUser()?.email || 'Anonymous'
-        };
+        return BaseService.safe(async () => {
+            const docRef = doc(db, this.collectionName, this.documentId);
+            const payload = {
+                ...updates,
+                updatedAt: serverTimestamp(),
+                updatedBy: AuthService.getCurrentUser()?.email || 'Anonymous'
+            };
 
-        await setDoc(docRef, payload, { merge: true });
+            await setDoc(docRef, payload, { merge: true });
 
-        if (trackWrite) {
-            Object.keys(updates).forEach(key => {
-                trackWrite(1, `Updated ${key} settings`, updates[key]);
-            });
-        }
+            if (trackWrite) {
+                Object.keys(updates).forEach(key => {
+                    trackWrite(1, `Updated ${key} settings`, updates[key]);
+                });
+            }
 
-        return payload;
+            return payload;
+        });
     }
 
     /**
@@ -63,19 +71,23 @@ class SettingsService {
      * Full document set (used for migration)
      */
     async setFullSettings(payload) {
-        const docRef = doc(db, this.collectionName, this.documentId);
-        await setDoc(docRef, {
-            ...payload,
-            updatedAt: serverTimestamp()
-        }, { merge: true });
+        return BaseService.safe(async () => {
+            const docRef = doc(db, this.collectionName, this.documentId);
+            await setDoc(docRef, {
+                ...payload,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+        });
     }
 
     /**
      * Update typography metadata
      */
     async updateTypographyMetadata(metadata) {
-        const docRef = doc(db, this.collectionName, 'metadata');
-        await setDoc(docRef, { typography: metadata }, { merge: true });
+        return BaseService.safe(async () => {
+            const docRef = doc(db, this.collectionName, 'metadata');
+            await setDoc(docRef, { typography: metadata }, { merge: true });
+        });
     }
 
     // Default metadata used for initialization or fallback

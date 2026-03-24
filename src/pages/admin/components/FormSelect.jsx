@@ -1,58 +1,23 @@
-import { Select } from '../../../shared/components/ui';
-import styles from '../../Admin.module.scss';
-
+import React, { forwardRef } from 'react';
+import { Select } from '@/shared/components/ui';
 
 /**
- * FormSelect — standard dropdown matching the User Account Profile style.
+ * FormSelect — Standard dropdown component for Admin forms.
+ * Designed to be used inside FormField.
  */
-const FormSelect = ({
-    label,
-    value,
-    onChange,
+const FormSelect = forwardRef(({
     options = [],
-    required = false,
-    fullWidth = false,
-    noWrapper = false,
-    icon,
-    style = {},
-    containerStyle = {},
-    hint
-}) => {
-    const selectElement = (
+    ...props
+}, ref) => {
+    return (
         <Select
-            value={value}
-            onChange={onChange}
-            className={noWrapper ? styles.standardSelect : undefined}
-            required={required}
+            ref={ref}
             options={options}
-            style={{
-                marginTop: (!noWrapper && label) ? '0.4rem' : '0',
-                ...style
-            }}
-            fullWidth={noWrapper || fullWidth}
+            {...props}
         />
     );
+});
 
-    if (noWrapper) return selectElement;
-
-    return (
-        <div
-            className={styles.inputGroup}
-            style={{
-                ...(fullWidth && typeof window !== 'undefined' && window.innerWidth > 600 ? { gridColumn: 'span 2' } : {}),
-                ...containerStyle
-            }}
-        >
-            {label && (
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    {icon && <span style={{ fontSize: '1.1rem' }}>{icon}</span>}
-                    {label}
-                </label>
-            )}
-            {selectElement}
-            {hint && <span className={styles.hint}>{hint}</span>}
-        </div>
-    );
-};
+FormSelect.displayName = 'FormSelect';
 
 export default FormSelect;
