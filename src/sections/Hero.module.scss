@@ -135,11 +135,12 @@
     font-family: var(--font-display, inherit);
     font-weight: var(--font-weight-display, 800);
     font-size: calc(var(--font-size-display) * 2.25);
-    
+
     @media (max-width: 480px) {
         font-size: calc(var(--font-size-display) * 1.5) !important;
         letter-spacing: 0 !important; // Fix name clipping ("K")
     }
+
     color: var(--text-primary);
     margin-bottom: 0.5rem;
     line-height: 1.1;
@@ -185,8 +186,9 @@
 
     @media (max-width: 480px) {
         gap: 0.75rem;
-        
-        .ctaButton, .ctaSecondary {
+
+        .ctaButton,
+        .ctaSecondary {
             width: 100%;
             justify-content: center;
             padding: 0.8rem 1.2rem;
@@ -433,7 +435,7 @@
         .imageContainer {
             width: 220px;
             height: 220px;
-            
+
             @media (max-width: 480px) {
                 width: 180px;
                 height: 180px;
@@ -448,7 +450,7 @@
 
 @media (max-width: 480px) {
     .hero {
-        padding-top: calc(#{$nav-height} + env(safe-area-inset-top) + 0.75rem);
+        padding-top: calc(#{$nav-height} + env(safe-area-inset-top) + 3rem);
         padding-bottom: 2rem;
     }
 }
