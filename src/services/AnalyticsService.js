@@ -4,8 +4,8 @@ import {
     collection, getDocs, query, where, orderBy, getCountFromServer, 
     limit as firestoreLimit, addDoc, serverTimestamp, doc, updateDoc 
 } from 'firebase/firestore';
+import { isAdminRole } from '../utils/permissions';
 
-const ALLOWED_ROLES = new Set(['superadmin', 'admin']);
 const MAX_ANALYTICS_ROWS = 3000;
 const MAX_DETAIL_WINDOW = 5000;
 const MAX_DURATION_SECONDS = 86400;
@@ -64,7 +64,7 @@ class AnalyticsService extends BaseService {
      * @returns {Promise<Array<Object>>} List of visit records
      */
     async fetchAnalytics(userRole, dateRangeConfig, trackRead) {
-        if (!ALLOWED_ROLES.has(userRole)) return [];
+        if (!isAdminRole(userRole)) return [];
 
         const { startDate, endDate, startKey, endKey } = normalizeDateRange(dateRangeConfig);
 
@@ -115,7 +115,7 @@ class AnalyticsService extends BaseService {
      * @returns {Promise<{data: Array, meta: {total: number, page: number, totalPages: number}}>}
      */
     async fetchAnalyticsDetails(userRole, dateRangeConfig, type, pagination = { page: 1, limit: 50 }, trackRead) {
-        if (!ALLOWED_ROLES.has(userRole)) {
+        if (!isAdminRole(userRole)) {
             return { data: [], meta: { total: 0, page: 1, totalPages: 0, hasMore: false } };
         }
 

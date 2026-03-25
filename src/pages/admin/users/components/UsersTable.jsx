@@ -3,6 +3,7 @@ import { Edit, Key, Trash2, UserPlus, Users } from 'lucide-react';
 import DataTable from '../../../../shared/components/ui/data-table/DataTable';
 import { Button, Badge } from '../../../../shared/components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { isSuperAdminRole, normalizeRole } from '../../../../utils/permissions';
 
 
 const UsersTable = ({ 
@@ -41,6 +42,7 @@ const UsersTable = ({
       header: tr('User', 'អ្នកប្រើ'),
       sortable: true,
       render: (user) => {
+        const normalizedRole = normalizeRole(user.role);
         const initials = (user.displayName || user.email || '??')
           .split(/[@.\s]/)
           .filter(Boolean)
@@ -62,7 +64,7 @@ const UsersTable = ({
           <div className="ui-user-identity">
             <div 
               className="ui-user-avatar" 
-              style={{ background: avatarColors[user.role] || avatarColors.pending }}
+              style={{ background: avatarColors[normalizedRole] || avatarColors.pending }}
             >
               {initials}
             </div>
@@ -81,6 +83,7 @@ const UsersTable = ({
       header: 'Role',
       sortable: true,
       render: (user) => {
+        const normalizedRole = normalizeRole(user.role);
         const roleVariants = {
           superadmin: 'success',
           admin: 'primary',
@@ -99,8 +102,8 @@ const UsersTable = ({
 
         return (
           <div className="ui-user-roleCell">
-            <Badge variant={roleVariants[user.role] || 'ghost'}>
-              {roleLabels[user.role] || user.role}
+            <Badge variant={roleVariants[normalizedRole] || 'ghost'}>
+              {roleLabels[normalizedRole] || user.role}
             </Badge>
             <span className="ui-user-roleCell__note">{tr('Role assignment', 'ការកំណត់តួនាទី')}</span>
           </div>
@@ -133,7 +136,8 @@ const UsersTable = ({
       header: tr('Actions', 'សកម្មភាព'),
       className: 'ui-table-actions',
       render: (user) => {
-        if (user.email === currentUser?.email) {
+        const isSelf = String(user.email || '').toLowerCase() === String(currentUser?.email || '').toLowerCase();
+        if (isSelf) {
           return <Badge variant="primary">{tr('You', 'អ្នក')}</Badge>;
         }
 
@@ -159,7 +163,7 @@ const UsersTable = ({
               variant="danger" 
               size="sm" 
               onClick={(event) => { event.stopPropagation(); onDelete(user); }}
-              disabled={userRole !== 'superadmin' || user.role === 'superadmin'}
+              disabled={!isSuperAdminRole(userRole) || isSuperAdminRole(user.role)}
               title={tr('Disable User', 'បិទអ្នកប្រើ')}
             >
               <Trash2 size={16} />
@@ -219,3 +223,4 @@ const UsersTable = ({
 };
 
 export default UsersTable;
+

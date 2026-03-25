@@ -46,8 +46,8 @@ const typographyMetadata = {
 async function seedSettings() {
     console.log("Starting settings seeding process...");
     await Promise.all([
-        db.collection('settings').doc('global').set(settingsGlobal, { merge: true }),
-        db.collection('settings').doc('metadata').set({ typography: typographyMetadata }, { merge: true })
+        db.collection('settings').doc('global').set(settingsGlobal, { merge: false }),
+        db.collection('settings').doc('metadata').set({ typography: typographyMetadata }, { merge: false })
     ]);
     console.log("Successfully seeded 'settings/global' and 'settings/metadata' content");
 

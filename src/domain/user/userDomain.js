@@ -1,12 +1,15 @@
+import { normalizeRole } from '../../utils/permissions';
+
 /**
  * Normalizes user data for Firestore.
  * @param {Object} data - Raw form data
  * @returns {Object} Normalized data
  */
 export const normalizeUser = (data) => {
+    const normalizedRole = normalizeRole(data.role || 'pending') || 'pending';
     return {
         email: (data.email || '').toLowerCase().trim(),
-        role: data.role || 'user',
+        role: normalizedRole,
         isActive: data.isActive !== false,
         displayName: (data.displayName || '').trim()
     };

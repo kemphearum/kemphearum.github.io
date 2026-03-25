@@ -13,6 +13,7 @@ import UsersFormDialog from './components/UsersFormDialog';
 import UserDetailDialog from './components/UserDetailDialog';
 import RolePermissionsPanel from './components/RolePermissionsPanel';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { isSuperAdminRole, normalizeRole } from '../../../utils/permissions';
 
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 
@@ -56,6 +57,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   });
 
   const { trackRead, trackWrite } = useActivity();
+  const normalizedUserRole = normalizeRole(userRole);
 
   // cursor pagination hook
   const pagination = useCursorPagination(5, [searchQuery]);
@@ -85,14 +87,14 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
       pagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
       return result.data;
     },
-    enabled: userRole === 'superadmin'
+    enabled: isSuperAdminRole(normalizedUserRole)
   });
 
   const usersList = usersResult.data;
   const userStats = useMemo(() => {
     const activeCount = usersList.filter((entry) => entry.isActive !== false && entry.disabled !== true).length;
     const disabledCount = usersList.length - activeCount;
-    const elevatedCount = usersList.filter((entry) => ['admin', 'superadmin'].includes(entry.role)).length;
+    const elevatedCount = usersList.filter((entry) => ['admin', 'superadmin'].includes(normalizeRole(entry.role))).length;
 
     return [
       {
@@ -116,7 +118,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
         meta: disabledCount > 0 ? tr('Blocked from login', 'បានទប់ស្កាត់ការចូល') : tr('No blocked accounts', 'គ្មានគណនីត្រូវបានទប់ស្កាត់'),
       },
     ];
-  }, [searchQuery, usersList]);
+  }, [searchQuery, usersList, tr]);
 
   const { data: rolePermissions = {} } = useQuery({
     staleTime: 60000,
@@ -131,7 +133,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
       }
       return result.data;
     },
-    enabled: userRole === 'superadmin'
+    enabled: isSuperAdminRole(normalizedUserRole)
   });
 
   const { data: userHistory = [], isLoading: historyLoading } = useQuery({
@@ -236,7 +238,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     });
   };
 
-  if (userRole !== 'superadmin') {
+  if (!isSuperAdminRole(normalizedUserRole)) {
     return (
       <EmptyState 
         title={tr('Access Restricted', 'ការចូលប្រើត្រូវបានកំណត់')}
@@ -260,7 +262,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
       <UsersTable 
         data={usersList}
         currentUser={user}
-        userRole={userRole}
+        userRole={normalizedUserRole}
         onEdit={setEditingUser}
         onResetPassword={handleResetPassword}
         onDelete={setDeletingUser}

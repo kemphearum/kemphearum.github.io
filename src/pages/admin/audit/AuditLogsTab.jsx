@@ -16,6 +16,7 @@ import ActivityAuditDialog from './components/ActivityAuditDialog';
 import QuotaResilienceBanner from '../components/QuotaResilienceBanner';
 import styles from './AuditLogsTab.module.scss';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { isSuperAdminRole } from '../../../utils/permissions';
 
 const AuditLogsTab = ({ userRole, showToast }) => {
   const { language } = useTranslation();
@@ -44,6 +45,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
   // UI State for Dialogs
   const [selectedLog, setSelectedLog] = useState(null);
   const [activityDetailType, setActivityDetailType] = useState(null); // 'read', 'write', or 'delete'
+  const canViewSecurityAudit = isSuperAdminRole(userRole);
 
   // 1. Fetch Aggregated Stats
   const { data: stats = {}, refetch: refetchStats } = useQuery({
@@ -78,7 +80,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     queryKey: ['auditLogs', 'security', userRole, securityDateRange, securityPagination.cursor, securityPagination.limit],
     queryFn: async () => {
       const requestCursor = securityPagination.cursor;
-      if (userRole !== 'superadmin') return { data: [], lastDoc: null, hasMore: false };
+      if (!canViewSecurityAudit) return { data: [], lastDoc: null, hasMore: false };
       const result = await BaseService.safe(() => AuditLogService.fetchSecurityAuditTrail({
         userRole,
         trackRead,
@@ -95,7 +97,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
       securityPagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
       return result.data;
     },
-    enabled: userRole === 'superadmin'
+    enabled: canViewSecurityAudit
   });
 
   const securityLogs = securityLogsResult.data;
@@ -255,9 +257,9 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     refetchSecurity();
     refetchActivity();
     showToast(tr('Logs refreshed', 'បានធ្វើបច្ចុប្បន្នភាពកំណត់ហេតុ'));
-  }, [refetchStats, refetchSecurity, refetchActivity, showToast, activityPagination, securityPagination]);
+  }, [refetchStats, refetchSecurity, refetchActivity, showToast, activityPagination, securityPagination, tr]);
 
-  if (userRole !== 'superadmin') {
+  if (!canViewSecurityAudit) {
     return (
       <EmptyState 
         title={tr('Access Restricted', 'ការចូលប្រើត្រូវបានកំណត់')}

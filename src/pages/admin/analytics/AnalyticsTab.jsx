@@ -27,6 +27,7 @@ import AnalyticsChart from './components/AnalyticsChart';
 import LoadingOverlay from '../../../shared/components/ui/loading-overlay/LoadingOverlay';
 import EmptyState from '../../../shared/components/ui/empty-state/EmptyState';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { isAdminRole } from '../../../utils/permissions';
 
 const toDateKey = (value) => {
     if (!value) return null;
@@ -38,18 +39,6 @@ const toDateKey = (value) => {
 const formatShortDate = (value) => {
     if (!value) return 'Unknown';
     return new Date(`${value}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-};
-
-const formatLastUpdated = (value) => {
-    if (!value) return 'Not synced yet';
-    const updated = new Date(value);
-    const now = new Date();
-    const deltaSeconds = Math.max(0, Math.floor((now.getTime() - updated.getTime()) / 1000));
-
-    if (deltaSeconds < 60) return 'Updated just now';
-    if (deltaSeconds < 3600) return `Updated ${Math.floor(deltaSeconds / 60)}m ago`;
-
-    return `Updated ${updated.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${updated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 };
 
 const AnalyticsTab = ({ userRole, showToast }) => {
@@ -89,6 +78,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     const detailLimit = 5;
     const [quotaExceeded, setQuotaExceeded] = useState(false);
     const shouldFetchDetailLogs = analyticsDetail === 'visits';
+    const canViewAnalytics = isAdminRole(userRole);
 
     // 2. DATA FETCHING (STANDARD REACT QUERY)
     const {
@@ -136,7 +126,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
             return result.data;
         },
-        enabled: (userRole === 'superadmin' || userRole === 'admin'),
+        enabled: canViewAnalytics,
         retry: (failureCount, error) => error.message !== 'QUOTA_EXCEEDED' && failureCount < 2
     });
 
@@ -166,7 +156,7 @@ const AnalyticsTab = ({ userRole, showToast }) => {
             }
             return result.data;
         },
-        enabled: shouldFetchDetailLogs && !!analyticsDetail && (userRole === 'superadmin' || userRole === 'admin'),
+        enabled: shouldFetchDetailLogs && !!analyticsDetail && canViewAnalytics,
         staleTime: 60000
     });
 

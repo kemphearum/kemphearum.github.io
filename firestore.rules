@@ -15,17 +15,40 @@ service cloud.firestore {
         ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role 
         : 'anonymous';
     }
+
+    function isSuperAdminRole(role) {
+      return role == 'superadmin'
+        || role == 'SUPERADMIN'
+        || role == 'superAdmin'
+        || role == 'super_admin'
+        || role == 'super-admin'
+        || role == 'super admin'
+        || role == 'owner'
+        || role == 'OWNER'
+        || role == 'Owner';
+    }
+
+    function isAdminRole(role) {
+      return role == 'admin'
+        || role == 'ADMIN'
+        || role == 'administrator'
+        || role == 'ADMINISTRATOR'
+        || isSuperAdminRole(role);
+    }
     
     function isSuperAdmin() {
-      return isSignedIn() && (request.auth.token.email == 'kem.phearum@gmail.com' || getRole() == 'superadmin');
+      return isSignedIn() && (
+        request.auth.token.email == 'kem.phearum@gmail.com'
+        || isSuperAdminRole(getRole())
+      );
     }
     
     function isAdmin() {
-      return isSignedIn() && (getRole() == 'admin' || isSuperAdmin());
+      return isSignedIn() && (isAdminRole(getRole()) || isSuperAdmin());
     }
     
     function isEditor() {
-      return isSignedIn() && (getRole() == 'editor' || isAdmin());
+      return isSignedIn() && (getRole() == 'editor' || getRole() == 'EDITOR' || getRole() == 'writer' || isAdmin());
     }
 
     function isVisitPayloadValid() {

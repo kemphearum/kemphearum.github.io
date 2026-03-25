@@ -2,7 +2,7 @@ import BaseService from './BaseService';
 import { db, auth } from '../firebase';
 import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, query, updateDoc, where, serverTimestamp } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
+import { isActionAllowed, ACTIONS, MODULES, isSuperAdminRole, normalizeRole } from '../utils/permissions';
 import { normalizeUser, validateUser } from '../domain/user/userDomain';
 
 class UserService extends BaseService {
@@ -21,7 +21,7 @@ class UserService extends BaseService {
      * @returns {Promise<import('./BaseService').PaginatedResult>}
      */
     async fetchUsers({ userRole, trackRead, lastDoc = null, limit = 20, search = '', includeTotal = false }) {
-        if (userRole !== 'superadmin') return { data: [], lastDoc: null, hasMore: false, totalCount: null };
+        if (!isSuperAdminRole(userRole)) return { data: [], lastDoc: null, hasMore: false, totalCount: null };
 
         return this.fetchPaginated({
             lastDoc,
@@ -45,7 +45,8 @@ class UserService extends BaseService {
      */
     async updateRole(userRole, userId, newRole, trackWrite) {
         if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
-        return this.update(userId, { role: newRole }, trackWrite);
+        const normalizedRole = normalizeRole(newRole) || 'pending';
+        return this.update(userId, { role: normalizedRole }, trackWrite);
     }
 
     /**
@@ -83,8 +84,9 @@ class UserService extends BaseService {
      */
     async createUser(userRole, email, password, role, trackRead) {
         if (!isActionAllowed(ACTIONS.CREATE, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
+        const normalizedRole = normalizeRole(role) || 'pending';
 
-        const dataToValidate = { email, role };
+        const dataToValidate = { email, role: normalizedRole };
         const errors = validateUser(dataToValidate);
         if (errors) throw new Error(`Validation failed: ${Object.values(errors).join(', ')}`);
 
@@ -115,7 +117,7 @@ class UserService extends BaseService {
 
         await this.createUserDoc({
             email: emailLower,
-            role: role,
+            role: normalizedRole,
             isActive: true
         }, uid);
     }
@@ -143,7 +145,12 @@ class UserService extends BaseService {
         if (trackRead) trackRead(snap.size, 'Fetched role permissions');
 
         const perms = {};
-        snap.docs.forEach(d => { perms[d.data().role] = d.data().allowedTabs || []; });
+        snap.docs.forEach((d) => {
+            const rawRole = d.data().role;
+            const normalizedRole = normalizeRole(rawRole);
+            if (!normalizedRole) return;
+            perms[normalizedRole] = d.data().allowedTabs || [];
+        });
         return perms;
     }
 
@@ -155,15 +162,18 @@ class UserService extends BaseService {
      * @returns {Promise<void>}
      */
     async saveRolePermissions(role, allowedTabs, trackWrite) {
-        const q = query(collection(db, "rolePermissions"), where("role", "==", role));
+        const normalizedRole = normalizeRole(role);
+        if (!normalizedRole) throw new Error('Invalid role provided.');
+
+        const q = query(collection(db, "rolePermissions"), where("role", "==", normalizedRole));
         const snap = await getDocs(q);
 
         if (snap.empty) {
-            await addDoc(collection(db, "rolePermissions"), { role, allowedTabs });
-            if (trackWrite) trackWrite(1, `Created ${role} permissions`);
+            await addDoc(collection(db, "rolePermissions"), { role: normalizedRole, allowedTabs });
+            if (trackWrite) trackWrite(1, `Created ${normalizedRole} permissions`);
         } else {
             await updateDoc(snap.docs[0].ref, { allowedTabs });
-            if (trackWrite) trackWrite(1, `Updated ${role} permissions`);
+            if (trackWrite) trackWrite(1, `Updated ${normalizedRole} permissions`);
         }
     }
 
@@ -173,7 +183,8 @@ class UserService extends BaseService {
      * @returns {Promise<Object|null>} Returns { id, ref, ...data } or null.
      */
     async fetchUserByEmail(email) {
-        const q = query(collection(db, this.collectionName), where("email", "==", email));
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const q = query(collection(db, this.collectionName), where("email", "==", normalizedEmail));
         const snap = await getDocs(q);
         if (snap.empty) return null;
         const docSnap = snap.docs[0];

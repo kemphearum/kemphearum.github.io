@@ -10,10 +10,15 @@ const COLLECTIONS = [
     'experience',
     'content',
     'messages',
-    // Intentionally preserve settings and roles/users by default.
+    'settings',
     'auditLogs',
     'visits',
     'dailyUsage'
+];
+
+const HARD_RESET_COLLECTIONS = [
+    'users',
+    'rolePermissions'
 ];
 
 const SEED_SCRIPTS = [
@@ -66,14 +71,28 @@ function runChildScript(scriptName) {
 }
 
 async function runSeedAll() {
+    const fullResetEnabled = process.argv.includes('--full-reset') || process.env.FULL_RESET === '1';
+    const hardResetEnabled = process.argv.includes('--hard-reset') || process.env.HARD_RESET === '1';
+    const collectionsToTruncate = fullResetEnabled
+        ? (await db.listCollections()).map((collectionRef) => collectionRef.id).sort()
+        : (hardResetEnabled ? [...COLLECTIONS, ...HARD_RESET_COLLECTIONS] : COLLECTIONS);
+
     console.log('====================================================');
     console.log('MASTER SEED: CLEAN + REBUILD');
     console.log('====================================================');
+    if (fullResetEnabled) {
+        console.log('Mode: FULL RESET (all top-level collections)');
+    } else if (hardResetEnabled) {
+        console.log('Mode: HARD RESET (includes users/rolePermissions)');
+    } else {
+        console.log('Mode: STANDARD RESET');
+    }
+    console.log(`Collections scheduled for truncation: ${collectionsToTruncate.length}`);
 
     console.log('\n[1/2] Truncating selected collections...');
     const truncateErrors = [];
 
-    for (const collectionName of COLLECTIONS) {
+    for (const collectionName of collectionsToTruncate) {
         process.stdout.write(`   - ${collectionName}: `);
         try {
             await truncateCollectionByName(collectionName);
@@ -87,6 +106,10 @@ async function runSeedAll() {
 
     if (truncateErrors.length) {
         throw new Error(`Truncate failed for ${truncateErrors.length} collection(s).`);
+    }
+
+    if (!fullResetEnabled && !hardResetEnabled) {
+        console.log('\nNote: users and rolePermissions are preserved. Use --hard-reset (or HARD_RESET=1) to wipe them.');
     }
 
     console.log('\n[2/2] Running seed scripts...');

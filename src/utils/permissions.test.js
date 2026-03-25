@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isActionAllowed, ACTIONS, MODULES } from './permissions';
+import { isActionAllowed, ACTIONS, MODULES, normalizeRole, isSuperAdminRole } from './permissions';
 
 describe('permissions', () => {
     describe('superadmin', () => {
@@ -7,6 +7,13 @@ describe('permissions', () => {
             expect(isActionAllowed(ACTIONS.CREATE, MODULES.BLOG, 'superadmin')).toBe(true);
             expect(isActionAllowed(ACTIONS.DELETE, MODULES.DATABASE, 'superadmin')).toBe(true);
             expect(isActionAllowed(ACTIONS.DATABASE_ACTIONS, MODULES.DATABASE, 'superadmin')).toBe(true);
+        });
+
+        it('should normalize legacy aliases to superadmin', () => {
+            expect(normalizeRole('owner')).toBe('superadmin');
+            expect(normalizeRole('super_admin')).toBe('superadmin');
+            expect(isSuperAdminRole('super-admin')).toBe(true);
+            expect(isActionAllowed(ACTIONS.VIEW, MODULES.AUDIT, 'Owner')).toBe(true);
         });
     });
 

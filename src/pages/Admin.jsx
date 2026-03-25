@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from
 import UserService from '../services/UserService';
 import MessageService from '../services/MessageService';
 import ContentService from '../services/ContentService';
-import { useLocation, Link, Outlet, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { fetchGeoData } from '../utils/geoUtils';
 import { useTheme } from '../context/ThemeContext';
@@ -17,7 +17,7 @@ import AuditLogService from '../services/AuditLogService';
 import AdminLayout from './admin/components/AdminLayout';
 import { Spinner } from '../shared/components/ui';
 import AnimatedBackground from '@/sections/AnimatedBackground';
-import { isActionAllowed, ACTIONS } from '../utils/permissions';
+import { isActionAllowed, ACTIONS, isAdminRole, isSuperAdminRole, normalizeRole } from '../utils/permissions';
 import { useTranslation } from '../hooks/useTranslation';
 import LanguageSwitcher from '../shared/components/LanguageSwitcher';
 
@@ -83,6 +83,7 @@ const Toast = ({ message, type, onClose }) => {
 };
 
 const AUTH_REMEMBER_EMAIL_KEY = 'adminRememberedEmail';
+const SUPERADMIN_EMAIL = 'kem.phearum@gmail.com';
 
 const formatAuthErrorMessage = (error, t, fallback) => {
     const defaultFallback = fallback || t('admin.auth.errors.default');
@@ -199,20 +200,21 @@ const Admin = () => {
     }, [settingsData.notificationsEnabled]);
 
     const isTabAllowed = useCallback((tab, role, permissions) => {
-        if (!role) return false;
-        if (role === 'superadmin') return true;
+        const normalizedRole = normalizeRole(role);
+        if (!normalizedRole) return false;
+        if (isSuperAdminRole(normalizedRole)) return true;
         if (tab === 'profile') return true; // Always allowed
         
         // Base block
-        if (!isActionAllowed(ACTIONS.VIEW, tab, role, permissions)) return false;
+        if (!isActionAllowed(ACTIONS.VIEW, tab, normalizedRole, permissions)) return false;
 
         // Extra protections layer (legacy behavior maintenance)
-        if (['users', 'database', 'audit'].includes(tab) && role !== 'superadmin' && role !== 'admin') return false;
+        if (['users', 'database', 'audit'].includes(tab) && !isAdminRole(normalizedRole)) return false;
         
-        if (permissions?.[role]?.includes(tab)) return true;
+        if (permissions?.[normalizedRole]?.includes(tab)) return true;
         
-        if (role === 'admin') return true;
-        if (role === 'editor') {
+        if (isAdminRole(normalizedRole)) return true;
+        if (normalizedRole === 'editor') {
             return ['general', 'experience', 'projects', 'blog', 'messages'].includes(tab);
         }
         
@@ -348,6 +350,7 @@ const Admin = () => {
         const unsubscribe = AuthService.onAuthChange(async (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
+                const currentEmail = String(currentUser.email || '').toLowerCase();
                 try {
                     // 1. Try fetching by UID first (new standard)
                     let userData = await UserService.fetchUserById(currentUser.uid);
@@ -371,9 +374,9 @@ const Admin = () => {
 
                         // 3. Auto-create if still not found
                         if (!userData) {
-                            const initialRole = currentUser.email === 'kem.phearum@gmail.com' ? 'superadmin' : 'pending';
+                            const initialRole = currentEmail === SUPERADMIN_EMAIL ? 'superadmin' : 'pending';
                             await UserService.createUserDoc({
-                                email: currentUser.email,
+                                email: currentEmail,
                                 role: initialRole,
                                 isActive: true
                             }, currentUser.uid);
@@ -396,17 +399,17 @@ const Admin = () => {
                             return;
                         }
 
-                        let fetchedRole = userData.role;
+                        let fetchedRole = normalizeRole(userData.role) || 'pending';
                         setUserId(userData.id);
                         setUserDisplayName(userData.displayName || '');
 
                         // Enforce Superadmin for the specific email
-                        if (currentUser.email === 'kem.phearum@gmail.com' && fetchedRole !== 'superadmin') {
+                        if (currentEmail === SUPERADMIN_EMAIL && !isSuperAdminRole(fetchedRole)) {
                             fetchedRole = 'superadmin';
                             UserService.updateUserField(userData.id, { role: 'superadmin' }).catch(console.error);
-                        } else if (fetchedRole === 'owner') { // Legacy role name
-                            fetchedRole = 'superadmin';
-                            UserService.updateUserField(userData.id, { role: 'superadmin' }).catch(console.error);
+                        } else if (userData.role !== fetchedRole && isSuperAdminRole(fetchedRole)) {
+                            // Normalize legacy aliases like `owner` and persist canonical value when possible.
+                            UserService.updateUserField(userData.id, { role: fetchedRole }).catch(console.error);
                         }
 
                         // Set the role
@@ -414,7 +417,7 @@ const Admin = () => {
                     }
                 } catch (error) {
                     console.error("Error fetching user role:", error);
-                    setUserRole(currentUser.email === 'kem.phearum@gmail.com' ? 'superadmin' : 'pending');
+                    setUserRole(currentEmail === SUPERADMIN_EMAIL ? 'superadmin' : 'pending');
                 } finally { setIsAuthLoading(false); }
             } else {
                 setUserRole(null); setUserId(null); setUserDisplayName('');
@@ -422,7 +425,6 @@ const Admin = () => {
             }
         });
         return () => unsubscribe();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [showToast, t]);
 
     useEffect(() => {
@@ -435,7 +437,7 @@ const Admin = () => {
     useEffect(() => {
         if (user && userRole) {
             // Only fetch management data for authorized roles
-            const isAuthorized = userRole === 'superadmin' || userRole === 'admin';
+            const isAuthorized = isAdminRole(userRole);
             
             if (isAuthorized) {
                 fetchRolePermissions();
@@ -448,7 +450,7 @@ const Admin = () => {
     }, [user, userRole, fetchRolePermissions, fetchMessages, fetchSectionData]);
 
     useEffect(() => {
-        if (userRole === 'superadmin') {
+        if (isSuperAdminRole(userRole)) {
             const runMigration = async () => {
                 try {
                     const { doc, getDoc, deleteDoc } = await import('firebase/firestore');

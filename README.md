@@ -200,6 +200,33 @@ npm test
 - `npm run lint` - lint project
 - `npm test` - run unit tests
 
+## Seed Scripts
+
+Seed scripts live in `scripts/` and use Firebase Admin credentials from:
+- `SA_FILE`, or
+- `GOOGLE_APPLICATION_CREDENTIALS`, or
+- fallback `sa-source.json` in the project root
+
+Main reset + seed entrypoint:
+- `node scripts/seed-all.cjs`
+
+Reset modes:
+- Standard reset (default): truncates content + operational collections, then reseeds.
+  - Truncated: `posts`, `projects`, `experience`, `content`, `messages`, `settings`, `auditLogs`, `visits`, `dailyUsage`
+  - Preserved: `users`, `rolePermissions`
+- Hard reset: also truncates `users` and `rolePermissions`.
+  - CLI flag: `node scripts/seed-all.cjs --hard-reset`
+  - Env mode (bash): `HARD_RESET=1 node scripts/seed-all.cjs`
+  - Env mode (PowerShell): `$env:HARD_RESET=1; node scripts/seed-all.cjs`
+- Full reset: truncates every top-level collection currently in Firestore before reseeding.
+  - CLI flag: `node scripts/seed-all.cjs --full-reset`
+  - Env mode (bash): `FULL_RESET=1 node scripts/seed-all.cjs`
+  - Env mode (PowerShell): `$env:FULL_RESET=1; node scripts/seed-all.cjs`
+
+Implementation notes:
+- Truncation recursively deletes nested subcollections.
+- `settings` seed uses full document replacement (`merge: false`) to prevent stale keys after repeated seed runs.
+
 ## License
 
 MIT License

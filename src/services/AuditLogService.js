@@ -5,6 +5,7 @@ import {
     collectionGroup, addDoc, serverTimestamp, where,
     startAfter 
 } from 'firebase/firestore';
+import { isSuperAdminRole } from '../utils/permissions';
 
 class AuditLogService extends BaseService {
     constructor() {
@@ -139,7 +140,7 @@ class AuditLogService extends BaseService {
      * @returns {Promise<{data: Array, lastDoc: any, hasMore: boolean}>}
      */
     async fetchSecurityAuditTrail({ userRole, trackRead, lastDoc = null, limit = 10, search = '', dateRange = 'all' }) {
-        if (userRole !== 'superadmin') throw new Error('Unauthorized');
+        if (!isSuperAdminRole(userRole)) throw new Error('Unauthorized');
         const safeLimit = Math.min(100, Math.max(5, Number(limit) || 10));
         const normalizedSearch = (search || '').trim();
         
