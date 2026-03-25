@@ -17,8 +17,8 @@ const settingsGlobal = {
             en: "© 2026 KEM PHEARUM. Built with React & Firebase.",
             km: "រក្សាសិទ្ធិឆ្នាំ 2026 ដោយ កឹម ភារម្យ។ បង្កើតឡើងដោយ React និង Firebase។"
         },
-        logoText: "Phearum",
-        logoHighlight: "Kem ",
+        logoText: "PHEARUM",
+        logoHighlight: "KEM",
         tagline: {
             en: "ICT Security & IT Audit Professional",
             km: "អ្នកជំនាញ ICT Security និង IT Audit"
