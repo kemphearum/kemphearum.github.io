@@ -27,9 +27,9 @@
     }
 
     p {
-        font-family: var(--font-heading, inherit);
-        font-weight: var(--font-weight-heading, 700);
-        font-style: var(--font-style-heading, normal);
+        font-family: var(--font-body, 'Inter', sans-serif);
+        font-weight: var(--font-weight-body, 400);
+        font-style: var(--font-style-body, normal);
         font-size: var(--font-size-heading);
         color: var(--text-secondary);
         max-width: 600px;

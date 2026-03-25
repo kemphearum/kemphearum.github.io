@@ -1,7 +1,7 @@
 @use '../styles/variables' as *;
 
 .section {
-    padding: 6rem 0;
+    @include section-padding;
     background:
         linear-gradient(180deg,
             rgba($primary-color, 0.045) 0%,
@@ -48,10 +48,10 @@
 }
 
 .standaloneSubtitle {
-    font-family: var(--font-heading, inherit);
+    font-family: var(--font-body, inherit);
     font-size: var(--font-size-heading);
-    font-weight: var(--font-weight-heading, 700);
-    font-style: var(--font-style-heading, normal);
+    font-weight: var(--font-weight-body, 400);
+    font-style: var(--font-style-body, normal);
     color: var(--text-secondary);
     max-width: 640px;
     text-align: center;

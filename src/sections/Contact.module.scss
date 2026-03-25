@@ -1,7 +1,7 @@
 @use '../styles/variables' as *;
 
 .section {
-    padding: 6rem 0;
+    @include section-padding;
     width: 100%;
     text-align: center;
     position: relative;

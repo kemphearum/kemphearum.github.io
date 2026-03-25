@@ -25,11 +25,11 @@ const FeaturedBlogs = () => {
         content: getLocalizedField(post.content, language)
     }));
 
-    // Priority: Items marked as 'featured'
-    let featuredList = posts.filter((p) => p.visible !== false && p.featured === true);
-
-    // Filter: Visible posts for the "View All" count
+    // Filter: Visible posts
     const visiblePosts = posts.filter((p) => p.visible !== false);
+
+    // Priority: Items marked as 'featured'
+    let featuredList = visiblePosts.filter((p) => p.featured === true);
 
     // Fallback: If no hand-picked featured posts, show the 3 newest visible ones
     if (featuredList.length === 0) {
@@ -51,7 +51,7 @@ const FeaturedBlogs = () => {
     featuredList = featuredList.slice(0, 3);
 
     return (
-        <section id="blog" className={styles.postsSection} style={{ paddingTop: '6rem', paddingBottom: '6rem' }}>
+        <section id="blog" className={styles.postsSection} style={{ paddingTop: '3rem', paddingBottom: '3rem' }}>
             <div className={styles.container}>
                 <motion.h2
                     className="section-title"
@@ -133,4 +133,3 @@ const FeaturedBlogs = () => {
 };
 
 export default FeaturedBlogs;
-
