@@ -450,7 +450,7 @@
 
 @media (max-width: 480px) {
     .hero {
-        padding-top: calc(#{$nav-height} + env(safe-area-inset-top) + 3rem);
+        padding-top: calc(#{$nav-height} + env(safe-area-inset-top) + 2rem);
         padding-bottom: 2rem;
     }
 }
