@@ -9,7 +9,16 @@ const defaultThemeContext = {
 const ThemeContext = createContext(defaultThemeContext);
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const useTheme = () => useContext(ThemeContext) || defaultThemeContext;
+export const useTheme = () => {
+    const context = useContext(ThemeContext);
+    if (!context || typeof context !== 'object') {
+        return defaultThemeContext;
+    }
+    return {
+        theme: context.theme || 'dark',
+        toggleTheme: typeof context.toggleTheme === 'function' ? context.toggleTheme : defaultThemeContext.toggleTheme
+    };
+};
 
 export const ThemeProvider = ({ children }) => {
     // Start with a consistent theme for the initial hydration pass

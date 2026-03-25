@@ -286,11 +286,11 @@
   margin-bottom: 1.25rem;
   padding: 1.1rem;
   border-radius: 18px;
-  border: 1px solid rgba($primary-color, 0.18);
-  background:
-    linear-gradient(180deg, rgba($primary-color, 0.08), rgba($primary-color, 0.02)),
-    rgba(255, 255, 255, 0.02);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-surface);
+  backdrop-filter: var(--glass-backdrop-filter);
+  -webkit-backdrop-filter: var(--glass-backdrop-filter);
+  box-shadow: var(--glass-shadow);
 }
 
 .ui-analytics-workspace__overview {
@@ -333,8 +333,8 @@
   min-height: 76px;
   padding: 0.72rem 0.82rem;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(12, 12, 20, 0.28);
+  border: 1px solid var(--divider);
+  background: var(--bg-surface-light);
   display: flex;
   flex-direction: column;
   gap: 0.28rem;

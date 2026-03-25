@@ -234,6 +234,33 @@ class BlogService extends BaseService {
             return { isNew: true, id: newId };
         }
     }
+
+    /**
+     * Build unique blog taxonomy suggestions from Firestore tags.
+     * @returns {Promise<Array<string>>}
+     */
+    async getTagSuggestions() {
+        const posts = await this.getAll();
+        const byKey = new Map();
+
+        posts.forEach((post) => {
+            // Prefer published/visible content for end-user filter suggestions.
+            if (post?.visible === false) return;
+
+            const rawTags = Array.isArray(post?.tags)
+                ? post.tags
+                : (typeof post?.tags === 'string' ? post.tags.split(',') : []);
+
+            rawTags.forEach((item) => {
+                const normalized = String(item || '').trim().replace(/\s+/g, ' ');
+                if (!normalized) return;
+                const key = normalized.toLowerCase();
+                if (!byKey.has(key)) byKey.set(key, normalized);
+            });
+        });
+
+        return Array.from(byKey.values()).sort((a, b) => a.localeCompare(b));
+    }
 }
 
 export default new BlogService();

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import styles from './Header.module.scss';
-import { LogOut, Sun, Moon, ExternalLink, Search } from 'lucide-react';
+import { LogOut, Sun, Moon, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import LanguageSwitcher from '../../../shared/components/LanguageSwitcher';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -69,13 +69,6 @@ const Header = ({
                     <span /><span /><span />
                 </button>
                 <span className={styles.brand}>{tr('Admin', 'គ្រប់គ្រង')}<span>.</span></span>
-            </div>
-
-            <div className={styles.center}>
-                <div className={styles.searchInputWrapper}>
-                    <Search />
-                    <input type="text" placeholder={t('admin.header.searchPlaceholder')} disabled />
-                </div>
             </div>
 
             <div className={styles.right}>

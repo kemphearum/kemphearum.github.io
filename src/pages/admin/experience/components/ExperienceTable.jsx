@@ -4,6 +4,7 @@ import { Badge } from '@/shared/components/ui';
 import DataTable from '@/shared/components/ui/data-table/DataTable';
 import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableHelpers';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { getLocalizedField } from '../../../../utils/localization';
 
 /**
  * ExperienceTable Component
@@ -83,7 +84,7 @@ const ExperienceTable = ({
   };
 
   const getDescription = (text = '') => {
-    const normalized = String(text).replace(/\s+/g, ' ').trim();
+    const normalized = String(getLocalizedField(text, language) || '').replace(/\s+/g, ' ').trim();
     if (!normalized) return tr('No description added yet.', 'មិនទាន់មានការពិពណ៌នានៅឡើយទេ។');
     return normalized.length > 96 ? `${normalized.slice(0, 96)}...` : normalized;
   };
@@ -96,9 +97,9 @@ const ExperienceTable = ({
       className: 'ui-table-cell--title',
       render: (row) => (
         <div className="ui-blog-tableTitle">
-          <div className="ui-blog-tableTitle__main">{row.role || tr('Untitled role', 'តួនាទីគ្មានចំណងជើង')}</div>
+          <div className="ui-blog-tableTitle__main">{getLocalizedField(row.role, language) || tr('Untitled role', 'តួនាទីគ្មានចំណងជើង')}</div>
           <div className="ui-blog-tableTitle__meta">
-            <span>{row.company || tr('Company not set', 'មិនទាន់កំណត់ក្រុមហ៊ុន')}</span>
+            <span>{getLocalizedField(row.company, language) || tr('Company not set', 'មិនទាន់កំណត់ក្រុមហ៊ុន')}</span>
             <span>{getDescription(row.description)}</span>
           </div>
         </div>
@@ -190,3 +191,4 @@ const ExperienceTable = ({
 };
 
 export default React.memo(ExperienceTable);
+

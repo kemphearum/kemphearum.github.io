@@ -11,6 +11,7 @@ import {
 } from '../../../../shared/components/ui/dialog/Dialog';
 import styles from '../AuditLogsTab.module.scss';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { getLocalizedField } from '../../../../utils/localization';
 
 const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
   const { language } = useTranslation();
@@ -33,7 +34,8 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
 
   const resolveOperationLabel = (log) => {
     const candidate = log?.label || log?.details?.action || type;
-    return localizeAction(candidate);
+    const localized = getLocalizedField(candidate, language);
+    return localizeAction(localized);
   };
   const handleOpenChange = (nextOpen) => {
     if (!nextOpen) setExpandedRows(new Set());
@@ -199,7 +201,7 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
                                 {resolveOperationLabel(log)}
                                 {log.details?.path && (
                                   <span style={{ color: 'var(--text-secondary)', fontWeight: 400, marginLeft: '4px' }}>
-                                    : {log.details.path}
+                                    : {getLocalizedField(log.details.path, language)}
                                   </span>
                                 )}
                               </span>

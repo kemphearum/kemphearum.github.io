@@ -13,6 +13,7 @@ import SectionHeader from '../components/SectionHeader';
 import { Button } from '@/shared/components/ui';
 import DatabaseStats from './components/DatabaseStats';
 import DatabaseActions from './components/DatabaseActions';
+import DatabaseAdvancedPanel from './components/DatabaseAdvancedPanel';
 import RestoreDialog from './components/RestoreDialog';
 import ArchiveDialog from './components/ArchiveDialog';
 import AuditSettingsPanel from './components/AuditSettingsPanel';
@@ -351,6 +352,8 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 canBackup={canDatabaseActions}
                 canArchive={canArchive}
             />
+
+            <DatabaseAdvancedPanel showToast={showToast} />
 
             <AuditSettingsPanel 
                 auditSettings={auditSettings}

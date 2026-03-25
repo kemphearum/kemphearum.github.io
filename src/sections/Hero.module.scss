@@ -1,7 +1,7 @@
 @use '../styles/variables' as *;
 
 .hero {
-    min-height: 100vh;
+    min-height: 80vh;
     display: flex;
     align-items: center;
     padding-top: $nav-height;
@@ -403,7 +403,7 @@
 
 @media (max-width: 900px) {
     .hero {
-        padding: 6rem 0 4rem;
+        padding: 4rem 0 2rem;
         text-align: center;
 
         .container {

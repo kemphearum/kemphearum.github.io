@@ -2,9 +2,64 @@ import BaseService from './BaseService';
 import { db } from '../firebase';
 import { doc, writeBatch, query, where, getCountFromServer, collection } from 'firebase/firestore';
 
+const UNREAD_COUNT_CACHE_MS = 30000;
+const UNREAD_COUNT_BACKOFF_START_MS = 5000;
+const UNREAD_COUNT_BACKOFF_MAX_MS = 300000;
+
 class MessageService extends BaseService {
     constructor() {
         super('messages', false);
+        this.unreadCountCache = { value: 0, fetchedAt: 0 };
+        this.unreadCountInFlight = null;
+        this.unreadCountBackoffMs = 0;
+        this.unreadCountBackoffUntil = 0;
+    }
+
+    _getCachedUnreadCount() {
+        const value = Number(this.unreadCountCache?.value);
+        return Number.isFinite(value) ? Math.max(0, value) : 0;
+    }
+
+    _setCachedUnreadCount(nextValue) {
+        const value = Number(nextValue);
+        this.unreadCountCache = {
+            value: Number.isFinite(value) ? Math.max(0, value) : 0,
+            fetchedAt: Date.now()
+        };
+    }
+
+    _adjustCachedUnreadCount(delta) {
+        const amount = Number(delta);
+        if (!Number.isFinite(amount) || amount === 0) return;
+        this._setCachedUnreadCount(this._getCachedUnreadCount() + amount);
+    }
+
+    _isQuotaExceededError(error) {
+        const code = String(error?.code || '').toLowerCase();
+        const message = String(error?.message || '').toLowerCase();
+        return (
+            code.includes('resource-exhausted')
+            || code.includes('quota')
+            || message.includes('quota exceeded')
+            || message.includes('too many requests')
+            || message.includes('429')
+        );
+    }
+
+    _increaseUnreadBackoff() {
+        this.unreadCountBackoffMs = this.unreadCountBackoffMs
+            ? Math.min(this.unreadCountBackoffMs * 2, UNREAD_COUNT_BACKOFF_MAX_MS)
+            : UNREAD_COUNT_BACKOFF_START_MS;
+        this.unreadCountBackoffUntil = Date.now() + this.unreadCountBackoffMs;
+    }
+
+    _resetUnreadBackoff() {
+        this.unreadCountBackoffMs = 0;
+        this.unreadCountBackoffUntil = 0;
+    }
+
+    invalidateUnreadCountCache() {
+        this.unreadCountCache.fetchedAt = 0;
     }
 
     /**
@@ -18,7 +73,15 @@ class MessageService extends BaseService {
             ...data,
             senderEmail: data.email?.toLowerCase() || data.senderEmail?.toLowerCase() || ''
         };
-        return super.create(processedData, trackWrite);
+        const id = await super.create(processedData, trackWrite);
+
+        if (processedData.isRead === false || processedData.isRead === undefined) {
+            this._adjustCachedUnreadCount(1);
+        } else {
+            this.invalidateUnreadCountCache();
+        }
+
+        return id;
     }
 
     /**
@@ -33,7 +96,9 @@ class MessageService extends BaseService {
         if (userRole === 'pending') {
             throw new Error('Unauthorized');
         }
-        return this.update(id, { isRead: !currentStatus }, trackWrite);
+        await this.update(id, { isRead: !currentStatus }, trackWrite);
+        // currentStatus=false -> now read, decrement unread. currentStatus=true -> now unread, increment unread.
+        this._adjustCachedUnreadCount(currentStatus ? 1 : -1);
     }
 
     /**
@@ -47,7 +112,8 @@ class MessageService extends BaseService {
         if (userRole === 'pending') {
             throw new Error('Unauthorized');
         }
-        return this.delete(id, trackDelete);
+        await this.delete(id, trackDelete);
+        this.invalidateUnreadCountCache();
     }
 
     /**
@@ -74,6 +140,7 @@ class MessageService extends BaseService {
         if (trackWrite) {
             trackWrite(selectedMessageIds.length, `Batch marked messages as ${isRead ? 'read' : 'unread'}`);
         }
+        this.invalidateUnreadCountCache();
         return { count: selectedMessageIds.length };
     }
 
@@ -100,6 +167,7 @@ class MessageService extends BaseService {
         if (trackDelete) {
             trackDelete(selectedMessageIds.length, 'Batch deleted messages');
         }
+        this.invalidateUnreadCountCache();
         return { count: selectedMessageIds.length };
     }
 
@@ -108,9 +176,44 @@ class MessageService extends BaseService {
      * @returns {Promise<number>}
      */
     async getUnreadCount() {
+        const now = Date.now();
+        const cacheAge = now - Number(this.unreadCountCache?.fetchedAt || 0);
+        const shouldUseFreshCache = cacheAge >= 0 && cacheAge < UNREAD_COUNT_CACHE_MS;
+        if (shouldUseFreshCache) {
+            return this._getCachedUnreadCount();
+        }
+
+        if (this.unreadCountInFlight) {
+            return this.unreadCountInFlight;
+        }
+
+        if (this.unreadCountBackoffUntil > now) {
+            return this._getCachedUnreadCount();
+        }
+
         const q = query(collection(db, this.collectionName), where('isRead', '==', false));
-        const snapshot = await getCountFromServer(q);
-        return snapshot.data().count;
+        this.unreadCountInFlight = (async () => {
+            try {
+                const snapshot = await getCountFromServer(q);
+                const count = Number(snapshot.data()?.count || 0);
+                this._setCachedUnreadCount(count);
+                this._resetUnreadBackoff();
+                return this._getCachedUnreadCount();
+            } catch (error) {
+                if (this._isQuotaExceededError(error)) {
+                    this._increaseUnreadBackoff();
+                    console.warn(
+                        `Unread count query throttled; backing off for ${Math.round(this.unreadCountBackoffMs / 1000)}s.`
+                    );
+                    return this._getCachedUnreadCount();
+                }
+                throw error;
+            } finally {
+                this.unreadCountInFlight = null;
+            }
+        })();
+
+        return this.unreadCountInFlight;
     }
 
     /**

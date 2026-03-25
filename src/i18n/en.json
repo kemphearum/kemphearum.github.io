@@ -335,7 +335,7 @@
     "profile": {
       "title": "Edit Profile",
       "displayName": "Display Name",
-      "displayNamePlaceholder": "Kem Phearum",
+      "displayNamePlaceholder": "KEM PHEARUM",
       "displayNameHint": "This name will be displayed in the Admin sidebar instead of your email address.",
       "emailAddress": "Email Address",
       "saving": "Saving...",
@@ -380,6 +380,7 @@
   },
   "projects": {
     "title": "All Projects",
+    "subtitle": "A curated collection of practical builds, experiments, and production-ready work.",
     "searchPlaceholder": "Search projects...",
     "searchAria": "Search projects",
     "filterAll": "All",

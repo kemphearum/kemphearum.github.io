@@ -4,6 +4,7 @@ import { Button, Badge } from '@/shared/components/ui';
 import DataTable from '@/shared/components/ui/data-table/DataTable';
 import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableHelpers';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { getLocalizedField } from '../../../../utils/localization';
 
 /**
  * BlogTable Component
@@ -52,7 +53,7 @@ const BlogTable = ({
   };
 
   const getExcerpt = (text = '') => {
-    const normalized = String(text).replace(/\s+/g, ' ').trim();
+    const normalized = String(getLocalizedField(text, language) || '').replace(/\s+/g, ' ').trim();
     if (!normalized) return tr('No excerpt added yet.', 'មិនទាន់មានសេចក្តីសង្ខេបនៅឡើយទេ។');
     return normalized.length > 92 ? `${normalized.slice(0, 92)}...` : normalized;
   };
@@ -76,7 +77,7 @@ const BlogTable = ({
 
         return (
           <div className="ui-blog-tableTitle">
-            <div className="ui-blog-tableTitle__main">{row.title || tr('Untitled post', 'អត្ថបទគ្មានចំណងជើង')}</div>
+            <div className="ui-blog-tableTitle__main">{getLocalizedField(row.title, language) || tr('Untitled post', 'អត្ថបទគ្មានចំណងជើង')}</div>
             <div className="ui-blog-tableTitle__meta">
               <span>/{row.slug || row.id}</span>
               <span>{getExcerpt(row.excerpt)}</span>
@@ -189,3 +190,4 @@ const BlogTable = ({
 };
 
 export default React.memo(BlogTable);
+

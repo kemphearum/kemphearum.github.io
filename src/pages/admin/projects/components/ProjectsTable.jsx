@@ -4,6 +4,7 @@ import { Badge, Button } from '@/shared/components/ui';
 import DataTable from '@/shared/components/ui/data-table/DataTable';
 import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableHelpers';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { getLocalizedField } from '../../../../utils/localization';
 
 /**
  * ProjectsTable Component
@@ -52,7 +53,7 @@ const ProjectsTable = ({
   };
 
   const getDescription = (text = '') => {
-    const normalized = String(text).replace(/\s+/g, ' ').trim();
+    const normalized = String(getLocalizedField(text, language) || '').replace(/\s+/g, ' ').trim();
     if (!normalized) return tr('No short description added yet.', 'មិនទាន់មានការពិពណ៌នាខ្លីនៅឡើយទេ។');
     return normalized.length > 96 ? `${normalized.slice(0, 96)}...` : normalized;
   };
@@ -76,7 +77,7 @@ const ProjectsTable = ({
 
         return (
           <div className="ui-blog-tableTitle">
-            <div className="ui-blog-tableTitle__main">{row.title || tr('Untitled project', 'គម្រោងគ្មានចំណងជើង')}</div>
+            <div className="ui-blog-tableTitle__main">{getLocalizedField(row.title, language) || tr('Untitled project', 'គម្រោងគ្មានចំណងជើង')}</div>
             <div className="ui-blog-tableTitle__meta">
               <span>/{row.slug || row.id}</span>
               <span>{getDescription(row.description)}</span>
@@ -189,3 +190,4 @@ const ProjectsTable = ({
 };
 
 export default React.memo(ProjectsTable);
+

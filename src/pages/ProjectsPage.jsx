@@ -43,7 +43,7 @@ const ProjectsPage = () => {
             <Navbar />
             <main className={styles.main}>
                 <div className={styles.content}>
-                    <Projects />
+                    <Projects isStandalone />
                 </div>
             </main>
             <Footer />

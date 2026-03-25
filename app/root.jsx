@@ -8,6 +8,7 @@ import {
   isRouteErrorResponse,
   useRouteError,
   useLocation,
+  useNavigationType,
 } from "react-router";
 import MaintenancePage from '@/sections/MaintenancePage';
 import ComponentErrorBoundary from '@/sections/ErrorBoundary';
@@ -45,19 +46,20 @@ export function Layout({ children }) {
         <Links />
       </head>
       <body>
-          <ComponentErrorBoundary>
-            <QueryClientProvider client={queryClient}>
+          <QueryClientProvider client={queryClient}>
               <LanguageProvider>
                 <ThemeProvider>
                   <ActivityProvider>
+                    <ComponentErrorBoundary>
                     {children}
                     {typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname) && <Analytics />}
+                    </ComponentErrorBoundary>
                   </ActivityProvider>
                 </ThemeProvider>
               </LanguageProvider>
             </QueryClientProvider>
-          </ComponentErrorBoundary>
         <ConditionalScrollRestoration />
+        <RouteScrollReset />
         <Scripts />
       </body>
     </html>
@@ -70,8 +72,30 @@ function ConditionalScrollRestoration() {
   return <ScrollRestoration />;
 }
 
+function RouteScrollReset() {
+  const location = useLocation();
+  const navigationType = useNavigationType();
+
+  useEffect(() => {
+    if (location.hash) return;
+    if (navigationType === 'POP') return;
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location.pathname, location.search, location.hash, navigationType]);
+
+  return null;
+}
+
 function SettingsApplier({ children, initialSettings }) {
   useAnalytics();
+
+  const resolveLocalizedString = (value, fallback = '') => {
+    if (typeof value === 'string') return value;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return fallback;
+
+    const preferredLang = (typeof window !== 'undefined' && localStorage.getItem('portfolio.language')) || 'en';
+    const localized = value[preferredLang] || value.en || value.km;
+    return typeof localized === 'string' ? localized : fallback;
+  };
 
   const { data: globalConfig } = useQuery({
     queryKey: ['settings', 'global'],
@@ -89,7 +113,8 @@ function SettingsApplier({ children, initialSettings }) {
   useEffect(() => {
     if (globalConfig) {
       const site = globalConfig.site || globalConfig;
-      if (site.pageTitle || site.title) document.title = site.pageTitle || site.title;
+      const pageTitle = resolveLocalizedString(site.pageTitle || site.title, document.title);
+      if (pageTitle) document.title = pageTitle;
 
       const favicon = site.pageFaviconUrl || site.favicon;
       if (favicon) {
@@ -155,6 +180,20 @@ function SettingsApplier({ children, initialSettings }) {
       const sizeMap = { 'small': '14px', 'default': '16px', 'large': '18px', 'extra-large': '20px' };
       const sizeKey = typpo.fontSize || 'default';
       root.style.setProperty('--font-size-base', sizeMap[sizeKey] || '16px');
+
+      // Glassmorphism & Theme Variables
+      const glassOpacity = typpo.glassOpacity ?? 0.82;
+      const glassBlur = typpo.glassBlur ?? 12;
+      const glassColor = typpo.glassColor || '#0b1527';
+
+      const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '11, 21, 39';
+      };
+
+      root.style.setProperty('--glass-opacity', glassOpacity);
+      root.style.setProperty('--glass-blur', `${glassBlur}px`);
+      root.style.setProperty('--glass-surface-rgb', hexToRgb(glassColor));
     }
   }, [globalConfig, metadata]);
 

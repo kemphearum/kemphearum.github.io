@@ -3,6 +3,7 @@ import { Clock, User, Globe, Hash, Layout, FileText, Briefcase, Users, Monitor, 
 import DataTable from '../../../../shared/components/ui/data-table/DataTable';
 import styles from '../AuditLogsTab.module.scss';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { getLocalizedField } from '../../../../utils/localization';
 
 const AuditLogsTable = ({ 
   data, 
@@ -107,7 +108,7 @@ const AuditLogsTable = ({
       header: tr('Action', 'សកម្មភាព'),
       sortable: true,
       render: (row) => {
-        const action = row.details?.action || row.type || 'read';
+        const action = getLocalizedField(row.details?.action || row.type || 'read', language);
         return (
           <span className={`${styles.badge} ${styles[`badge--${getBadgeVariant(action)}`]}`}>
             {localizeAction(action)}
@@ -129,21 +130,27 @@ const AuditLogsTable = ({
       key: 'module',
       header: tr('Module', 'ម៉ូឌុល'),
       sortable: true,
-      render: (row) => (
-        <div className={styles.moduleCell}>
-          <div className={styles.moduleIcon}>{getModuleIcon(row.details?.module)}</div>
-          {localizeModule(row.details?.module)}
-        </div>
-      )
+      render: (row) => {
+        const module = getLocalizedField(row.details?.module, language);
+        return (
+          <div className={styles.moduleCell}>
+            <div className={styles.moduleIcon}>{getModuleIcon(module)}</div>
+            {localizeModule(module)}
+          </div>
+        );
+      }
     },
     {
       key: 'entity',
       header: tr('Target Entity', 'ធាតុគោលដៅ'),
-      render: (row) => (
-        <div className={styles.entityCell} title={row.details?.entityName || row.label}>
-          {row.details?.entityName || row.label || '-'}
-        </div>
-      )
+      render: (row) => {
+        const entityName = getLocalizedField(row.details?.entityName || row.label, language);
+        return (
+          <div className={styles.entityCell} title={entityName}>
+            {entityName || '-'}
+          </div>
+        );
+      }
     },
     {
       key: 'user',

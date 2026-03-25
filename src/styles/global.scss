@@ -56,17 +56,23 @@ html {
     --primary-color-strong: #2459ca;
     --accent-color: #14b8a6;
     --bg-color: #090f1d;
-    --bg-surface: rgba(12, 20, 34, 0.9);
-    --bg-surface-light: rgba(14, 24, 40, 0.82);
+    
+    // Theme Variables (Dynamic)
+    --dynamic-glass-opacity: var(--glass-opacity, 0.9);
+    --dynamic-glass-blur: var(--glass-blur, 10px);
+    --dynamic-glass-rgb: var(--glass-surface-rgb, 12, 20, 34);
+
+    --bg-surface: rgba(var(--dynamic-glass-rgb), var(--dynamic-glass-opacity));
+    --bg-surface-light: rgba(var(--dynamic-glass-rgb), calc(var(--dynamic-glass-opacity) - 0.08));
     --text-primary: #eaf0ff;
     --text-secondary: #a7b8d6;
     --glass-surface: rgba(255, 255, 255, 0.04);
-    --glass-backdrop-filter: blur(10px);
+    --glass-backdrop-filter: blur(var(--dynamic-glass-blur));
     --glass-border: rgba(149, 177, 255, 0.22);
     --glass-shadow: 0 20px 50px rgba(3, 8, 20, 0.45);
     --neon-glow: 0 0 12px rgba(47, 109, 246, 0.35);
-    --card-bg: rgba(12, 22, 40, 0.88);
-    --card-bg-rgb: 12, 22, 40;
+    --card-bg: rgba(var(--dynamic-glass-rgb), calc(var(--dynamic-glass-opacity) - 0.02));
+    --card-bg-rgb: var(--dynamic-glass-rgb);
     --primary-color-rgb: 47, 109, 246;
     --card-hover: rgba(47, 109, 246, 0.11);
     --input-bg: rgba(10, 18, 33, 0.75);
@@ -151,41 +157,46 @@ html {
 
 /* Admin Solid Theme Overrides */
 [data-admin-theme="true"] {
-    --bg-surface: #0b1527;
-    --bg-surface-light: #111f37;
-    --glass-surface: #15243d;
-    --glass-backdrop-filter: none;
-    --card-bg: #16253f;
-    --card-bg-rgb: 22, 37, 63;
-    --card-hover: #1d3153;
-    --input-bg: #13233d;
-    --input-focus-bg: #172944;
+    // Theme Variables (Dynamic)
+    --dynamic-glass-opacity: var(--glass-opacity, 0.82);
+    --dynamic-glass-blur: var(--glass-blur, 12px);
+    --dynamic-glass-rgb: var(--glass-surface-rgb, 11, 21, 39);
+
+    --bg-surface: rgba(var(--dynamic-glass-rgb), var(--dynamic-glass-opacity));
+    --bg-surface-light: rgba(var(--dynamic-glass-rgb), calc(var(--dynamic-glass-opacity) - 0.07));
+    --glass-surface: rgba(var(--dynamic-glass-rgb), 0.55);
+    --glass-backdrop-filter: blur(var(--dynamic-glass-blur));
+    --card-bg: rgba(var(--dynamic-glass-rgb), calc(var(--dynamic-glass-opacity) + 0.03));
+    --card-bg-rgb: var(--dynamic-glass-rgb);
+    --card-hover: rgba(var(--dynamic-glass-rgb), 0.52);
+    --input-bg: rgba(var(--dynamic-glass-rgb), 0.65);
+    --input-focus-bg: rgba(var(--dynamic-glass-rgb), 0.88);
     --input-border: rgba(149, 177, 255, 0.28);
     --divider: rgba(149, 177, 255, 0.18);
     --skeleton-base: rgba(149, 177, 255, 0.12);
     --skeleton-shine: rgba(149, 177, 255, 0.22);
-    --card-bg-gradient: linear-gradient(145deg, rgba(17, 31, 54, 0.96) 0%, rgba(10, 18, 33, 0.98) 100%);
-    --sidebar-bg: linear-gradient(180deg, rgba(16, 30, 52, 0.96) 0%, rgba(9, 17, 31, 0.96) 100%);
-    --topnav-bg: #101d33;
+    --card-bg-gradient: linear-gradient(145deg, rgba(var(--dynamic-glass-rgb), 0.88) 0%, rgba(var(--dynamic-glass-rgb), 0.92) 100%);
+    --sidebar-bg: linear-gradient(180deg, rgba(var(--dynamic-glass-rgb), 0.92) 0%, rgba(var(--dynamic-glass-rgb), 0.94) 100%);
+    --topnav-bg: rgba(var(--dynamic-glass-rgb), 0.88);
     --bg-card: var(--card-bg);
-    --workspace-stat-bg: #1b2c48;
+    --workspace-stat-bg: rgba(var(--dynamic-glass-rgb), 0.72);
     --workspace-stat-border: rgba(149, 177, 255, 0.2);
-    --workspace-stat-icon-bg: #243b5d;
+    --workspace-stat-icon-bg: rgba(var(--dynamic-glass-rgb), 0.65);
     --workspace-stat-icon-border: rgba(149, 177, 255, 0.28);
 
     &[data-theme="light"],
     &[data-theme="light"] *,
     [data-theme="light"] & {
         --bg-color: #f8f9fa;
-        --bg-surface: #f4f8ff;
-        --bg-surface-light: #ffffff;
-        --glass-surface: #ffffff;
-        --glass-backdrop-filter: none;
-        --card-bg: #ffffff;
+        --bg-surface: rgba(244, 248, 255, 0.75);
+        --bg-surface-light: rgba(255, 255, 255, 0.68);
+        --glass-surface: rgba(255, 255, 255, 0.62);
+        --glass-backdrop-filter: blur(14px);
+        --card-bg: rgba(255, 255, 255, 0.7);
         --card-bg-rgb: 255, 255, 255;
-        --card-hover: #eef4ff;
-        --input-bg: #f6f9ff;
-        --input-focus-bg: #ffffff;
+        --card-hover: rgba(238, 244, 255, 0.8);
+        --input-bg: rgba(246, 249, 255, 0.75);
+        --input-focus-bg: rgba(255, 255, 255, 0.92);
         --input-border: rgba(47, 109, 246, 0.24);
         --divider: rgba(47, 109, 246, 0.16);
         --text-primary: #1f2937;
@@ -193,13 +204,13 @@ html {
         --text-tertiary: #9ca3af;
         --skeleton-base: rgba(47, 109, 246, 0.08);
         --skeleton-shine: rgba(47, 109, 246, 0.16);
-        --card-bg-gradient: linear-gradient(145deg, #ffffff 0%, #eef4ff 100%);
-        --sidebar-bg: #ffffff;
-        --topnav-bg: #ffffff;
+        --card-bg-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.85) 0%, rgba(238, 244, 255, 0.9) 100%);
+        --sidebar-bg: rgba(255, 255, 255, 0.92);
+        --topnav-bg: rgba(255, 255, 255, 0.88);
         --bg-card: var(--card-bg);
-        --workspace-stat-bg: #e7edf6;
+        --workspace-stat-bg: rgba(231, 237, 246, 0.78);
         --workspace-stat-border: #d2dced;
-        --workspace-stat-icon-bg: #d4dff2;
+        --workspace-stat-icon-bg: rgba(212, 223, 242, 0.82);
         --workspace-stat-icon-border: #b8c8e6;
     }
 }

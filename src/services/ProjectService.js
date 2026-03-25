@@ -236,6 +236,33 @@ class ProjectService extends BaseService {
             ? projectsData.map((project) => this.localizeProject(project, options.lang))
             : projectsData;
     }
+
+    /**
+     * Build unique project taxonomy suggestions from Firestore tech stacks.
+     * @returns {Promise<Array<string>>}
+     */
+    async getCategorySuggestions() {
+        const projects = await this.getAll();
+        const byKey = new Map();
+
+        projects.forEach((project) => {
+            // Prefer published/visible content for end-user filter suggestions.
+            if (project?.visible === false) return;
+
+            const rawStack = Array.isArray(project?.techStack)
+                ? project.techStack
+                : (typeof project?.techStack === 'string' ? project.techStack.split(',') : []);
+
+            rawStack.forEach((item) => {
+                const normalized = String(item || '').trim().replace(/\s+/g, ' ');
+                if (!normalized) return;
+                const key = normalized.toLowerCase();
+                if (!byKey.has(key)) byKey.set(key, normalized);
+            });
+        });
+
+        return Array.from(byKey.values()).sort((a, b) => a.localeCompare(b));
+    }
 }
 
 export default new ProjectService();

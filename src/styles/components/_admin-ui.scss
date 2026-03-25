@@ -3473,6 +3473,33 @@
     }
 }
 
+.ui-advanced-section .ui-advanced-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ui-advanced-code {
+    display: block;
+    padding: 0.55rem 0.7rem;
+    margin-bottom: 0.45rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(10, 10, 18, 0.28);
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
 .ui-file-info {
     display: flex;
     align-items: center;

@@ -20,6 +20,7 @@ import AnimatedBackground from '@/sections/AnimatedBackground';
 import { isActionAllowed, ACTIONS, isAdminRole, isSuperAdminRole, normalizeRole } from '../utils/permissions';
 import { useTranslation } from '../hooks/useTranslation';
 import LanguageSwitcher from '../shared/components/LanguageSwitcher';
+import { getLocalizedField } from '../utils/localization';
 
 // Tab components
 const GeneralTab = lazy(() => import('./admin/general/GeneralTab'));
@@ -57,10 +58,27 @@ const tabSubtitleKeys = {
     settings: 'admin.subtitles.settings'
 };
 
+const normalizeRenderableText = (value, language = 'en', fallback = '') => {
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+
+    if (value && typeof value === 'object') {
+        const localized = getLocalizedField(value, language);
+        if (localized) return localized;
+        try {
+            return JSON.stringify(value);
+        } catch {
+            return fallback;
+        }
+    }
+
+    return fallback;
+};
+
 // ============================================================
 // Toast Component
 // ============================================================
-const Toast = ({ message, type, onClose }) => {
+const Toast = ({ message, type, onClose, language = 'en' }) => {
     useEffect(() => {
         const timer = setTimeout(onClose, 4000);
         return () => clearTimeout(timer);
@@ -72,11 +90,12 @@ const Toast = ({ message, type, onClose }) => {
         warning: '!',
         info: 'i'
     }[type] || '*');
+    const displayMessage = normalizeRenderableText(message, language, '');
 
     return (
         <div className={`ui-toast ui-${type}`}>
             <span style={{ fontWeight: 'bold' }}>{getIcon()}</span>
-            <p>{message}</p>
+            <p>{displayMessage}</p>
             <button onClick={onClose} className="ui-toastClose">x</button>
         </div>
     );
@@ -85,10 +104,11 @@ const Toast = ({ message, type, onClose }) => {
 const AUTH_REMEMBER_EMAIL_KEY = 'adminRememberedEmail';
 const SUPERADMIN_EMAIL = 'kem.phearum@gmail.com';
 
-const formatAuthErrorMessage = (error, t, fallback) => {
+const formatAuthErrorMessage = (error, t, language = 'en', fallback) => {
     const defaultFallback = fallback || t('admin.auth.errors.default');
     const code = error?.code || '';
-    const message = typeof error === 'string' ? error : (error?.message || defaultFallback);
+    const rawMessage = typeof error === 'string' ? error : error?.message;
+    const message = normalizeRenderableText(rawMessage, language, defaultFallback) || defaultFallback;
 
     if (message.includes('disabled by an administrator')) {
         return t('admin.auth.errors.disabledByAdmin');
@@ -133,8 +153,9 @@ const Admin = () => {
     // ====== 1. React & Custom Hooks (Top Level Only) ======
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const { t } = useTranslation();
-    const { theme, toggleTheme } = useTheme();
+    const { t, language } = useTranslation();
+    const themeContext = useTheme() || { theme: 'dark', toggleTheme: () => {} };
+    const { theme, toggleTheme } = themeContext;
     const { trackRead, trackWrite } = useActivity();
     const { loading, execute } = useAsyncAction();
 
@@ -195,9 +216,12 @@ const Admin = () => {
     // ====== 3. Callbacks & Memoized Values (Logic Definitions) ======
     const showToast = useCallback((message, type = 'success') => {
         if (settingsData.notificationsEnabled !== false) {
-            setToast({ message, type });
+            setToast({
+                message: normalizeRenderableText(message, language, t('admin.auth.errors.default')),
+                type
+            });
         }
-    }, [settingsData.notificationsEnabled]);
+    }, [settingsData.notificationsEnabled, language, t]);
 
     const isTabAllowed = useCallback((tab, role, permissions) => {
         const normalizedRole = normalizeRole(role);
@@ -401,7 +425,7 @@ const Admin = () => {
 
                         let fetchedRole = normalizeRole(userData.role) || 'pending';
                         setUserId(userData.id);
-                        setUserDisplayName(userData.displayName || '');
+                        setUserDisplayName(normalizeRenderableText(userData.displayName, language, ''));
 
                         // Enforce Superadmin for the specific email
                         if (currentEmail === SUPERADMIN_EMAIL && !isSuperAdminRole(fetchedRole)) {
@@ -425,7 +449,7 @@ const Admin = () => {
             }
         });
         return () => unsubscribe();
-    }, [showToast, t]);
+    }, [showToast, t, language]);
 
     useEffect(() => {
         if (!isAuthLoading && userRole && !isTabAllowed(activeTab, userRole, rolePermissions)) {
@@ -612,7 +636,7 @@ const Admin = () => {
         });
 
         if (!result?.success) {
-            setAuthError(formatAuthErrorMessage(result?.error, t));
+            setAuthError(formatAuthErrorMessage(result?.error, t, language));
             return;
         }
 
@@ -690,7 +714,7 @@ const Admin = () => {
                     glowOpacity={settingsData.bgGlowOpacity ?? 40}
                     interactive={settingsData.bgInteractive ?? true}
                 />
-                {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+                {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} language={language} />}
                 <div className="ui-loginCard">
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
                         <LanguageSwitcher />
@@ -815,7 +839,7 @@ const Admin = () => {
             subtitle={t(tabSubtitleKeys[activeTab] || 'admin.subtitles.default')}
             settingsData={settingsData}
         >
-            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} language={language} />}
             <Suspense fallback={<div style={{display: 'flex', justifyContent: 'center', padding: '4rem'}}><Spinner size="xl" /></div>}>
                 {renderActiveTab()}
             </Suspense>

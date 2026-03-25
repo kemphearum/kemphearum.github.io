@@ -4,31 +4,34 @@ const db = initDb();
 
 const settingsGlobal = {
     site: {
-        pageTitle: { 
-            en: "Kem Phearum | Portfolio", 
-            km: "កែម ភារម្យ | ផតថលីយ៉ូ" 
+        pageTitle: {
+            en: "KEM PHEARUM | Portfolio",
+            km: "កឹម ភារម្យ | ផតថលីយ៉ូ"
         },
-        pageDescription: { 
-            en: "ICT Security & IT Audit Professional based in Phnom Penh, Cambodia.", 
-            km: "អ្នកជំនាញ ICT Security និង IT Audit ដែលមានមូលដ្ឋាននៅរាជធានីភ្នំពេញ ប្រទេសកម្ពុជា។" 
+        pageDescription: {
+            en: "ICT Security & IT Audit Professional based in Phnom Penh, Cambodia.",
+            km: "អ្នកជំនាញ ICT Security និង IT Audit ដែលមានមូលដ្ឋាននៅរាជធានីភ្នំពេញ ប្រទេសកម្ពុជា។"
         },
         pageFaviconUrl: "/vite.svg", // Default vite icon or custom
-        footerText: { 
-            en: "© 2026 Kem Phearum. Built with React & Firebase.", 
-            km: "រក្សាសិទ្ធិឆ្នាំ 2026 ដោយ កែម ភារម្យ។ បង្កើតឡើងដោយ React និង Firebase។" 
+        footerText: {
+            en: "© 2026 KEM PHEARUM. Built with React & Firebase.",
+            km: "រក្សាសិទ្ធិឆ្នាំ 2026 ដោយ កឹម ភារម្យ។ បង្កើតឡើងដោយ React និង Firebase។"
         },
         logoText: "Phearum",
         logoHighlight: "Kem ",
-        tagline: { 
-            en: "ICT Security & IT Audit Professional", 
-            km: "អ្នកជំនាញ ICT Security និង IT Audit" 
+        tagline: {
+            en: "ICT Security & IT Audit Professional",
+            km: "អ្នកជំនាញ ICT Security និង IT Audit"
         },
         mirrors: [
             { name: 'GitHub Pages', url: 'https://kemphearum.github.io/' },
             { name: 'Vercel Mirror', url: 'https://phearum-info.vercel.app/' },
             { name: 'Firebase Primary', url: 'https://phearum-info.web.app/' },
             { name: 'Firebase Mirror', url: 'https://kem-phearum.web.app/' }
-        ]
+        ],
+        glassOpacity: 0.82,
+        glassBlur: 12,
+        glassColor: '#0b1527'
     },
     updatedAt: admin.firestore.FieldValue.serverTimestamp()
 };

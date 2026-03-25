@@ -7,6 +7,7 @@ import { useTheme } from '../context/ThemeContext';
 import LanguageSwitcher from '../shared/components/LanguageSwitcher';
 import { useTranslation } from '../hooks/useTranslation';
 import { normalizeSectionTarget } from '../utils/sectionNavigation';
+import { getLocalizedField } from '../utils/localization';
 
 const SECTION_IDS = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
 
@@ -20,7 +21,8 @@ const Navbar = () => {
     const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const isHome = location.pathname === '/';
     const currentHash = (location.hash || '').replace('#', '');
-    const { theme, toggleTheme } = useTheme();
+    const themeContext = useTheme() || { theme: 'dark', toggleTheme: () => {} };
+    const { theme, toggleTheme } = themeContext;
     const navItems = [
         { key: 'home', type: 'section', label: t('nav.home') },
         { key: 'about', type: 'section', label: t('nav.about') },
@@ -42,6 +44,8 @@ const Navbar = () => {
         logoText: '',
         logoHighlight: ''
     };
+    const logoHighlight = getLocalizedField(settings.logoHighlight, language);
+    const logoText = getLocalizedField(settings.logoText, language);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -138,6 +142,19 @@ const Navbar = () => {
         }
     };
 
+    const handleRouteNavigation = () => {
+        if (isOpen) {
+            setIsOpen(false);
+            // Wait for mobile menu/body-lock cleanup before forcing top.
+            setTimeout(() => {
+                window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+            }, 50);
+            return;
+        }
+
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    };
+
     const isItemActive = (item) => {
         if (item.key === 'blog') {
             if (isHome) return activeSection === 'blog';
@@ -168,7 +185,7 @@ const Navbar = () => {
                             }
                         }}
                     >
-                        {settings.logoHighlight}<span className={styles.highlight}>{settings.logoText}</span>
+                        {logoHighlight}<span className={styles.highlight}>{logoText}</span>
                     </Link>
                 </div>
 
@@ -181,7 +198,7 @@ const Navbar = () => {
                                 {item.type === 'route' ? (
                                     <Link
                                         to={item.to}
-                                        onClick={() => setIsOpen(false)}
+                                        onClick={handleRouteNavigation}
                                         className={active ? styles.activeNav : ''}
                                         aria-current={active ? 'page' : undefined}
                                     >

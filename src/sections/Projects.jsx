@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
 
-const Projects = () => {
+const Projects = ({ isStandalone = false }) => {
     const { language, t } = useTranslation();
     const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const ALL_FILTER = '__all__';
@@ -94,7 +94,7 @@ const Projects = () => {
     );
 
     return (
-        <section id="projects" className={styles.section}>
+        <section id="projects" className={`${styles.section} ${isStandalone ? styles.sectionStandalone : ''}`}>
             <div className={styles.container}>
                 <motion.h2
                     className="section-title"
@@ -104,6 +104,17 @@ const Projects = () => {
                 >
                     {t('projects.title')}
                 </motion.h2>
+                {isStandalone && (
+                    <motion.p
+                        className={styles.standaloneSubtitle}
+                        initial={{ opacity: 0, y: -10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.08 }}
+                    >
+                        {t('projects.subtitle')}
+                    </motion.p>
+                )}
 
                 {/* Search Bar */}
                 <motion.div

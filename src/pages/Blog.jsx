@@ -126,9 +126,13 @@ const Blog = () => {
             <main className={styles.blogPage}>
                 <section className={styles.hero}>
                     <div className={styles.container}>
-                        <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                        <motion.h2
+                            className="section-title"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                        >
                             {t('blog.title')}
-                        </motion.h1>
+                        </motion.h2>
                         <motion.p
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}

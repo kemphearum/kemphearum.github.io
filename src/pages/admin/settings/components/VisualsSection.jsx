@@ -173,6 +173,73 @@ const VisualsSection = ({
                                 </div>
                             </div>
                         </section>
+                        
+                        <section className={tabStyles.settingsPanel}>
+                            <div className={tabStyles.panelHeader}>
+                                <div className={tabStyles.panelTitleGroup}>
+                                    <span className={tabStyles.panelEyebrow}>{tr('Container Appearance', 'រូបរាងកុងតឺន័រ')}</span>
+                                    <h4 className={tabStyles.panelTitle}>{tr('Glassmorphism & Surfaces', 'បែបកញ្ចក់ និងផ្ទៃ')}</h4>
+                                    <p className={tabStyles.panelDescription}>{tr('Control the transparency, blur, and base color of UI containers across the entire portfolio and admin dashboard.', 'គ្រប់គ្រងតម្លាភាព ភាពព្រាល និងពណ៌មូលដ្ឋាននៃកុងតឺន័រ UI ទូទាំង Portfolio និង Dashboard Admin។')}</p>
+                                </div>
+                                <span className={tabStyles.panelBadge}>{tr('Shared UI', 'UI រួម')}</span>
+                            </div>
+
+                            <div className={tabStyles.rangeStack}>
+                                <div className={tabStyles.rangeCard}>
+                                    <div className={tabStyles.rangeCardHeader}>
+                                        <div>
+                                            <div className={tabStyles.rangeTitle}>{tr('Glass Opacity', 'តម្លាភាពកញ្ចក់')}</div>
+                                            <div className={tabStyles.rangeHint}>{tr('Control how translucent the containers appear.', 'គ្រប់គ្រងកម្រិតថ្លានៃកុងតឺន័រ។')}</div>
+                                        </div>
+                                        <span className={tabStyles.rangeValue}>{Math.round((settingsData.glassOpacity ?? 0.82) * 100)}%</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={Math.round((settingsData.glassOpacity ?? 0.82) * 100)}
+                                        onChange={(e) => setSettingsData({ ...settingsData, glassOpacity: parseFloat((e.target.value / 100).toFixed(2)) })}
+                                        className="ui-range-input"
+                                    />
+                                </div>
+
+                                <div className={tabStyles.rangeCard}>
+                                    <div className={tabStyles.rangeCardHeader}>
+                                        <div>
+                                            <div className={tabStyles.rangeTitle}>{tr('Backdrop Blur', 'ភាពព្រាលផ្ទៃក្រោយ')}</div>
+                                            <div className={tabStyles.rangeHint}>{tr('Set the intensity of the glass blur effect.', 'កំណត់កម្រិតព្រាលនៃបែបផែនកញ្ចក់។')}</div>
+                                        </div>
+                                        <span className={tabStyles.rangeValue}>{settingsData.glassBlur ?? 12}px</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="40"
+                                        value={settingsData.glassBlur ?? 12}
+                                        onChange={(e) => setSettingsData({ ...settingsData, glassBlur: parseInt(e.target.value, 10) })}
+                                        className="ui-range-input"
+                                    />
+                                </div>
+
+                                <div className={tabStyles.rangeCard}>
+                                    <div className={tabStyles.rangeCardHeader}>
+                                        <div>
+                                            <div className={tabStyles.rangeTitle}>{tr('Surface Base Color', 'ពណ៌មូលដ្ឋានផ្ទៃ')}</div>
+                                            <div className={tabStyles.rangeHint}>{tr('The primary hue for containers and cards.', 'ពណ៌ចម្បងសម្រាប់កុងតឺន័រ និងកាត។')}</div>
+                                        </div>
+                                        <div className={tabStyles.colorInputWrapper}>
+                                            <span className={tabStyles.colorValue}>{settingsData.glassColor || '#0b1527'}</span>
+                                            <input
+                                                type="color"
+                                                value={settingsData.glassColor || '#0b1527'}
+                                                onChange={(e) => setSettingsData({ ...settingsData, glassColor: e.target.value })}
+                                                className={tabStyles.colorInput}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
                     </div>
 
                     <aside className={tabStyles.settingsAsideColumn}>
