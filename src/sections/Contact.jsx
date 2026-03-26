@@ -20,7 +20,7 @@ const DEFAULT_PRIMARY_CONTACT_ORIGIN = 'https://phearum-info.vercel.app';
 const getPrimaryContactEndpoint = () => {
     const explicitOrigin = String(import.meta.env.VITE_PRIMARY_CONTACT_ORIGIN || '').trim();
     const origin = explicitOrigin || DEFAULT_PRIMARY_CONTACT_ORIGIN;
-    return `${origin.replace(/\/$/, '')}/api/submit-contact`;
+    return `${origin.replace(/\/$/, '')}/api/contact`;
 };
 
 const getFirebaseContactEndpoint = () => {
@@ -41,7 +41,7 @@ const getContactEndpoints = () => {
 
     if (isVercelHost || isLocalHost) {
         // Use same-origin route first when API is expected in this host.
-        endpoints.push('/api/submit-contact');
+        endpoints.push('/api/contact');
         endpoints.push(getPrimaryContactEndpoint());
     } else {
         // On GitHub Pages/Firebase mirrors, target primary Vercel API directly.
@@ -61,7 +61,8 @@ const submitContact = async (payload) => {
         try {
             const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                // Use a simple request content type to avoid CORS preflight across mirrors.
+                headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
                 body: JSON.stringify(payload)
             });
 
