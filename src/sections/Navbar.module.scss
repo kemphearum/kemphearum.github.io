@@ -134,6 +134,14 @@
     }
 }
 
+// Slightly increase navbar label size for Khmer script readability.
+:global(html[lang="km"]) .navLinks li {
+    button,
+    a {
+        font-size: calc(var(--font-size-nav) * 1.12) !important;
+    }
+}
+
 .activeNav {
     color: $primary-color !important;
     background: rgba($primary-color, 0.08) !important;
