@@ -15,9 +15,7 @@ export default defineConfig({
   ssr: {
     noExternal: [
       "react-markdown",
-      "rehype-raw",
       "rehype-slug",
-      "dompurify",
       "lucide-react",
       "framer-motion",
       "react-syntax-highlighter"

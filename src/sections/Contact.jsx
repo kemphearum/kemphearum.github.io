@@ -15,6 +15,14 @@ const getConfiguredContactEndpoint = () => {
     return null;
 };
 
+const DEFAULT_PRIMARY_CONTACT_ORIGIN = 'https://phearum-info.vercel.app';
+
+const getPrimaryContactEndpoint = () => {
+    const explicitOrigin = String(import.meta.env.VITE_PRIMARY_CONTACT_ORIGIN || '').trim();
+    const origin = explicitOrigin || DEFAULT_PRIMARY_CONTACT_ORIGIN;
+    return `${origin.replace(/\/$/, '')}/api/submit-contact`;
+};
+
 const getFirebaseContactEndpoint = () => {
     const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
     if (projectId) {
@@ -27,9 +35,19 @@ const getContactEndpoints = () => {
     const endpoints = [];
     const configured = getConfiguredContactEndpoint();
     if (configured) endpoints.push(configured);
+    const hostname = typeof window !== 'undefined' ? String(window.location.hostname || '') : '';
+    const isVercelHost = hostname.endsWith('.vercel.app');
+    const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
 
-    // Same-origin Vercel serverless endpoint.
-    endpoints.push('/api/submit-contact');
+    if (isVercelHost || isLocalHost) {
+        // Use same-origin route first when API is expected in this host.
+        endpoints.push('/api/submit-contact');
+        endpoints.push(getPrimaryContactEndpoint());
+    } else {
+        // On GitHub Pages/Firebase mirrors, target primary Vercel API directly.
+        endpoints.push(getPrimaryContactEndpoint());
+    }
+
     endpoints.push(getFirebaseContactEndpoint());
 
     return Array.from(new Set(endpoints));

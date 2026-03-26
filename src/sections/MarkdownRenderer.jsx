@@ -1,10 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
 import rehypeSlug from 'rehype-slug';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import DOMPurify from 'dompurify';
 import { Check, Copy } from 'lucide-react';
 import styles from './MarkdownRenderer.module.scss';
 import { useTranslation } from '../hooks/useTranslation';
@@ -55,29 +53,15 @@ const CodeBlock = ({ inline, className, children, ...props }) => {
 const MarkdownRenderer = ({ content }) => {
     const { language } = useTranslation();
     const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
-    const [mounted, setMounted] = useState(false);
-    
-    useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    // Sanitize the content before rendering to prevent XSS. 
-    // We only sanitize on the client after mount to ensure the initial hydration matches the server's raw string
-    const cleanContent = useMemo(() => {
-        if (!mounted || typeof window === 'undefined') return content;
-        return DOMPurify.sanitize(content, {
-            ADD_TAGS: ['iframe'],
-            ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling', 'width', 'height', 'style']
-        });
-    }, [content, mounted]);
+    const safeContent = typeof content === 'string' ? content : '';
 
     return (
         <div className={styles.markdownContent}>
             <ReactMarkdown
-                rehypePlugins={[rehypeRaw, rehypeSlug]}
+                rehypePlugins={[rehypeSlug]}
                 components={{
                     code: CodeBlock,
-                    iframe: ({ node, allowFullScreen: _, allowfullscreen: __, ...props }) => {
+                    iframe: (props) => {
                         return (
                             <span className={styles.iframeWrapper}>
                                 <iframe {...props} allowFullScreen={true} />
@@ -138,7 +122,7 @@ const MarkdownRenderer = ({ content }) => {
                     }
                 }}
             >
-                {cleanContent}
+                {safeContent}
             </ReactMarkdown>
         </div>
     );

@@ -3,9 +3,19 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 const RATE_LIMIT_COLLECTION = 'contactRateLimits';
 const MESSAGE_COLLECTION = 'messages';
+const ALLOWED_ORIGINS = new Set([
+  'https://kemphearum.github.io',
+  'https://www.kemphearum.github.io',
+  'https://phearum-info.web.app',
+  'https://phearum-info.firebaseapp.com',
+  'https://kem-phearum.web.app',
+  'https://kem-phearum.firebaseapp.com',
+  'https://phearum-info.vercel.app',
+  'http://localhost:5173'
+]);
 
 const parseServiceAccount = () => {
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const raw = globalThis.process?.env?.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (!raw) {
     throw new Error('Missing FIREBASE_SERVICE_ACCOUNT_JSON in Vercel environment.');
   }
@@ -84,6 +94,11 @@ const getClientIp = (req) => {
 };
 
 export default async function handler(req, res) {
+  const origin = String(req.headers.origin || '');
+  if (ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -145,4 +160,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }
-

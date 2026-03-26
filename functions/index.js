@@ -282,10 +282,11 @@ exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
             }
 
             const collectionName = type === 'blog' ? 'posts' : 'projects';
+            const defaultImage = sanitizePublicUrl(`${protocol}://${host}/og-image.jpg`, `https://${DEFAULT_PUBLIC_HOST}/og-image.jpg`);
             
             let title = 'Kem Phearum - Portfolio & Blog';
             let description = 'A modern, responsive personal portfolio and Markdown blog built by Kem Phearum.';
-            let imageUrl = 'https://kemphearum.github.io/og-image.jpg';
+            let imageUrl = defaultImage;
             
             const snapshot = await admin.firestore().collection(collectionName).where('slug', '==', slug).limit(1).get();
             if (!snapshot.empty) {
@@ -305,7 +306,7 @@ exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
 
             const safeTitle = escapeHtml(title);
             const safeDescription = escapeHtml(description);
-            const safeImageUrl = escapeHtml(sanitizePublicUrl(imageUrl, 'https://kemphearum.github.io/og-image.jpg'));
+            const safeImageUrl = escapeHtml(sanitizePublicUrl(imageUrl, defaultImage));
             const safeFullUrl = escapeHtml(fullUrl);
 
             const metaTags = `
