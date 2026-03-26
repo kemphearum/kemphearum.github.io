@@ -199,6 +199,9 @@ npm test
 - `npm run preview` - preview production build
 - `npm run lint` - lint project
 - `npm test` - run unit tests
+- `npm run deploy:firebase:hosting` - deploy static hosting only
+- `npm run deploy:firebase:rules` - deploy Firestore security rules only
+- `npm run deploy:firebase:backend` - deploy Functions + Firestore rules together
 
 ## Seed Scripts
 
@@ -216,8 +219,17 @@ Reset modes:
   - Preserved: `users`, `rolePermissions`
 - Hard reset: also truncates `users` and `rolePermissions`.
   - CLI flag: `node scripts/seed-all.cjs --hard-reset`
-  - Env mode (bash): `HARD_RESET=1 node scripts/seed-all.cjs`
-  - Env mode (PowerShell): `$env:HARD_RESET=1; node scripts/seed-all.cjs`
+- Env mode (bash): `HARD_RESET=1 node scripts/seed-all.cjs`
+- Env mode (PowerShell): `$env:HARD_RESET=1; node scripts/seed-all.cjs`
+
+## Deployment Safety Notes
+
+For production contact form handling, deploy backend before or with frontend:
+
+1. `npm run deploy:firebase:backend`
+2. `npm run deploy:firebase:hosting`
+
+If hosting deploys first while Functions/Rules are not live yet, contact submissions can fail until backend deployment completes.
 - Full reset: truncates every top-level collection currently in Firestore before reseeding.
   - CLI flag: `node scripts/seed-all.cjs --full-reset`
   - Env mode (bash): `FULL_RESET=1 node scripts/seed-all.cjs`

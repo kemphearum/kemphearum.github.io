@@ -42,4 +42,5 @@ build/
 build_log.txt
 check_actions.cjs
 .vercel
+.firebase/
 .env*.local
