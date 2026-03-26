@@ -64,7 +64,8 @@ const ALLOWED_PUBLIC_HOSTS = new Set([
     DEFAULT_PUBLIC_HOST,
     'phearum-info.firebaseapp.com',
     'kemphearum.github.io',
-    'www.kemphearum.github.io'
+    'www.kemphearum.github.io',
+    'phearum-info.vercel.app'
 ]);
 
 function normalizeHost(rawHost = '') {
@@ -101,6 +102,146 @@ function sanitizePublicUrl(value, fallback) {
     }
     return fallback;
 }
+
+function getLocalizedText(value, fallback = '') {
+    if (!value) return fallback;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') {
+        const english = typeof value.en === 'string' ? value.en.trim() : '';
+        const khmer = typeof value.km === 'string' ? value.km.trim() : '';
+        return english || khmer || fallback;
+    }
+    return fallback;
+}
+
+function setCorsHeaders(req, res) {
+    const allowedOrigins = new Set([
+        'https://kemphearum.github.io',
+        'https://www.kemphearum.github.io',
+        'https://phearum-info.web.app',
+        'https://phearum-info.firebaseapp.com',
+        'https://kem-phearum.web.app',
+        'https://kem-phearum.firebaseapp.com',
+        'https://phearum-info.vercel.app',
+        'http://localhost:5173'
+    ]);
+
+    const origin = String(req.headers.origin || '');
+    if (allowedOrigins.has(origin)) {
+        res.set('Access-Control-Allow-Origin', origin);
+    }
+    res.set('Vary', 'Origin');
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function normalizeText(value, maxLength = 5000) {
+    return String(value || '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .slice(0, maxLength);
+}
+
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+async function enforceContactRateLimit(identifier) {
+    const now = Date.now();
+    const minuteMs = 60 * 1000;
+    const dayMs = 24 * 60 * 60 * 1000;
+    const rateRef = admin.firestore().collection('contactRateLimits').doc(identifier);
+
+    await admin.firestore().runTransaction(async (tx) => {
+        const snap = await tx.get(rateRef);
+        const data = snap.exists ? snap.data() : {};
+        const minuteWindowStart = Number(data.minuteWindowStart || 0);
+        const dayWindowStart = Number(data.dayWindowStart || 0);
+        const minuteCount = Number(data.minuteCount || 0);
+        const dayCount = Number(data.dayCount || 0);
+
+        const inMinuteWindow = now - minuteWindowStart < minuteMs;
+        const inDayWindow = now - dayWindowStart < dayMs;
+
+        const nextMinuteCount = inMinuteWindow ? minuteCount + 1 : 1;
+        const nextDayCount = inDayWindow ? dayCount + 1 : 1;
+
+        // Hard limits for free-tier quota protection
+        if (nextMinuteCount > 1) {
+            throw new functions.https.HttpsError('resource-exhausted', 'Too many requests. Please wait a minute.');
+        }
+        if (nextDayCount > 5) {
+            throw new functions.https.HttpsError('resource-exhausted', 'Daily request limit reached. Please try tomorrow.');
+        }
+
+        tx.set(rateRef, {
+            minuteWindowStart: inMinuteWindow ? minuteWindowStart : now,
+            dayWindowStart: inDayWindow ? dayWindowStart : now,
+            minuteCount: nextMinuteCount,
+            dayCount: nextDayCount,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+    });
+}
+
+exports.submitContact = functions.https.onRequest(async (req, res) => {
+    setCorsHeaders(req, res);
+
+    if (req.method === 'OPTIONS') {
+        return res.status(204).send('');
+    }
+
+    if (req.method !== 'POST') {
+        return res.status(405).json({ success: false, error: 'Method not allowed' });
+    }
+
+    try {
+        const payload = req.body && typeof req.body === 'object' ? req.body : {};
+        const honeypot = normalizeText(payload.website || '', 200);
+        if (honeypot) {
+            // Silently accept bot submissions without writing.
+            return res.status(200).json({ success: true });
+        }
+
+        const name = normalizeText(payload.name, 100);
+        const email = normalizeText(payload.email, 200).toLowerCase();
+        const message = String(payload.message || '').trim().slice(0, 5000);
+
+        if (!name || name.length < 2) {
+            return res.status(400).json({ success: false, error: 'Name is required.' });
+        }
+        if (!email || !isValidEmail(email)) {
+            return res.status(400).json({ success: false, error: 'A valid email is required.' });
+        }
+        if (!message || message.length < 10) {
+            return res.status(400).json({ success: false, error: 'Message is too short.' });
+        }
+
+        const forwarded = String(req.headers['x-forwarded-for'] || '');
+        const ip = normalizeText(forwarded.split(',')[0] || req.ip || 'unknown', 100);
+        const identifier = `${ip}:${email}`.toLowerCase();
+        await enforceContactRateLimit(identifier);
+
+        await admin.firestore().collection('messages').add({
+            name,
+            email,
+            senderEmail: email,
+            message,
+            isRead: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            source: 'contact-function'
+        });
+
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        const code = error?.code || '';
+        if (code === 'resource-exhausted') {
+            return res.status(429).json({ success: false, error: error.message || 'Too many requests.' });
+        }
+        console.error('submitContact error:', error);
+        return res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
 
 exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
     try {
@@ -149,16 +290,16 @@ exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
             const snapshot = await admin.firestore().collection(collectionName).where('slug', '==', slug).limit(1).get();
             if (!snapshot.empty) {
                 const data = snapshot.docs[0].data();
-                title = data.title || title;
-                description = data.excerpt || data.description || description;
-                imageUrl = data.coverImage || data.imageUrl || imageUrl;
+                title = getLocalizedText(data.title, title);
+                description = getLocalizedText(data.excerpt, getLocalizedText(data.description, description));
+                imageUrl = sanitizePublicUrl(data.coverImage || data.imageUrl || imageUrl, imageUrl);
             } else {
                 const doc = await admin.firestore().collection(collectionName).doc(slug).get();
                 if (doc.exists) {
                     const data = doc.data();
-                    title = data.title || title;
-                    description = data.excerpt || data.description || description;
-                    imageUrl = data.coverImage || data.imageUrl || imageUrl;
+                    title = getLocalizedText(data.title, title);
+                    description = getLocalizedText(data.excerpt, getLocalizedText(data.description, description));
+                    imageUrl = sanitizePublicUrl(data.coverImage || data.imageUrl || imageUrl, imageUrl);
                 }
             }
 

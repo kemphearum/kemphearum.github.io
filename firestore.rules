@@ -149,7 +149,9 @@ service cloud.firestore {
 
     // Messages: Public can write (send), only Admin can read/manage
     match /messages/{document=**} {
-      allow create: if request.resource.data.keys().hasAll(['name', 'email', 'message', 'createdAt']);
+      // Public writes are handled through Cloud Functions (Admin SDK bypasses rules).
+      // This blocks direct client spam against Firestore quota.
+      allow create: if isAdmin();
       allow read, update, delete: if isAdmin();
     }
 

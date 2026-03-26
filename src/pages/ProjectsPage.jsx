@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
-import { db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { getLocalizedField } from '../utils/localization';
+import SettingsService from '../services/SettingsService';
 
 const getMetaLanguage = () => {
     if (typeof window === 'undefined') return 'en';
@@ -9,9 +8,12 @@ const getMetaLanguage = () => {
 };
 
 export async function loader() {
-    const docRef = doc(db, 'settings', 'global');
-    const snap = await getDoc(docRef);
-    return snap.exists() ? snap.data() : null;
+    try {
+        return await SettingsService.fetchGlobalSettings();
+    } catch (error) {
+        console.error("Projects Loader Error:", error);
+        return null;
+    }
 }
 
 export function meta({ data }) {

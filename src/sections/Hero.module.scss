@@ -143,7 +143,9 @@
 
     color: var(--text-primary);
     margin-bottom: 0.5rem;
-    line-height: 1.1;
+    // Reserve extra vertical room for scripts with taller glyph marks (e.g. Khmer).
+    line-height: 1.2;
+    padding-block: 0.12em 0.14em;
     letter-spacing: -1px;
     background: linear-gradient(135deg, var(--hero-gradient-start) 0%, var(--hero-gradient-end) 100%);
     -webkit-background-clip: text;

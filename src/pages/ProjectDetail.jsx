@@ -18,8 +18,6 @@ import Footer from '@/sections/Footer';
 import RelatedProjects from '@/sections/RelatedProjects';
 import TableOfContents from '@/sections/TableOfContents';
 import styles from './ProjectDetail.module.scss';
-import { db } from '../firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { getLocalizedField } from '../utils/localization';
 import { useTranslation } from '../hooks/useTranslation';
 
@@ -29,24 +27,12 @@ const getMetaLanguage = () => {
 };
 
 export async function loader({ params }) {
-    const q = query(collection(db, 'projects'), where("slug", "==", params.slug));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-        return querySnapshot.docs[0].data();
-    }
-
-    // Fallback: search by ID if slug not found
     try {
-        const docRef = doc(db, 'projects', params.slug);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            return docSnap.data();
-        }
+        return await ProjectService.fetchProjectBySlug(params.slug);
     } catch (e) {
-        console.error("Error in loader fallback:", e);
+        console.error("Project detail loader failed:", e);
+        return null;
     }
-
-    return null;
 }
 
 export function meta({ data }) {
@@ -78,9 +64,9 @@ const ProjectDetail = () => {
     const { trackRead } = useActivity();
 
     const { data: project, isLoading: loading, isError } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 300000,
+        refetchOnWindowFocus: false,
         queryKey: ['project', slug],
         queryFn: async () => {
             const projectData = await ProjectService.fetchProjectBySlug(slug);

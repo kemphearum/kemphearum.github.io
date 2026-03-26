@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { db } from '../firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { getLocalizedField } from '../utils/localization';
+import SettingsService from '../services/SettingsService';
 
 const getMetaLanguage = () => {
     if (typeof window === 'undefined') return 'en';
@@ -9,9 +8,12 @@ const getMetaLanguage = () => {
 };
 
 export async function loader() {
-    const docRef = doc(db, 'settings', 'global');
-    const snap = await getDoc(docRef);
-    return snap.exists() ? snap.data() : null;
+    try {
+        return await SettingsService.fetchGlobalSettings();
+    } catch (error) {
+        console.error("Blog Loader Error:", error);
+        return null;
+    }
 }
 
 export function meta({ data }) {
@@ -30,20 +32,20 @@ export function meta({ data }) {
 
 import { useQuery } from '@tanstack/react-query';
 import BlogService from '../services/BlogService';
-import SettingsService from '../services/SettingsService';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
-import { Link } from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 import Navbar from '@/sections/Navbar';
 import Footer from '@/sections/Footer';
 import styles from './Blog.module.scss';
 import { useTranslation } from '../hooks/useTranslation';
 
 const Blog = () => {
+    const loaderData = useLoaderData();
     const { language, t } = useTranslation();
     const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const { data: postsData, isLoading: loadingPosts } = useQuery({
-        staleTime: 60000,
+        staleTime: 5 * 60 * 1000,
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['posts'],
@@ -51,11 +53,12 @@ const Blog = () => {
     });
 
     const { data: globalConfig } = useQuery({
-        staleTime: 60000,
+        staleTime: 5 * 60 * 1000,
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['settings', 'global'],
-        queryFn: () => SettingsService.fetchGlobalSettings()
+        queryFn: () => SettingsService.fetchGlobalSettings(),
+        initialData: loaderData || undefined
     });
 
     const settings = globalConfig?.site || globalConfig;

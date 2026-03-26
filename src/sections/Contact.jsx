@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import MessageService from '../services/MessageService';
-import { serverTimestamp } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
 import ContentService from '../services/ContentService';
 import { useAnalytics } from '../hooks/useAnalytics';
@@ -10,6 +8,62 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
+
+const getConfiguredContactEndpoint = () => {
+    const explicit = String(import.meta.env.VITE_CONTACT_ENDPOINT || '').trim();
+    if (explicit) return explicit;
+    return null;
+};
+
+const getFirebaseContactEndpoint = () => {
+    const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+    if (projectId) {
+        return `https://us-central1-${projectId}.cloudfunctions.net/submitContact`;
+    }
+    return 'https://us-central1-phearum-info.cloudfunctions.net/submitContact';
+};
+
+const getContactEndpoints = () => {
+    const endpoints = [];
+    const configured = getConfiguredContactEndpoint();
+    if (configured) endpoints.push(configured);
+
+    // Same-origin Vercel serverless endpoint.
+    endpoints.push('/api/submit-contact');
+    endpoints.push(getFirebaseContactEndpoint());
+
+    return Array.from(new Set(endpoints));
+};
+
+const submitContact = async (payload) => {
+    const endpoints = getContactEndpoints();
+    let lastError = null;
+
+    for (const endpoint of endpoints) {
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) return { success: true };
+            if (response.status === 429) return { success: false, rateLimited: true };
+
+            // Try next endpoint for typical route-not-found / backend unavailable.
+            if ([404, 405, 500, 502, 503].includes(response.status)) {
+                lastError = new Error(`Endpoint failed (${endpoint}): ${response.status}`);
+                continue;
+            }
+
+            lastError = new Error(`Contact endpoint rejected request (${response.status})`);
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    throw lastError || new Error('Unable to submit contact form');
+};
 
 const Contact = () => {
     const { trackEvent } = useAnalytics();
@@ -53,11 +107,16 @@ const Contact = () => {
 
         setStatus('sending');
         try {
-            await MessageService.create({
+            const result = await submitContact({
                 ...formData,
-                isRead: false,
-                createdAt: serverTimestamp()
-            }, null); // no trackWrite because this is public frontend
+                website: '' // honeypot field
+            });
+
+            if (result?.rateLimited) {
+                setStatus('rate_limited');
+                setTimeout(() => setStatus(null), 5000);
+                return;
+            }
 
             localStorage.setItem('lastContactSubmit', Date.now().toString());
             setStatus('success');
@@ -131,6 +190,16 @@ const Contact = () => {
                                 />
                             </div>
                         </div>
+
+                        <input
+                            type="text"
+                            name="website"
+                            autoComplete="off"
+                            tabIndex="-1"
+                            aria-hidden="true"
+                            style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', opacity: 0 }}
+                            onChange={() => {}}
+                        />
 
                         <div className={styles.inputGroup}>
                             <label htmlFor="message">{t('contact.message')}</label>
