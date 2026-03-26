@@ -83,9 +83,22 @@ const Blog = () => {
         return Array.from(tags).sort();
     }, [posts]);
 
-    const displayTags = settings?.blogFilters
-        ? settings.blogFilters.split(',').map(s => s.trim()).filter(s => s)
-        : allTags.slice(0, 8);
+    const displayTags = React.useMemo(() => {
+        const rawFilters = settings?.blogFilters;
+        const localizedFilters = getLocalizedField(rawFilters, language);
+        const source = Array.isArray(localizedFilters)
+            ? localizedFilters.join(',')
+            : String(localizedFilters ?? '');
+
+        const parsed = source
+            .replace(/\n/g, ',')
+            .replace(/;/g, ',')
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean);
+
+        return parsed.length > 0 ? parsed : allTags.slice(0, 8);
+    }, [settings?.blogFilters, language, allTags]);
 
     const visiblePosts = posts.filter(post => {
         if (!post.visible) return false;

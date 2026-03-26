@@ -69,9 +69,22 @@ const Projects = ({ isStandalone = false }) => {
         return acc;
     }, []);
 
-    const displayTags = settings?.projectFilters
-        ? settings.projectFilters.split(',').map(s => s.trim()).filter(s => s)
-        : allTags.slice(0, 8);
+    const displayTags = React.useMemo(() => {
+        const rawFilters = settings?.projectFilters;
+        const localizedFilters = getLocalizedField(rawFilters, language);
+        const source = Array.isArray(localizedFilters)
+            ? localizedFilters.join(',')
+            : String(localizedFilters ?? '');
+
+        const parsed = source
+            .replace(/\n/g, ',')
+            .replace(/;/g, ',')
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean);
+
+        return parsed.length > 0 ? parsed : allTags.slice(0, 8);
+    }, [settings?.projectFilters, language, allTags]);
 
     // Apply search + tag filter
     const filteredProjects = visibleProjects.filter(p => {
