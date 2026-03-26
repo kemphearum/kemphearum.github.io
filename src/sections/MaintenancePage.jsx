@@ -2,11 +2,24 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Home, RefreshCcw, AlertCircle, Wrench } from 'lucide-react';
 import styles from './MaintenancePage.module.scss';
-import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
 
+const resolveLanguage = () => {
+    if (typeof window !== 'undefined') {
+        const stored = String(localStorage.getItem('portfolio.language') || '').toLowerCase();
+        if (stored === 'km' || stored === 'en') return stored;
+    }
+
+    if (typeof document !== 'undefined') {
+        const docLang = String(document.documentElement.lang || '').toLowerCase();
+        if (docLang.startsWith('km')) return 'km';
+    }
+
+    return 'en';
+};
+
 const MaintenancePage = ({ error, resetErrorBoundary, title, message }) => {
-    const { language } = useTranslation();
+    const language = resolveLanguage();
     const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
 
     const safeText = (value, fallback = '') => {

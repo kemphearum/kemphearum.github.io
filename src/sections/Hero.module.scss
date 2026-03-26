@@ -229,6 +229,7 @@
 .ctaSecondary {
     display: inline-flex;
     align-items: center;
+    gap: 0.55rem;
     padding: 0.9rem 1.8rem;
     font-size: var(--font-size-ui);
     font-weight: 600;
@@ -244,6 +245,10 @@
         color: $primary-color;
         background: rgba($primary-color, 0.05);
         transform: translateY(-3px);
+    }
+
+    svg {
+        flex-shrink: 0;
     }
 }
 
