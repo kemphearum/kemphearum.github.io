@@ -119,6 +119,21 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
     }
   });
 
+  const { data: experienceStats = { total: 0, visible: 0, companies: 0, currentRoles: 0 } } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    queryKey: ['experience', 'stats', language],
+    queryFn: async () => {
+      const result = await BaseService.safe(() => ExperienceService.fetchStats(language));
+      if (result.error) {
+        showToast(result.error, 'error');
+        return { total: 0, visible: 0, companies: 0, currentRoles: 0 };
+      }
+      return result.data;
+    }
+  });
+
   const experiences = experiencesResult.data;
 
   const experiencesByTimeline = useMemo(() => {
@@ -149,37 +164,33 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   })), [experiencesByTimeline, language]);
 
   const workspaceStats = useMemo(() => {
-    const visibleCount = experiencesByTimeline.filter((item) => item.visible !== false).length;
-    const currentCount = experiencesByTimeline.filter((item) => isCurrentRole(item)).length;
-    const companyCount = new Set(experiencesByTimeline.map((item) => getLocalizedField(item.company, language)).filter(Boolean)).size;
-
     return [
       {
-        label: t('admin.common.stats.onThisPage.label'),
-        value: experiencesByTimeline.length,
-        hint: t('admin.common.stats.onThisPage.hint'),
+        label: t('admin.experience.stats.total.label'),
+        value: experienceStats.total,
+        hint: t('admin.experience.stats.total.hint'),
         icon: BriefcaseBusiness
       },
       {
         label: t('admin.experience.stats.visible.label'),
-        value: visibleCount,
+        value: experienceStats.visible,
         hint: t('admin.experience.stats.visible.hint'),
         icon: Eye
       },
       {
         label: t('admin.experience.stats.companies.label'),
-        value: companyCount,
+        value: experienceStats.companies,
         hint: t('admin.experience.stats.companies.hint'),
         icon: Building2
       },
       {
         label: t('admin.experience.stats.currentRoles.label'),
-        value: currentCount,
+        value: experienceStats.currentRoles,
         hint: t('admin.experience.stats.currentRoles.hint'),
         icon: Clock3
       }
     ];
-  }, [experiencesByTimeline, language, t]);
+  }, [experienceStats, t]);
 
   // Robust date parser for legacy formats (yyyy-mm)
   const parseLegacyDate = (dateVal, isEnd = false) => {

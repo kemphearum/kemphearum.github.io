@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import UserService from '../services/UserService';
 import MessageService from '../services/MessageService';
 import ContentService from '../services/ContentService';
@@ -21,6 +21,8 @@ import { isActionAllowed, ACTIONS, isAdminRole, isSuperAdminRole, normalizeRole 
 import { useTranslation } from '../hooks/useTranslation';
 import LanguageSwitcher from '../shared/components/LanguageSwitcher';
 import { getLocalizedField } from '../utils/localization';
+
+const DEFAULT_VISUAL_SETTINGS = SettingsService.constructor.DEFAULT_VISUAL_SETTINGS || {};
 
 // Tab components
 const GeneralTab = lazy(() => import('./admin/general/GeneralTab'));
@@ -194,7 +196,7 @@ const Admin = () => {
 
     // Content & Permissions
     const [rolePermissions, setRolePermissions] = useState({});
-    const [messages, setMessages] = useState([]);
+    const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
     const [toast, setToast] = useState(null);
 
     // Form Data
@@ -210,7 +212,7 @@ const Admin = () => {
         footerText: '',
         projectFilters: '',
         blogFilters: '',
-        notificationsEnabled: true
+        ...DEFAULT_VISUAL_SETTINGS
     });
 
     // ====== 3. Callbacks & Memoized Values (Logic Definitions) ======
@@ -256,8 +258,7 @@ const Admin = () => {
         try {
             const count = await MessageService.getUnreadCount();
             trackRead(1, 'Fetched inbox unread count');
-            // Store dummy objects to keep unreadMessagesCount calculation working for the badge
-            setMessages(new Array(count).fill({ isRead: false }));
+            setUnreadMessagesCount(Math.max(0, Number(count) || 0));
         } catch (error) { console.error("Error fetching message count:", error); }
     }, [trackRead]);
 
@@ -271,6 +272,7 @@ const Admin = () => {
                 const global = await SettingsService.fetchGlobalSettings();
                 if (global) {
                     setSettingsData({
+                        ...DEFAULT_VISUAL_SETTINGS,
                         ...global.site,
                         ...global.typography,
                         ...global.system
@@ -278,6 +280,11 @@ const Admin = () => {
                     if (typeof global.system?.sidebarPersistent === 'boolean') {
                         setSidebarPersistent(global.system.sidebarPersistent);
                     }
+                } else {
+                    setSettingsData((prev) => ({
+                        ...prev,
+                        ...DEFAULT_VISUAL_SETTINGS
+                    }));
                 }
                 if (trackRead) trackRead(1, 'Fetched global settings');
                 return;
@@ -343,8 +350,6 @@ const Admin = () => {
             errorMessage: t('admin.common.saveSectionFailed', { section })
         });
     }, [showToast, trackWrite, queryClient, execute, checkActionAllowed, t]);
-
-    const unreadMessagesCount = useMemo(() => messages.filter(m => !m.isRead).length, [messages]);
 
     // ====== 4. Side Effects (Must follow all definitions) ======
     useEffect(() => {

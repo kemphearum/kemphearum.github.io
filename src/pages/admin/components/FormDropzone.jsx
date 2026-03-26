@@ -18,9 +18,8 @@ const FormDropzone = ({
     circular = false,
     aspectRatio = "16 / 6"
 }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
-    const dropzonePlaceholder = placeholder || tr('Upload Image', 'ផ្ទុករូបភាព');
+    const { t } = useTranslation();
+    const dropzonePlaceholder = placeholder || t('admin.common.dropzone.uploadImage');
     const [previewUrl, setPreviewUrl] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
     const [internalClear, setInternalClear] = useState(false);
@@ -52,13 +51,13 @@ const FormDropzone = ({
         // Check file type
         const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
         if (!validTypes.includes(file.type)) {
-            return tr('Invalid file type. Please upload an image (JPG, PNG, WebP, GIF, or SVG).', 'ប្រភេទឯកសារមិនត្រឹមត្រូវ។ សូមផ្ទុករូបភាព (JPG, PNG, WebP, GIF ឬ SVG)។');
+            return t('admin.common.dropzone.invalidFileType');
         }
 
         // Check file size (1MB Firestore limit)
         const maxSize = 1 * 1024 * 1024;
         if (file.size > maxSize) {
-            return tr('File is too large. Maximum size is 1MB to ensure database compatibility.', 'ឯកសារធំពេក។ ទំហំអតិបរមា 1MB ដើម្បីឱ្យសមស្របជាមួយមូលដ្ឋានទិន្នន័យ។');
+            return t('admin.common.dropzone.fileTooLarge');
         }
 
         return null;
@@ -167,7 +166,7 @@ const FormDropzone = ({
                         <div className="ui-premiumImageCard" style={circular ? { borderRadius: '50%', height: '100%', overflow: 'visible' } : {}}>
                             <img 
                                 src={previewUrl || currentImageUrl} 
-                                alt={tr('Current image', 'រូបភាពបច្ចុប្បន្ន')}
+                                alt={t('admin.common.dropzone.currentImage')}
                                 className="ui-unifiedPreviewImg" 
                                 style={circular ? { borderRadius: '50%' } : {}}
                             />
@@ -184,10 +183,10 @@ const FormDropzone = ({
                                         e.stopPropagation();
                                         setIsPreviewModalOpen(true);
                                     }}
-                                    title={tr('Preview Image', 'មើលរូបភាពជាមុន')}
+                                    title={t('admin.common.dropzone.previewImage')}
                                 >
                                     <Maximize2 size={18} />
-                                    {!circular && <span>{tr('Preview', 'មើលជាមុន')}</span>}
+                                    {!circular && <span>{t('admin.common.dropzone.preview')}</span>}
                                 </button>
                                 
                                 <div className="ui-pillDivider" />
@@ -196,10 +195,10 @@ const FormDropzone = ({
                                     type="button"
                                     className="ui-pillActionBtn"
                                     onClick={handleBrowseClick}
-                                    title={tr('Change Image', 'ប្តូររូបភាព')}
+                                    title={t('admin.common.dropzone.changeImage')}
                                 >
                                     <FolderPlus size={18} />
-                                    {!circular && <span>{tr('Change', 'ប្តូរ')}</span>}
+                                    {!circular && <span>{t('admin.common.dropzone.change')}</span>}
                                 </button>
                                 
                                 {onClearExisting && (
@@ -209,10 +208,10 @@ const FormDropzone = ({
                                             type="button"
                                             className="ui-pillActionBtn ui-danger"
                                             onClick={handleRemove}
-                                            title={tr('Clear Image', 'សម្អាតរូបភាព')}
+                                            title={t('admin.common.dropzone.clearImage')}
                                         >
                                             <Trash2 size={18} />
-                                            {!circular && <span>{tr('Clear', 'សម្អាត')}</span>}
+                                            {!circular && <span>{t('admin.common.dropzone.clear')}</span>}
                                         </button>
                                     </>
                                 )}
@@ -222,26 +221,26 @@ const FormDropzone = ({
                             <div className={`ui-topBadge ${isNewImage ? 'ui-newBadge' : ''} ${circular ? 'ui-circularBadge' : ''}`}>
                                 {isNewImage ? (
                                     <>
-                                        <CheckCircle2 size={12} /> {circular ? tr('Ready', 'រួចរាល់') : tr('Ready to Upload', 'រួចរាល់សម្រាប់ផ្ទុក')}
+                                        <CheckCircle2 size={12} /> {circular ? t('admin.common.dropzone.readyCircular') : t('admin.common.dropzone.readyToUpload')}
                                         {file && <span className="ui-fileMetric">({formatSize(file.size)})</span>}
                                     </>
                                 ) : (
                                     <>
-                                        <ImageIcon size={12} /> {circular ? tr('Active', 'កំពុងប្រើ') : tr('Currently Published', 'កំពុងប្រើបច្ចុប្បន្ន')}
+                                        <ImageIcon size={12} /> {circular ? t('admin.common.dropzone.activeCircular') : t('admin.common.dropzone.currentlyPublished')}
                                     </>
                                 )}
                             </div>
 
                             {/* Hover Help Info */}
-                            <div className="ui-hoverHelp">
-                                <Upload size={14} /> {tr('Click or Drop to Change', 'ចុច ឬទម្លាក់ដើម្បីប្តូរ')}
+                            <div className={`ui-hoverHelp ${circular ? 'ui-circularHelp' : ''}`}>
+                                <Upload size={14} /> {t('admin.common.dropzone.clickOrDrop')}
                             </div>
 
                             {/* Drop Overlay (only visible on drag) */}
                             {isDragging && (
                                 <div className="ui-dropOverlay">
                                     <Upload size={32} />
-                                    <span>{tr('Drop to Replace', 'ទម្លាក់ដើម្បីជំនួស')}</span>
+                                    <span>{t('admin.common.dropzone.dropToReplace')}</span>
                                 </div>
                             )}
                         </div>
@@ -267,9 +266,9 @@ const FormDropzone = ({
                             </div>
                             <div className="ui-fullUploadText">
                                 <span className="ui-main" style={circular ? { fontSize: '0.9rem' } : {}}>{dropzonePlaceholder}</span>
-                                {!circular && <span className="ui-sub">{tr('Drag and drop your image here, or click to browse', 'អូសទម្លាក់រូបភាពនៅទីនេះ ឬចុចដើម្បីរកមើល')}</span>}
+                                {!circular && <span className="ui-sub">{t('admin.common.dropzone.dragAndDrop')}</span>}
                                 <span className="ui-uploadRequirements" style={circular ? { fontSize: '0.7rem' } : {}}>
-                                    {circular ? tr('Max 1MB', 'អតិបរមា 1MB') : tr('Max 1MB • Recommended: 1920x720 (16:6)', 'អតិបរមា 1MB • ណែនាំ៖ 1920x720 (16:6)')}
+                                    {circular ? t('admin.common.dropzone.maxSizeCircular') : t('admin.common.dropzone.maxSizeFull')}
                                 </span>
                             </div>
                         </div>
@@ -284,19 +283,34 @@ const FormDropzone = ({
 
             {/* Integrated Preview Modal */}
             <Dialog open={isPreviewModalOpen} onOpenChange={(open) => !open && setIsPreviewModalOpen(false)}>
-                <Dialog.Content maxWidth="1000px" style={{ padding: 0, background: '#000' }}>
+                <Dialog.Content maxWidth="1000px" style={{ padding: 0 }}>
                     <Dialog.Header>
                         <Dialog.Title style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                             <ImageIcon2 size={20} className="ui-primaryText" />
-                            <span>{tr('Image Preview', 'មើលរូបភាពជាមុន')}</span>
+                            <span>{t('admin.common.dropzone.imagePreview')}</span>
                         </Dialog.Title>
                     </Dialog.Header>
                     
-                    <Dialog.Body style={{ padding: 0, background: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+                    <Dialog.Body
+                        style={{
+                            padding: 0,
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            minHeight: '400px',
+                            background: 'linear-gradient(180deg, rgba(var(--primary-color-rgb), 0.06), transparent 26%), var(--bg-surface-light)'
+                        }}
+                    >
                         <img 
                             src={previewUrl || currentImageUrl} 
-                            alt={tr('Preview image', 'រូបភាពមើលជាមុន')}
-                            style={{ maxWidth: '100%', maxHeight: '80vh', objectFit: 'contain' }} 
+                            alt={t('admin.common.dropzone.previewAlt')}
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: '80vh',
+                                objectFit: 'contain',
+                                borderRadius: '18px',
+                                boxShadow: '0 18px 40px rgba(7, 12, 24, 0.22)'
+                            }} 
                         />
                     </Dialog.Body>
                 </Dialog.Content>

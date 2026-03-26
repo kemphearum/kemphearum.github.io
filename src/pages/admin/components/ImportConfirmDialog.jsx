@@ -16,10 +16,9 @@ const ImportConfirmDialog = ({
   notes = [],
   confirmText = ''
 }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
-  const resolvedTitle = title || tr('Confirm Import', 'បញ្ជាក់ការនាំចូល');
-  const resolvedConfirmText = confirmText || tr('Import', 'នាំចូល');
+  const { t } = useTranslation();
+  const resolvedTitle = title || t('admin.common.import.confirmTitle');
+  const resolvedConfirmText = confirmText || t('admin.common.import.confirmImport');
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -40,7 +39,7 @@ const ImportConfirmDialog = ({
         <Dialog.Body className="ui-importConfirmDialog__body">
           <div className="ui-importConfirmDialog__fileMeta">
             <FileText size={16} />
-            <span className="ui-importConfirmDialog__fileName">{fileName || tr('Selected file', 'ឯកសារដែលបានជ្រើស')}</span>
+            <span className="ui-importConfirmDialog__fileName">{fileName || t('admin.common.import.selectedFile')}</span>
             {format && <span className="ui-importConfirmDialog__format">{format}</span>}
           </div>
 
@@ -66,10 +65,10 @@ const ImportConfirmDialog = ({
 
         <Dialog.Footer className="ui-importConfirmDialog__footer">
           <Button variant="ghost" onClick={() => onOpenChange(false)} type="button">
-            {tr('Cancel', 'បោះបង់')}
+            {t('admin.common.import.cancel')}
           </Button>
           <Button onClick={onConfirm} isLoading={loading}>
-            {loading ? tr('Importing...', 'កំពុងនាំចូល...') : resolvedConfirmText}
+            {loading ? t('admin.common.import.importing') : resolvedConfirmText}
           </Button>
         </Dialog.Footer>
       </Dialog.Content>

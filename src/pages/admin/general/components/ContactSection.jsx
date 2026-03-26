@@ -11,8 +11,7 @@ const ContactSection = ({
     loading,
     onOpenHistory
 }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t } = useTranslation();
 
     return (
         <div className="ui-card">
@@ -21,17 +20,17 @@ const ContactSection = ({
                     <Mail size={24} />
                 </div>
                 <div className={'ui-title-meta'}>
-                    <h3>{tr('Contact Section', 'ផ្នែកទំនាក់ទំនង')}</h3>
-                    <p>{tr('Manage the intro text displayed above your contact form.', 'គ្រប់គ្រងអត្ថបទណែនាំដែលបង្ហាញលើទម្រង់ទំនាក់ទំនង។')}</p>
+                    <h3>{t('admin.general.sections.contact.title')}</h3>
+                    <p>{t('admin.general.sections.contact.description')}</p>
                 </div>
                 <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => onOpenHistory('contact', tr('Contact Section', 'ផ្នែកទំនាក់ទំនង'))}
+                    onClick={() => onOpenHistory('contact', t('admin.general.sections.contact.title'))}
                     className={'ui-history-btn'}
                 >
-                    <History size={16} /> <span>{tr('History', 'ប្រវត្តិ')}</span>
+                    <History size={16} /> <span>{t('admin.general.sections.contact.history')}</span>
                 </Button>
             </div>
             <div className={'ui-form'}>
@@ -39,18 +38,18 @@ const ContactSection = ({
                     <div className="ui-generalPrimary">
                         <div className="ui-generalAsideCard">
                             <div className="ui-generalAsideCard__head">
-                                <h4>{tr('Contact intro', 'អត្ថបទណែនាំទំនាក់ទំនង')}</h4>
-                                <p>{tr('Set the tone before visitors reach the form so expectations feel clear and welcoming.', 'កំណត់សម្លេងមុនពេលអ្នកទស្សនាដល់ទម្រង់ ដើម្បីឱ្យការរំពឹងទុកច្បាស់លាស់ និងរួសរាយ។')}</p>
+                                <h4>{t('admin.general.sections.contact.intro.title')}</h4>
+                                <p>{t('admin.general.sections.contact.intro.description')}</p>
                             </div>
 
                             <FormField
-                                label={tr('Contact Intro (EN)', 'អត្ថបទណែនាំទំនាក់ទំនង (EN)')}
+                                label={t('admin.general.sections.contact.fields.introEn')}
                                 name="introTextEn"
-                                validation={{ required: tr('English intro text is required', 'ត្រូវការអត្ថបទណែនាំជាភាសាអង់គ្លេស') }}
+                                validation={{ required: t('admin.general.sections.contact.fields.introRequired') }}
                             >
                                 <FormMarkdownEditor
                                     id="contact-intro-en"
-                                    placeholder={tr('The text shown above the contact form...', 'អត្ថបទដែលបង្ហាញនៅលើទម្រង់ទំនាក់ទំនង...')}
+                                    placeholder={t('admin.general.sections.contact.fields.introPlaceholderEn')}
                                     isPreviewMode={contactPreview}
                                     onTogglePreview={() => setContactPreview(!contactPreview)}
                                     rows="4"
@@ -58,12 +57,12 @@ const ContactSection = ({
                             </FormField>
 
                             <FormField
-                                label={tr('Contact Intro (KM)', 'អត្ថបទណែនាំទំនាក់ទំនង (KM)')}
+                                label={t('admin.general.sections.contact.fields.introKm')}
                                 name="introTextKm"
                             >
                                 <FormMarkdownEditor
                                     id="contact-intro-km"
-                                    placeholder={tr('Khmer intro text shown above the contact form...', 'អត្ថបទខ្មែរ ដែលបង្ហាញនៅលើទម្រង់ទំនាក់ទំនង...')}
+                                    placeholder={t('admin.general.sections.contact.fields.introPlaceholderKm')}
                                     isPreviewMode={contactPreview}
                                     onTogglePreview={() => setContactPreview(!contactPreview)}
                                     rows="4"
@@ -75,15 +74,15 @@ const ContactSection = ({
                     <aside className="ui-generalAside">
                         <div className="ui-generalAsideCard">
                             <div className="ui-generalAsideCard__head">
-                                <h4>{tr('Best practice', 'អនុវត្តល្អបំផុត')}</h4>
-                                <p>{tr('Keep this copy short. It should invite contact, explain what people can reach out about, and reduce friction.', 'រក្សាអត្ថបទនេះឱ្យខ្លី។ វាគួរអញ្ជើញឱ្យទាក់ទង ពន្យល់ពីអ្វីដែលអាចទាក់ទងបាន និងកាត់បន្ថយការលំបាក។')}</p>
+                                <h4>{t('admin.general.sections.contact.bestPractice.title')}</h4>
+                                <p>{t('admin.general.sections.contact.bestPractice.description')}</p>
                             </div>
                         </div>
                     </aside>
                 </div>
                 <div className={'ui-formFooter'}>
                     <Button type="submit" isLoading={loading} className="ui-button-block">
-                        <Save size={18} /> {tr('Save Contact Changes', 'រក្សាទុកការកែប្រែទំនាក់ទំនង')}
+                        <Save size={18} /> {t('admin.general.sections.contact.save')}
                     </Button>
                 </div>
             </div>

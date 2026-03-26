@@ -33,8 +33,7 @@ const BlogTable = ({
   paginationVariant = 'cursor',
   selection = null
 }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { t, language } = useTranslation();
   const formatPostDate = (value) => {
     if (!value?.seconds) return { day: '-', time: '' };
 
@@ -54,7 +53,7 @@ const BlogTable = ({
 
   const getExcerpt = (text = '') => {
     const normalized = String(getLocalizedField(text, language) || '').replace(/\s+/g, ' ').trim();
-    if (!normalized) return tr('No excerpt added yet.', 'មិនទាន់មានសេចក្តីសង្ខេបនៅឡើយទេ។');
+    if (!normalized) return t('admin.blog.table.noExcerpt');
     return normalized.length > 92 ? `${normalized.slice(0, 92)}...` : normalized;
   };
 
@@ -69,7 +68,7 @@ const BlogTable = ({
   const columns = [
     {
       key: 'title',
-      header: tr('Title', 'ចំណងជើង'),
+      header: t('admin.blog.table.title'),
       sortable: true,
       className: 'ui-table-cell--title',
       render: (row) => {
@@ -77,7 +76,7 @@ const BlogTable = ({
 
         return (
           <div className="ui-blog-tableTitle">
-            <div className="ui-blog-tableTitle__main">{getLocalizedField(row.title, language) || tr('Untitled post', 'អត្ថបទគ្មានចំណងជើង')}</div>
+            <div className="ui-blog-tableTitle__main">{getLocalizedField(row.title, language) || t('admin.blog.table.untitled')}</div>
             <div className="ui-blog-tableTitle__meta">
               <span>/{row.slug || row.id}</span>
               <span>{getExcerpt(row.excerpt)}</span>
@@ -95,29 +94,29 @@ const BlogTable = ({
     },
     {
       key: 'visible',
-      header: tr('Status', 'ស្ថានភាព'),
+      header: t('admin.blog.table.status'),
       sortable: true,
       render: (row) => (
         <div className="ui-blog-statusCell">
           <div className="ui-blog-statusCell__badges">
             <Badge variant={row.visible !== false ? 'success' : 'warning'}>
-              {row.visible !== false ? tr('Live', 'បង្ហាញ') : tr('Draft', 'ព្រាង')}
+              {row.visible !== false ? t('admin.blog.table.live') : t('admin.blog.table.draft')}
             </Badge>
             {row.featured && (
-              <Badge variant="primary">{tr('Featured', 'ពិសេស')}</Badge>
+              <Badge variant="primary">{t('admin.blog.table.featured')}</Badge>
             )}
           </div>
           <span className="ui-blog-statusCell__note">
             {row.featured
-              ? tr('Homepage highlight enabled', 'បានដាក់បន្លិចលើទំព័រដើម')
-              : tr('Standard listing', 'បញ្ជីធម្មតា')}
+              ? t('admin.blog.table.homepageHighlight')
+              : t('admin.blog.table.standardListing')}
           </span>
         </div>
       )
     },
     {
       key: 'createdAt',
-      header: tr('Date', 'កាលបរិច្ឆេទ'),
+      header: t('admin.blog.table.date'),
       sortable: true,
       render: (row) => {
         const formatted = formatPostDate(row.createdAt);
@@ -131,7 +130,7 @@ const BlogTable = ({
     },
     {
       key: 'actions',
-      header: tr('Actions', 'សកម្មភាព'),
+      header: t('admin.blog.table.actions'),
       className: 'ui-table-cell--actions',
       render: (row) => renderAdminActions({
         row,
@@ -147,7 +146,7 @@ const BlogTable = ({
             variant="ghost" 
             size="sm" 
             onClick={() => onViewHistory(row)} 
-            title={tr('View History', 'មើលប្រវត្តិ')}
+            title={t('admin.blog.table.viewHistory')}
           >
             <History size={16} />
           </Button>
@@ -177,10 +176,10 @@ const BlogTable = ({
       selection={selection}
       emptyState={{
         icon: FileText,
-        title: tr('No Blog Posts', 'មិនមានអត្ថបទប្លុក'),
-        description: tr('Start with a draft, import an existing archive, or create your first published article.', 'ចាប់ផ្តើមដោយអត្ថបទព្រាង នាំចូលឯកសារចាស់ ឬបង្កើតអត្ថបទដំបូងរបស់អ្នក។'),
+        title: t('admin.blog.table.emptyTitle'),
+        description: t('admin.blog.table.emptyDescription'),
         action: canCreate ? {
-          label: tr('Create first post', 'បង្កើតអត្ថបទដំបូង'),
+          label: t('admin.blog.table.createFirst'),
           onClick: onCreate,
           icon: Plus
         } : null

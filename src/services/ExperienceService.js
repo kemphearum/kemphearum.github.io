@@ -2,7 +2,7 @@ import BaseService from './BaseService';
 import { serverTimestamp } from 'firebase/firestore';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 import { normalizeExperience, validateExperience } from '../domain/experience/experienceDomain';
-import { getLanguageFromStorage, localizeEntityFields } from '../utils/localization';
+import { getLanguageFromStorage, getLocalizedField, localizeEntityFields } from '../utils/localization';
 
 const EXPERIENCE_LOCALIZED_FIELDS = ['company', 'role', 'description'];
 
@@ -62,6 +62,31 @@ class ExperienceService extends BaseService {
             });
             return { isNew: true, id: newId };
         }
+    }
+
+    async fetchStats(lang = getLanguageFromStorage()) {
+        const experiences = await this.getAll();
+
+        const isCurrentRole = (item) => {
+            if (item.current === true) return true;
+            const rawEnd = `${item.endMonthYear || item.endDate || item.period || ''}`.toLowerCase();
+            return rawEnd.includes('present');
+        };
+
+        const visible = experiences.filter((item) => item.visible !== false).length;
+        const currentRoles = experiences.filter((item) => isCurrentRole(item)).length;
+        const companies = new Set(
+            experiences
+                .map((item) => getLocalizedField(item.company, lang))
+                .filter(Boolean)
+        ).size;
+
+        return {
+            total: experiences.length,
+            visible,
+            companies,
+            currentRoles
+        };
     }
 }
 

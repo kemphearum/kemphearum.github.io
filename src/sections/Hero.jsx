@@ -157,7 +157,7 @@ const Hero = () => {
                         {(content.profileImageUrl || loading) && (
                             <img
                                 src={content.profileImageUrl || "https://ui-avatars.com/api/?name=Kem+Phearum&background=6C63FF&color=fff&size=350"}
-                                alt={tr('Profile', 'ប្រវត្តិរូប')}
+                                alt={t('common.profile')}
                                 className={styles.profileImage}
                                 width="320"
                                 height="320"

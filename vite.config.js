@@ -8,7 +8,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url))
-    }
+    },
+    dedupe: ["react", "react-dom"]
   },
   plugins: [!process.env.VITEST && reactRouter({ presets: [vercelPreset()] })].filter(Boolean),
   ssr: {

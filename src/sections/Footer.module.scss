@@ -182,10 +182,15 @@
     font-weight: var(--font-weight-footer-text, 400);
     font-style: var(--font-style-footer-text, normal);
     line-height: 1.6;
-    opacity: 0.4;
+    opacity: 0.78;
     text-align: center;
     letter-spacing: 0.3px;
     padding: 0 1rem; // Prevent text clipping on edges
+}
+
+:global([data-theme="light"]) .copyright {
+    color: rgba(16, 33, 61, 0.82);
+    opacity: 0.92;
 }
 
 @media (max-width: 500px) {

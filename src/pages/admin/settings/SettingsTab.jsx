@@ -7,6 +7,7 @@ import ImageProcessingService from '../../../services/ImageProcessingService';
 import tabStyles from './SettingsTab.module.scss';
 import axios from 'axios';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { toLocalizedField } from '../../../utils/localization';
 
 // Shared UI components
 import { Button, Dialog, Tabs } from '@/shared/components/ui';
@@ -17,9 +18,11 @@ import TypographySection from './components/TypographySection';
 import VisualsSection from './components/VisualsSection';
 import SyncSection from './components/SyncSection';
 
+const DEFAULT_VISUAL_SETTINGS = SettingsService.constructor.DEFAULT_VISUAL_SETTINGS || {};
+
 const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, sidebarPersistent, setSidebarPersistent, showToast }) => {
-    const { t, language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t } = useTranslation();
+    const localizedSiteFields = ['title', 'tagline', 'logoHighlight', 'logoText', 'footerText', 'projectFilters', 'blogFilters'];
     const queryClient = useQueryClient();
     const { data: metadata } = useQuery({
     staleTime: 60000,
@@ -69,7 +72,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         title: '',
         message: '',
         onConfirm: null,
-        confirmText: tr('Confirm', 'បញ្ជាក់'),
+        confirmText: t('admin.settings.dialogs.confirm'),
         type: 'warning'
     });
 
@@ -89,14 +92,29 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                 faviconUrl = await ImageProcessingService.compress(settingsFavicon, { maxSizeMB: 0.05, maxWidthOrHeight: 256 });
             }
             const payload = {
+                ...DEFAULT_VISUAL_SETTINGS,
                 ...settingsData,
                 title: settingsData.title || '',
                 favicon: faviconUrl,
                 mirrors: settingsData.mirrors || [],
                 fontSize: settingsData.fontSize || 'default',
                 adminFontOverride: settingsData.adminFontOverride ?? true,
-                sidebarPersistent,
+                glassOpacity: settingsData.glassOpacity ?? DEFAULT_VISUAL_SETTINGS.glassOpacity ?? 0.82,
+                glassBlur: settingsData.glassBlur ?? DEFAULT_VISUAL_SETTINGS.glassBlur ?? 12,
+                glassColor: settingsData.glassColor || DEFAULT_VISUAL_SETTINGS.glassColor || '#0b1527',
+                bgStyle: settingsData.bgStyle || DEFAULT_VISUAL_SETTINGS.bgStyle || 'plexus',
+                bgDensity: settingsData.bgDensity ?? DEFAULT_VISUAL_SETTINGS.bgDensity ?? 50,
+                bgSpeed: settingsData.bgSpeed ?? DEFAULT_VISUAL_SETTINGS.bgSpeed ?? 50,
+                bgGlowOpacity: settingsData.bgGlowOpacity ?? DEFAULT_VISUAL_SETTINGS.bgGlowOpacity ?? 50,
+                bgInteractive: settingsData.bgInteractive ?? DEFAULT_VISUAL_SETTINGS.bgInteractive ?? true,
+                notificationsEnabled: settingsData.notificationsEnabled ?? DEFAULT_VISUAL_SETTINGS.notificationsEnabled ?? true,
+                sidebarPersistent
             };
+
+            localizedSiteFields.forEach((field) => {
+                payload[field] = toLocalizedField(settingsData[field], field === 'title' ? 'KEM PHEARUM | Portfolio' : '');
+            });
+
             fontCategories.forEach(c => {
                 payload[c.field] = settingsData[c.field] || 'inter';
                 payload[c.sizeField] = settingsData[c.sizeField] || c.defaultSize;
@@ -172,9 +190,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                 setRebuildStatus(prev => ({
                     ...prev,
                     state: newState,
-                    message: newState === 'success' ? tr('Build successful! Your site is updated.', 'ការបង្កើតបានជោគជ័យ! គេហទំព័ររបស់អ្នកត្រូវបានធ្វើបច្ចុប្បន្នភាព។') :
-                        newState === 'error' ? `${tr('Build failed', 'ការបង្កើតបរាជ័យ')}: ${run.conclusion}` :
-                            `${tr('Current Status', 'ស្ថានភាពបច្ចុប្បន្ន')}: ${run.status.replace('_', ' ')}...`
+                    message: newState === 'success' ? t('admin.settings.syncStatus.messages.success') :
+                        newState === 'error' ? `${t('admin.settings.syncStatus.messages.error')}: ${run.conclusion}` :
+                            `${t('admin.settings.syncStatus.messages.current')}: ${run.status.replace('_', ' ')}...`
                 }));
 
                 if (run.status === 'completed') {
@@ -204,21 +222,21 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
 
     const handleTriggerRebuild = async () => {
         if (!githubToken) {
-            showToast(tr('Please enter your GitHub Personal Access Token first.', 'សូមបញ្ចូល GitHub Personal Access Token ជាមុនសិន។'), 'error');
+            showToast(t('admin.settings.syncStatus.messages.tokenRequired'), 'error');
             return;
         }
 
         setConfirmDialog({
             isOpen: true,
-            title: tr('Trigger Site Rebuild', 'ចាប់ផ្តើមបង្កើតគេហទំព័រឡើងវិញ'),
-            message: tr('This will trigger a full site rebuild and deployment. You can track the progress in real-time below.\n\nContinue?', 'វានឹងចាប់ផ្តើមបង្កើត និងដាក់ប្រើគេហទំព័រឡើងវិញទាំងស្រុង។ អ្នកអាចតាមដានវឌ្ឍនភាពបានភ្លាមៗខាងក្រោម។\n\nបន្តទេ?'),
-            confirmText: tr('Rebuild Now', 'បង្កើតឡើងវិញឥឡូវនេះ'),
+            title: t('admin.settings.syncStatus.dialogs.rebuild.title'),
+            message: t('admin.settings.syncStatus.dialogs.rebuild.message'),
+            confirmText: t('admin.settings.syncStatus.dialogs.rebuild.confirm'),
             type: 'warning',
             onConfirm: async () => {
                 const startTime = Date.now();
                 setRebuildStatus({
                     state: 'loading',
-                    message: tr('Initializing sync with GitHub...', 'កំពុងចាប់ផ្ដើមសមកាលកម្មជាមួយ GitHub...'),
+                    message: t('admin.settings.syncStatus.messages.initializing'),
                     runId: null,
                     startTime
                 });
@@ -243,9 +261,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     setRebuildStatus(prev => ({
                         ...prev,
                         state: 'requested',
-                        message: tr('Request sent! Waiting for GitHub to start the build...', 'បានផ្ញើសំណើរួច! កំពុងរង់ចាំ GitHub ចាប់ផ្តើមបង្កើត...')
+                        message: t('admin.settings.syncStatus.messages.requested')
                     }));
-                    showToast(tr('Rebuild request sent successfully!', 'បានផ្ញើសំណើបង្កើតឡើងវិញដោយជោគជ័យ!'));
+                    showToast(t('admin.settings.syncStatus.messages.requestSent'));
                 });
 
                 if (error) {
@@ -253,9 +271,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     let errMsg = error;
                     // axios error handling
                     if (error.response?.status === 401 || error.response?.status === 403) {
-                        errMsg = tr('Invalid or expired GitHub Token. Please check your token settings.', 'GitHub Token មិនត្រឹមត្រូវ ឬផុតកំណត់។ សូមពិនិត្យការកំណត់ token របស់អ្នក។');
+                        errMsg = t('admin.settings.syncStatus.messages.invalidToken');
                     } else if (error.response?.data?.message) {
-                        errMsg = `${tr('GitHub Error', 'កំហុស GitHub')}: ${error.response.data.message}`;
+                        errMsg = `${t('admin.settings.syncStatus.messages.githubError')}: ${error.response.data.message}`;
                     }
 
                     setRebuildStatus({
@@ -289,15 +307,15 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     const handleInitializeMetadata = async () => {
         setConfirmDialog({
             isOpen: true,
-            title: tr('Initialize Typography Metadata', 'ចាប់ផ្តើម Typography Metadata'),
-            message: tr('This will push the default typography options (Fonts, Categories, Defaults) to your database. This is usually only needed once or when adding new fonts to the system.\n\nContinue?', 'វានឹងបញ្ចូលជម្រើស typography លំនាំដើម (ពុម្ពអក្សរ ប្រភេទ និងលំនាំដើម) ទៅកាន់មូលដ្ឋានទិន្នន័យ។ ជាទូទៅត្រូវធ្វើតែម្តង ឬពេលបន្ថែមពុម្ពអក្សរថ្មីទៅប្រព័ន្ធ។\n\nបន្តទេ?'),
-            confirmText: tr('Initialize Now', 'ចាប់ផ្តើមឥឡូវនេះ'),
+            title: t('admin.settings.dialogs.initializeMetadata.title'),
+            message: t('admin.settings.dialogs.initializeMetadata.message'),
+            confirmText: t('admin.settings.dialogs.initializeMetadata.confirm'),
             type: 'info',
             onConfirm: async () => {
                 const { error } = await BaseService.safe(async () => {
                     await SettingsService.updateTypographyMetadata(SettingsService.constructor.DEFAULT_TYPOGRAPHY_METADATA);
                     queryClient.invalidateQueries({ queryKey: ['settings', 'metadata', 'typography'] });
-                    showToast(tr('Typography metadata initialized successfully!', 'បានចាប់ផ្តើម Typography metadata ដោយជោគជ័យ!'));
+                    showToast(t('admin.settings.dialogs.initializeMetadata.success'));
                 });
                 if (error) {
                     console.error("Failed to initialize metadata:", error);
@@ -335,7 +353,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
 
 
     if (!typographyMetadata) {
-        return <div className="ui-spinnerContainer">{tr('Loading Typography Settings...', 'កំពុងផ្ទុកការកំណត់ Typography...')}</div>;
+        return <div className="ui-spinnerContainer">{t('admin.settings.loading')}</div>;
     }
 
     const backgroundLabelMap = {
@@ -404,25 +422,25 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
             <div className={tabStyles.workspaceShell}>
                 <div className={tabStyles.workspaceIntro}>
                     <div className={tabStyles.workspaceCopy}>
-                        <span className={tabStyles.workspaceEyebrow}>{tr('Site Operations', 'ប្រតិបត្តិការគេហទំព័រ')}</span>
-                        <h2>{tr('Control the brand system, motion, and deployment behavior from one calmer workspace.', 'គ្រប់គ្រងប្រព័ន្ធម៉ាក ចលនា និងឥរិយាបថដាក់ប្រើពី workspace តែមួយដែលស្ងប់ស្ងាត់ជាងមុន។')}</h2>
-                        <p>{tr('Settings now group identity, typography, visuals, and sync into clearer workstreams so you can tune the portfolio without digging through dense forms.', 'ការកំណត់ត្រូវបានបែងចែកជា identity, typography, visuals និង sync ឲ្យច្បាស់ ដើម្បីកែតម្រូវ portfolio បានងាយស្រួល។')}</p>
+                        <span className={tabStyles.workspaceEyebrow}>{t('admin.settings.workspace.eyebrow')}</span>
+                        <h2>{t('admin.settings.workspace.title')}</h2>
+                        <p>{t('admin.settings.workspace.description')}</p>
                     </div>
                     <div className={tabStyles.workspaceStats}>
                         <div className={tabStyles.workspaceStat}>
                             <span className={tabStyles.workspaceStatValue}>4</span>
-                            <span className={tabStyles.workspaceStatLabel}>{tr('Workstreams', 'លំហូរការងារ')}</span>
-                            <span className={tabStyles.workspaceStatHint}>{tr('Identity, typography, visuals, and sync', 'Identity, Typography, Visuals និង Sync')}</span>
+                            <span className={tabStyles.workspaceStatLabel}>{t('admin.settings.workspace.stats.workstreams')}</span>
+                            <span className={tabStyles.workspaceStatHint}>{t('admin.settings.workspace.stats.workstreamsHint')}</span>
                         </div>
                         <div className={tabStyles.workspaceStat}>
                             <span className={tabStyles.workspaceStatValue}>{fontCategories.length}</span>
-                            <span className={tabStyles.workspaceStatLabel}>{tr('Type Roles', 'តួនាទីអក្សរ')}</span>
-                            <span className={tabStyles.workspaceStatHint}>{tr('Live previews across public and admin UI', 'មើលជាមុនភ្លាមៗលើ UI សាធារណៈ និង Admin')}</span>
+                            <span className={tabStyles.workspaceStatLabel}>{t('admin.settings.workspace.stats.typeRoles')}</span>
+                            <span className={tabStyles.workspaceStatHint}>{t('admin.settings.workspace.stats.typeRolesHint')}</span>
                         </div>
                         <div className={tabStyles.workspaceStat}>
                             <span className={tabStyles.workspaceStatValue}>{mirrors.length}</span>
-                            <span className={tabStyles.workspaceStatLabel}>{tr('Deploy Targets', 'គោលដៅ Deploy')}</span>
-                            <span className={tabStyles.workspaceStatHint}>{tokenReady ? tr('GitHub rebuild control is configured', 'បានកំណត់ការគ្រប់គ្រង rebuild របស់ GitHub') : tr('Add a token to trigger rebuilds', 'បន្ថែម token ដើម្បីចាប់ផ្តើម rebuild')}</span>
+                            <span className={tabStyles.workspaceStatLabel}>{t('admin.settings.workspace.stats.deployTargets')}</span>
+                            <span className={tabStyles.workspaceStatHint}>{tokenReady ? t('admin.settings.workspace.stats.tokenConfigured') : t('admin.settings.workspace.stats.tokenNeeded')}</span>
                         </div>
                     </div>
                 </div>
@@ -520,7 +538,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         {confirmDialog.message}
                     </Dialog.Body>
                     <Dialog.Footer>
-                        <Button variant="ghost" onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}>{tr('Cancel', 'បោះបង់')}</Button>
+                        <Button variant="ghost" onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}>{t('admin.settings.dialogs.cancel')}</Button>
                         <Button 
                             variant={confirmDialog.type === 'danger' ? 'danger' : 'primary'}
                             onClick={() => { confirmDialog.onConfirm?.(); setConfirmDialog(prev => ({ ...prev, isOpen: false })); }}

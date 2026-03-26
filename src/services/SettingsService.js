@@ -81,6 +81,19 @@ class SettingsService extends BaseService {
     }
 
     // Default metadata used for initialization or fallback
+    static DEFAULT_VISUAL_SETTINGS = {
+        bgStyle: 'plexus',
+        bgDensity: 50,
+        bgSpeed: 50,
+        bgGlowOpacity: 50,
+        bgInteractive: true,
+        notificationsEnabled: true,
+        glassOpacity: 0.82,
+        glassBlur: 12,
+        glassColor: '#0b1527',
+        sidebarPersistent: true
+    };
+
     static DEFAULT_TYPOGRAPHY_METADATA = {
         fontOptions: [
             { value: 'inter', label: 'Inter' },

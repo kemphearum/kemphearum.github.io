@@ -96,6 +96,21 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     }
   });
 
+  const { data: blogStats = { total: 0, published: 0, featured: 0, drafts: 0 } } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    queryKey: ['posts', 'stats'],
+    queryFn: async () => {
+      const result = await BaseService.safe(() => BlogService.fetchStats());
+      if (result.error) {
+        showToast(result.error, 'error');
+        return { total: 0, published: 0, featured: 0, drafts: 0 };
+      }
+      return result.data;
+    }
+  });
+
   const posts = postsResult.data;
   const tablePosts = useMemo(() => posts.map((post) => ({
     ...post,
@@ -104,31 +119,28 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     excerpt: getLocalizedField(post.excerpt, language),
     content: getLocalizedField(post.content, language)
   })), [posts, language]);
-  const visiblePostsCount = posts.filter((post) => post.visible !== false).length;
-  const featuredPostsCount = posts.filter((post) => !!post.featured).length;
-  const draftPostsCount = posts.length - visiblePostsCount;
   const workspaceStats = [
     {
-      label: t('admin.common.stats.onThisPage.label'),
-      value: posts.length,
-      hint: t('admin.common.stats.onThisPage.hint'),
+      label: t('admin.blog.stats.total.label'),
+      value: blogStats.total,
+      hint: t('admin.blog.stats.total.hint'),
       icon: FileText
     },
     {
       label: t('admin.common.stats.published.label'),
-      value: visiblePostsCount,
+      value: blogStats.published,
       hint: t('admin.blog.stats.published.hint'),
       icon: Globe2
     },
     {
       label: t('admin.common.stats.featured.label'),
-      value: featuredPostsCount,
+      value: blogStats.featured,
       hint: t('admin.blog.stats.featured.hint'),
       icon: Sparkles
     },
     {
       label: t('admin.blog.stats.drafts.label'),
-      value: draftPostsCount,
+      value: blogStats.drafts,
       hint: t('admin.blog.stats.drafts.hint'),
       icon: PenSquare
     }

@@ -89,6 +89,21 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     }
   });
 
+  const { data: projectStats = { total: 0, published: 0, featured: 0, linked: 0 } } = useQuery({
+    staleTime: 60000,
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    queryKey: ['projects', 'stats'],
+    queryFn: async () => {
+      const result = await BaseService.safe(() => ProjectService.fetchStats());
+      if (result.error) {
+        showToast(result.error, 'error');
+        return { total: 0, published: 0, featured: 0, linked: 0 };
+      }
+      return result.data;
+    }
+  });
+
   const projects = projectsResult.data;
   const tableProjects = useMemo(() => projects.map((project) => ({
     ...project,
@@ -97,31 +112,28 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     description: getLocalizedField(project.description, language),
     content: getLocalizedField(project.content, language)
   })), [projects, language]);
-  const visibleProjectsCount = projects.filter((project) => project.visible !== false).length;
-  const featuredProjectsCount = projects.filter((project) => !!project.featured).length;
-  const linkedProjectsCount = projects.filter((project) => project.liveUrl || project.githubUrl).length;
   const workspaceStats = [
     {
-      label: t('admin.common.stats.onThisPage.label'),
-      value: projects.length,
-      hint: t('admin.common.stats.onThisPage.hint'),
+      label: t('admin.projects.stats.total.label'),
+      value: projectStats.total,
+      hint: t('admin.projects.stats.total.hint'),
       icon: LayoutTemplate
     },
     {
       label: t('admin.common.stats.published.label'),
-      value: visibleProjectsCount,
+      value: projectStats.published,
       hint: t('admin.projects.stats.published.hint'),
       icon: Globe2
     },
     {
       label: t('admin.common.stats.featured.label'),
-      value: featuredProjectsCount,
+      value: projectStats.featured,
       hint: t('admin.projects.stats.featured.hint'),
       icon: Sparkles
     },
     {
       label: t('admin.projects.stats.linked.label'),
-      value: linkedProjectsCount,
+      value: projectStats.linked,
       hint: t('admin.projects.stats.linked.hint'),
       icon: Link2
     }
@@ -282,7 +294,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         skippedCount
       });
     } catch (error) {
-      showToast(error?.message || 'Failed to import projects.', 'error');
+      showToast(error?.message || t('admin.common.messages.importFailed'), 'error');
     }
   };
 
@@ -355,7 +367,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         failed > 0 || skipped > 0 ? 'warning' : 'success'
       );
     } catch (error) {
-      showToast(error?.message || 'Failed to import projects.', 'error');
+      showToast(error?.message || t('admin.common.messages.importFailed'), 'error');
     } finally {
       setImportLoading(false);
     }
@@ -441,7 +453,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       if (context?.previousProjects) {
         queryClient.setQueryData(['projects', searchQuery, pagination.cursor, pagination.limit], context.previousProjects);
       }
-      showToast(err?.message || 'Failed to update visibility', 'error');
+      showToast(err?.message || t('admin.common.messages.updateFailed'), 'error');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -472,7 +484,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       if (context?.previousProjects) {
         queryClient.setQueryData(['projects', searchQuery, pagination.cursor, pagination.limit], context.previousProjects);
       }
-      showToast(err?.message || 'Failed to update featured status', 'error');
+      showToast(err?.message || t('admin.common.messages.updateFailed'), 'error');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -508,7 +520,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       setSelectedProjects([]);
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
-    onError: (err) => showToast(err?.message || 'Failed to delete projects', 'error')
+    onError: (err) => showToast(err?.message || t('admin.common.messages.deleteFailed'), 'error')
   });
 
   const bulkVisibilityMutation = useMutation({
@@ -522,7 +534,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       setSelectedProjects([]);
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
-    onError: (err) => showToast(err?.message || 'Failed to update projects', 'error')
+    onError: (err) => showToast(err?.message || t('admin.common.messages.updateFailed'), 'error')
   });
 
   const bulkFeaturedMutation = useMutation({

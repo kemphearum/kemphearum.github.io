@@ -17,8 +17,7 @@ const BlogToolbar = ({
   onDownloadTemplateJSON
 }) => {
   const fileInputRef = useRef(null);
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { t } = useTranslation();
 
   return (
     <section className="ui-blog-workspace">
@@ -26,15 +25,15 @@ const BlogToolbar = ({
         <div className="ui-blog-workspace__intro">
           <span className="ui-blog-workspace__eyebrow">
             <Sparkles size={14} />
-            {tr('Editorial workspace', 'ផ្ទៃការងារកែសម្រួល')}
+            {t('admin.blog.toolbar.eyebrow')}
           </span>
           <div className="ui-blog-workspace__copy">
-            <h2>{tr('Keep publishing, imports, and post cleanup in one place.', 'រក្សាការបោះពុម្ព ការនាំចូល និងសម្អាតអត្ថបទនៅកន្លែងតែមួយ។')}</h2>
-            <p>{tr('Search the collection, start a new draft quickly, and use templates or bulk actions without hunting through the table.', 'ស្វែងរកក្នុងបណ្ណសារ ចាប់ផ្តើមសេចក្តីព្រាងថ្មីបានរហ័ស ហើយប្រើ template ឬសកម្មភាពជាក្រុមដោយមិនចាំបាច់រករយៈពេលយូរ។')}</p>
+            <h2>{t('admin.blog.toolbar.title')}</h2>
+            <p>{t('admin.blog.toolbar.description')}</p>
           </div>
         </div>
 
-        <div className="ui-blog-workspace__stats" aria-label={tr('Blog workspace summary', 'សង្ខេបផ្ទៃការងារប្លុក')}>
+        <div className="ui-blog-workspace__stats" aria-label={t('admin.blog.toolbar.summaryAria')}>
           {stats.map(({ label, value, hint, icon: Icon }) => (
             <div key={label} className="ui-blog-workspace__stat">
               <div className="ui-blog-workspace__statIcon">
@@ -54,7 +53,7 @@ const BlogToolbar = ({
         <div className="admin-search-wrapper ui-blog-toolbar__search">
           <Search size={16} />
           <Input
-            placeholder={tr('Search by title...', 'ស្វែងរកតាមចំណងជើង...')}
+            placeholder={t('admin.blog.toolbar.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => onSearch(e.target.value)}
           />
@@ -75,20 +74,20 @@ const BlogToolbar = ({
                 }}
               />
               <div className="ui-blog-toolbar__actionGroup">
-                <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} title={tr('Import JSON or CSV', 'នាំចូល JSON ឬ CSV')}>
-                  <Upload size={16} /> {tr('Import', 'នាំចូល')}
+                <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} title={t('admin.blog.toolbar.importTitle')}>
+                  <Upload size={16} /> {t('admin.blog.toolbar.import')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={onExportSelected} disabled={selectedCount === 0} title={tr('Export selected posts as JSON', 'នាំចេញអត្ថបទដែលបានជ្រើសជា JSON')}>
-                  <Download size={16} /> {tr('Export', 'នាំចេញ')} {selectedCount > 0 ? `(${selectedCount})` : ''}
+                <Button variant="ghost" size="sm" onClick={onExportSelected} disabled={selectedCount === 0} title={t('admin.blog.toolbar.exportTitle')}>
+                  <Download size={16} /> {t('admin.blog.toolbar.export')} {selectedCount > 0 ? `(${selectedCount})` : ''}
                 </Button>
               </div>
 
               <div className="ui-blog-toolbar__actionGroup">
-                <Button variant="ghost" size="sm" onClick={onDownloadTemplateCSV} title={tr('Download CSV template', 'ទាញយកគំរូ CSV')}>
-                  <FileText size={16} /> {tr('CSV Template', 'គំរូ CSV')}
+                <Button variant="ghost" size="sm" onClick={onDownloadTemplateCSV} title={t('admin.blog.toolbar.csvTemplateTitle')}>
+                  <FileText size={16} /> {t('admin.blog.toolbar.csvTemplate')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={onDownloadTemplateJSON} title={tr('Download JSON template', 'ទាញយកគំរូ JSON')}>
-                  <FileText size={16} /> {tr('JSON Template', 'គំរូ JSON')}
+                <Button variant="ghost" size="sm" onClick={onDownloadTemplateJSON} title={t('admin.blog.toolbar.jsonTemplateTitle')}>
+                  <FileText size={16} /> {t('admin.blog.toolbar.jsonTemplate')}
                 </Button>
               </div>
             </>
@@ -96,15 +95,15 @@ const BlogToolbar = ({
 
           {canCreate && (
             <Button onClick={onCreate} className="ui-blog-toolbar__create">
-              <Plus size={18} /> {tr('Add New Post', 'បន្ថែមអត្ថបទថ្មី')}
+              <Plus size={18} /> {t('admin.blog.toolbar.addNewPost')}
             </Button>
           )}
         </div>
       </div>
 
       <div className="ui-blog-toolbar__foot">
-        <span>{tr('Import accepts `CSV` or `JSON` and matches existing entries by slug.', 'ការនាំចូលទទួល `CSV` ឬ `JSON` ហើយផ្គូផ្គងទិន្នន័យដែលមានរួចតាម slug។')}</span>
-        <span>{tr('JSON export uses the selected posts; table export downloads the current page as CSV.', 'JSON export ប្រើអត្ថបទដែលបានជ្រើស; table export ទាញយកទំព័របច្ចុប្បន្នជា CSV។')}</span>
+        <span>{t('admin.blog.toolbar.footNote1')}</span>
+        <span>{t('admin.blog.toolbar.footNote2')}</span>
       </div>
     </section>
   );

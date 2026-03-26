@@ -116,10 +116,11 @@ const DataTable = ({
     : totalPages > 1;
   const hasKnownTotalPages = isCursorMode && totalItemsProp !== null && totalPages > 0;
   const previousDisabled = isCursorMode
-    ? loading || isFirstPage
+    ? loading || isFirstPage || page <= 1
     : loading || page === 1;
+  const cursorHasNext = hasMore || (hasKnownTotalPages && page < totalPages);
   const nextDisabled = isCursorMode
-    ? loading || !hasMore
+    ? loading || !cursorHasNext
     : loading || page === totalPages;
 
   // 4. Selection Helpers

@@ -12,14 +12,14 @@ describe('userDomain', () => {
             const result = normalizeUser(rawData);
 
             expect(result.email).toBe('test@example.com');
-            expect(result.role).toBe('ADMIN');
+            expect(result.role).toBe('admin');
             expect(result.displayName).toBe('John Doe');
             expect(result.isActive).toBe(true);
         });
 
-        it('should default role to user if missing', () => {
+        it('should default role to pending if missing', () => {
             const result = normalizeUser({ email: 'a@b.com' });
-            expect(result.role).toBe('user');
+            expect(result.role).toBe('pending');
         });
 
         it('should handle isActive correctly', () => {

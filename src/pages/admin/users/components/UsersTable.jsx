@@ -27,7 +27,7 @@ const UsersTable = ({
   onPageChange,
   paginationVariant = 'cursor'
 }) => {
-  const { language } = useTranslation();
+  const { language, t } = useTranslation();
   const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
   const roleLabels = {
     superadmin: tr('Super Admin', 'អ្នកគ្រប់គ្រងកំពូល'),
@@ -80,7 +80,7 @@ const UsersTable = ({
     },
     {
       key: 'role',
-      header: 'Role',
+      header: t('admin.rolePermissions.roleSuffix'),
       sortable: true,
       render: (user) => {
         const normalizedRole = normalizeRole(user.role);

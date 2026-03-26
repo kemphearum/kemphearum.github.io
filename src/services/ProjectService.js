@@ -1,6 +1,6 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 import { normalizeProject, validateProject } from '../domain/project/projectDomain';
 import { getLanguageFromStorage, localizeEntityFields } from '../utils/localization';
@@ -262,6 +262,33 @@ class ProjectService extends BaseService {
         });
 
         return Array.from(byKey.values()).sort((a, b) => a.localeCompare(b));
+    }
+
+    /**
+     * Fetch aggregate project counts for dashboard stat cards.
+     * @returns {Promise<{total:number,published:number,featured:number,linked:number}>}
+     */
+    async fetchStats() {
+        const collectionRef = collection(db, this.collectionName);
+
+        const [totalSnap, publishedSnap, featuredSnap, projects] = await Promise.all([
+            getCountFromServer(collectionRef),
+            getCountFromServer(query(collectionRef, where('visible', '==', true))),
+            getCountFromServer(query(collectionRef, where('featured', '==', true))),
+            this.getAll()
+        ]);
+
+        const total = Number(totalSnap.data()?.count || 0);
+        const published = Number(publishedSnap.data()?.count || 0);
+        const featured = Number(featuredSnap.data()?.count || 0);
+        const linked = projects.filter((project) => project.liveUrl || project.githubUrl).length;
+
+        return {
+            total,
+            published,
+            featured,
+            linked
+        };
     }
 }
 

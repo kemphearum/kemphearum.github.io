@@ -33,6 +33,18 @@ const UserDetailDialog = ({
 }) => {
   const { language } = useTranslation();
   const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const getActionLabel = (action) => {
+    switch (action) {
+      case 'created':
+        return tr('Created', 'បានបង្កើត');
+      case 'deleted':
+        return tr('Deleted', 'បានលុប');
+      case 'updated':
+        return tr('Updated', 'បានកែប្រែ');
+      default:
+        return action;
+    }
+  };
 
   if (!user) return null;
 
@@ -214,7 +226,7 @@ const UserDetailDialog = ({
                               : 'primary'
                         }
                       >
-                        {entry.action}
+                        {getActionLabel(entry.action)}
                       </Badge>
                       <span className="ui-history-time">
                         <Clock size={12} />
@@ -237,7 +249,7 @@ const UserDetailDialog = ({
                           ))}
                         </div>
                       ) : (
-                        <span>{tr('Account', 'គណនី')} {entry.action}</span>
+                        <span>{tr('Account', 'គណនី')} {getActionLabel(entry.action)}</span>
                       )}
                     </div>
 

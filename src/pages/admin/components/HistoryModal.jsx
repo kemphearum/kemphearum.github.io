@@ -7,8 +7,19 @@ import { useTranslation } from '../../../hooks/useTranslation';
 
 const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
     const [expandedLogId, setExpandedLogId] = useState(null);
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t } = useTranslation();
+    const getActionLabel = (action) => {
+        switch (action) {
+            case 'created':
+                return t('admin.common.history.actions.created');
+            case 'deleted':
+                return t('admin.common.history.actions.deleted');
+            case 'updated':
+                return t('admin.common.history.actions.updated');
+            default:
+                return action;
+        }
+    };
 
     const { data: history = [], isLoading, error } = useQuery({
     staleTime: 60000,
@@ -60,7 +71,7 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
 
     const renderDiffs = (action, diffs, payload) => {
         if (action === 'deleted') {
-            return <div style={{ color: 'var(--error-color, #ef4444)', fontSize: '0.85rem' }}>{tr('Record deleted.', 'កំណត់ត្រាត្រូវបានលុប។')}</div>;
+            return <div style={{ color: 'var(--error-color, #ef4444)', fontSize: '0.85rem' }}>{t('admin.common.history.recordDeleted')}</div>;
         }
 
         if (action === 'created') {
@@ -74,7 +85,7 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
         }
 
         if (!diffs || diffs.length === 0) {
-            return <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{tr('No specific field changes detected.', 'មិនរកឃើញការផ្លាស់ប្តូរវាលជាក់លាក់ទេ។')}</div>;
+            return <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{t('admin.common.history.noChanges')}</div>;
         }
 
         return (
@@ -136,9 +147,9 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
                             <History size={18} />
                         </div>
                         <div>
-                            <Dialog.Title>{tr('Edit History', 'ប្រវត្តិកែសម្រួល')}</Dialog.Title>
+                            <Dialog.Title>{t('admin.common.history.editHistory')}</Dialog.Title>
                             <Dialog.Description>
-                                {title || tr('Record Timeline', 'លំដាប់ពេលវេលាកំណត់ត្រា')}
+                                {title || t('admin.common.history.recordTimeline')}
                             </Dialog.Description>
                         </div>
                     </div>
@@ -153,14 +164,14 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
                     ) : error ? (
                         <div className="ui-empty-state" style={{ padding: '3rem 2rem', textAlign: 'center' }}>
                             <AlertCircle size={40} style={{ margin: '0 auto 1rem', color: '#ef4444' }} />
-                            <h3 className="ui-empty-state-title" style={{ color: '#ef4444' }}>{tr('Error loading history', 'កំហុសពេលផ្ទុកប្រវត្តិ')}</h3>
-                            <p className="ui-empty-state-description">{error.message || tr('An unknown error occurred.', 'មានកំហុសមិនស្គាល់មួយកើតឡើង។')}</p>
+                            <h3 className="ui-empty-state-title" style={{ color: '#ef4444' }}>{t('admin.common.history.errorLoading')}</h3>
+                            <p className="ui-empty-state-description">{error.message || t('admin.common.history.unknownError')}</p>
                         </div>
                     ) : history.length === 0 ? (
                         <div className="ui-empty-state" style={{ padding: '5rem 2rem', textAlign: 'center', opacity: 0.6 }}>
                             <Clock size={48} style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }} />
-                            <h3 className="ui-empty-state-title">{tr('No History Recorded', 'មិនមានប្រវត្តិបានកត់ត្រា')}</h3>
-                            <p className="ui-empty-state-description">{tr('This record was likely created before history tracking was enabled.', 'កំណត់ត្រានេះប្រហែលជាត្រូវបានបង្កើតមុនពេលបើកការតាមដានប្រវត្តិ។')}</p>
+                            <h3 className="ui-empty-state-title">{t('admin.common.history.noHistory')}</h3>
+                            <p className="ui-empty-state-description">{t('admin.common.history.noHistoryDesc')}</p>
                         </div>
                     ) : (
                         <div className="ui-historyTimeline">
@@ -187,15 +198,15 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
                                                     <div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
                                                             <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', color: actionColor }}>
-                                                                {entry.action}
+                                                                {getActionLabel(entry.action)}
                                                             </span>
                                                             <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                                                                {tr('by', 'ដោយ')} <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{entry.user || tr('Unknown', 'មិនស្គាល់')}</span>
+                                                                {t('admin.common.history.by')} <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{entry.user || t('admin.common.history.unknown')}</span>
                                                             </span>
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.8rem', fontFamily: 'monospace' }}>
                                                             <Clock size={14} style={{ opacity: 0.8 }} />
-                                                            {entry.timestamp?.seconds ? new Date(entry.timestamp.seconds * 1000).toLocaleString() : tr('Just now', 'ឥឡូវនេះ')}
+                                                            {entry.timestamp?.seconds ? new Date(entry.timestamp.seconds * 1000).toLocaleString() : t('admin.common.history.justNow')}
                                                         </div>
                                                     </div>
                                                     <div style={{ color: 'var(--text-secondary)', opacity: 0.8 }}>
@@ -206,7 +217,7 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
                                                 {isExpanded && (
                                                     <div style={{ padding: '1.5rem', borderTop: '1px solid rgba(108, 99, 255, 0.15)', background: 'var(--bg-color)' }}>
                                                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                            <Edit3 size={14} /> {entry.action === 'created' ? tr('Initial Payload', 'ទិន្នន័យដើម') : tr('Changes Made', 'ការផ្លាស់ប្តូរ')}
+                                                            <Edit3 size={14} /> {entry.action === 'created' ? t('admin.common.history.initialPayload') : t('admin.common.history.changesMade')}
                                                         </div>
                                                         <div>
                                                             {renderDiffs(entry.action, entry.diffs, entry.dataPayload)}
@@ -222,7 +233,7 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
                     )}
                 </Dialog.Body>
                 <Dialog.Footer>
-                    <Button variant="ghost" onClick={onClose}>{tr('Close', 'បិទ')}</Button>
+                    <Button variant="ghost" onClick={onClose}>{t('admin.common.history.close')}</Button>
                 </Dialog.Footer>
             </Dialog.Content>
         </Dialog>

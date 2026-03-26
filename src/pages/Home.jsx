@@ -3,15 +3,15 @@ import { useLocation } from 'react-router';
 import Navbar from '@/sections/Navbar';
 import Hero from '@/sections/Hero';
 import About from '@/sections/About';
-import Projects from '@/sections/Projects';
 import FeaturedProjects from '@/sections/FeaturedProjects';
 import FeaturedBlogs from '@/sections/FeaturedBlogs';
 import Contact from '@/sections/Contact';
 import Footer from '@/sections/Footer';
 import Experience from '@/sections/Experience';
 import SettingsService from '../../src/services/SettingsService';
-import { normalizeSectionTarget, scrollToSectionWithOffset as scrollToSectionOffset } from '../utils/sectionNavigation';
+import { normalizeSectionTarget } from '../utils/sectionNavigation';
 import { getLocalizedField } from '../utils/localization';
+import { buildBrowserTitle } from '../utils/browserTitle';
 
 const getMetaLanguage = () => {
   if (typeof window === 'undefined') return 'en';
@@ -29,11 +29,14 @@ export async function loader() {
 
 export function meta({ data }) {
   const language = getMetaLanguage();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
   const site = data?.site || data || {};
-  const title = getLocalizedField(site.pageTitle || site.title, language) || tr("Kem Phearum | Portfolio", "Kem Phearum | ផតថលីយ៉ូ");
-  const desc = getLocalizedField(site.pageDescription || site.description, language) || tr("ICT Security & IT Audit Professional", "អ្នកជំនាញ ICT Security និង IT Audit");
-  
+  const title = buildBrowserTitle(site, language);
+  const desc = getLocalizedField(site.tagline, language) || (
+    language === 'km'
+      ? 'អ្នកជំនាញសន្តិសុខ ICT និងសវនកម្ម IT'
+      : 'ICT Security & IT Audit Professional'
+  );
+
   return [
     { title },
     { name: "description", content: desc },
@@ -51,7 +54,7 @@ export default function Home() {
     const targetId = normalizeSectionTarget(sectionId);
     let attempts = 0;
     const maxAttempts = 35;
-    
+
     // Safety: ensure body isn't locked if we are trying to scroll
     if (typeof document !== 'undefined') {
       document.body.style.overflow = '';
@@ -64,7 +67,7 @@ export default function Home() {
         clearInterval(checkElement);
         return;
       }
-      
+
       attempts += 1;
       if (attempts >= maxAttempts) {
         clearInterval(checkElement);

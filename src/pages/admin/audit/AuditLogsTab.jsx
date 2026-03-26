@@ -19,8 +19,8 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import { isSuperAdminRole } from '../../../utils/permissions';
 
 const AuditLogsTab = ({ userRole, showToast }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { t } = useTranslation();
+  const tm = useCallback((key, params = {}) => t(`admin.audit.${key}`, params), [t]);
   const { trackRead, currentDateKey, dailyUsage } = useActivity();
   const [quotaExceeded, setQuotaExceeded] = useState(false);
   const [activitySearch, setActivitySearch] = useState('');
@@ -191,13 +191,13 @@ const AuditLogsTab = ({ userRole, showToast }) => {
   const handleExport = (type) => {
     const targetLogs = type === 'security' ? filteredSecurityLogs : filteredActivityLogs;
     if (!targetLogs.length) {
-      showToast(tr('No logs to export for this view.', 'មិនមានកំណត់ហេតុសម្រាប់នាំចេញក្នុងទិដ្ឋភាពនេះទេ។'), 'error');
+      showToast(tm('toasts.noLogsToExport'), 'error');
       return;
     }
 
     const header = type === 'security'
-      ? [tr('Status', 'ស្ថានភាព'), tr('Email', 'អ៊ីមែល'), tr('IP Address', 'អាសយដ្ឋាន IP'), tr('Device', 'ឧបករណ៍'), tr('Location', 'ទីតាំង'), tr('Timestamp', 'ពេលវេលា'), tr('Reason', 'មូលហេតុ')]
-      : [tr('Action', 'សកម្មភាព'), tr('Module', 'ម៉ូឌុល'), tr('Entity', 'ធាតុ'), tr('User', 'អ្នកប្រើ'), tr('Count', 'ចំនួន'), tr('Timestamp', 'ពេលវេលា')];
+      ? [tm('export.headers.status'), tm('export.headers.email'), tm('export.headers.ipAddress'), tm('export.headers.device'), tm('export.headers.location'), tm('export.headers.timestamp'), tm('export.headers.reason')]
+      : [tm('export.headers.action'), tm('export.headers.module'), tm('export.headers.entity'), tm('export.headers.user'), tm('export.headers.count'), tm('export.headers.timestamp')];
     const rows = targetLogs.map((log) => {
       const time = log.time?.seconds || log.timestamp?.seconds
         ? new Date((log.time?.seconds || log.timestamp?.seconds) * 1000).toLocaleString()
@@ -234,7 +234,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-      showToast(tr('Exported audit logs successfully.', 'បាននាំចេញកំណត់ហេតុសវនកម្មដោយជោគជ័យ។'));
+      showToast(tm('toasts.exported'));
   };
 
   const resetActivityView = useCallback(() => {
@@ -256,14 +256,14 @@ const AuditLogsTab = ({ userRole, showToast }) => {
     refetchStats();
     refetchSecurity();
     refetchActivity();
-    showToast(tr('Logs refreshed', 'បានធ្វើបច្ចុប្បន្នភាពកំណត់ហេតុ'));
-  }, [refetchStats, refetchSecurity, refetchActivity, showToast, activityPagination, securityPagination, tr]);
+    showToast(tm('toasts.refreshed'));
+  }, [refetchStats, refetchSecurity, refetchActivity, showToast, activityPagination, securityPagination, tm]);
 
   if (!canViewSecurityAudit) {
     return (
       <EmptyState 
-        title={tr('Access Restricted', 'ការចូលប្រើត្រូវបានកំណត់')}
-        description={tr('You do not have permission to view system audit logs. Only Super Admins can access this area.', 'អ្នកមិនមានសិទ្ធិមើលកំណត់ហេតុសវនកម្មប្រព័ន្ធទេ។ មានតែ Super Admin ប៉ុណ្ណោះដែលអាចចូលប្រើតំបន់នេះបាន។')}
+        title={tm('restricted.title')}
+        description={tm('restricted.description')}
         icon={Shield}
       />
     );
@@ -272,15 +272,15 @@ const AuditLogsTab = ({ userRole, showToast }) => {
   return (
     <div className={styles.container}>
       <SectionHeader
-        title={tr('Audit Intelligence Dashboard', 'ផ្ទាំងវិភាគសវនកម្ម')}
-        description={tr('Track admin activity, auth events, and operational risk signals in one place.', 'តាមដានសកម្មភាពអ្នកគ្រប់គ្រង ព្រឹត្តិការណ៍ផ្ទៀងផ្ទាត់ និងសញ្ញាហានិភ័យប្រតិបត្តិការ នៅកន្លែងតែមួយ។')}
+        title={tm('header.title')}
+        description={tm('header.description')}
         icon={Activity}
         rightElement={
           <button 
             type="button"
             onClick={handleRefresh} 
             className="ui-button ui-button--ghost ui-btn-icon-only"
-            title={tr('Refresh All Data', 'ធ្វើបច្ចុប្បន្នភាពទិន្នន័យទាំងអស់')}
+            title={tm('header.refreshAllData')}
           >
             <RefreshCw size={18} className={(securityFetching || activityFetching) ? 'ui-spin' : ''} />
           </button>
@@ -303,9 +303,9 @@ const AuditLogsTab = ({ userRole, showToast }) => {
         <div className={styles.tableHeaderSection}>
           <div className={styles.tableTitleGroup}>
             <Activity size={18} className={styles.accentIcon} />
-            <h3 className={styles.tableTitle}>{tr('Activity History', 'ប្រវត្តិសកម្មភាព')}</h3>
+            <h3 className={styles.tableTitle}>{tm('sections.activity.title')}</h3>
           </div>
-          <p className={styles.tableSubtitle}>{tr('Data mutations and admin-level changes.', 'ការកែប្រែទិន្នន័យ និងការផ្លាស់ប្តូរកម្រិតអ្នកគ្រប់គ្រង។')}</p>
+          <p className={styles.tableSubtitle}>{tm('sections.activity.description')}</p>
         </div>
       
         <AuditLogsToolbar
@@ -319,8 +319,8 @@ const AuditLogsTab = ({ userRole, showToast }) => {
           onReset={resetActivityView}
           totalItems={filteredActivityLogs.length}
           isExportDisabled={!filteredActivityLogs.length}
-          searchHint={normalizedActivitySearch ? tr(`Search: "${debouncedActivitySearch}"`, `ស្វែងរក៖ "${debouncedActivitySearch}"`) : ''}
-          placeholder={tr('Search labels, users, module, action...', 'ស្វែងរកតាមស្លាក អ្នកប្រើ ម៉ូឌុល សកម្មភាព...')}
+          searchHint={normalizedActivitySearch ? tm('sections.activity.searchHint', { query: debouncedActivitySearch }) : ''}
+          placeholder={tm('sections.activity.searchPlaceholder')}
         />
 
         <AuditLogsTable
@@ -349,9 +349,9 @@ const AuditLogsTab = ({ userRole, showToast }) => {
         <div className={styles.tableHeaderSection}>
           <div className={styles.tableTitleGroup}>
             <Shield size={18} className={styles.securityIcon} />
-            <h3 className={styles.tableTitle}>{tr('Login Audit Trail', 'ប្រវត្តិសវនកម្មការចូល')}</h3>
+            <h3 className={styles.tableTitle}>{tm('sections.security.title')}</h3>
           </div>
-          <p className={styles.tableSubtitle}>{tr('Authentication attempts, origins, and device profile.', 'ការព្យាយាមផ្ទៀងផ្ទាត់ ប្រភព និងប្រវត្តិឧបករណ៍។')}</p>
+          <p className={styles.tableSubtitle}>{tm('sections.security.description')}</p>
         </div>
 
         <AuditLogsToolbar
@@ -363,8 +363,8 @@ const AuditLogsTab = ({ userRole, showToast }) => {
           onReset={resetSecurityView}
           totalItems={filteredSecurityLogs.length}
           isExportDisabled={!filteredSecurityLogs.length}
-          searchHint={normalizedSecuritySearch ? tr(`Search: "${debouncedSecuritySearch}"`, `ស្វែងរក៖ "${debouncedSecuritySearch}"`) : ''}
-          placeholder={tr('Search email, IP, device, country...', 'ស្វែងរកអ៊ីមែល IP ឧបករណ៍ ប្រទេស...')}
+          searchHint={normalizedSecuritySearch ? tm('sections.security.searchHint', { query: debouncedSecuritySearch }) : ''}
+          placeholder={tm('sections.security.searchPlaceholder')}
         />
 
         <AuditLogsTable

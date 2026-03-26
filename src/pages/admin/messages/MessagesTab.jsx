@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Mail, MailOpen, Trash2, Search, RefreshCw, Reply, Inbox, Layers3 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Input, Dialog, Badge } from '@/shared/components/ui';
@@ -16,26 +16,26 @@ const getDateFromTimestamp = (timestamp) => {
     return new Date(timestamp.seconds * 1000);
 };
 
-const formatDateTime = (timestamp) => {
+const formatDateTime = (timestamp, locale, fallbackText) => {
     const date = getDateFromTimestamp(timestamp);
     return date
-        ? new Intl.DateTimeFormat(undefined, {
+        ? new Intl.DateTimeFormat(locale, {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
             hour: 'numeric',
             minute: '2-digit'
         }).format(date)
-        : 'Recently';
+        : fallbackText;
 };
 
-const buildRelativeTime = (timestamp) => {
+const buildRelativeTime = (timestamp, locale, fallbackText) => {
     const date = getDateFromTimestamp(timestamp);
-    if (!date) return 'Just arrived';
+    if (!date) return fallbackText;
 
     const diffMs = date.getTime() - Date.now();
     const absMinutes = Math.abs(diffMs) / 60000;
-    const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+    const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
 
     if (absMinutes < 60) {
         return formatter.format(Math.round(diffMs / 60000), 'minute');
@@ -54,25 +54,37 @@ const buildRelativeTime = (timestamp) => {
     return formatter.format(Math.round(diffMs / 604800000), 'week');
 };
 
-const getInitials = (name = '') => {
-    const cleaned = name.trim();
-    if (!cleaned) return '?';
-    const parts = cleaned.split(/\s+/).slice(0, 2);
-    return parts.map((part) => part.charAt(0).toUpperCase()).join('');
-};
-
 const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { language, t } = useTranslation();
+    const locale = language === 'km' ? 'km-KH' : undefined;
+    const tm = useCallback((key, params = {}) => t(`admin.messages.${key}`, params), [t]);
     const queryClient = useQueryClient();
     const [searchMessages, setSearchMessages] = useState('');
     const debouncedSearch = useDebounce(searchMessages, 500);
     const [selectedMessages, setSelectedMessages] = useState([]);
     const [viewingMessage, setViewingMessage] = useState(null);
-    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: tr('Confirm', 'បញ្ជាក់'), type: 'danger' });
+    const [confirmDialog, setConfirmDialog] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null,
+        confirmText: tm('dialog.confirm'),
+        type: 'danger'
+    });
     const { trackWrite, trackDelete } = useActivity();
 
     const pagination = useCursorPagination(5, [debouncedSearch]);
+
+    const resetConfirmDialog = useCallback(() => {
+        setConfirmDialog({
+            isOpen: false,
+            title: '',
+            message: '',
+            onConfirm: null,
+            confirmText: tm('dialog.confirm'),
+            type: 'danger'
+        });
+    }, [tm]);
 
     const { data: messagesResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading, isFetching } = useQuery({
         queryKey: ['messages', debouncedSearch, pagination.cursor, pagination.limit],
@@ -97,19 +109,45 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
         gcTime: 300000
     });
 
+    const { data: unreadCountResult = 0 } = useQuery({
+        queryKey: ['messages', 'unreadCount'],
+        queryFn: async () => {
+            const result = await BaseService.safe(() => MessageService.getUnreadCount());
+            if (result.error) {
+                showToast(result.error, 'error');
+                return 0;
+            }
+            return result.data;
+        },
+        staleTime: 30000,
+        gcTime: 300000
+    });
+
     const messages = messagesResult.data;
 
     const refetchMessages = useCallback(() => {
         queryClient.invalidateQueries({ queryKey: ['messages'] });
+        queryClient.invalidateQueries({ queryKey: ['messages', 'unreadCount'] });
         onMessagesChange?.();
     }, [queryClient, onMessagesChange]);
 
-    const unreadMessagesCount = useMemo(() => messages.filter((message) => !message.isRead).length, [messages]);
-    const readMessagesCount = messages.length - unreadMessagesCount;
+    const pageUnreadCount = messages.filter((message) => !message.isRead).length;
+    const pageReadCount = Math.max(0, messages.length - pageUnreadCount);
+    const normalizedUnreadCount = Math.max(0, Number(unreadCountResult) || 0);
+    const hasTotalCount = Number.isFinite(messagesResult.totalCount);
+    const totalMessagesCount = hasTotalCount
+        ? Math.max(0, Number(messagesResult.totalCount) || 0, normalizedUnreadCount)
+        : messages.length;
+    const unreadMessagesCount = hasTotalCount
+        ? Math.min(normalizedUnreadCount, totalMessagesCount)
+        : pageUnreadCount;
+    const readMessagesCount = hasTotalCount
+        ? Math.max(0, totalMessagesCount - unreadMessagesCount)
+        : pageReadCount;
     const selectedCount = selectedMessages.length;
     const pageSummary = debouncedSearch
-        ? tr(`${messages.length} search result${messages.length === 1 ? '' : 's'} on this page`, `លទ្ធផលស្វែងរក ${messages.length} នៅលើទំព័រនេះ`)
-        : tr(`${messages.length} message${messages.length === 1 ? '' : 's'} loaded on this page`, `សារ ${messages.length} ដែលបានផ្ទុកលើទំព័រនេះ`);
+        ? tm('summary.searchResultsOnPage', { count: messages.length })
+        : tm('summary.loadedOnPage', { count: messages.length });
 
     const handleToggleMessageRead = async (id, currentStatus) => {
         const { error } = await BaseService.safe(() => MessageService.toggleReadStatus(userRole, id, currentStatus, trackWrite));
@@ -160,20 +198,20 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
 
         refetchMessages();
         setSelectedMessages([]);
-        showToast(tr(`Marked ${selectedMessages.length} messages as ${isRead ? 'read' : 'unread'}.`, `បានសម្គាល់សារ ${selectedMessages.length} ជា ${isRead ? 'បានអាន' : 'មិនទាន់អាន'}។`));
+        showToast(tm(isRead ? 'toasts.markedRead' : 'toasts.markedUnread', { count: selectedMessages.length }));
     };
 
     const handleBatchDeleteMessages = () => {
         if (selectedMessages.length === 0) return;
         if (!isActionAllowed('delete', 'messages')) {
-            return showToast(tr('You do not have permission to perform this action.', 'អ្នកមិនមានសិទ្ធិធ្វើសកម្មភាពនេះទេ។'), 'error');
+            return showToast(t('admin.common.noPermissionAction'), 'error');
         }
 
         setConfirmDialog({
             isOpen: true,
-            title: tr('Delete Messages', 'លុបសារ'),
-            message: tr(`Are you sure you want to delete ${selectedMessages.length} selected messages? This action cannot be undone.`, `តើអ្នកប្រាកដថាចង់លុបសារ ${selectedMessages.length} ដែលបានជ្រើសរើសឬ? សកម្មភាពនេះមិនអាចមិនធ្វើវិញបានទេ។`),
-            confirmText: tr('Delete All', 'លុបទាំងអស់'),
+            title: tm('dialog.deleteManyTitle'),
+            message: tm('dialog.deleteManyMessage', { count: selectedMessages.length }),
+            confirmText: tm('actions.deleteAll'),
             type: 'danger',
             onConfirm: async () => {
                 const { error } = await BaseService.safe(() => MessageService.batchDeleteMessages(userRole, selectedMessages, trackDelete));
@@ -182,23 +220,23 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                 } else {
                     refetchMessages();
                     setSelectedMessages([]);
-                    showToast(tr(`Deleted ${selectedMessages.length} messages.`, `បានលុបសារ ${selectedMessages.length}។`));
+                    showToast(tm('toasts.deletedMany', { count: selectedMessages.length }));
                 }
-                setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: tr('Confirm', 'បញ្ជាក់'), type: 'danger' });
+                resetConfirmDialog();
             }
         });
     };
 
     const handleDeleteMessage = (id) => {
         if (!isActionAllowed('delete', 'messages')) {
-            return showToast(tr('You do not have permission to perform this action.', 'អ្នកមិនមានសិទ្ធិធ្វើសកម្មភាពនេះទេ។'), 'error');
+            return showToast(t('admin.common.noPermissionAction'), 'error');
         }
 
         setConfirmDialog({
             isOpen: true,
-            title: tr('Delete Message', 'លុបសារ'),
-            message: tr('Are you sure you want to delete this message? This action cannot be undone.', 'តើអ្នកប្រាកដថាចង់លុបសារនេះឬ? សកម្មភាពនេះមិនអាចមិនធ្វើវិញបានទេ។'),
-            confirmText: tr('Delete', 'លុប'),
+            title: tm('dialog.deleteSingleTitle'),
+            message: tm('dialog.deleteSingleMessage'),
+            confirmText: tm('actions.delete'),
             type: 'danger',
             onConfirm: async () => {
                 const { error } = await BaseService.safe(() => MessageService.deleteMessage(userRole, id, trackDelete));
@@ -210,36 +248,36 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                     if (viewingMessage?.id === id) {
                         setViewingMessage(null);
                     }
-                    showToast(tr('Message deleted.', 'បានលុបសារ។'));
+                    showToast(tm('toasts.deletedOne'));
                 }
-                setConfirmDialog({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: tr('Confirm', 'បញ្ជាក់'), type: 'danger' });
+                resetConfirmDialog();
             }
         });
     };
 
     const replyHref = viewingMessage
-        ? `mailto:${viewingMessage.email}?subject=${encodeURIComponent(tr(`Re: Portfolio inquiry from ${viewingMessage.name || 'your contact form'}`, `ឆ្លើយតប៖ សំណួរពី Portfolio ពី ${viewingMessage.name || 'ទម្រង់ទំនាក់ទំនងរបស់អ្នក'}`))}`
+        ? `mailto:${viewingMessage.email}?subject=${encodeURIComponent(tm('actions.replySubject', { name: viewingMessage.name || tm('general.contactForm') }))}`
         : '#';
 
     return (
         <div className="ui-message-tab">
             <SectionHeader
-                title={tr('Inquiry Messages', 'សារសំណួរ')}
-                description={tr('Review contact form submissions, prioritize unread inquiries, and move from triage to reply without losing context.', 'ពិនិត្យសារពីទម្រង់ទំនាក់ទំនង កំណត់អាទិភាពសារមិនទាន់អាន ហើយឆ្លើយតបដោយមិនបាត់បរិបទ។')}
+                title={tm('header.title')}
+                description={tm('header.description')}
                 icon={Mail}
                 rightElement={(
                     <div className="ui-message-headerActions">
                         <Badge variant={unreadMessagesCount > 0 ? 'primary' : 'default'}>
-                            {unreadMessagesCount > 0 ? tr(`${unreadMessagesCount} unread`, `${unreadMessagesCount} មិនទាន់អាន`) : tr('Inbox clear', 'ប្រអប់សារទទេ')}
+                            {unreadMessagesCount > 0 ? tm('header.unreadCount', { count: unreadMessagesCount }) : tm('header.inboxClear')}
                         </Badge>
                         <button
                             onClick={() => {
                                 pagination.reset();
                                 refetchMessages();
-                                showToast(tr('Messages refreshed', 'បានធ្វើបច្ចុប្បន្នភាពសារ'));
+                                showToast(tm('toasts.refreshed'));
                             }}
                             className="ui-button ui-button--ghost ui-btn-icon-only"
-                            title={tr('Refresh messages', 'ធ្វើបច្ចុប្បន្នភាពសារ')}
+                            title={tm('actions.refresh')}
                             type="button"
                         >
                             <RefreshCw size={18} className={(isLoading || isFetching) ? 'ui-spin' : ''} />
@@ -252,90 +290,82 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                 <div className="ui-message-workspace__overview">
                     <div className="ui-message-workspace__intro">
                         <div className="ui-message-workspace__copy">
-                            <span className="ui-message-workspace__eyebrow">{tr('Inbox workspace', 'កន្លែងធ្វើការប្រអប់សារ')}</span>
-                            <h3>{tr('Scan, sort, and answer inquiries faster', 'ស្កេន តម្រៀប និងឆ្លើយសំណួរបានលឿន')}</h3>
-                            <p>
-                                {tr('Keep the list focused on what needs attention first, then open each message in a cleaner reading surface with reply-ready actions.', 'ផ្តោតលើសារដែលត្រូវការយកចិត្តទុកដាក់ជាមុន រួចបើកអាននិងឆ្លើយតបបានភ្លាម។')}
-                            </p>
+                            <span className="ui-message-workspace__eyebrow">{tm('workspace.eyebrow')}</span>
+                            <h3>{tm('workspace.title')}</h3>
+                            <p>{tm('workspace.description')}</p>
                         </div>
                         <div className="ui-message-workspace__status">
                             <Badge variant={debouncedSearch ? 'primary' : 'default'}>
-                                {debouncedSearch ? tr(`Filtered by "${debouncedSearch}"`, `បានតម្រងតាម "${debouncedSearch}"`) : tr('Latest page', 'ទំព័រចុងក្រោយ')}
+                                {debouncedSearch ? tm('workspace.filteredBy', { query: debouncedSearch }) : tm('workspace.latestPage')}
                             </Badge>
                             <span>{pageSummary}</span>
                         </div>
                     </div>
-
                     <div className="ui-message-workspace__stats">
-                        <div className="ui-message-workspace__stat">
-                            <span className="ui-message-workspace__statLabel">{tr('Unread now', 'មិនទាន់អាន')}</span>
+                        <div className="ui-message-workspace__stat ui-message-workspace__stat--unread">
+                            <span className="ui-message-workspace__statLabel">{tm('stats.unread.label')}</span>
                             <strong>{unreadMessagesCount}</strong>
-                            <span className="ui-message-workspace__statHint">{tr('Messages needing a fresh review', 'សារដែលត្រូវពិនិត្យ')}</span>
+                            <span className="ui-message-workspace__statHint">{tm('stats.unread.hint')}</span>
                         </div>
-                        <div className="ui-message-workspace__stat">
-                            <span className="ui-message-workspace__statLabel">{tr('Read on page', 'បានអានលើទំព័រ')}</span>
+                        <div className="ui-message-workspace__stat ui-message-workspace__stat--read">
+                            <span className="ui-message-workspace__statLabel">{tm('stats.read.label')}</span>
                             <strong>{readMessagesCount}</strong>
-                            <span className="ui-message-workspace__statHint">{tr('Already opened and reviewed', 'បានបើក និងពិនិត្យរួច')}</span>
+                            <span className="ui-message-workspace__statHint">{tm('stats.read.hint')}</span>
                         </div>
-                        <div className="ui-message-workspace__stat">
-                            <span className="ui-message-workspace__statLabel">{tr('Loaded now', 'ដែលបានផ្ទុក')}</span>
-                            <strong>{messages.length}</strong>
-                            <span className="ui-message-workspace__statHint">{tr('Visible records on this page', 'កំណត់ត្រាដែលមើលឃើញលើទំព័រនេះ')}</span>
+                        <div className="ui-message-workspace__stat ui-message-workspace__stat--total">
+                            <span className="ui-message-workspace__statLabel">{tm('stats.total.label')}</span>
+                            <strong>{totalMessagesCount}</strong>
+                            <span className="ui-message-workspace__statHint">{tm('stats.total.hint')}</span>
                         </div>
-                        <div className="ui-message-workspace__stat">
-                            <span className="ui-message-workspace__statLabel">{tr('Selected', 'បានជ្រើស')}</span>
+                        <div className="ui-message-workspace__stat ui-message-workspace__stat--selected">
+                            <span className="ui-message-workspace__statLabel">{tm('stats.selected.label')}</span>
                             <strong>{selectedCount}</strong>
-                            <span className="ui-message-workspace__statHint">{tr('Ready for batch actions', 'រួចសម្រាប់សកម្មភាពជាក្រុម')}</span>
+                            <span className="ui-message-workspace__statHint">{tm('stats.selected.hint')}</span>
                         </div>
                     </div>
-                </div>
 
-                <div className="ui-message-toolbar">
-                    <div className="ui-message-searchPanel">
-                        <label className="ui-message-searchPanel__label" htmlFor="message-search">
-                            {tr('Search inbox', 'ស្វែងរកក្នុងប្រអប់សារ')}
-                        </label>
-                        <div className="admin-search-container ui-message-searchPanel__field">
-                            <Search size={16} className="admin-search-icon" />
-                            <Input
-                                id="message-search"
-                                type="text"
-                                placeholder={tr('Search by sender, email, or message preview...', 'ស្វែងរកតាមអ្នកផ្ញើ អ៊ីមែល ឬការមើលសារជាមុន...')}
-                                value={searchMessages}
-                                onChange={(event) => setSearchMessages(event.target.value)}
-                                className="admin-search-input"
-                            />
-                            {(isLoading || isFetching) && (
-                                <RefreshCw
-                                    size={14}
-                                    className="ui-spin ui-message-searchPanel__spinner"
+                    <div className="ui-message-toolbar">
+                        <div className="ui-message-searchPanel">
+                            <div className="ui-message-searchPanel__input">
+                                <Search size={16} className="ui-message-searchPanel__icon" />
+                                <Input
+                                    placeholder={tm('toolbar.searchPlaceholder')}
+                                    value={searchMessages}
+                                    onChange={(event) => setSearchMessages(event.target.value)}
+                                    className="admin-search-input"
                                 />
-                            )}
-                        </div>
-                        <p className="ui-message-searchPanel__meta">
-                            {debouncedSearch
-                                ? tr(`${messages.length} matching message${messages.length === 1 ? '' : 's'} visible on this page.`, `មានសារត្រូវគ្នា ${messages.length} នៅលើទំព័រនេះ។`)
-                                : tr('Unread rows stay visually elevated so the next reply is easy to spot.', 'ជួរមិនទាន់អានត្រូវបានរំលេចឱ្យងាយរកឃើញសម្រាប់ឆ្លើយបន្ទាប់។')}
-                        </p>
-                    </div>
-
-                    <div className="ui-message-toolbar__aside">
-                        <div className="ui-message-toolbar__note">
-                            <span className="ui-message-toolbar__noteIcon">
-                                <Inbox size={16} />
-                            </span>
-                            <div>
-                                <strong>{tr('Focused review', 'ពិនិត្យផ្តោត')}</strong>
-                                <p>{tr('Open any row to read the full message, copy the sender context, and jump straight into email.', 'បើកជួរណាមួយដើម្បីអានសារពេញ យកបរិបទអ្នកផ្ញើ ហើយឆ្លើយតាមអ៊ីមែលភ្លាម។')}</p>
+                                {(isLoading || isFetching) && (
+                                    <RefreshCw
+                                        size={14}
+                                        className="ui-spin ui-message-searchPanel__spinner"
+                                    />
+                                )}
                             </div>
+                            <p className="ui-message-searchPanel__meta">
+                                {debouncedSearch
+                                    ? tm('toolbar.searchResultsVisible', { count: messages.length })
+                                    : tm('toolbar.defaultHint')}
+                            </p>
                         </div>
-                        <div className="ui-message-toolbar__note">
-                            <span className="ui-message-toolbar__noteIcon">
-                                <Layers3 size={16} />
-                            </span>
-                            <div>
-                                <strong>{tr('Batch-friendly', 'ងាយសម្រាប់សកម្មភាពជាក្រុម')}</strong>
-                                <p>{tr('Select multiple rows when you want to clear older inquiries or reset unread state in one pass.', 'ជ្រើសជួរច្រើនពេលចង់សម្អាតសារចាស់ ឬកំណត់ស្ថានភាពមិនទាន់អានឡើងវិញ។')}</p>
+
+                        <div className="ui-message-toolbar__aside">
+                            <div className="ui-message-toolbar__note">
+                                <span className="ui-message-toolbar__noteIcon">
+                                    <Inbox size={16} />
+                                </span>
+                                <div>
+                                    <strong>{tm('notes.focusedReview.title')}</strong>
+                                    <p>{tm('notes.focusedReview.description')}</p>
+                                </div>
+                            </div>
+                            <div className="ui-message-toolbar__note">
+                                <span className="ui-message-toolbar__noteIcon">
+                                    <Layers3 size={16} />
+                                </span>
+                                <div>
+                                    <strong>{tm('notes.batchFriendly.title')}</strong>
+                                    <p>{tm('notes.batchFriendly.description')}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -346,19 +376,19 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                         <div className="ui-message-bulkBar__summary">
                             <span className="ui-message-bulkBar__count">{selectedMessages.length}</span>
                             <div>
-                                <strong>{tr(`${selectedMessages.length} selected`, `បានជ្រើស ${selectedMessages.length}`)}</strong>
-                                <p>{tr('Apply a status update or clear the chosen messages.', 'ធ្វើបច្ចុប្បន្នភាពស្ថានភាព ឬសម្អាតសារដែលបានជ្រើស។')}</p>
+                                <strong>{tm('bulk.selectedCount', { count: selectedMessages.length })}</strong>
+                                <p>{tm('bulk.description')}</p>
                             </div>
                         </div>
                         <div className="ui-message-bulkBar__actions">
-                            <Button variant="secondary" size="sm" onClick={() => handleBatchMarkMessages(true)} title={tr('Mark selected as read', 'សម្គាល់ដែលជ្រើសថាបានអាន')}>
-                                <MailOpen size={14} /> {tr('Mark Read', 'សម្គាល់ថាបានអាន')}
+                            <Button variant="secondary" size="sm" onClick={() => handleBatchMarkMessages(true)} title={tm('bulk.markReadTitle')}>
+                                <MailOpen size={14} /> {tm('actions.markRead')}
                             </Button>
-                            <Button variant="secondary" size="sm" onClick={() => handleBatchMarkMessages(false)} title={tr('Mark selected as unread', 'សម្គាល់ដែលជ្រើសថាមិនទាន់អាន')}>
-                                <Mail size={14} /> {tr('Mark Unread', 'សម្គាល់ថាមិនទាន់អាន')}
+                            <Button variant="secondary" size="sm" onClick={() => handleBatchMarkMessages(false)} title={tm('bulk.markUnreadTitle')}>
+                                <Mail size={14} /> {tm('actions.markUnread')}
                             </Button>
-                            <Button variant="danger" size="sm" onClick={handleBatchDeleteMessages} title={tr('Delete selected messages', 'លុបសារដែលបានជ្រើស')}>
-                                <Trash2 size={14} /> {tr('Delete', 'លុប')}
+                            <Button variant="danger" size="sm" onClick={handleBatchDeleteMessages} title={tm('bulk.deleteTitle')}>
+                                <Trash2 size={14} /> {tm('actions.delete')}
                             </Button>
                         </div>
                     </div>
@@ -399,16 +429,14 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                                 <Mail size={22} />
                             </div>
                             <div className="ui-message-detail__heroCopy">
-                                <Dialog.Title>{tr('Message Details', 'ព័ត៌មានលម្អិតសារ')}</Dialog.Title>
-                                <Dialog.Description>
-                                    {tr('Read the inquiry, verify sender context, and reply without leaving the admin workspace.', 'អានសំណួរ ផ្ទៀងផ្ទាត់បរិបទអ្នកផ្ញើ និងឆ្លើយតបដោយមិនចាកចេញពី Admin។')}
-                                </Dialog.Description>
+                                <Dialog.Title>{tm('detail.title')}</Dialog.Title>
+                                <Dialog.Description>{tm('detail.description')}</Dialog.Description>
                             </div>
                         </div>
                         <div className="ui-message-detail__headerMeta">
                             {viewingMessage && (
                                 <Badge variant={viewingMessage.isRead ? 'default' : 'primary'}>
-                                    {viewingMessage.isRead ? tr('Read', 'បានអាន') : tr('Unread', 'មិនទាន់អាន')}
+                                    {viewingMessage.isRead ? tm('status.read') : tm('status.unread')}
                                 </Badge>
                             )}
                             <Dialog.Close />
@@ -421,11 +449,11 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                                 <div className="ui-message-detail__main">
                                     <section className="ui-message-detail__panel ui-message-detail__panel--message">
                                         <div className="ui-message-detail__sectionHead">
-                                            <span>{tr('Message body', 'ខ្លឹមសារសារ')}</span>
-                                            <small>{buildRelativeTime(viewingMessage.createdAt)}</small>
+                                            <span>{tm('detail.messageBody')}</span>
+                                            <small>{buildRelativeTime(viewingMessage.createdAt, locale, tm('general.justArrived'))}</small>
                                         </div>
                                         <div className="ui-message-detail__messageText">
-                                            {viewingMessage.message || tr('No message body was provided.', 'មិនមានខ្លឹមសារសារទេ។')}
+                                            {viewingMessage.message || tm('detail.noBody')}
                                         </div>
                                     </section>
                                 </div>
@@ -433,16 +461,16 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                                 <aside className="ui-message-detail__aside">
                                     <section className="ui-message-detail__panel">
                                         <div className="ui-message-detail__sectionHead">
-                                            <span>{tr('Sender', 'អ្នកផ្ញើ')}</span>
+                                            <span>{tm('detail.sender')}</span>
                                         </div>
                                         <div className="ui-message-detail__senderCard">
                                             <div className="ui-message-detail__senderAvatar">
-                                                {getInitials(viewingMessage.name)}
+                                                {(viewingMessage.name || '').trim().slice(0, 2).toUpperCase() || '?'}
                                             </div>
                                             <div className="ui-message-detail__senderMeta">
-                                                <strong>{viewingMessage.name || tr('Unknown sender', 'អ្នកផ្ញើមិនស្គាល់')}</strong>
+                                                <strong>{viewingMessage.name || tm('general.unknownSender')}</strong>
                                                 <a href={`mailto:${viewingMessage.email}`}>
-                                                    {viewingMessage.email || tr('No email provided', 'មិនមានអ៊ីមែល')}
+                                                    {viewingMessage.email || tm('general.noEmail')}
                                                 </a>
                                             </div>
                                         </div>
@@ -450,20 +478,20 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
 
                                     <section className="ui-message-detail__panel">
                                         <div className="ui-message-detail__sectionHead">
-                                            <span>{tr('Message status', 'ស្ថានភាពសារ')}</span>
+                                            <span>{tm('detail.statusTitle')}</span>
                                         </div>
                                         <div className="ui-message-detail__metaList">
                                             <div className="ui-message-detail__metaItem">
-                                                <span>{tr('Received', 'បានទទួល')}</span>
-                                                <strong>{formatDateTime(viewingMessage.createdAt)}</strong>
+                                                <span>{tm('detail.received')}</span>
+                                                <strong>{formatDateTime(viewingMessage.createdAt, locale, tm('general.recently'))}</strong>
                                             </div>
                                             <div className="ui-message-detail__metaItem">
-                                                <span>{tr('Status', 'ស្ថានភាព')}</span>
-                                                <strong>{viewingMessage.isRead ? tr('Already reviewed', 'បានពិនិត្យរួច') : tr('Needs attention', 'ត្រូវការយកចិត្តទុកដាក់')}</strong>
+                                                <span>{tm('detail.status')}</span>
+                                                <strong>{viewingMessage.isRead ? tm('status.alreadyReviewed') : tm('status.needsAttention')}</strong>
                                             </div>
                                             <div className="ui-message-detail__metaItem">
-                                                <span>{tr('Reply path', 'ផ្លូវឆ្លើយតប')}</span>
-                                                <strong>{tr('Email client', 'កម្មវិធីអ៊ីមែល')}</strong>
+                                                <span>{tm('detail.replyPath')}</span>
+                                                <strong>{tm('detail.emailClient')}</strong>
                                             </div>
                                         </div>
                                     </section>
@@ -477,7 +505,7 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                             <div className="ui-footer-actions-container">
                                 <div className="ui-footer-actions-left">
                                     <Button variant="danger" onClick={() => handleDeleteMessage(viewingMessage.id)}>
-                                        <Trash2 size={16} /> {tr('Delete', 'លុប')}
+                                        <Trash2 size={16} /> {tm('actions.delete')}
                                     </Button>
                                 </div>
                                 <div className="ui-footer-actions-right">
@@ -485,13 +513,13 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                                         variant="secondary"
                                         onClick={() => handleToggleMessageRead(viewingMessage.id, viewingMessage.isRead)}
                                     >
-                                        {viewingMessage.isRead ? <><MailOpen size={18} /> {tr('Mark Unread', 'សម្គាល់ថាមិនទាន់អាន')}</> : <><Mail size={18} /> {tr('Mark Read', 'សម្គាល់ថាបានអាន')}</>}
+                                        {viewingMessage.isRead ? <><MailOpen size={18} /> {tm('actions.markUnread')}</> : <><Mail size={18} /> {tm('actions.markRead')}</>}
                                     </Button>
                                     <a
                                         href={replyHref}
                                         className="ui-message-detail__replyLink"
                                     >
-                                        <Reply size={18} /> {tr('Reply Now', 'ឆ្លើយឥឡូវនេះ')}
+                                        <Reply size={18} /> {tm('actions.replyNow')}
                                     </a>
                                 </div>
                             </div>
@@ -500,7 +528,7 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                 </Dialog.Content>
             </Dialog>
 
-            <Dialog open={confirmDialog.isOpen} onOpenChange={(open) => !open && setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}>
+            <Dialog open={confirmDialog.isOpen} onOpenChange={(open) => !open && resetConfirmDialog()}>
                 <Dialog.Content maxWidth="440px" className={`ui-confirm-dialog ${confirmDialog.type !== 'danger' ? 'ui-confirm-dialog--primary' : ''}`}>
                     <Dialog.Header className="ui-confirm-dialog__header">
                         <div className="ui-confirm-dialog__titleWrap">
@@ -512,7 +540,7 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                                     {confirmDialog.title}
                                 </Dialog.Title>
                                 <Dialog.Description className="ui-confirm-dialog__description">
-                                    {tr('Review this action before continuing.', 'ពិនិត្យសកម្មភាពនេះមុនបន្ត។')}
+                                    {tm('dialog.reviewAction')}
                                 </Dialog.Description>
                             </div>
                         </div>
@@ -520,17 +548,17 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
                     </Dialog.Header>
                     <Dialog.Body className="ui-confirm-dialog__body">
                         <p className="ui-confirm-dialog__message">{confirmDialog.message}</p>
-                        <p className="ui-confirm-dialog__note">{tr('Deleted messages cannot be restored from this inbox view.', 'សារដែលលុបហើយ មិនអាចស្តារឡើងវិញពីទិដ្ឋភាពប្រអប់សារនេះបានទេ។')}</p>
+                        <p className="ui-confirm-dialog__note">{tm('dialog.deleteNote')}</p>
                     </Dialog.Body>
                     <Dialog.Footer className="ui-confirm-dialog__footer">
-                        <Button variant="ghost" onClick={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}>
-                            {tr('Cancel', 'បោះបង់')}
+                        <Button variant="ghost" onClick={resetConfirmDialog}>
+                            {tm('dialog.cancel')}
                         </Button>
                         <Button
                             variant={confirmDialog.type === 'danger' ? 'danger' : 'primary'}
                             onClick={() => {
                                 confirmDialog.onConfirm?.();
-                                setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+                                resetConfirmDialog();
                             }}
                         >
                             {confirmDialog.confirmText}

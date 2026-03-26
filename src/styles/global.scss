@@ -66,7 +66,7 @@ html {
     --bg-surface: rgba(var(--dynamic-glass-rgb), var(--dynamic-glass-opacity));
     --bg-surface-light: rgba(var(--dynamic-glass-rgb), calc(var(--dynamic-glass-opacity) - 0.08));
     --text-primary: #eaf0ff;
-    --text-secondary: #a7b8d6;
+    --text-secondary: #c0d0e8;
     --glass-surface: rgba(255, 255, 255, 0.04);
     --glass-backdrop-filter: blur(var(--dynamic-glass-blur));
     --glass-border: rgba(149, 177, 255, 0.22);
@@ -102,16 +102,16 @@ html {
 
 [data-theme="light"] {
     --bg-color: #eef3fb;
-    --bg-surface: rgba(244, 248, 255, 0.72);
-    --bg-surface-light: rgba(255, 255, 255, 0.62);
+    --bg-surface: rgba(255, 255, 255, calc(0.16 + (var(--dynamic-glass-opacity) * 0.82)));
+    --bg-surface-light: rgba(255, 255, 255, calc(0.24 + (var(--dynamic-glass-opacity) * 0.74)));
     --text-primary: #10213d;
     --text-secondary: #4e6386;
-    --glass-surface: rgba(255, 255, 255, 0.56);
-    --glass-backdrop-filter: blur(12px);
+    --glass-surface: rgba(255, 255, 255, calc(0.1 + (var(--dynamic-glass-opacity) * 0.52)));
+    --glass-backdrop-filter: blur(var(--dynamic-glass-blur));
     --glass-border: rgba(47, 109, 246, 0.16);
     --glass-shadow: 0 18px 40px rgba(26, 52, 95, 0.11), 0 2px 8px rgba(16, 33, 61, 0.06);
     --neon-glow: 0 0 12px rgba(47, 109, 246, 0.16);
-    --card-bg: rgba(255, 255, 255, 0.64);
+    --card-bg: rgba(255, 255, 255, calc(0.18 + (var(--dynamic-glass-opacity) * 0.8)));
     --card-bg-rgb: 255, 255, 255;
     --primary-color-rgb: 47, 109, 246;
     --card-hover: rgba(238, 244, 255, 0.82);
@@ -130,9 +130,9 @@ html {
     --hero-gradient-start: #10213d;
     --hero-gradient-end: #2f6df6;
     --heading-color: #10213d;
-    --sidebar-bg: #ffffff;
-    --topnav-bg: #ffffff;
-    --card-bg-gradient: linear-gradient(145deg, #ffffff 0%, #eef4ff 100%);
+    --sidebar-bg: rgba(255, 255, 255, calc(0.24 + (var(--dynamic-glass-opacity) * 0.76)));
+    --topnav-bg: rgba(255, 255, 255, calc(0.2 + (var(--dynamic-glass-opacity) * 0.76)));
+    --card-bg-gradient: linear-gradient(145deg, rgba(255, 255, 255, calc(0.16 + (var(--dynamic-glass-opacity) * 0.8))) 0%, rgba(238, 244, 255, calc(0.18 + (var(--dynamic-glass-opacity) * 0.78))) 100%);
     --primary-color: #2f6df6;
     --primary-rgb: 47, 109, 246;
     --primary-color-strong: #2459ca;
@@ -189,11 +189,11 @@ html {
     &[data-theme="light"] *,
     [data-theme="light"] & {
         --bg-color: #f8f9fa;
-        --bg-surface: rgba(244, 248, 255, 0.75);
-        --bg-surface-light: rgba(255, 255, 255, 0.68);
-        --glass-surface: rgba(255, 255, 255, 0.62);
-        --glass-backdrop-filter: blur(14px);
-        --card-bg: rgba(255, 255, 255, 0.7);
+        --bg-surface: rgba(255, 255, 255, calc(0.18 + (var(--dynamic-glass-opacity) * 0.82)));
+        --bg-surface-light: rgba(255, 255, 255, calc(0.26 + (var(--dynamic-glass-opacity) * 0.74)));
+        --glass-surface: rgba(255, 255, 255, calc(0.12 + (var(--dynamic-glass-opacity) * 0.54)));
+        --glass-backdrop-filter: blur(var(--dynamic-glass-blur));
+        --card-bg: rgba(255, 255, 255, calc(0.2 + (var(--dynamic-glass-opacity) * 0.8)));
         --card-bg-rgb: 255, 255, 255;
         --card-hover: rgba(238, 244, 255, 0.8);
         --input-bg: rgba(246, 249, 255, 0.75);
@@ -205,9 +205,9 @@ html {
         --text-tertiary: #9ca3af;
         --skeleton-base: rgba(47, 109, 246, 0.08);
         --skeleton-shine: rgba(47, 109, 246, 0.16);
-        --card-bg-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.85) 0%, rgba(238, 244, 255, 0.9) 100%);
-        --sidebar-bg: rgba(255, 255, 255, 0.92);
-        --topnav-bg: rgba(255, 255, 255, 0.88);
+        --card-bg-gradient: linear-gradient(145deg, rgba(255, 255, 255, calc(0.2 + (var(--dynamic-glass-opacity) * 0.8))) 0%, rgba(238, 244, 255, calc(0.22 + (var(--dynamic-glass-opacity) * 0.76))) 100%);
+        --sidebar-bg: rgba(255, 255, 255, calc(0.26 + (var(--dynamic-glass-opacity) * 0.76)));
+        --topnav-bg: rgba(255, 255, 255, calc(0.22 + (var(--dynamic-glass-opacity) * 0.76)));
         --bg-card: var(--card-bg);
         --workspace-stat-bg: rgba(231, 237, 246, 0.78);
         --workspace-stat-border: #d2dced;
@@ -354,10 +354,10 @@ h6 {
 
 .section-title {
     text-align: center;
-    font-family: var(--font-heading, inherit);
-    font-weight: var(--font-weight-heading, 700);
-    font-style: var(--font-style-heading, normal);
-    font-size: calc(var(--font-size-heading) * 1.8);
+    font-family: var(--font-display, var(--font-heading, inherit));
+    font-weight: var(--font-weight-display, var(--font-weight-heading, 700));
+    font-style: var(--font-style-display, var(--font-style-heading, normal));
+    font-size: calc(var(--font-size-display) * 1.1);
     margin-bottom: 3rem;
     position: relative;
 

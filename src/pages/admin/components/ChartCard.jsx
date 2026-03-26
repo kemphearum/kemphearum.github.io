@@ -11,8 +11,7 @@ const ChartCard = ({
     children,
     headerRight
 }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t } = useTranslation();
 
     return (
         <div className="ui-chartCard">
@@ -25,7 +24,7 @@ const ChartCard = ({
                     {headerRight}
                     {onViewDetails && (
                         <button className="ui-detailBtn" onClick={onViewDetails}>
-                            {tr('View Details', 'មើលលម្អិត')}
+                            {t('admin.common.chartCard.viewDetails')}
                         </button>
                     )}
                     {onRefresh && (
@@ -35,7 +34,7 @@ const ChartCard = ({
                             disabled={isLoading}
                         >
                             <RefreshCw size={14} className={isLoading ? 'ui-spin' : ''} />
-                            {tr('Refresh', 'ធ្វើបច្ចុប្បន្នភាព')}
+                            {t('admin.common.chartCard.refresh')}
                         </button>
                     )}
                 </div>

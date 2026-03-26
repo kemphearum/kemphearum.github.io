@@ -20,6 +20,19 @@ const interpolate = (text, params = {}) => text.replace(/\{\{(\w+)\}\}/g, (_, to
     params[token] !== undefined ? String(params[token]) : `{{${token}}}`
 ));
 
+const interpolateValue = (value, params = {}) => {
+    if (typeof value === 'string') return interpolate(value, params);
+    if (Array.isArray(value)) {
+        return value.map((item) => interpolateValue(item, params));
+    }
+    if (value && typeof value === 'object') {
+        return Object.fromEntries(
+            Object.entries(value).map(([entryKey, entryValue]) => [entryKey, interpolateValue(entryValue, params)])
+        );
+    }
+    return value;
+};
+
 export const LanguageProvider = ({ children }) => {
     const [language, setLanguageState] = useState(getLanguageFromStorage);
 
@@ -39,14 +52,16 @@ export const LanguageProvider = ({ children }) => {
     }, []);
 
     const t = useCallback((key, params = {}) => {
+        const { returnObjects = false, ...interpolationParams } = params;
         const activeDictionary = translations[language] || translations[DEFAULT_LANGUAGE];
         const englishDictionary = translations[DEFAULT_LANGUAGE];
         const localized = getNestedValue(activeDictionary, key);
         const fallback = getNestedValue(englishDictionary, key);
         const value = (localized ?? fallback ?? key);
 
-        if (typeof value !== 'string') return key;
-        return interpolate(value, params);
+        if (typeof value === 'string') return interpolate(value, interpolationParams);
+        if (returnObjects && value !== undefined) return interpolateValue(value, interpolationParams);
+        return key;
     }, [language]);
 
     const value = useMemo(() => ({

@@ -9,9 +9,10 @@
     left: 0;
     width: 100%;
     padding: 0 1.5rem;
-    background: var(--topnav-bg, rgba(10, 20, 35, 0.82));
-    backdrop-filter: none;
-    border-bottom: 1px solid var(--divider);
+    background: var(--topnav-bg, rgba(10, 20, 35, 0.96));
+    backdrop-filter: blur(14px) saturate(1.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 28px rgba(3, 8, 20, 0.28);
     height: 56px;
     z-index: 300;
 

@@ -9,7 +9,18 @@ import ProjectService from '../../../../services/ProjectService';
 import BlogService from '../../../../services/BlogService';
 import tabStyles from '../SettingsTab.module.scss';
 import { useTranslation } from '../../../../hooks/useTranslation';
-import { getLocalizedField, isLocalizedObject } from '../../../../utils/localization';
+import { getLanguageValue, getLocalizedField, isLocalizedObject } from '../../../../utils/localization';
+import { buildBrowserTitle } from '../../../../utils/browserTitle';
+
+const LOCALIZED_IDENTITY_FIELDS = [
+    'title',
+    'tagline',
+    'logoHighlight',
+    'logoText',
+    'footerText',
+    'projectFilters',
+    'blogFilters'
+];
 
 const normalizeTaxonomyToken = (value) => String(value || '').trim().replace(/\s+/g, ' ');
 
@@ -67,25 +78,39 @@ const IdentitySection = ({
     onSave,
     loading
 }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
-    const getText = (value, fallback = '') => {
+    const { language, t } = useTranslation();
+    const getInputText = (value, fallback = '') => {
+        if (isLocalizedObject(value)) {
+            return getLanguageValue(value, language, false);
+        }
         if (typeof value === 'string') return value;
         if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-        if (value && typeof value === 'object') {
+        return fallback;
+    };
+
+    const getPreviewText = (value, fallback = '') => {
+        if (isLocalizedObject(value)) {
             const localized = getLocalizedField(value, language);
             return localized || fallback;
         }
+        if (typeof value === 'string') return value;
+        if (typeof value === 'number' || typeof value === 'boolean') return String(value);
         return fallback;
     };
 
     const updateField = (key, value) => {
         const current = settingsData[key];
-        if (isLocalizedObject(current)) {
+        const isLocalizedField = LOCALIZED_IDENTITY_FIELDS.includes(key);
+
+        if (isLocalizedObject(current) || isLocalizedField) {
+            const currentObj = isLocalizedObject(current) 
+                ? current 
+                : { en: current || '', km: current || '' }; 
+            
             setSettingsData({
                 ...settingsData,
                 [key]: {
-                    ...current,
+                    ...currentObj,
                     [language]: value
                 }
             });
@@ -94,14 +119,19 @@ const IdentitySection = ({
         setSettingsData({ ...settingsData, [key]: value });
     };
 
-    const titleText = getText(settingsData.title);
-    const taglineText = getText(settingsData.tagline);
-    const logoHighlightText = getText(settingsData.logoHighlight);
-    const logoTextText = getText(settingsData.logoText);
-    const footerTextText = getText(settingsData.footerText);
-    const projectFiltersText = getText(settingsData.projectFilters);
-    const blogFiltersText = getText(settingsData.blogFilters);
-    const faviconText = getText(settingsData.favicon);
+    const titleText = getInputText(settingsData.title);
+    const taglineText = getInputText(settingsData.tagline);
+    const logoHighlightText = getInputText(settingsData.logoHighlight);
+    const logoTextText = getInputText(settingsData.logoText);
+    const footerTextText = getInputText(settingsData.footerText);
+    const projectFiltersText = getInputText(settingsData.projectFilters);
+    const blogFiltersText = getInputText(settingsData.blogFilters);
+    const faviconText = getPreviewText(settingsData.favicon);
+    const previewLogoHighlightText = getPreviewText(settingsData.logoHighlight);
+    const previewLogoTextText = getPreviewText(settingsData.logoText);
+    const previewTaglineText = getPreviewText(settingsData.tagline);
+    const previewFooterText = getPreviewText(settingsData.footerText);
+    const browserTitlePreview = buildBrowserTitle(settingsData, language);
     const hasFavicon = Boolean(settingsFavicon || faviconText || previewBase64);
     const [projectManualInput, setProjectManualInput] = useState('');
     const [blogManualInput, setBlogManualInput] = useState('');
@@ -171,25 +201,25 @@ const IdentitySection = ({
             <div className="ui-card">
                 <div className={tabStyles.surfaceHeader}>
                     <div className={tabStyles.surfaceCopy}>
-                        <span className={tabStyles.surfaceEyebrow}>{tr('Identity System', 'ប្រព័ន្ធអត្តសញ្ញាណ')}</span>
-                        <h3 className={tabStyles.surfaceHeadline}>{tr('Shape how the portfolio is recognized in tabs, branding, and collection filters.', 'កំណត់របៀបដែល Portfolio ត្រូវបានស្គាល់នៅលើផ្ទាំង ការប្រេន និងតម្រងបញ្ជី។')}</h3>
-                        <p className={tabStyles.surfaceLead}>{tr('This view keeps naming, browser assets, and taxonomy controls in one place so brand updates feel deliberate instead of scattered.', 'ផ្ទាំងនេះរួមបញ្ចូលឈ្មោះ Asset Browser និង Taxonomy នៅកន្លែងតែមួយ ដើម្បីងាយកែប្រែម៉ាក។')}</p>
+                        <span className={tabStyles.surfaceEyebrow}>{t('admin.settings.sections.identity.eyebrow')}</span>
+                        <h3 className={tabStyles.surfaceHeadline}>{t('admin.settings.sections.identity.title')}</h3>
+                        <p className={tabStyles.surfaceLead}>{t('admin.settings.sections.identity.description')}</p>
                     </div>
                     <div className={tabStyles.surfaceMeta}>
                         <div className={tabStyles.surfaceMetaCard}>
-                            <span className={tabStyles.surfaceMetaValue}>{hasFavicon ? tr('Ready', 'រួចរាល់') : tr('Pending', 'កំពុងរង់ចាំ')}</span>
-                            <span className={tabStyles.surfaceMetaLabel}>{tr('Favicon', 'រូបតំណាង')}</span>
-                            <span className={tabStyles.surfaceMetaHint}>{tr('Upload a small icon for browser tabs', 'ផ្ទុកឡើងរូបតំណាងតូចសម្រាប់ផ្ទាំង Browser')}</span>
+                            <span className={tabStyles.surfaceMetaValue}>{hasFavicon ? t('admin.settings.sections.identity.ready') : t('admin.settings.sections.identity.pending')}</span>
+                            <span className={tabStyles.surfaceMetaLabel}>{t('admin.settings.sections.identity.favicon')}</span>
+                            <span className={tabStyles.surfaceMetaHint}>{t('admin.settings.sections.identity.faviconHint')}</span>
                         </div>
                         <div className={tabStyles.surfaceMetaCard}>
-                            <span className={tabStyles.surfaceMetaValue}>{logoHighlightText || tr('Kem', 'ខេម')} {logoTextText || tr('Phearum', 'ភារុំ')}</span>
-                            <span className={tabStyles.surfaceMetaLabel}>{tr('Brand Name', 'ឈ្មោះម៉ាក')}</span>
-                            <span className={tabStyles.surfaceMetaHint}>{tr('Used across logo treatments and previews', 'ប្រើសម្រាប់ឡូហ្គោ និងការមើលជាមុន')}</span>
+                            <span className={tabStyles.surfaceMetaValue}>{logoHighlightText || t('admin.settings.sections.identity.fields.logoPrefixPlaceholder')} {logoTextText || t('admin.settings.sections.identity.fields.logoSuffixPlaceholder')}</span>
+                            <span className={tabStyles.surfaceMetaLabel}>{t('admin.settings.sections.identity.brandName')}</span>
+                            <span className={tabStyles.surfaceMetaHint}>{t('admin.settings.sections.identity.brandNameHint')}</span>
                         </div>
                         <div className={tabStyles.surfaceMetaCard}>
                             <span className={tabStyles.surfaceMetaValue}>{[projectFiltersText, blogFiltersText].filter(Boolean).length}/2</span>
-                            <span className={tabStyles.surfaceMetaLabel}>{tr('Filter Sets', 'សំណុំតម្រង')}</span>
-                            <span className={tabStyles.surfaceMetaHint}>{tr('Quick sorting for projects and blog posts', 'តម្រៀបរហ័សសម្រាប់ Project និង Blog')}</span>
+                            <span className={tabStyles.surfaceMetaLabel}>{t('admin.settings.sections.identity.filterSets')}</span>
+                            <span className={tabStyles.surfaceMetaHint}>{t('admin.settings.sections.identity.filterSetsHint')}</span>
                         </div>
                     </div>
                 </div>
@@ -199,25 +229,25 @@ const IdentitySection = ({
                         <section className={tabStyles.settingsPanel}>
                             <div className={tabStyles.panelHeader}>
                                 <div className={tabStyles.panelTitleGroup}>
-                                    <span className={tabStyles.panelEyebrow}>{tr('Brand Basics', 'មូលដ្ឋានម៉ាក')}</span>
-                                    <h4 className={tabStyles.panelTitle}>{tr('Name, tagline, and browser copy', 'ឈ្មោះ Tagline និងអត្ថបទ Browser')}</h4>
-                                    <p className={tabStyles.panelDescription}>{tr('These settings define the identity seen in the browser tab, navbar, and footer.', 'ការកំណត់ទាំងនេះកំណត់អត្តសញ្ញាណដែលបង្ហាញលើផ្ទាំង Browser Navbar និង Footer។')}</p>
+                                    <span className={tabStyles.panelEyebrow}>{t('admin.settings.sections.identity.brandBasics.title')}</span>
+                                    <h4 className={tabStyles.panelTitle}>{t('admin.settings.sections.identity.brandBasics.subtitle')}</h4>
+                                    <p className={tabStyles.panelDescription}>{t('admin.settings.sections.identity.brandBasics.description')}</p>
                                 </div>
-                                <span className={tabStyles.panelBadge}>{tr('Core copy', 'អត្ថបទស្នូល')}</span>
+                                <span className={tabStyles.panelBadge}>{t('admin.settings.sections.identity.brandBasics.badge')}</span>
                             </div>
 
                             <div className={tabStyles.formGrid}>
-                                <FormField label={tr('Page Title (Browser Tab)', 'ចំណងជើងទំព័រ (ផ្ទាំង Browser)')} columns={1}>
+                                <FormField label={t('admin.settings.sections.identity.fields.pageTitle')} columns={1}>
                                     <FormInput
-                                        placeholder={tr('Kem Phearum | Portfolio', 'ខេម ភារុំ | ផតហ្វូលីយ៉ូ')}
+                                        placeholder={t('admin.settings.sections.identity.fields.pageTitlePlaceholder')}
                                         value={titleText || ''}
                                         onChange={(e) => updateField('title', e.target.value)}
                                     />
                                 </FormField>
 
-                                <FormField label={tr('Site Tagline', 'Tagline គេហទំព័រ')} columns={1}>
+                                <FormField label={t('admin.settings.sections.identity.fields.siteTagline')} columns={1}>
                                     <FormInput
-                                        placeholder={tr('ICT Security & IT Audit Professional', 'អ្នកជំនាញសន្តិសុខ ICT និងសវនកម្ម IT')}
+                                        placeholder={t('admin.settings.sections.identity.fields.siteTaglinePlaceholder')}
                                         value={taglineText || ''}
                                         onChange={(e) => updateField('tagline', e.target.value)}
                                     />
@@ -225,26 +255,26 @@ const IdentitySection = ({
                             </div>
 
                             <FormRow>
-                                <FormField label={tr('Logo Prefix', 'ផ្នែកដើមឡូហ្គោ')} columns={1}>
+                                <FormField label={t('admin.settings.sections.identity.fields.logoPrefix')} columns={1}>
                                     <FormInput
-                                        placeholder={tr('Kem', 'ខេម')}
+                                        placeholder={t('admin.settings.sections.identity.fields.logoPrefixPlaceholder')}
                                         value={logoHighlightText || ''}
                                         onChange={(e) => updateField('logoHighlight', e.target.value)}
                                     />
                                 </FormField>
 
-                                <FormField label={tr('Logo Suffix', 'ផ្នែកចុងឡូហ្គោ')} columns={1}>
+                                <FormField label={t('admin.settings.sections.identity.fields.logoSuffix')} columns={1}>
                                     <FormInput
-                                        placeholder={tr('Phearum', 'ភារុំ')}
+                                        placeholder={t('admin.settings.sections.identity.fields.logoSuffixPlaceholder')}
                                         value={logoTextText || ''}
                                         onChange={(e) => updateField('logoText', e.target.value)}
                                     />
                                 </FormField>
                             </FormRow>
 
-                            <FormField label={tr('Footer Copyright Text', 'អត្ថបទរក្សាសិទ្ធិ Footer')} columns={1}>
+                            <FormField label={t('admin.settings.sections.identity.fields.footerCopyright')} columns={1}>
                                     <FormInput
-                                        placeholder={tr('(c) 2026 Your Name. All Rights Reserved.', '(c) 2026 ឈ្មោះរបស់អ្នក។ រក្សាសិទ្ធិគ្រប់យ៉ាង។')}
+                                        placeholder={t('admin.settings.sections.identity.fields.footerCopyrightPlaceholder')}
                                         value={footerTextText || ''}
                                         onChange={(e) => updateField('footerText', e.target.value)}
                                     />
@@ -254,28 +284,28 @@ const IdentitySection = ({
                         <section className={tabStyles.settingsPanel}>
                             <div className={tabStyles.panelHeader}>
                                 <div className={tabStyles.panelTitleGroup}>
-                                    <span className={tabStyles.panelEyebrow}>{tr('Collection Filters', 'តម្រងបណ្ដុំ')}</span>
-                                    <h4 className={tabStyles.panelTitle}>{tr('Project and blog taxonomy', 'Taxonomy សម្រាប់ Project និង Blog')}</h4>
-                                    <p className={tabStyles.panelDescription}>{tr('Keep category names aligned with your published content so filtering feels intentional and predictable.', 'រក្សាឈ្មោះប្រភេទឱ្យត្រូវនឹងខ្លឹមសារដែលបានផ្សាយ ដើម្បីឱ្យការតម្រងមានភាពច្បាស់លាស់។')}</p>
+                                    <span className={tabStyles.panelEyebrow}>{t('admin.settings.sections.identity.taxonomy.title')}</span>
+                                    <h4 className={tabStyles.panelTitle}>{t('admin.settings.sections.identity.taxonomy.subtitle')}</h4>
+                                    <p className={tabStyles.panelDescription}>{t('admin.settings.sections.identity.taxonomy.description')}</p>
                                 </div>
-                                <span className={tabStyles.panelBadge}>{tr('Taxonomy', 'Taxonomy')}</span>
+                                <span className={tabStyles.panelBadge}>{t('admin.settings.sections.identity.taxonomy.badge')}</span>
                             </div>
 
                             <div className={tabStyles.taxonomyGrid}>
                                 <div className={tabStyles.taxonomyCard}>
                                     <div className={tabStyles.taxonomyCardHeader}>
                                         <div>
-                                            <h5 className={tabStyles.taxonomyCardTitle}>{tr('Project Category Filters', 'តម្រងប្រភេទ Project')}</h5>
-                                            <p className={tabStyles.taxonomyCardHint}>{tr('Suggestions are pulled from published project tech stacks.', 'សំណើត្រូវបានទាញពី Tech Stack ក្នុង Project ដែលបានផ្សព្វផ្សាយ។')}</p>
+                                            <h5 className={tabStyles.taxonomyCardTitle}>{t('admin.settings.sections.identity.taxonomy.projectTitle')}</h5>
+                                            <p className={tabStyles.taxonomyCardHint}>{t('admin.settings.sections.identity.taxonomy.projectHint')}</p>
                                         </div>
                                         <span className={tabStyles.taxonomyCount}>{projectSelectedFilters.length}</span>
                                     </div>
 
                                     <div className={tabStyles.taxonomyChipWrap}>
                                         {taxonomyLoading ? (
-                                            <span className={tabStyles.taxonomyState}>{tr('Loading suggestions...', 'កំពុងផ្ទុកសំណើ...')}</span>
+                                            <span className={tabStyles.taxonomyState}>{t('admin.settings.sections.identity.taxonomy.loading')}</span>
                                         ) : taxonomyError ? (
-                                            <span className={tabStyles.taxonomyState}>{tr('Could not load suggestions. You can still add manually.', 'មិនអាចផ្ទុកសំណើបានទេ ប៉ុន្តែអ្នកអាចបញ្ចូលដោយដៃបាន។')}</span>
+                                            <span className={tabStyles.taxonomyState}>{t('admin.settings.sections.identity.taxonomy.error')}</span>
                                         ) : projectSuggestionOptions.length > 0 ? (
                                             projectSuggestionOptions.map((token) => {
                                                 const selected = hasToken(projectSelectedFilters, token);
@@ -291,13 +321,13 @@ const IdentitySection = ({
                                                 );
                                             })
                                         ) : (
-                                            <span className={tabStyles.taxonomyState}>{tr('No taxonomy found yet.', 'មិនទាន់មាន Taxonomy នៅឡើយ។')}</span>
+                                            <span className={tabStyles.taxonomyState}>{t('admin.settings.sections.identity.taxonomy.empty')}</span>
                                         )}
                                     </div>
 
                                     <div className={tabStyles.taxonomyManualRow}>
                                         <FormInput
-                                            placeholder={tr('Type custom tags (comma separated)', 'បញ្ចូលស្លាកផ្ទាល់ខ្លួន (បំបែកដោយក្បៀស)')}
+                                            placeholder={t('admin.settings.sections.identity.taxonomy.typeCustom')}
                                             value={projectManualInput}
                                             onChange={(e) => setProjectManualInput(e.target.value)}
                                             onKeyDown={(e) => {
@@ -313,13 +343,13 @@ const IdentitySection = ({
                                             onClick={() => addManualTaxonomy('projectFilters', projectSelectedFilters, projectManualInput, setProjectManualInput)}
                                             disabled={!projectManualInput.trim()}
                                         >
-                                            {tr('Add', 'បន្ថែម')}
+                                            {t('admin.settings.sections.identity.taxonomy.add')}
                                         </Button>
                                     </div>
 
-                                    <FormField label={tr('Manual List', 'បញ្ជីផ្ទាល់ខ្លួន')} hint={tr('Comma separated fallback', 'ជាជម្រើសបម្រុងបំបែកដោយក្បៀស')} columns={1}>
+                                    <FormField label={t('admin.settings.sections.identity.taxonomy.manualLabel')} hint={t('admin.settings.sections.identity.taxonomy.manualFallback')} columns={1}>
                                         <FormInput
-                                            placeholder={tr('React, Python, Firebase...', 'React, Python, Firebase...')}
+                                            placeholder={t('admin.settings.sections.identity.taxonomy.manualPlaceholder')}
                                             value={projectFiltersText || ''}
                                             onChange={(e) => updateField('projectFilters', e.target.value)}
                                         />
@@ -329,17 +359,17 @@ const IdentitySection = ({
                                 <div className={tabStyles.taxonomyCard}>
                                     <div className={tabStyles.taxonomyCardHeader}>
                                         <div>
-                                            <h5 className={tabStyles.taxonomyCardTitle}>{tr('Blog Tag Filters', 'តម្រងស្លាក Blog')}</h5>
-                                            <p className={tabStyles.taxonomyCardHint}>{tr('Suggestions are pulled from published blog tags.', 'សំណើត្រូវបានទាញពីស្លាក Blog ដែលបានផ្សព្វផ្សាយ។')}</p>
+                                            <h5 className={tabStyles.taxonomyCardTitle}>{t('admin.settings.sections.identity.taxonomy.blogTitle')}</h5>
+                                            <p className={tabStyles.taxonomyCardHint}>{t('admin.settings.sections.identity.taxonomy.blogHint')}</p>
                                         </div>
                                         <span className={tabStyles.taxonomyCount}>{blogSelectedFilters.length}</span>
                                     </div>
 
                                     <div className={tabStyles.taxonomyChipWrap}>
                                         {taxonomyLoading ? (
-                                            <span className={tabStyles.taxonomyState}>{tr('Loading suggestions...', 'កំពុងផ្ទុកសំណើ...')}</span>
+                                            <span className={tabStyles.taxonomyState}>{t('admin.settings.sections.identity.taxonomy.loading')}</span>
                                         ) : taxonomyError ? (
-                                            <span className={tabStyles.taxonomyState}>{tr('Could not load suggestions. You can still add manually.', 'មិនអាចផ្ទុកសំណើបានទេ ប៉ុន្តែអ្នកអាចបញ្ចូលដោយដៃបាន។')}</span>
+                                            <span className={tabStyles.taxonomyState}>{t('admin.settings.sections.identity.taxonomy.error')}</span>
                                         ) : blogSuggestionOptions.length > 0 ? (
                                             blogSuggestionOptions.map((token) => {
                                                 const selected = hasToken(blogSelectedFilters, token);
@@ -355,13 +385,13 @@ const IdentitySection = ({
                                                 );
                                             })
                                         ) : (
-                                            <span className={tabStyles.taxonomyState}>{tr('No taxonomy found yet.', 'មិនទាន់មាន Taxonomy នៅឡើយ។')}</span>
+                                            <span className={tabStyles.taxonomyState}>{t('admin.settings.sections.identity.taxonomy.empty')}</span>
                                         )}
                                     </div>
 
                                     <div className={tabStyles.taxonomyManualRow}>
                                         <FormInput
-                                            placeholder={tr('Type custom tags (comma separated)', 'បញ្ចូលស្លាកផ្ទាល់ខ្លួន (បំបែកដោយក្បៀស)')}
+                                            placeholder={t('admin.settings.sections.identity.taxonomy.typeCustom')}
                                             value={blogManualInput}
                                             onChange={(e) => setBlogManualInput(e.target.value)}
                                             onKeyDown={(e) => {
@@ -377,13 +407,13 @@ const IdentitySection = ({
                                             onClick={() => addManualTaxonomy('blogFilters', blogSelectedFilters, blogManualInput, setBlogManualInput)}
                                             disabled={!blogManualInput.trim()}
                                         >
-                                            {tr('Add', 'បន្ថែម')}
+                                            {t('admin.settings.sections.identity.taxonomy.add')}
                                         </Button>
                                     </div>
 
-                                    <FormField label={tr('Manual List', 'បញ្ជីផ្ទាល់ខ្លួន')} hint={tr('Comma separated fallback', 'ជាជម្រើសបម្រុងបំបែកដោយក្បៀស')} columns={1}>
+                                    <FormField label={t('admin.settings.sections.identity.taxonomy.manualLabel')} hint={t('admin.settings.sections.identity.taxonomy.manualFallback')} columns={1}>
                                         <FormInput
-                                            placeholder={tr('Tutorial, Tech, Security...', 'មេរៀន, បច្ចេកវិទ្យា, សុវត្ថិភាព...')}
+                                            placeholder={t('admin.settings.sections.identity.taxonomy.blogPlaceholder')}
                                             value={blogFiltersText || ''}
                                             onChange={(e) => updateField('blogFilters', e.target.value)}
                                         />
@@ -397,19 +427,19 @@ const IdentitySection = ({
                         <section className={tabStyles.settingsPanel}>
                             <div className={tabStyles.panelHeader}>
                                 <div className={tabStyles.panelTitleGroup}>
-                                    <span className={tabStyles.panelEyebrow}>{tr('Browser Asset', 'Asset Browser')}</span>
-                                    <h4 className={tabStyles.panelTitle}>{tr('Favicon uploader', 'ការផ្ទុកឡើង Favicon')}</h4>
-                                    <p className={tabStyles.panelDescription}>{tr('Use a high-contrast icon so the portfolio reads cleanly in tabs, bookmarks, and shortcuts.', 'ប្រើរូបតំណាងដែលមានកម្រិតផ្ទុយខ្លាំង ដើម្បីមើលឃើញច្បាស់លើផ្ទាំង Bookmark និង Shortcut។')}</p>
+                                    <span className={tabStyles.panelEyebrow}>{t('admin.settings.sections.identity.browserAsset.title')}</span>
+                                    <h4 className={tabStyles.panelTitle}>{t('admin.settings.sections.identity.browserAsset.subtitle')}</h4>
+                                    <p className={tabStyles.panelDescription}>{t('admin.settings.sections.identity.browserAsset.description')}</p>
                                 </div>
-                                <span className={tabStyles.panelBadge}>16-256px</span>
+                                <span className={tabStyles.panelBadge}>{t('admin.settings.sections.identity.browserAsset.badge')}</span>
                             </div>
 
-                            <FormField label={tr('Browser Favicon', 'Favicon សម្រាប់ Browser')} columns={1}>
+                            <FormField label={t('admin.settings.sections.identity.browserAsset.label')} columns={1}>
                                 <div className={tabStyles.fileInputWrapper}>
                                     {hasFavicon && (
                                         <div className={tabStyles.faviconPreview}>
                                             {(previewBase64 || faviconText) ? (
-                                                <img src={previewBase64 || faviconText} alt={tr('Favicon Preview', 'មើល Favicon ជាមុន')} />
+                                                <img src={previewBase64 || faviconText} alt={t('admin.settings.sections.identity.browserAsset.preview')} />
                                             ) : null}
                                         </div>
                                     )}
@@ -427,9 +457,9 @@ const IdentitySection = ({
                                             <Upload size={16} />
                                             <div>
                                                 <span className={tabStyles.fileDropzoneTitle}>
-                                                    {settingsFavicon ? settingsFavicon.name : (faviconText ? tr('Replace current icon', 'ជំនួសរូបតំណាងបច្ចុប្បន្ន') : tr('Upload a favicon', 'ផ្ទុកឡើង favicon'))}
+                                                    {settingsFavicon ? settingsFavicon.name : (faviconText ? t('admin.settings.sections.identity.browserAsset.replace') : t('admin.settings.sections.identity.browserAsset.upload'))}
                                                 </span>
-                                                <span className={tabStyles.fileDropzoneHint}>{tr('PNG, SVG, or ICO. Square artwork works best.', 'PNG, SVG ឬ ICO។ រូបការ៉េអាចប្រើបានល្អបំផុត។')}</span>
+                                                <span className={tabStyles.fileDropzoneHint}>{t('admin.settings.sections.identity.browserAsset.hint')}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -438,43 +468,64 @@ const IdentitySection = ({
                         </section>
 
                         <section className={tabStyles.identityPreviewCard}>
-                            <span className={tabStyles.identityPreviewEyebrow}>{tr('Identity preview', 'មើលអត្តសញ្ញាណជាមុន')}</span>
+                            <span className={tabStyles.identityPreviewEyebrow}>{t('admin.settings.sections.identity.preview.title')}</span>
+                            <div className={tabStyles.browserTabPreview}>
+                                <span className={tabStyles.browserTabPreviewLabel}>{t('admin.settings.sections.identity.preview.browserTab')}</span>
+                                <div className={tabStyles.browserTabMock}>
+                                    <div className={tabStyles.browserTabChrome}>
+                                        <span />
+                                        <span />
+                                        <span />
+                                    </div>
+                                    <div className={tabStyles.browserTabPill}>
+                                        <div className={tabStyles.browserTabIcon}>
+                                            {(previewBase64 || faviconText) ? (
+                                                <img src={previewBase64 || faviconText} alt={t('admin.settings.sections.identity.preview.currentFavicon')} />
+                                            ) : (
+                                                <ImagePlus size={14} />
+                                            )}
+                                        </div>
+                                        <span className={tabStyles.browserTabText}>{browserTitlePreview}</span>
+                                    </div>
+                                </div>
+                                <p className={tabStyles.browserTabHint}>{t('admin.settings.sections.identity.preview.browserTabHint')}</p>
+                            </div>
                             <div className={tabStyles.identityPreviewHeader}>
                                 <div className={tabStyles.faviconPreview}>
                                     {(previewBase64 || faviconText) ? (
-                                        <img src={previewBase64 || faviconText} alt={tr('Current favicon', 'Favicon បច្ចុប្បន្ន')} />
+                                        <img src={previewBase64 || faviconText} alt={t('admin.settings.sections.identity.preview.currentFavicon')} />
                                     ) : (
                                         <ImagePlus size={20} />
                                     )}
                                 </div>
                                 <div>
                                     <div className={tabStyles.identityPreviewLogo}>
-                                        {logoHighlightText || tr('Kem', 'ខេម')} <span>{logoTextText || tr('Phearum', 'ភារុំ')}</span>
+                                        {previewLogoHighlightText || t('admin.settings.sections.identity.fields.logoPrefixPlaceholder')} <span>{previewLogoTextText || t('admin.settings.sections.identity.fields.logoSuffixPlaceholder')}</span>
                                     </div>
-                                    <div className={tabStyles.identityPreviewTitle}>{titleText || tr('Kem Phearum | Portfolio', 'Kem Phearum | ផតហ្វូលីយ៉ូ')}</div>
+                                    <div className={tabStyles.identityPreviewTitle}>{browserTitlePreview}</div>
                                 </div>
                             </div>
                             <p className={tabStyles.identityPreviewTagline}>
-                                {taglineText || tr('ICT Security & IT Audit Professional', 'អ្នកជំនាញសុវត្ថិភាព ICT និងសវនកម្ម IT')}
+                                {previewTaglineText || t('admin.settings.sections.identity.fields.siteTaglinePlaceholder')}
                             </p>
                             <div className={tabStyles.identityPreviewMetaList}>
                                 <div className={tabStyles.identityPreviewMeta}>
-                                    <span>{tr('Footer copy', 'អត្ថបទ Footer')}</span>
-                                    <strong>{footerTextText || tr('(c) 2026 Your Name. All Rights Reserved.', '(c) 2026 ឈ្មោះរបស់អ្នក។ រក្សាសិទ្ធិគ្រប់យ៉ាង។')}</strong>
+                                    <span>{t('admin.settings.sections.identity.preview.footerCopy')}</span>
+                                    <strong>{previewFooterText || t('admin.settings.sections.identity.fields.footerCopyrightPlaceholder')}</strong>
                                 </div>
                                 <div className={tabStyles.identityPreviewMeta}>
-                                    <span>{tr('Filter readiness', 'ភាពរួចរាល់នៃតម្រង')}</span>
+                                    <span>{t('admin.settings.sections.identity.preview.filterReadiness')}</span>
                                     <strong>
                                         {[projectFiltersText, blogFiltersText].filter(Boolean).length === 2
-                                            ? tr('Project and blog filters are configured', 'បានកំណត់តម្រង Project និង Blog រួចរាល់')
-                                            : tr('Finish both filter lists for faster content sorting', 'បំពេញបញ្ជីតម្រងទាំងពីរ ដើម្បីតម្រៀបខ្លឹមសារបានលឿន')}
+                                            ? t('admin.settings.sections.identity.preview.filtersConfigured')
+                                            : t('admin.settings.sections.identity.preview.filtersPending')}
                                     </strong>
                                 </div>
                             </div>
                             <ul className={tabStyles.identityChecklist}>
-                                <li>{tr('Keep the page title short enough to read in a browser tab.', 'រក្សាចំណងជើងទំព័រឱ្យខ្លី ដើម្បីអានងាយលើផ្ទាំង Browser។')}</li>
-                                <li>{tr('Use a favicon with strong contrast and minimal detail.', 'ប្រើ favicon ដែលមានភាពផ្ទុយខ្លាំង និងមានលម្អិតតិច។')}</li>
-                                <li>{tr('Match category names to the content visitors actually browse.', 'ផ្គូផ្គងឈ្មោះប្រភេទទៅនឹងខ្លឹមសារដែលភ្ញៀវចូលមើលជាក់ស្តែង។')}</li>
+                                {t('admin.settings.sections.identity.checklist', { returnObjects: true }).map((item, id) => (
+                                    <li key={id}>{item}</li>
+                                ))}
                             </ul>
                         </section>
                     </aside>
@@ -486,7 +537,7 @@ const IdentitySection = ({
                         isLoading={loading}
                         className={tabStyles.saveButton}
                     >
-                        <Save size={18} /> {tr('Save Identity Changes', 'រក្សាទុកការផ្លាស់ប្តូរអត្តសញ្ញាណ')}
+                        <Save size={18} /> {t('admin.settings.sections.identity.save')}
                     </Button>
                 </div>
             </div>

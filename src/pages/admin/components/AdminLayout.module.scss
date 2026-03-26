@@ -26,8 +26,6 @@
     @media (max-width: 768px) {
         margin-left: 0 !important;
         min-height: calc(100dvh - var(--admin-header-height, 56px));
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
         padding: 2rem 1.25rem 2rem;
     }
 }

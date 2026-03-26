@@ -35,6 +35,24 @@ class UserService extends BaseService {
         });
     }
 
+    async fetchStats(userRole) {
+        if (!isSuperAdminRole(userRole)) {
+            return { total: 0, active: 0, elevated: 0, disabled: 0 };
+        }
+
+        const users = await this.getAll();
+        const active = users.filter((entry) => entry.isActive !== false && entry.disabled !== true).length;
+        const disabled = users.length - active;
+        const elevated = users.filter((entry) => ['admin', 'superadmin'].includes(normalizeRole(entry.role))).length;
+
+        return {
+            total: users.length,
+            active,
+            elevated,
+            disabled
+        };
+    }
+
     /**
      * Update user role.
      * @param {string} userRole 

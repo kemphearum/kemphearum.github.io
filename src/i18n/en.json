@@ -1,4 +1,7 @@
 {
+  "common": {
+    "profile": "Profile"
+  },
   "language": {
     "label": "Language",
     "en": "EN",
@@ -9,12 +12,22 @@
       "light": "light",
       "dark": "dark",
       "loading": "Loading...",
+      "profile": "Profile",
       "noPermissionAction": "You do not have permission to perform this action.",
       "settingsSaved": "Settings saved!",
       "sectionSaved": "{{section}} saved!",
       "saveSectionFailed": "Failed to save {{section}}.",
       "save": "Save",
       "delete": "Delete",
+      "messages": {
+        "error": "An error occurred.",
+        "success": "Action completed successfully.",
+        "saveFailed": "Failed to save data.",
+        "deleteFailed": "Failed to delete item.",
+        "updateFailed": "Failed to update item.",
+        "importFailed": "Failed to import data.",
+        "invalidUrl": "Please enter a valid URL."
+      },
       "stats": {
         "onThisPage": {
           "label": "On This Page",
@@ -31,7 +44,93 @@
         "rowsFound": "Rows found",
         "readyToImport": "Ready to import",
         "skipped": "Skipped",
-        "runImport": "Run Import"
+        "runImport": "Run Import",
+        "confirmTitle": "Confirm Import",
+        "confirmImport": "Import",
+        "selectedFile": "Selected file",
+        "cancel": "Cancel",
+        "importing": "Importing..."
+      },
+      "dropzone": {
+        "uploadImage": "Upload Image",
+        "invalidFileType": "Invalid file type. Please upload an image (JPG, PNG, WebP, GIF, or SVG).",
+        "fileTooLarge": "File is too large. Maximum size is 1MB to ensure database compatibility.",
+        "currentImage": "Current image",
+        "previewImage": "Preview Image",
+        "preview": "Preview",
+        "changeImage": "Change Image",
+        "change": "Change",
+        "clearImage": "Clear Image",
+        "clear": "Clear",
+        "readyCircular": "Ready",
+        "readyToUpload": "Ready to Upload",
+        "activeCircular": "Active",
+        "currentlyPublished": "Currently Published",
+        "clickOrDrop": "Click or Drop to Change",
+        "dropToReplace": "Drop to Replace",
+        "dragAndDrop": "Drag and drop your image here, or click to browse",
+        "maxSizeCircular": "Max 1MB",
+        "maxSizeFull": "Max 1MB • Recommended: 1920x720 (16:6)",
+        "imagePreview": "Image Preview",
+        "previewAlt": "Preview image"
+      },
+      "markdownEditor": {
+        "boldText": "bold text",
+        "italicText": "italic text",
+        "linkText": "Link text",
+        "codeHere": "code here",
+        "formattingAria": "Markdown formatting controls",
+        "boldTitle": "Bold (Ctrl/Cmd+B)",
+        "boldAria": "Bold",
+        "italicTitle": "Italic (Ctrl/Cmd+I)",
+        "italicAria": "Italic",
+        "linkTitle": "Link (Ctrl/Cmd+K)",
+        "linkAria": "Link",
+        "codeBlockTitle": "Code block",
+        "codeBlockAria": "Code block",
+        "switchToEdit": "Switch to edit mode",
+        "switchToPreview": "Switch to preview mode",
+        "edit": "Edit",
+        "preview": "Preview",
+        "nothingToPreview": "*Nothing to preview yet.*",
+        "writePlaceholder": "Write in Markdown...",
+        "words": "words",
+        "characters": "characters",
+        "shortcuts": "Shortcuts: Ctrl/Cmd+B, I, K"
+      },
+      "history": {
+        "editHistory": "Edit History",
+        "recordTimeline": "Record Timeline",
+        "recordDeleted": "Record deleted.",
+        "noChanges": "No specific field changes detected.",
+        "errorLoading": "Error loading history",
+        "unknownError": "An unknown error occurred.",
+        "noHistory": "No History Recorded",
+        "noHistoryDesc": "This record was likely created before history tracking was enabled.",
+        "by": "by",
+        "unknown": "Unknown",
+        "justNow": "Just now",
+        "initialPayload": "Initial Payload",
+        "changesMade": "Changes Made",
+        "actions": {
+          "created": "Created",
+          "updated": "Updated",
+          "deleted": "Deleted"
+        },
+        "close": "Close"
+      },
+      "quotaBanner": {
+        "title": "Daily Resource Limit Reached",
+        "message": "The Firebase daily free-tier quota has been exceeded. Some data may be temporarily unavailable until the next daily reset (usually at midnight).",
+        "checkAgain": "Check Again",
+        "estimatedReset": "Estimated reset: Midnight"
+      },
+      "chartCard": {
+        "viewDetails": "View Details",
+        "refresh": "Refresh"
+      },
+      "header": {
+        "adminBrand": "Admin"
       }
     },
     "dashboard": {
@@ -138,17 +237,212 @@
         "sectionsHint": "Home, About, and Contact",
         "fieldsFilledLabel": "Fields Filled",
         "fieldsFilledHint": "Quick signal for content completeness"
+      },
+      "sections": {
+        "home": {
+          "title": "Home Section",
+          "description": "Configure the main hero content of your landing page.",
+          "history": "History",
+          "heroCopy": {
+            "title": "Hero copy",
+            "description": "Set the first lines visitors see when they land on the portfolio."
+          },
+          "fields": {
+            "greetingEn": "Greeting (EN)",
+            "greetingKm": "Greeting (KM)",
+            "greetingPlaceholder": "e.g. Hello, I am",
+            "nameEn": "Full Name (EN)",
+            "nameKm": "Full Name (KM)",
+            "namePlaceholder": "Your professional name",
+            "subtitleEn": "Professional Subtitle (EN)",
+            "subtitleKm": "Professional Subtitle (KM)",
+            "subtitlePlaceholder": "e.g. Senior Software Engineer",
+            "descriptionEn": "Hero Description (EN)",
+            "descriptionKm": "Hero Description (KM)",
+            "descriptionPlaceholderEn": "A brief, impactful introduction...",
+            "descriptionPlaceholderKm": "សេចក្តីណែនាំជាខ្មែរខ្លីៗ...",
+            "ctaTextEn": "Call to Action Text (EN)",
+            "ctaTextKm": "Call to Action Text (KM)",
+            "ctaPlaceholder": "e.g. View My Work",
+            "ctaLink": "CTA Anchor/Link",
+            "ctaLinkPlaceholder": "e.g. #projects"
+          },
+          "primaryAction": {
+            "title": "Primary action",
+            "description": "Guide visitors toward the next section or strongest conversion point."
+          },
+          "portrait": {
+            "title": "Portrait",
+            "description": "Use a clean image that reads well in the hero and keeps attention on the headline.",
+            "label": "Profile Portrait",
+            "hint": "Transparent PNG recommended"
+          },
+          "save": "Save Home Changes"
+        },
+        "about": {
+          "title": "About Section",
+          "description": "Update your biography, professional summary, and key skills.",
+          "history": "History",
+          "bio": {
+            "title": "Biography",
+            "description": "Write the narrative that introduces your background, experience, and point of view."
+          },
+          "fields": {
+            "bioEn": "Biography (EN)",
+            "bioKm": "Biography (KM)",
+            "bioRequired": "English bio is required",
+            "bioPlaceholderEn": "Write your professional bio...",
+            "bioPlaceholderKm": "Write your Khmer biography...",
+            "skills": "Professional Skills",
+            "skillsPlaceholder": "React, Python, Firebase, ...",
+            "skillsHint": "comma separated"
+          },
+          "skillsSnapshot": {
+            "title": "Skills snapshot",
+            "description": "List the capabilities you want visitors to notice first."
+          },
+          "save": "Save Changes"
+        },
+        "contact": {
+          "title": "Contact Section",
+          "description": "Manage the intro text displayed above your contact form.",
+          "history": "History",
+          "intro": {
+            "title": "Contact intro",
+            "description": "Set the tone before visitors reach the form so expectations feel clear and welcoming."
+          },
+          "fields": {
+            "introEn": "Contact Intro (EN)",
+            "introKm": "Contact Intro (KM)",
+            "introRequired": "English intro text is required",
+            "introPlaceholderEn": "The text shown above the contact form...",
+            "introPlaceholderKm": "Khmer intro text shown above the contact form..."
+          },
+          "bestPractice": {
+            "title": "Best practice",
+            "description": "Keep this copy short. It should invite contact, explain what people can reach out about, and reduce friction."
+          },
+          "save": "Save Contact Changes"
+        }
       }
     },
     "experience": {
+      "workspace": {
+        "eyebrow": "Career workspace",
+        "title": "Keep your timeline, company history, and visibility settings easy to manage.",
+        "description": "Search by role or company, add new experience quickly, and keep the public career story polished without digging through dense rows.",
+        "summaryAria": "Experience workspace summary",
+        "searchPlaceholder": "Search experience by role or company...",
+        "addNew": "Add New Experience",
+        "timelineHint": "Use precise month ranges so the public timeline stays consistent.",
+        "presentHint": "Mark current roles as present to keep sorting and timeline display clear."
+      },
+      "table": {
+        "present": "Present",
+        "noTimeline": "Timeline not set",
+        "noDescription": "No description added yet.",
+        "columns": {
+          "role": "Role",
+          "timeline": "Timeline",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "roleMeta": {
+          "untitled": "Untitled role",
+          "noCompany": "Company not set"
+        },
+        "status": {
+          "current": "Current position",
+          "completed": "Completed role",
+          "visible": "Visible",
+          "hidden": "Hidden",
+          "isCurrent": "Current",
+          "visibleDesc": "Appears on the public career timeline",
+          "hiddenDesc": "Saved only in admin for now"
+        },
+        "empty": {
+          "title": "No Experience Entries",
+          "description": "Add your first role to start shaping the public career timeline and internal work history.",
+          "action": "Create first entry"
+        }
+      },
+      "form": {
+        "languages": {
+          "en": "English",
+          "km": "Khmer"
+        },
+        "fields": {
+          "companyName": "Company Name",
+          "companyRequired": "English company name is required",
+          "companyHint": "Optional. English fallback is automatic.",
+          "companyPlaceholderEn": "e.g. Google Inc.",
+          "companyPlaceholderKm": "ឧ. ក្រុមហ៊ុន Google",
+          "role": "Role / Job Title",
+          "roleRequired": "English role is required",
+          "rolePlaceholderEn": "e.g. Senior Developer",
+          "rolePlaceholderKm": "ឧ. អ្នកអភិវឌ្ឍជាន់ខ្ពស់",
+          "description": "Description",
+          "descriptionRequired": "English description is required",
+          "descriptionHint": "Use Markdown to highlight impact and measurable outcomes.",
+          "descriptionPlaceholderEn": "Describe responsibilities in english...",
+          "descriptionPlaceholderKm": "ពិពណ៌នាភារកិច្ចជាភាសាខ្មែរ...",
+          "startDate": "Start Date",
+          "startDateRequired": "Start date is required",
+          "isCurrent": "This role is current",
+          "isCurrentDesc": "Hide the end date and label the role as present.",
+          "endDate": "End Date",
+          "endDateHint": "Current roles do not need an end date.",
+          "endDateRequiredHint": "Required for past roles.",
+          "endDateRequired": "End date is required",
+          "endDateInvalid": "End date must be the same or after start date",
+          "visibility": "Visibility",
+          "visibilityDesc": "Control whether this role appears publicly or remains admin-only.",
+          "optionVisible": "Visible on Homepage",
+          "optionHidden": "Hidden from Public"
+        },
+        "sections": {
+          "roleDetails": {
+            "title": "Role details",
+            "description": "Use EN/KM tabs to maintain bilingual experience entries in one record."
+          },
+          "timelineGuidance": {
+            "title": "Timeline guidance",
+            "description": "Use month precision to keep sorting and career progression consistent.",
+            "hint": "Current roles can leave the end date empty. Past roles should include both start and end months."
+          },
+          "timeline": {
+            "title": "Timeline",
+            "description": "Set role duration accurately so the public timeline stays trustworthy."
+          },
+          "visibility": {
+            "title": "Visibility",
+            "description": "Control whether this role appears publicly or remains admin-only."
+          }
+        },
+        "dialogs": {
+          "addTitle": "Add New Experience",
+          "editTitle": "Edit Experience",
+          "description": "Keep each entry bilingual in one document. English is required, Khmer is optional.",
+          "footerNote": "EN and KM values are stored together. Khmer can stay empty while translations are pending."
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "saving": "Saving...",
+          "save": "Save Experience"
+        }
+      },
       "messages": {
-        "created": "Experience created successfully.",
-        "updated": "Experience updated successfully.",
-        "deleted": "Experience deleted successfully.",
-        "shownOnHomepage": "Experience shown on homepage.",
-        "hiddenOnHomepage": "Experience hidden on homepage."
+        "created": "Experience record created successfully.",
+        "updated": "Experience record updated successfully.",
+        "deleted": "Experience record removed permanently.",
+        "shownOnHomepage": "Role is now visible on the public site.",
+        "hiddenOnHomepage": "Role is now hidden from the public site."
       },
       "stats": {
+        "total": {
+          "label": "Total Experience",
+          "hint": "All experience entries in the collection"
+        },
         "visible": {
           "label": "Visible",
           "hint": "Shown in the public experience section"
@@ -163,12 +457,254 @@
         }
       },
       "dialogs": {
-        "deleteTitle": "Delete Experience",
-        "deleteMessage": "Are you sure you want to delete \"{{role}}\" at \"{{company}}\"? This action cannot be undone."
+        "deleteTitle": "Delete Experience Entry?",
+        "deleteMessage": "Are you sure you want to remove the {{role}} role at {{company}}? This action cannot be undone."
+      }
+    },
+    "messages": {
+      "header": {
+        "title": "Inquiry Messages",
+        "description": "Review contact form submissions, prioritize unread inquiries, and move from triage to reply without losing context.",
+        "unreadCount": "{{count}} unread",
+        "inboxClear": "Inbox clear"
+      },
+      "workspace": {
+        "eyebrow": "Inbox workspace",
+        "title": "Scan, sort, and answer inquiries faster",
+        "description": "Keep the list focused on what needs attention first, then open each message in a cleaner reading surface with reply-ready actions.",
+        "filteredBy": "Filtered by \"{{query}}\"",
+        "latestPage": "Latest page"
+      },
+      "summary": {
+        "searchResultsOnPage": "{{count}} search results on this page",
+        "loadedOnPage": "{{count}} messages loaded on this page"
+      },
+      "stats": {
+        "unread": {
+          "label": "Unread now",
+          "hint": "Messages needing a fresh review"
+        },
+        "read": {
+          "label": "Read total",
+          "hint": "Already opened and reviewed"
+        },
+        "total": {
+          "label": "Total inbox",
+          "hint": "All records in the inbox"
+        },
+        "selected": {
+          "label": "Selected",
+          "hint": "Ready for batch actions"
+        }
+      },
+      "toolbar": {
+        "searchPlaceholder": "Search sender, email, or preview...",
+        "searchResultsVisible": "{{count}} matching messages visible on this page.",
+        "defaultHint": "Unread rows stay visually elevated so the next reply is easy to spot."
+      },
+      "notes": {
+        "focusedReview": {
+          "title": "Focused review",
+          "description": "Open any row to read the full message, copy the sender context, and jump straight into email."
+        },
+        "batchFriendly": {
+          "title": "Batch-friendly",
+          "description": "Select multiple rows when you want to clear older inquiries or reset unread state in one pass."
+        }
+      },
+      "bulk": {
+        "selectedCount": "{{count}} selected",
+        "description": "Apply a status update or clear the chosen messages.",
+        "markReadTitle": "Mark selected as read",
+        "markUnreadTitle": "Mark selected as unread",
+        "deleteTitle": "Delete selected messages"
+      },
+      "detail": {
+        "title": "Message Details",
+        "description": "Read the inquiry, verify sender context, and reply without leaving the admin workspace.",
+        "messageBody": "Message body",
+        "noBody": "No message body was provided.",
+        "sender": "Sender",
+        "statusTitle": "Message status",
+        "received": "Received",
+        "status": "Status",
+        "replyPath": "Reply path",
+        "emailClient": "Email client"
+      },
+      "status": {
+        "read": "Read",
+        "unread": "Unread",
+        "alreadyReviewed": "Already reviewed",
+        "needsAttention": "Needs attention"
+      },
+      "actions": {
+        "refresh": "Refresh messages",
+        "markRead": "Mark Read",
+        "markUnread": "Mark Unread",
+        "delete": "Delete",
+        "deleteAll": "Delete All",
+        "replyNow": "Reply Now",
+        "replySubject": "Re: Portfolio inquiry from {{name}}"
+      },
+      "dialog": {
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "reviewAction": "Review this action before continuing.",
+        "deleteSingleTitle": "Delete Message",
+        "deleteSingleMessage": "Are you sure you want to delete this message? This action cannot be undone.",
+        "deleteManyTitle": "Delete Messages",
+        "deleteManyMessage": "Are you sure you want to delete {{count}} selected messages? This action cannot be undone.",
+        "deleteNote": "Deleted messages cannot be restored from this inbox view."
+      },
+      "toasts": {
+        "refreshed": "Messages refreshed",
+        "markedRead": "Marked {{count}} messages as read.",
+        "markedUnread": "Marked {{count}} messages as unread.",
+        "deletedMany": "Deleted {{count}} messages.",
+        "deletedOne": "Message deleted."
+      },
+      "table": {
+        "sender": "Sender",
+        "preview": "Preview",
+        "actions": "Actions",
+        "openMessage": "Open message",
+        "markRead": "Mark read",
+        "markUnread": "Mark unread",
+        "deleteMessage": "Delete message",
+        "needsReplyCheck": "Needs a reply check",
+        "openToReview": "Open to review details",
+        "emptyTitle": "No messages yet",
+        "emptyDescription": "Incoming inquiries from your portfolio contact form will appear here."
+      },
+      "general": {
+        "recently": "Recently",
+        "justArrived": "Just arrived",
+        "unknownSender": "Unknown sender",
+        "noEmail": "No email provided",
+        "noPreview": "No message preview available.",
+        "contactForm": "your contact form"
       }
     },
     "projects": {
+      "workspace": {
+        "eyebrow": "Project workspace",
+        "title": "Organize featured work, links, and imports from one portfolio surface.",
+        "description": "Search the catalog quickly, keep demos and repositories current, and launch new case studies without losing context.",
+        "summaryAria": "Project workspace summary",
+        "searchPlaceholder": "Search projects by title or stack...",
+        "addNew": "Add New Project"
+      },
+      "toolbar": {
+        "import": "Import",
+        "importTitle": "Import JSON or CSV",
+        "export": "Export",
+        "exportTitle": "Export selected projects as JSON",
+        "csvTemplate": "CSV Template",
+        "csvTemplateTitle": "Download CSV template",
+        "jsonTemplate": "JSON Template",
+        "jsonTemplateTitle": "Download JSON template",
+        "importHint": "Import accepts `CSV` or `JSON` and updates existing entries when the slug already exists.",
+        "exportHint": "JSON export uses your current selection; the table toolbar still exports the visible page as CSV."
+      },
+      "table": {
+        "columns": {
+          "title": "Title",
+          "status": "Status",
+          "date": "Date",
+          "actions": "Actions"
+        },
+        "roleMeta": {
+          "untitled": "Untitled project"
+        },
+        "status": {
+          "live": "Live",
+          "hidden": "Hidden",
+          "featured": "Featured",
+          "demoLinked": "Demo linked",
+          "repoLinked": "Repository linked",
+          "noLinks": "No public links yet"
+        },
+        "empty": {
+          "title": "No Projects Yet",
+          "description": "Start with a featured case study, import an existing portfolio export, or add the next project you want to showcase.",
+          "action": "Create first project"
+        },
+        "viewHistory": "View History",
+        "noDescription": "No description added yet."
+      },
+      "form": {
+        "languages": {
+          "en": "English",
+          "km": "Khmer"
+        },
+        "fields": {
+          "imagePlaceholder": "Upload project cover image",
+          "projectTitle": "Project Title",
+          "titleRequired": "English title is required",
+          "titleHint": "Optional. Empty Khmer falls back to English.",
+          "titlePlaceholderEn": "Enter english project title...",
+          "titlePlaceholderKm": "បញ្ចូលចំណងជើងគម្រោងជាភាសាខ្មែរ...",
+          "shortDescription": "Short Description",
+          "descriptionRequired": "English description is required",
+          "descriptionHint": "Used in cards, previews, and supporting metadata.",
+          "descriptionPlaceholderEn": "Describe the project in english...",
+          "descriptionPlaceholderKm": "ពិពណ៌នាគម្រោងជាភាសាខ្មែរ...",
+          "projectContent": "Project Content",
+          "contentPlaceholderEn": "Detailed english case study in Markdown...",
+          "contentPlaceholderKm": "មាតិកាលម្អិតជាភាសាខ្មែរ (Markdown)...",
+          "techStack": "Tech Stack",
+          "techStackRequired": "Tech stack is required",
+          "techStackHint": "Separate technologies with commas.",
+          "techStackPlaceholder": "e.g. React, Firebase, SCSS",
+          "githubUrl": "GitHub URL",
+          "urlInvalid": "Enter a valid URL (http/https)",
+          "githubPlaceholder": "https://github.com/...",
+          "liveUrl": "Live Demo URL",
+          "livePlaceholder": "https://...",
+          "slug": "Custom Slug",
+          "slugHint": "Leave blank to generate from English title.",
+          "slugPlaceholder": "e.g. portfolio-website",
+          "visibility": "Visibility",
+          "optionPublished": "Published",
+          "optionHidden": "Hidden",
+          "featured": "Featured",
+          "optionNormal": "Normal",
+          "optionFeatured": "Featured",
+          "projectImage": "Project Image",
+          "projectCover": "Project cover",
+          "projectCoverDesc": "Use a wide image that works in cards and detail pages."
+        },
+        "sections": {
+          "projectBasics": {
+            "title": "Project basics",
+            "description": "Edit content language-by-language while keeping one canonical record."
+          },
+          "linksAndUrl": {
+            "title": "Links and URL",
+            "description": "Keep the public slug and external links ready before publishing."
+          },
+          "publishing": {
+            "title": "Publishing",
+            "description": "Control public visibility and homepage highlighting."
+          }
+        },
+        "dialogs": {
+          "addTitle": "Add New Project",
+          "editTitle": "Edit Project",
+          "description": "Maintain bilingual project storytelling in a single Firestore document with EN/KM tabs.",
+          "footerNote": "EN and KM are saved together in one document. Khmer can remain empty while translation is in progress."
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "saving": "Saving...",
+          "save": "Save Project"
+        }
+      },
       "stats": {
+        "total": {
+          "label": "Total Projects",
+          "hint": "All projects in the collection"
+        },
         "published": {
           "hint": "Visible in the public portfolio"
         },
@@ -225,6 +761,10 @@
     },
     "blog": {
       "stats": {
+        "total": {
+          "label": "Total Posts",
+          "hint": "All blog posts in the collection"
+        },
         "published": {
           "hint": "Publicly visible posts"
         },
@@ -277,13 +817,93 @@
         "description": "Review the file before running a bulk import. Existing posts with matching slugs will be updated.",
         "noteMissingTitle": "Rows without a title are skipped automatically.",
         "noteSlug": "Import keeps slug-based updates and creates new posts when no match is found."
+      },
+      "toolbar": {
+        "eyebrow": "Editorial workspace",
+        "title": "Keep publishing, imports, and post cleanup in one place.",
+        "description": "Search the collection, start a new draft quickly, and use templates or bulk actions without hunting through the table.",
+        "summaryAria": "Blog workspace summary",
+        "searchPlaceholder": "Search by title...",
+        "import": "Import",
+        "importTitle": "Import JSON or CSV",
+        "export": "Export",
+        "exportTitle": "Export selected posts as JSON",
+        "csvTemplate": "CSV Template",
+        "csvTemplateTitle": "Download CSV template",
+        "jsonTemplate": "JSON Template",
+        "jsonTemplateTitle": "Download JSON template",
+        "addNewPost": "Add New Post",
+        "footNote1": "Import accepts `CSV` or `JSON` and matches existing entries by slug.",
+        "footNote2": "JSON export uses the selected posts; table export downloads the current page as CSV."
+      },
+      "table": {
+        "title": "Title",
+        "status": "Status",
+        "date": "Date",
+        "actions": "Actions",
+        "noExcerpt": "No excerpt added yet.",
+        "untitled": "Untitled post",
+        "live": "Live",
+        "draft": "Draft",
+        "featured": "Featured",
+        "homepageHighlight": "Homepage highlight enabled",
+        "standardListing": "Standard listing",
+        "viewHistory": "View History",
+        "emptyTitle": "No Blog Posts",
+        "emptyDescription": "Start with a draft, import an existing archive, or create your first published article.",
+        "createFirst": "Create first post"
+      },
+      "form": {
+        "createTitle": "Create New Post",
+        "editTitle": "Edit Post",
+        "description": "Manage bilingual content in one document. English is required, Khmer is optional and falls back to English.",
+        "storyBasics": "Story basics",
+        "storyBasicsDesc": "Switch language tabs to edit EN/KM fields without leaving this form.",
+        "english": "English",
+        "khmer": "Khmer",
+        "postTitle": "Post Title",
+        "titleRequired": "English title is required",
+        "titlePlaceholderEn": "Enter english title...",
+        "titlePlaceholderKm": "Enter Khmer title...",
+        "titleOptionalHint": "Optional. Leave blank to fall back to English.",
+        "shortExcerpt": "Short Excerpt",
+        "excerptHint": "Used in cards, previews, and search results.",
+        "excerptPlaceholderEn": "A short english summary...",
+        "excerptPlaceholderKm": "A short Khmer summary...",
+        "content": "Content",
+        "contentRequired": "English content is required",
+        "contentPlaceholderEn": "Write the english article in Markdown...",
+        "contentPlaceholderKm": "Write the Khmer article in Markdown...",
+        "publishing": "Publishing",
+        "publishingDesc": "Control visibility, homepage promotion, and the public URL.",
+        "publishStatus": "Publish Status",
+        "optionPublished": "Published (Publicly Visible)",
+        "optionDraft": "Draft (Admin Only)",
+        "homepageHighlight": "Homepage Highlight",
+        "optionNormal": "Normal Post",
+        "optionFeatured": "Featured on Homepage",
+        "customSlug": "Custom Slug",
+        "slugHint": "Leave blank to generate the URL automatically from the English title.",
+        "slugPlaceholder": "e.g. my-blog-post",
+        "tags": "Tags",
+        "tagsHint": "Separate topics with commas to improve filtering and related-post suggestions.",
+        "tagsPlaceholder": "React, Firebase, Security",
+        "coverImage": "Cover image",
+        "coverImageDesc": "Use a clean, wide image to make the blog list and article header feel polished.",
+        "coverImageLabel": "Cover Image",
+        "uploadPlaceholder": "Upload post cover image",
+        "footerNote": "Both languages are stored in one Firestore document. Khmer can remain empty while content is being translated.",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "save": "Save Blog Post"
       }
     },
     "settings": {
+      "loading": "Loading Typography Settings...",
       "subTabs": {
         "identity": {
           "label": "Identity",
-          "description": "Browser title, logo system, filters, and favicon."
+          "description": "Browser title, branding system, filters, and favicon."
         },
         "typography": {
           "label": "Typography",
@@ -298,12 +918,54 @@
           "description": "Mirrors, GitHub token, and manual rebuild control."
         }
       },
+      "workspace": {
+        "eyebrow": "Site Operations",
+        "title": "Control the brand system, motion, and deployment behavior from one calmer workspace.",
+        "description": "Settings now group identity, typography, visuals, and sync into clearer workstreams so you can tune the portfolio without digging through dense forms.",
+        "stats": {
+          "workstreams": "Workstreams",
+          "workstreamsHint": "Identity, typography, visuals, and sync",
+          "typeRoles": "Type Roles",
+          "typeRolesHint": "Live previews across public and admin UI",
+          "deployTargets": "Deploy Targets",
+          "tokenConfigured": "GitHub rebuild control is configured",
+          "tokenNeeded": "Add a token to trigger rebuilds"
+        }
+      },
+      "dialogs": {
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "initializeMetadata": {
+          "title": "Initialize Typography Metadata",
+          "message": "This will push the default typography options (Fonts, Categories, Defaults) to your database. This is usually only needed once or when adding new fonts to the system.\n\nContinue?",
+          "confirm": "Initialize Now",
+          "success": "Typography metadata initialized successfully!"
+        }
+      },
       "syncStatus": {
         "ready": "Ready",
         "syncing": "Syncing",
         "queued": "Queued",
         "healthy": "Healthy",
-        "attention": "Attention"
+        "attention": "Attention",
+        "dialogs": {
+          "rebuild": {
+            "title": "Trigger Site Rebuild",
+            "message": "This will trigger a full site rebuild and deployment. You can track the progress in real-time below.\n\nContinue?",
+            "confirm": "Rebuild Now"
+          }
+        },
+        "messages": {
+          "success": "Build successful! Your site is updated.",
+          "error": "Build failed",
+          "current": "Current Status",
+          "tokenRequired": "Please enter your GitHub Personal Access Token first.",
+          "initializing": "Initializing sync with GitHub...",
+          "requested": "Request sent! Waiting for GitHub to start the build...",
+          "requestSent": "Rebuild request sent successfully!",
+          "invalidToken": "Invalid or expired GitHub Token. Please check your token settings.",
+          "githubError": "GitHub Error"
+        }
       },
       "sectionMeta": {
         "identity": {
@@ -327,8 +989,432 @@
         },
         "sync": {
           "mirrors": "mirrors",
+          "githubTokenNeeded": "Token needed for rebuilds",
           "statusForRebuilds": "{{status}} for rebuilds",
           "tokenNeededForRebuilds": "Token needed for rebuilds"
+        }
+      },
+      "sections": {
+        "identity": {
+          "eyebrow": "Identity System",
+          "title": "Shape how the portfolio is recognized in tabs, branding, and collection filters.",
+          "description": "This view keeps naming, browser assets, and taxonomy controls in one place so brand updates feel deliberate instead of scattered.",
+          "ready": "Ready",
+          "pending": "Pending",
+          "favicon": "Favicon",
+          "faviconHint": "Upload a small icon for browser tabs",
+          "brandName": "Brand Name",
+          "brandNameHint": "Used across logo treatments and previews",
+          "filterSets": "Filter Sets",
+          "filterSetsHint": "Quick sorting for projects and blog posts",
+          "brandBasics": {
+            "title": "Brand Basics",
+            "subtitle": "Name, tagline, and browser copy",
+            "description": "These settings define the identity seen in the browser tab, navbar, and footer.",
+            "badge": "Core copy"
+          },
+          "fields": {
+            "pageTitle": "Page Title (Browser Tab)",
+            "pageTitlePlaceholder": "Kem Phearum | Portfolio",
+            "siteTagline": "Site Tagline",
+            "siteTaglinePlaceholder": "ICT Security & IT Audit Professional",
+            "logoPrefix": "Logo Prefix",
+            "logoPrefixPlaceholder": "Kem",
+            "logoSuffix": "Logo Suffix",
+            "logoSuffixPlaceholder": "Phearum",
+            "footerCopyright": "Footer Copyright Text",
+            "footerCopyrightPlaceholder": "(c) 2026 Your Name. All Rights Reserved."
+          },
+          "taxonomy": {
+            "title": "Collection Filters",
+            "subtitle": "Project and blog taxonomy",
+            "description": "Keep category names aligned with your published content so filtering feels intentional and predictable.",
+            "badge": "Taxonomy",
+            "projectTitle": "Project Category Filters",
+            "projectHint": "Suggestions are pulled from published project tech stacks.",
+            "blogTitle": "Blog Tag Filters",
+            "blogHint": "Suggestions are pulled from published blog tags.",
+            "loading": "Loading suggestions...",
+            "error": "Could not load suggestions. You can still add manually.",
+            "empty": "No taxonomy found yet.",
+            "manualLabel": "Manual List",
+            "manualFallback": "Comma separated fallback",
+            "manualPlaceholder": "React, Python, Firebase...",
+            "blogPlaceholder": "Tutorial, Tech, Security...",
+            "typeCustom": "Type custom tags (comma separated)",
+            "add": "Add"
+          },
+          "browserAsset": {
+            "title": "Browser Asset",
+            "subtitle": "Favicon uploader",
+            "description": "Use a high-contrast icon so the portfolio reads cleanly in tabs, bookmarks, and shortcuts.",
+            "badge": "16-256px",
+            "label": "Browser Favicon",
+            "preview": "Favicon Preview",
+            "replace": "Replace current icon",
+            "upload": "Upload a favicon",
+            "hint": "PNG, SVG, or ICO. Square artwork works best."
+          },
+          "preview": {
+            "title": "Identity preview",
+            "browserTab": "Browser tab preview",
+            "browserTabHint": "Browsers control the tab font. Your settings update the title text, favicon, and on-page typography instead.",
+            "currentFavicon": "Current favicon",
+            "footerCopy": "Footer copy",
+            "filterReadiness": "Filter readiness",
+            "filtersConfigured": "Project and blog filters are configured",
+            "filtersPending": "Finish both filter lists for faster content sorting"
+          },
+          "tabs": {
+            "home": "Home"
+          },
+          "checklist": [
+            "Keep the page title short enough to read cleanly in the browser tab.",
+            "Use a favicon with strong contrast and minimal detail.",
+            "Match filter names to the content visitors actually browse."
+          ],
+          "save": "Save Identity Changes"
+        },
+        "typography": {
+          "header": {
+            "eyebrow": "Typography System",
+            "title": "Tune the public-facing type hierarchy while keeping the admin workspace readable.",
+            "description": "Presets, base sizing, and role-level controls now sit next to live previews so decisions feel faster and more confident."
+          },
+          "meta": {
+            "typeRoles": "Type Roles",
+            "typeRolesHint": "Logo, nav, body, footer, and admin surfaces",
+            "quickPresets": "Quick Presets",
+            "quickPresetsHint": "Apply a brand direction in one click",
+            "adminFontMode": "Admin Font Mode",
+            "adminFontModeHint": "Keep dashboard text stable while styling the public site",
+            "inter": "Inter",
+            "custom": "Custom"
+          },
+          "global": {
+            "title": "Global typography controls",
+            "description": "Set the base scale, initialize metadata if needed, and reset the whole system when you want a clean starting point.",
+            "baseSize": "Base Size",
+            "setupMetadata": "Setup Metadata",
+            "setupMetadataTitle": "One-time push of typography defaults to database",
+            "resetDefaults": "Reset to Defaults"
+          },
+          "roles": {
+            "eyebrow": "Role Controls",
+            "title": "Fine-tune every text role",
+            "description": "Each role can choose its own family, weight, italic state, and size while keeping the overall system organized.",
+            "badge": "roles",
+            "fontFamily": "Font Family",
+            "weight": "Weight",
+            "italic": "Italic",
+            "sizeLabel": "Size (e.g. 1.2rem)",
+            "sizeTitle": "Font Size (e.g. 1.2rem, 18px)",
+            "presets": "Quick presets"
+          },
+          "preview": {
+            "eyebrow": "Preview Studio",
+            "title": "Validate typography before saving",
+            "description": "Preview how the type system behaves across navigation, content, footer, and admin surfaces.",
+            "badge": "Live render",
+            "adminOverrideTitle": "Use Inter for the admin panel",
+            "adminOverrideDesc": "Keep dashboard text in Inter regardless of the public typography choices above.",
+            "liveLabel": "Live Typography Preview",
+            "liveDesc": "These previews mirror your real site regions so hierarchy issues are easier to catch before publishing.",
+            "regions": {
+              "previewLabel": "Preview regions",
+              "previewDesc": "Check how the font system behaves across public and admin surfaces before saving.",
+              "header": "SITE HEADER",
+              "responsive": "Responsive preview",
+              "desktop": "Desktop",
+              "mobile": "Mobile",
+              "mainHero": "MAIN CONTENT & HERO",
+              "footer": "FOOTER PREVIEW",
+              "admin": "ADMIN SURFACES"
+            },
+            "content": {
+              "display": "Display Preview",
+              "heading": "Heading - Sample Text",
+              "subheading": "Subheading - Sample Text",
+              "bodyPrefix": "This is a sample paragraph to preview the body text font. The ",
+              "bodyHighlight": "quick brown fox",
+              "bodySuffix": " jumps over the lazy dog.",
+              "list": [
+                "High performance architecture",
+                "Modern typography system"
+              ],
+              "primaryBtn": "Primary Button",
+              "statusActive": "Status: Active",
+              "secondaryAction": "Secondary Action",
+              "codeComment": "// Initializing site...",
+              "navBlog": "Blog",
+              "siteMirrors": "Site Mirrors",
+              "mirrorLink": "Mirror Link",
+              "desktopSpread": "Three-column spread",
+              "mobileStack": "Single-column stack",
+              "allRightsReserved": "All Rights Reserved.",
+              "adminLabel": "Admin",
+              "settings": "Settings",
+              "sidebarActive": "Sidebar Active Link",
+              "section": "Section",
+              "pageTabTitle": "Page / Tab Title",
+              "totalVisits": "TOTAL PAGE VISITS",
+              "fromLastWeek": "from last week"
+            }
+          },
+          "weights": {
+            "normal": "Normal",
+            "medium": "Medium",
+            "semibold": "SemiBold",
+            "bold": "Bold"
+          },
+          "save": "Save Typography Settings"
+        },
+        "visuals": {
+          "eyebrow": "Visual Experience",
+          "title": "Tune the atmosphere, motion, and UI feedback of the portfolio and admin dashboard.",
+          "description": "Background energy and interface behavior are grouped separately now, so it is easier to shape the site mood without losing operational clarity.",
+          "ready": "On",
+          "pending": "Off",
+          "active": "On",
+          "bgStyle": "Background Style",
+          "motionInput": "Motion Input",
+          "adminFeedback": "Admin Feedback",
+          "atmosphere": {
+            "title": "Background Atmosphere",
+            "subtitle": "Set the visual mood of the public site",
+            "description": "Choose the scene and then fine-tune the amount of movement, density, and glow so the background supports the content instead of overpowering it.",
+            "badge": "Public site"
+          },
+          "container": {
+            "title": "Container Appearance",
+            "subtitle": "Glassmorphism & Surfaces",
+            "description": "Control the transparency, blur, and base color of UI containers across the entire portfolio and admin dashboard.",
+            "badge": "Shared UI"
+          },
+          "behavior": {
+            "title": "Interface Behavior",
+            "subtitle": "Enable the experience defaults you want",
+            "description": "These switches affect how interactive, chatty, and persistent the interface feels for both visitors and admins.",
+            "badge": "Behavior"
+          },
+          "guidance": {
+            "title": "Direction",
+            "subtitle": "Visual guidance",
+            "description": "Use these quick checks to keep the overall experience expressive without making the portfolio hard to read."
+          },
+          "fields": {
+            "density": "Density",
+            "speed": "Speed",
+            "glow": "Glow",
+            "variant": "Background Style Variant",
+            "variantHint": "Choose the visual pattern for the site background",
+            "particleDensity": "Particle Density",
+            "particleDensityHint": "Control how full or minimal the scene feels.",
+            "animationSpeed": "Animation Speed",
+            "animationSpeedHint": "Move slower for calm or faster for a more energetic canvas.",
+            "glowIntensity": "Glow Intensity",
+            "glowIntensityHint": "Raise this when the scene needs more contrast and visual depth.",
+            "glassOpacity": "Glass Opacity",
+            "glassOpacityHint": "Control how translucent the containers appear.",
+            "backdropBlur": "Backdrop Blur",
+            "backdropBlurHint": "Set the intensity of the glass blur effect.",
+            "surfaceBaseColor": "Surface Base Color",
+            "surfaceBaseColorHint": "The primary hue for containers and cards."
+          },
+          "bgStyles": {
+            "plexus": "Plexus (Connected Lines)",
+            "particles": "Dust Particles",
+            "geometry": "Floating Geometry",
+            "aurora": "Aurora Borealis"
+          },
+          "toggles": {
+            "interactive": {
+              "title": "Interactive mouse effect",
+              "description": "Let particles or shapes respond to pointer movement for a more tactile public experience."
+            },
+            "notifications": {
+              "title": "Notification alerts",
+              "description": "Show toast feedback in the admin interface for save, delete, and sync actions."
+            },
+            "sidebar": {
+              "title": "Persistent admin sidebar",
+              "description": "Keep the navigation expanded so the dashboard feels stable during longer editing sessions."
+            }
+          },
+          "checklist": [
+            "Lower density and glow if the content starts fighting the background.",
+            "Keep sidebar persistence on for longer admin sessions and off for compact browsing.",
+            "Leave notifications enabled unless you are troubleshooting UI noise."
+          ],
+          "save": "Save Visual Settings"
+        },
+        "sync": {
+          "eyebrow": "Site Synchronization",
+          "title": "Manage deployment targets and manual rebuild control from one cleaner sync workspace.",
+          "description": "Mirror environments and rebuild settings are separated now, so it is easier to understand what is being deployed where and when.",
+          "mirrors": "Mirrors",
+          "githubToken": "GitHub Token",
+          "rebuildStatus": "Rebuild Status",
+          "syncHealth": "Current sync health for manual deployment requests",
+          "tokenStored": "Stored",
+          "tokenMissing": "Missing",
+          "tokenHint": "Saved locally in your browser for rebuild access",
+          "mirrorHint": "Deployment targets currently configured",
+          "mirrorsSection": {
+            "title": "Mirror Environments",
+            "subtitle": "Manage every deployment destination",
+            "description": "Keep your live portfolio mirrors organized so you always know which URLs represent production, backup, and alternate hosting.",
+            "targets": "targets"
+          },
+          "mirrorFields": {
+            "remove": "Remove Mirror",
+            "config": "Mirror Configuration",
+            "env": "Environment #{{index}}",
+            "name": "Mirror Name",
+            "namePlaceholder": "e.g. GitHub Pages",
+            "url": "Repository URL",
+            "urlPlaceholder": "https://github.com/user/repo"
+          },
+          "addMirror": {
+            "title": "Add Mirror Environment",
+            "description": "Configure another deployment target"
+          },
+          "rebuild": {
+            "title": "Manual Rebuild",
+            "subtitle": "GitHub Actions deployment control",
+            "description": "Trigger a rebuild and deployment of the live site without leaving the admin panel.",
+            "tokenLabel": "GitHub Personal Access Token",
+            "tokenHint": "Used only for triggering site rebuilds. Stored locally in your browser.",
+            "tokenPlaceholder": "ghp_xxxxxxxxxxxx",
+            "btnDefault": "Trigger Manual Rebuild",
+            "btnLoading": "Syncing...",
+            "statusLabel": "Status:",
+            "lastUpdated": "Last Updated:",
+            "never": "Never"
+          },
+          "states": {
+            "ready": "Ready",
+            "syncing": "Syncing",
+            "queued": "Queued",
+            "healthy": "Healthy",
+            "attention": "Attention",
+            "idle": "IDLE",
+            "loading": "LOADING",
+            "requested": "REQUESTED",
+            "success": "SUCCESS",
+            "error": "ERROR"
+          },
+          "note": {
+            "title": "Important Note",
+            "subtitle": "No-backend rebuild flow",
+            "description": "The rebuild action depends on your GitHub token because deployment is handled through hosted CI rather than a custom backend.",
+            "label": "Note:",
+            "message": "Enter a valid GitHub token above before triggering a rebuild. This keeps the hosting flow backend-free while still allowing controlled deployments."
+          },
+          "save": "Save Sync Settings"
+        }
+      },
+      "general": {
+        "workspace": {
+          "eyebrow": "Portfolio Content",
+          "title": "General Sections",
+          "description": "Control the primary static content across your home, about, and contact pages.",
+          "sectionsLabel": "Sections",
+          "sectionsHint": "Main content blocks",
+          "fieldsFilledLabel": "Fields Filled",
+          "fieldsFilledHint": "Across all general sections"
+        },
+        "sectionDescriptions": {
+          "home": "Hero copy, CTA, and portrait",
+          "about": "Biography and skills snapshot",
+          "contact": "Contact form intro text"
+        },
+        "sections": {
+          "home": {
+            "title": "Home Section",
+            "description": "Configure the main hero content of your landing page.",
+            "history": "History",
+            "heroCopy": {
+              "title": "Hero copy",
+              "description": "Set the first lines visitors see when they land on the portfolio."
+            },
+            "fields": {
+              "greetingEn": "Greeting (EN)",
+              "greetingKm": "Greeting (KM)",
+              "greetingPlaceholder": "e.g. Hello, I am",
+              "nameEn": "Full Name (EN)",
+              "nameKm": "Full Name (KM)",
+              "namePlaceholder": "Your professional name",
+              "subtitleEn": "Professional Subtitle (EN)",
+              "subtitleKm": "Professional Subtitle (KM)",
+              "subtitlePlaceholder": "e.g. Senior Software Engineer",
+              "descriptionEn": "Hero Description (EN)",
+              "descriptionKm": "Hero Description (KM)",
+              "descriptionPlaceholderEn": "A brief, impactful introduction...",
+              "descriptionPlaceholderKm": "សេចក្តីណែនាំជាខ្មែរខ្លីៗ...",
+              "ctaTextEn": "Call to Action Text (EN)",
+              "ctaTextKm": "Call to Action Text (KM)",
+              "ctaPlaceholder": "e.g. View My Work",
+              "ctaLink": "CTA Anchor/Link",
+              "ctaLinkPlaceholder": "e.g. #projects"
+            },
+            "primaryAction": {
+              "title": "Primary action",
+              "description": "Guide visitors toward the next section or strongest conversion point."
+            },
+            "portrait": {
+              "title": "Portrait",
+              "description": "Use a clean image that reads well in the hero and keeps attention on the headline.",
+              "label": "Profile Portrait",
+              "hint": "Transparent PNG recommended"
+            },
+            "save": "Save Home Changes"
+          },
+          "about": {
+            "title": "About Section",
+            "description": "Update your biography, professional summary, and key skills.",
+            "history": "History",
+            "bio": {
+              "title": "Biography",
+              "description": "Write the narrative that introduces your background, experience, and point of view."
+            },
+            "fields": {
+              "bioEn": "Biography (EN)",
+              "bioKm": "Biography (KM)",
+              "bioRequired": "English bio is required",
+              "bioPlaceholderEn": "Write your professional bio...",
+              "bioPlaceholderKm": "Write your Khmer biography...",
+              "skills": "Professional Skills",
+              "skillsPlaceholder": "React, Python, Firebase, ...",
+              "skillsHint": "comma separated"
+            },
+            "skillsSnapshot": {
+              "title": "Skills snapshot",
+              "description": "List the capabilities you want visitors to notice first."
+            },
+            "save": "Save Changes"
+          },
+          "contact": {
+            "title": "Contact Section",
+            "description": "Manage the intro text displayed above your contact form.",
+            "history": "History",
+            "intro": {
+              "title": "Contact intro",
+              "description": "Set the tone before visitors reach the form so expectations feel clear and welcoming."
+            },
+            "fields": {
+              "introEn": "Contact Intro (EN)",
+              "introKm": "Contact Intro (KM)",
+              "introRequired": "English intro text is required",
+              "introPlaceholderEn": "The text shown above the contact form...",
+              "introPlaceholderKm": "Khmer intro text shown above the contact form..."
+            },
+            "bestPractice": {
+              "title": "Best practice",
+              "description": "Keep this copy short. It should invite contact, explain what people can reach out about, and reduce friction."
+            },
+            "save": "Save Contact Changes"
+          }
         }
       }
     },
@@ -343,6 +1429,218 @@
         "noChanges": "No profile changes to save.",
         "saved": "Profile saved!"
       }
+    },
+    "analytics": {
+      "header": {
+        "title": "Analytics Dashboard",
+        "description": "Track traffic quality, audience behavior, and acquisition signals for your portfolio.",
+        "loading": "Loading analytics..."
+      },
+      "lastUpdated": {
+        "notSyncedYet": "Not synced yet",
+        "justNow": "Updated just now",
+        "minutesAgo": "Updated {{minutes}}m ago",
+        "dateAtTime": "Updated {{date}} at {{time}}"
+      },
+      "toasts": {
+        "refreshed": "Analytics data refreshed!",
+        "noDataToExport": "No data to export",
+        "exported": "Analytics exported to CSV"
+      },
+      "common": {
+        "unknown": "Unknown",
+        "direct": "Direct",
+        "new": "New",
+        "returning": "Returning",
+        "to": "to"
+      },
+      "alerts": {
+        "quotaTitle": "Firestore Quota Exceeded",
+        "quotaDescription": "The daily free tier limit has been reached. Some data may be missing."
+      },
+      "empty": {
+        "title": "No Analytics Data",
+        "description": "No data available for the selected range. Try a different date range."
+      },
+      "workspace": {
+        "eyebrow": "Traffic Overview",
+        "performanceFor": "Performance for",
+        "monitoring": "Monitoring",
+        "trackedSessionsOver": "tracked sessions over",
+        "refreshingNow": "Refreshing now...",
+        "topCountry": "Top Country",
+        "topSource": "Top Source",
+        "topPage": "Top Page",
+        "returningShare": "Returning Share",
+        "customRange": "Custom range",
+        "noCountryDataYet": "No country data yet",
+        "noSourceDataYet": "No source data yet",
+        "noPageDataYet": "No page data yet",
+        "day": "day",
+        "days": "days"
+      },
+      "summary": {
+        "period": "period",
+        "vsPrevious": "vs prev. {{period}}"
+      },
+      "cards": {
+        "pageViews": "Page Views",
+        "uniqueVisitors": "Unique Visitors",
+        "avgSession": "Avg. Session",
+        "bounceRate": "Bounce Rate"
+      },
+      "charts": {
+        "visitsOverTime": "Visits Over Time",
+        "visitorsByCountry": "Visitors by Country",
+        "deviceBreakdown": "Device Breakdown",
+        "topCities": "Top Cities",
+        "trafficSources": "Traffic Sources",
+        "topBrowsers": "Top Browsers",
+        "operatingSystems": "Operating Systems",
+        "visitorRetention": "Visitor Retention",
+        "topVisitedPages": "Top Visited Pages"
+      }
+    },
+    "audit": {
+      "header": {
+        "title": "Audit Intelligence Dashboard",
+        "description": "Track admin activity, auth events, and operational risk signals in one place.",
+        "refreshAllData": "Refresh All Data"
+      },
+      "restricted": {
+        "title": "Access Restricted",
+        "description": "You do not have permission to view system audit logs. Only Super Admins can access this area."
+      },
+      "toasts": {
+        "noLogsToExport": "No logs to export for this view.",
+        "exported": "Exported audit logs successfully.",
+        "refreshed": "Logs refreshed"
+      },
+      "export": {
+        "headers": {
+          "status": "Status",
+          "email": "Email",
+          "ipAddress": "IP Address",
+          "device": "Device",
+          "location": "Location",
+          "timestamp": "Timestamp",
+          "reason": "Reason",
+          "action": "Action",
+          "module": "Module",
+          "entity": "Entity",
+          "user": "User",
+          "count": "Count"
+        }
+      },
+      "sections": {
+        "activity": {
+          "title": "Activity History",
+          "description": "Data mutations and admin-level changes.",
+          "searchPlaceholder": "Search labels, users, module, action...",
+          "searchHint": "Search: \"{{query}}\""
+        },
+        "security": {
+          "title": "Login Audit Trail",
+          "description": "Authentication attempts, origins, and device profile.",
+          "searchPlaceholder": "Search email, IP, device, country...",
+          "searchHint": "Search: \"{{query}}\""
+        }
+      }
+    },
+    "database": {
+      "header": {
+        "title": "Database Management",
+        "description": "Track collection health, backup and restore safely, and tune audit retention.",
+        "refreshHealth": "Refresh Health"
+      },
+      "common": {
+        "enabled": "enabled",
+        "disabled": "disabled"
+      },
+      "warnings": {
+        "healthCheckIncomplete": "Health Check Incomplete",
+        "someCountsNotLoaded": "Some collection counts could not be loaded:"
+      },
+      "validation": {
+        "invalidJsonBackup": "Please choose a valid JSON backup file.",
+        "selectedFileEmpty": "Selected file is empty.",
+        "backupFileTooLarge": "Backup file is too large. Please use a file smaller than 25 MB."
+      },
+      "toasts": {
+        "auditUpdateFailed": "Failed to update audit setting.",
+        "exportSuccess": "Database exported successfully!",
+        "exportFailed": "Failed to export database.",
+        "loadHealthFailed": "Failed to load database health.",
+        "noPermission": "You do not have permission to perform this action.",
+        "healthMetricsLoadFailedFor": "Could not load health metrics for: {{collections}}",
+        "allAuditSettingsStatus": "All audit settings {{status}}.",
+        "auditSettingUpdated": "Audit setting updated: {{key}} = {{value}}",
+        "gatheringArchive": "Gathering data to archive...",
+        "noOldRecords": "No records found older than {{days}} days.",
+        "archiveDeleteSuccess": "Successfully archived and deleted {{count}} old records.",
+        "archiveFailed": "Failed to archive data.",
+        "restoringBackup": "Restoring backup, please wait...",
+        "readFileFailed": "Failed to read file.",
+        "partialRestore": "Partially completed ({{completed}}/{{total}}). Issues on: {{collections}}",
+        "restoreSuccess": "Successfully restored {{count}} records!",
+        "restoreFailedInvalidFormat": "Failed to restore. Invalid format?"
+      }
+    },
+    "users": {
+      "stats": {
+        "totalUsers": {
+          "label": "Total users",
+          "meta": "All accounts in the collection"
+        },
+        "activeAccess": {
+          "label": "Active access",
+          "meta": "Can sign in today"
+        },
+        "elevatedRoles": {
+          "label": "Elevated roles",
+          "meta": "Admin or super admin"
+        },
+        "disabled": {
+          "label": "Disabled",
+          "metaBlocked": "Blocked from login",
+          "metaNone": "No blocked accounts"
+        }
+      },
+      "restricted": {
+        "title": "Access Restricted",
+        "description": "Only Super Admins can manage users and roles. Please contact the system administrator if you believe this is an error."
+      },
+      "common": {
+        "user": "User",
+        "enabled": "enabled",
+        "disabled": "disabled",
+        "successfully": "successfully."
+      },
+      "toasts": {
+        "userCreated": "User created successfully.",
+        "createFailed": "Failed to create user.",
+        "updateRoleFailed": "Failed to update role.",
+        "sendResetEmailFailed": "Failed to send reset email.",
+        "updateStatusFailed": "Failed to update user status.",
+        "savePermissionsFailed": "Failed to save permissions.",
+        "noPermission": "You do not have permission to perform this action.",
+        "emailRequired": "Email is required.",
+        "roleUpdatedTo": "Role updated to",
+        "passwordResetSentTo": "Password reset email sent to",
+        "permissionsFor": "Permissions for",
+        "saved": "saved!"
+      },
+      "dialogs": {
+        "reEnableUser": "Re-enable User",
+        "disableUser": "Disable User",
+        "confirmReEnableFor": "Are you sure you want to re-enable access for",
+        "confirmDisable": "Are you sure you want to disable",
+        "noLongerAbleToLogin": "They will no longer be able to log in.",
+        "reEnabling": "Re-enabling...",
+        "disabling": "Disabling...",
+        "noteReEnable": "The account can sign in again immediately after this change.",
+        "noteDisable": "The account remains in the system and can be re-enabled later from User Management."
+      }
     }
   },
   "nav": {
@@ -351,11 +1649,14 @@
     "experience": "Experience",
     "projects": "Projects",
     "blog": "Blog",
-    "contact": "Contact"
+    "contact": "Contact",
+    "primary": "Primary navigation",
+    "open": "Open navigation menu",
+    "close": "Close navigation menu"
   },
   "hero": {
     "defaultCta": "Get My CV",
-    "contactCta": "Get In Touch"
+    "contactCta": "Get In Touch "
   },
   "about": {
     "title": "About Me",

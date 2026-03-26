@@ -190,7 +190,7 @@ const Navbar = () => {
                 </div>
 
                 <div className={styles.navRight}>
-                    <ul id="primary-navigation" className={`${styles.navLinks} ${isOpen ? styles.active : ''}`} aria-label={tr('Primary navigation', 'ម៉ឺនុយមេ')}>
+                    <ul id="primary-navigation" className={`${styles.navLinks} ${isOpen ? styles.active : ''}`} aria-label={t('nav.primary')}>
                         {navItems.map((item) => {
                             const active = isItemActive(item);
                             return (
@@ -224,11 +224,11 @@ const Navbar = () => {
                         className={styles.themeToggle}
                         onClick={toggleTheme}
                         aria-label={theme === 'dark'
-                            ? tr('Switch to light mode', 'ប្តូរទៅរបៀបភ្លឺ')
-                            : tr('Switch to dark mode', 'ប្តូរទៅរបៀបងងឹត')}
+                            ? t('admin.header.switchTheme', { mode: t('admin.common.light') })
+                            : t('admin.header.switchTheme', { mode: t('admin.common.dark') })}
                         title={theme === 'dark'
-                            ? tr('Switch to light mode', 'ប្តូរទៅរបៀបភ្លឺ')
-                            : tr('Switch to dark mode', 'ប្តូរទៅរបៀបងងឹត')}
+                            ? t('admin.header.switchTheme', { mode: t('admin.common.light') })
+                            : t('admin.header.switchTheme', { mode: t('admin.common.dark') })}
                     >
                         {theme === 'dark' ? (
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -256,8 +256,8 @@ const Navbar = () => {
                         aria-expanded={isOpen}
                         aria-controls="primary-navigation"
                         aria-label={isOpen
-                            ? tr('Close navigation menu', 'បិទម៉ឺនុយរុករក')
-                            : tr('Open navigation menu', 'បើកម៉ឺនុយរុករក')}
+                            ? t('nav.close')
+                            : t('nav.open')}
                     >
                         <span />
                         <span />
@@ -271,7 +271,7 @@ const Navbar = () => {
                         type="button"
                         className={styles.backdrop}
                         onClick={() => setIsOpen(false)}
-                        aria-label={tr('Close navigation menu', 'បិទម៉ឺនុយរុករក')}
+                        aria-label={t('nav.close')}
                     />
                 )}
             </div>

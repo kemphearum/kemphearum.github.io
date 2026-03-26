@@ -1,6 +1,6 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
 import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 import { normalizePost, validatePost } from '../domain/blog/blogDomain';
 import { getLanguageFromStorage, localizeEntityFields } from '../utils/localization';
@@ -260,6 +260,32 @@ class BlogService extends BaseService {
         });
 
         return Array.from(byKey.values()).sort((a, b) => a.localeCompare(b));
+    }
+
+    /**
+     * Fetch aggregate blog counts for dashboard stat cards.
+     * @returns {Promise<{total:number,published:number,featured:number,drafts:number}>}
+     */
+    async fetchStats() {
+        const collectionRef = collection(db, this.collectionName);
+
+        const [totalSnap, publishedSnap, featuredSnap] = await Promise.all([
+            getCountFromServer(collectionRef),
+            getCountFromServer(query(collectionRef, where('visible', '==', true))),
+            getCountFromServer(query(collectionRef, where('featured', '==', true)))
+        ]);
+
+        const total = Number(totalSnap.data()?.count || 0);
+        const published = Number(publishedSnap.data()?.count || 0);
+        const featured = Number(featuredSnap.data()?.count || 0);
+        const drafts = Math.max(0, total - published);
+
+        return {
+            total,
+            published,
+            featured,
+            drafts
+        };
     }
 }
 

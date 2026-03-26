@@ -24,13 +24,20 @@ const UsersToolbar = ({ search, onSearch, onCreate, searchResultCount, totalCoun
 
       {stats.length > 0 && (
         <div className="ui-users-toolbar__stats" aria-label={tr('User workspace summary', 'សង្ខេបផ្ទៃការងារអ្នកប្រើ')}>
-          {stats.map((stat) => (
-            <div key={stat.label} className="ui-users-toolbar__stat">
+          {stats.map((stat, index) => {
+            const tone = stat.tone || ['total', 'active', 'elevated', 'disabled'][index] || 'total';
+
+            return (
+            <div
+              key={stat.label}
+              className={`ui-users-toolbar__stat ui-users-toolbar__stat--${tone}`}
+            >
               <span className="ui-users-toolbar__statLabel">{stat.label}</span>
               <strong className="ui-users-toolbar__statValue">{stat.value}</strong>
               <span className="ui-users-toolbar__statMeta">{stat.meta}</span>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

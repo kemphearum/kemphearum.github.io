@@ -19,8 +19,7 @@ const SyncSection = ({
     onSave,
     loading
 }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t, language } = useTranslation();
     const locale = language === 'km' ? 'km-KH' : 'en-US';
 
     const updateMirrorField = (index, field, value) => {
@@ -33,39 +32,39 @@ const SyncSection = ({
     };
 
     const syncStateLabel = rebuildStatus.state === 'idle'
-        ? tr('Ready', 'រួចរាល់')
+        ? t('admin.settings.sections.sync.states.ready')
         : rebuildStatus.state === 'loading'
-            ? tr('Syncing', 'កំពុងសមកាលកម្ម')
+            ? t('admin.settings.sections.sync.states.syncing')
             : rebuildStatus.state === 'requested'
-                ? tr('Queued', 'កំពុងរង់ចាំ')
+                ? t('admin.settings.sections.sync.states.queued')
                 : rebuildStatus.state === 'success'
-                    ? tr('Healthy', 'ដំណើរការល្អ')
-                    : tr('Attention', 'ត្រូវពិនិត្យ');
+                    ? t('admin.settings.sections.sync.states.healthy')
+                    : t('admin.settings.sections.sync.states.attention');
 
     return (
         <form onSubmit={onSave} className={tabStyles.tabContentFadeIn}>
             <div className="ui-card">
                 <div className={tabStyles.surfaceHeader}>
                     <div className={tabStyles.surfaceCopy}>
-                        <span className={tabStyles.surfaceEyebrow}>{tr('Site Synchronization', 'ការសមកាលកម្មគេហទំព័រ')}</span>
-                        <h3 className={tabStyles.surfaceHeadline}>{tr('Manage deployment targets and manual rebuild control from one cleaner sync workspace.', 'គ្រប់គ្រងគោលដៅ deploy និងការបញ្ជា rebuild ដោយដៃ ពី workspace តែមួយដែលស្អាតជាងមុន។')}</h3>
-                        <p className={tabStyles.surfaceLead}>{tr('Mirror environments and rebuild settings are separated now, so it is easier to understand what is being deployed where and when.', 'បរិស្ថាន mirror និងការកំណត់ rebuild ត្រូវបានបំបែកច្បាស់ ដើម្បីងាយយល់ថាកំពុង deploy ទៅណា និងពេលណា។')}</p>
+                        <span className={tabStyles.surfaceEyebrow}>{t('admin.settings.sections.sync.eyebrow')}</span>
+                        <h3 className={tabStyles.surfaceHeadline}>{t('admin.settings.sections.sync.title')}</h3>
+                        <p className={tabStyles.surfaceLead}>{t('admin.settings.sections.sync.description')}</p>
                     </div>
                     <div className={tabStyles.surfaceMeta}>
                         <div className={tabStyles.surfaceMetaCard}>
                             <span className={tabStyles.surfaceMetaValue}>{mirrors.length}</span>
-                            <span className={tabStyles.surfaceMetaLabel}>{tr('Mirrors', 'Mirror')}</span>
-                            <span className={tabStyles.surfaceMetaHint}>{tr('Deployment targets currently configured', 'គោលដៅ deploy ដែលបានកំណត់')}</span>
+                            <span className={tabStyles.surfaceMetaLabel}>{t('admin.settings.sections.sync.mirrors')}</span>
+                            <span className={tabStyles.surfaceMetaHint}>{t('admin.settings.sections.sync.mirrorHint')}</span>
                         </div>
                         <div className={tabStyles.surfaceMetaCard}>
-                            <span className={tabStyles.surfaceMetaValue}>{githubToken.trim() ? tr('Stored', 'បានរក្សាទុក') : tr('Missing', 'មិនទាន់មាន')}</span>
-                            <span className={tabStyles.surfaceMetaLabel}>{tr('GitHub Token', 'GitHub Token')}</span>
-                            <span className={tabStyles.surfaceMetaHint}>{tr('Saved locally in your browser for rebuild access', 'រក្សាទុកក្នុង browser របស់អ្នកសម្រាប់ rebuild')}</span>
+                            <span className={tabStyles.surfaceMetaValue}>{githubToken.trim() ? t('admin.settings.sections.sync.tokenStored') : t('admin.settings.sections.sync.tokenMissing')}</span>
+                            <span className={tabStyles.surfaceMetaLabel}>{t('admin.settings.sections.sync.githubToken')}</span>
+                            <span className={tabStyles.surfaceMetaHint}>{t('admin.settings.sections.sync.tokenHint')}</span>
                         </div>
                         <div className={tabStyles.surfaceMetaCard}>
                             <span className={tabStyles.surfaceMetaValue}>{syncStateLabel}</span>
-                            <span className={tabStyles.surfaceMetaLabel}>{tr('Rebuild Status', 'ស្ថានភាព Rebuild')}</span>
-                            <span className={tabStyles.surfaceMetaHint}>{tr('Current sync health for manual deployment requests', 'ស្ថានភាពសមកាលកម្មបច្ចុប្បន្នសម្រាប់សំណើ deploy ដោយដៃ')}</span>
+                            <span className={tabStyles.surfaceMetaLabel}>{t('admin.settings.sections.sync.rebuildStatus')}</span>
+                            <span className={tabStyles.surfaceMetaHint}>{t('admin.settings.sections.sync.syncHealth')}</span>
                         </div>
                     </div>
                 </div>
@@ -74,11 +73,11 @@ const SyncSection = ({
                     <section className={tabStyles.settingsPanel}>
                         <div className={tabStyles.panelHeader}>
                             <div className={tabStyles.panelTitleGroup}>
-                                <span className={tabStyles.panelEyebrow}>{tr('Mirror Environments', 'បរិស្ថាន Mirror')}</span>
-                                <h4 className={tabStyles.panelTitle}>{tr('Manage every deployment destination', 'គ្រប់គ្រងគោលដៅ deploy ទាំងអស់')}</h4>
-                                <p className={tabStyles.panelDescription}>{tr('Keep your live portfolio mirrors organized so you always know which URLs represent production, backup, and alternate hosting.', 'រៀបចំ mirror របស់ portfolio ឲ្យមានរបៀប ដើម្បីដឹងថា URL មួយណាជា production បម្រុង និង host ជំនួស។')}</p>
+                                <span className={tabStyles.panelEyebrow}>{t('admin.settings.sections.sync.mirrorsSection.title')}</span>
+                                <h4 className={tabStyles.panelTitle}>{t('admin.settings.sections.sync.mirrorsSection.subtitle')}</h4>
+                                <p className={tabStyles.panelDescription}>{t('admin.settings.sections.sync.mirrorsSection.description')}</p>
                             </div>
-                            <span className={tabStyles.panelBadge}>{mirrors.length} {tr('targets', 'គោលដៅ')}</span>
+                            <span className={tabStyles.panelBadge}>{mirrors.length} {t('admin.settings.sections.sync.mirrorsSection.targets')}</span>
                         </div>
 
                         <div className={tabStyles.mirrorsGrid}>
@@ -99,7 +98,7 @@ const SyncSection = ({
                                                 variant="ghost"
                                                 onClick={() => removeMirror(index)}
                                                 className={tabStyles.removeMirrorBtn}
-                                                title={tr('Remove Mirror', 'លុប Mirror')}
+                                                title={t('admin.settings.sections.sync.mirrorFields.remove')}
                                             >
                                                 <X size={16} />
                                             </Button>
@@ -111,26 +110,26 @@ const SyncSection = ({
                                                     <PlatformIcon size={20} />
                                                 </div>
                                                 <div className={tabStyles.mirrorTitleGroup}>
-                                                    <h5>{mirror.name || tr('Mirror Configuration', 'ការកំណត់ Mirror')}</h5>
-                                                    <span>{tr(`Environment #${index + 1}`, `បរិស្ថាន #${index + 1}`)}</span>
+                                                    <h5>{mirror.name || t('admin.settings.sections.sync.mirrorFields.config')}</h5>
+                                                    <span>{t('admin.settings.sections.sync.mirrorFields.env', { index: index + 1 })}</span>
                                                 </div>
                                             </div>
 
-                                            <FormField label={tr('Mirror Name', 'ឈ្មោះ Mirror')}>
+                                            <FormField label={t('admin.settings.sections.sync.mirrorFields.name')}>
                                                 <Input
                                                     value={mirror.name}
                                                     onChange={(e) => updateMirrorField(index, 'name', e.target.value)}
-                                                    placeholder={tr('e.g. GitHub Pages', 'ឧ. GitHub Pages')}
+                                                    placeholder={t('admin.settings.sections.sync.mirrorFields.namePlaceholder')}
                                                     className={tabStyles.mirrorInput}
                                                 />
                                             </FormField>
 
-                                            <FormField label={tr('Repository URL', 'URL Repository')}>
+                                            <FormField label={t('admin.settings.sections.sync.mirrorFields.url')}>
                                                 <div className={tabStyles.tokenInputContainer}>
                                                     <Input
                                                         value={mirror.url}
                                                         onChange={(e) => updateMirrorField(index, 'url', e.target.value)}
-                                                        placeholder={tr('https://github.com/user/repo', 'https://github.com/user/repo')}
+                                                        placeholder={t('admin.settings.sections.sync.mirrorFields.urlPlaceholder')}
                                                         className={tabStyles.mirrorInputWithIcon}
                                                     />
                                                     <Globe size={14} className={tabStyles.inputIcon} />
@@ -151,8 +150,8 @@ const SyncSection = ({
                                     <Plus size={24} />
                                 </div>
                                 <div className={tabStyles.btnText}>
-                                    <strong>{tr('Add Mirror Environment', 'បន្ថែមបរិស្ថាន Mirror')}</strong>
-                                    <span>{tr('Configure another deployment target', 'កំណត់គោលដៅ deploy ថ្មី')}</span>
+                                    <strong>{t('admin.settings.sections.sync.addMirror.title')}</strong>
+                                    <span>{t('admin.settings.sections.sync.addMirror.description')}</span>
                                 </div>
                             </Button>
                         </div>
@@ -162,21 +161,21 @@ const SyncSection = ({
                         <section className={tabStyles.settingsPanel}>
                             <div className={tabStyles.panelHeader}>
                                 <div className={tabStyles.panelTitleGroup}>
-                                    <span className={tabStyles.panelEyebrow}>{tr('Manual Rebuild', 'Rebuild ដោយដៃ')}</span>
-                                    <h4 className={tabStyles.panelTitle}>{tr('GitHub Actions deployment control', 'ការគ្រប់គ្រង deploy តាម GitHub Actions')}</h4>
-                                    <p className={tabStyles.panelDescription}>{tr('Trigger a rebuild and deployment of the live site without leaving the admin panel.', 'ចាប់ផ្តើម rebuild និង deploy គេហទំព័រផ្ទាល់ ដោយមិនចាកចេញពីផ្ទាំង Admin។')}</p>
+                                    <span className={tabStyles.panelEyebrow}>{t('admin.settings.sections.sync.rebuild.title')}</span>
+                                    <h4 className={tabStyles.panelTitle}>{t('admin.settings.sections.sync.rebuild.subtitle')}</h4>
+                                    <p className={tabStyles.panelDescription}>{t('admin.settings.sections.sync.rebuild.description')}</p>
                                 </div>
                                 <span className={tabStyles.panelBadge}>{syncStateLabel}</span>
                             </div>
 
                             <FormField
-                                label={<><Key size={14} style={{ marginRight: '6px' }} /> {tr('GitHub Personal Access Token', 'GitHub Personal Access Token')}</>}
-                                hint={tr('Used only for triggering site rebuilds. Stored locally in your browser.', 'ប្រើសម្រាប់ចាប់ផ្តើម rebuild ប៉ុណ្ណោះ។ រក្សាទុកក្នុង browser របស់អ្នក។')}
+                                label={<><Key size={14} style={{ marginRight: '6px' }} /> {t('admin.settings.sections.sync.rebuild.tokenLabel')}</>}
+                                hint={t('admin.settings.sections.sync.rebuild.tokenHint')}
                             >
                                 <div className={tabStyles.tokenInputContainer}>
                                     <Input
                                         type={showToken ? 'text' : 'password'}
-                                        placeholder={tr('ghp_xxxxxxxxxxxx', 'ghp_xxxxxxxxxxxx')}
+                                        placeholder={t('admin.settings.sections.sync.rebuild.tokenPlaceholder')}
                                         value={githubToken}
                                         onChange={(e) => setGithubToken(e.target.value)}
                                     />
@@ -197,28 +196,28 @@ const SyncSection = ({
                                 className={`${tabStyles.syncButton} ${rebuildStatus.state === 'error' ? tabStyles['syncButton--error'] : ''}`}
                             >
                                 <RefreshCw size={18} />
-                                <span>{rebuildStatus.state === 'loading' ? tr('Syncing...', 'កំពុងសមកាលកម្ម...') : tr('Trigger Manual Rebuild', 'ចាប់ផ្តើម Rebuild ដោយដៃ')}</span>
+                                <span>{rebuildStatus.state === 'loading' ? t('admin.settings.sections.sync.rebuild.btnLoading') : t('admin.settings.sections.sync.rebuild.btnDefault')}</span>
                             </Button>
 
                             {rebuildStatus.state !== 'idle' && (
                                 <div className={tabStyles.statusInfo}>
                                     <div>
                                         <span className={tabStyles.statusText}>
-                                            {tr('Status:', 'ស្ថានភាព:')}{' '}
+                                            {t('admin.settings.sections.sync.rebuild.statusLabel')}{' '}
                                             <strong className={rebuildStatus.state === 'success' ? tabStyles.success : (rebuildStatus.state === 'error' ? tabStyles.error : tabStyles.loading)}>
                                                 {rebuildStatus.state === 'idle'
-                                                    ? tr('IDLE', 'រង់ចាំ')
+                                                    ? t('admin.settings.sections.sync.states.idle')
                                                     : rebuildStatus.state === 'loading'
-                                                        ? tr('LOADING', 'កំពុងដំណើរការ')
+                                                        ? t('admin.settings.sections.sync.states.loading')
                                                         : rebuildStatus.state === 'requested'
-                                                            ? tr('REQUESTED', 'បានស្នើ')
+                                                            ? t('admin.settings.sections.sync.states.requested')
                                                             : rebuildStatus.state === 'success'
-                                                                ? tr('SUCCESS', 'ជោគជ័យ')
-                                                                : tr('ERROR', 'បរាជ័យ')}
+                                                                ? t('admin.settings.sections.sync.states.success')
+                                                                : t('admin.settings.sections.sync.states.error')}
                                             </strong>
                                         </span>
                                         <div className={tabStyles.timestamp}>
-                                            {tr('Last Updated:', 'បានធ្វើបច្ចុប្បន្នភាពចុងក្រោយ:')} {rebuildStatus.lastChecked ? new Date(rebuildStatus.lastChecked).toLocaleTimeString(locale) : tr('Never', 'មិនដែល')}
+                                            {t('admin.settings.sections.sync.rebuild.lastUpdated')} {rebuildStatus.lastChecked ? new Date(rebuildStatus.lastChecked).toLocaleTimeString(locale) : t('admin.settings.sections.sync.rebuild.never')}
                                         </div>
                                     </div>
                                     {rebuildStatus.message && <div className={tabStyles.rebuildMessage}>{rebuildStatus.message}</div>}
@@ -229,16 +228,16 @@ const SyncSection = ({
                         <section className={tabStyles.settingsPanel}>
                             <div className={tabStyles.panelHeader}>
                                 <div className={tabStyles.panelTitleGroup}>
-                                    <span className={tabStyles.panelEyebrow}>{tr('Important Note', 'ចំណាំសំខាន់')}</span>
-                                    <h4 className={tabStyles.panelTitle}>{tr('No-backend rebuild flow', 'ដំណើរការ rebuild គ្មាន backend')}</h4>
-                                    <p className={tabStyles.panelDescription}>{tr('The rebuild action depends on your GitHub token because deployment is handled through hosted CI rather than a custom backend.', 'សកម្មភាព rebuild ពឹងផ្អែកលើ GitHub token របស់អ្នក ព្រោះ deploy ត្រូវបានគ្រប់គ្រងតាម hosted CI មិនមែន backend ផ្ទាល់ខ្លួន។')}</p>
+                                    <span className={tabStyles.panelEyebrow}>{t('admin.settings.sections.sync.note.title')}</span>
+                                    <h4 className={tabStyles.panelTitle}>{t('admin.settings.sections.sync.note.subtitle')}</h4>
+                                    <p className={tabStyles.panelDescription}>{t('admin.settings.sections.sync.note.description')}</p>
                                 </div>
                             </div>
 
                             <div className={tabStyles.warningBanner}>
                                 <AlertCircle size={18} className={tabStyles.sectionIcon} />
                                 <div className={tabStyles.warningText}>
-                                    <strong>{tr('Note:', 'ចំណាំ:')}</strong> {tr('Enter a valid GitHub token above before triggering a rebuild. This keeps the hosting flow backend-free while still allowing controlled deployments.', 'សូមបញ្ចូល GitHub token ត្រឹមត្រូវខាងលើ មុនចាប់ផ្តើម rebuild។ វាអនុញ្ញាតឲ្យ deploy ត្រូវបានគ្រប់គ្រង ដោយមិនត្រូវការប្រព័ន្ធ backend។')}
+                                    <strong>{t('admin.settings.sections.sync.note.label')}</strong> {t('admin.settings.sections.sync.note.message')}
                                 </div>
                             </div>
                         </section>
@@ -251,7 +250,7 @@ const SyncSection = ({
                         isLoading={loading}
                         className={tabStyles.saveButton}
                     >
-                        <Save size={18} /> {tr('Save Sync Settings', 'រក្សាទុកការកំណត់សមកាលកម្ម')}
+                        <Save size={18} /> {t('admin.settings.sections.sync.save')}
                     </Button>
                 </div>
             </div>

@@ -17,12 +17,14 @@ import { ActivityProvider } from '../src/context/ActivityContext';
 import { LanguageProvider } from '../src/context/LanguageContext';
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { queryClient } from '../src/queryClient';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import SettingsService from '../src/services/SettingsService';
 import AnimatedBackground from '@/sections/AnimatedBackground';
 import '../src/styles/global.scss';
 import { useAnalytics } from '../src/hooks/useAnalytics';
 import { Analytics } from "@vercel/analytics/react";
+import { useTranslation } from '../src/hooks/useTranslation';
+import { buildBrowserTitle } from '../src/utils/browserTitle';
 
 export async function loader() {
   try {
@@ -68,6 +70,7 @@ export function Layout({ children }) {
 
 function ConditionalScrollRestoration() {
   const location = useLocation();
+
   if (location.hash) return null;
   return <ScrollRestoration />;
 }
@@ -80,22 +83,24 @@ function RouteScrollReset() {
     if (location.hash) return;
     if (navigationType === 'POP') return;
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [location.pathname, location.search, location.hash, navigationType]);
+  }, [location, navigationType]);
 
   return null;
 }
 
 function SettingsApplier({ children, initialSettings }) {
+  const { language } = useTranslation();
   useAnalytics();
+  const defaultVisualSettings = SettingsService.constructor.DEFAULT_VISUAL_SETTINGS || {};
 
-  const resolveLocalizedString = (value, fallback = '') => {
+  const resolveLocalizedString = useCallback((value, fallback = '') => {
     if (typeof value === 'string') return value;
     if (!value || typeof value !== 'object' || Array.isArray(value)) return fallback;
 
-    const preferredLang = (typeof window !== 'undefined' && localStorage.getItem('portfolio.language')) || 'en';
+    const preferredLang = language || (typeof window !== 'undefined' && localStorage.getItem('portfolio.language')) || 'en';
     const localized = value[preferredLang] || value.en || value.km;
     return typeof localized === 'string' ? localized : fallback;
-  };
+  }, [language]);
 
   const { data: globalConfig } = useQuery({
     queryKey: ['settings', 'global'],
@@ -111,9 +116,11 @@ function SettingsApplier({ children, initialSettings }) {
   });
 
   useEffect(() => {
+    document.documentElement.lang = language === 'km' ? 'km' : 'en';
+
     if (globalConfig) {
       const site = globalConfig.site || globalConfig;
-      const pageTitle = resolveLocalizedString(site.pageTitle || site.title, document.title);
+      const pageTitle = buildBrowserTitle(site, language) || resolveLocalizedString(site.title, document.title);
       if (pageTitle) document.title = pageTitle;
 
       const favicon = site.pageFaviconUrl || site.favicon;
@@ -182,9 +189,9 @@ function SettingsApplier({ children, initialSettings }) {
       root.style.setProperty('--font-size-base', sizeMap[sizeKey] || '16px');
 
       // Glassmorphism & Theme Variables
-      const glassOpacity = typpo.glassOpacity ?? 0.82;
-      const glassBlur = typpo.glassBlur ?? 12;
-      const glassColor = typpo.glassColor || '#0b1527';
+      const glassOpacity = typpo.glassOpacity ?? defaultVisualSettings.glassOpacity ?? 0.82;
+      const glassBlur = typpo.glassBlur ?? defaultVisualSettings.glassBlur ?? 12;
+      const glassColor = typpo.glassColor || defaultVisualSettings.glassColor || '#0b1527';
 
       const hexToRgb = (hex) => {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -195,14 +202,14 @@ function SettingsApplier({ children, initialSettings }) {
       root.style.setProperty('--glass-blur', `${glassBlur}px`);
       root.style.setProperty('--glass-surface-rgb', hexToRgb(glassColor));
     }
-  }, [globalConfig, metadata]);
+  }, [globalConfig, language, metadata, resolveLocalizedString]);
 
   const siteConfig = globalConfig?.site || globalConfig || {};
-  const bgDensity = siteConfig.bgDensity ?? 50;
-  const bgSpeed = siteConfig.bgSpeed ?? 50;
-  const bgGlowOpacity = siteConfig.bgGlowOpacity ?? 50;
-  const bgInteractive = siteConfig.bgInteractive ?? true;
-  const bgStyle = siteConfig.bgStyle || 'plexus';
+  const bgDensity = siteConfig.bgDensity ?? defaultVisualSettings.bgDensity ?? 50;
+  const bgSpeed = siteConfig.bgSpeed ?? defaultVisualSettings.bgSpeed ?? 50;
+  const bgGlowOpacity = siteConfig.bgGlowOpacity ?? defaultVisualSettings.bgGlowOpacity ?? 50;
+  const bgInteractive = siteConfig.bgInteractive ?? defaultVisualSettings.bgInteractive ?? true;
+  const bgStyle = siteConfig.bgStyle || defaultVisualSettings.bgStyle || 'plexus';
 
   return (
     <>

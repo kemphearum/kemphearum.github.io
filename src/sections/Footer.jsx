@@ -36,7 +36,9 @@ const Footer = () => {
     const settings = {
         ...baseSettings,
         footerText: getLocalizedField(baseSettings.footerText, language),
-        tagline: getLocalizedField(baseSettings.tagline, language)
+        tagline: getLocalizedField(baseSettings.tagline, language),
+        logoHighlight: getLocalizedField(baseSettings.logoHighlight, language),
+        logoText: getLocalizedField(baseSettings.logoText, language)
     };
 
     const mirrors = settings.mirrors || DEFAULT_MIRRORS;
@@ -58,7 +60,7 @@ const Footer = () => {
                 <div className={styles.topSection}>
                     <div className={styles.brand}>
                         <span className={styles.logo}>{settings.logoHighlight}<span className={styles.highlight}>{settings.logoText}</span></span>
-                        <p className={styles.tagline}>{settings.tagline || tr('ICT Security & IT Audit Professional', 'អ្នកជំនាញ ICT Security និង IT Audit')}</p>
+                        <p className={styles.tagline}>{settings.tagline || tr('ICT Security & IT Audit Professional', 'អ្នកជំនាញសន្តិសុខ ICT និងសវនកម្ម IT')}</p>
                     </div>
 
                     <div className={styles.mirrorsSection}>
@@ -96,7 +98,7 @@ const Footer = () => {
                     </div>
                 </div>
                 <div className={styles.divider} />
-                <p className={styles.copyright}>{settings.footerText}</p>
+                <p className={styles.copyright}>{settings.footerText || tr('(c) 2026 Kem Phearum. All Rights Reserved.', '(c) 2026 កឹម ភារម្យ។ រក្សាសិទ្ធិគ្រប់យ៉ាង។')}</p>
             </div>
         </footer>
     );

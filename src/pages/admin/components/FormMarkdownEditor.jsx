@@ -21,8 +21,7 @@ const FormMarkdownEditor = ({
     className = '',
     ...props
 }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t } = useTranslation();
     const formContext = useFormContext();
     const textareaRef = useRef(null);
     const internalId = useId();
@@ -86,17 +85,17 @@ const FormMarkdownEditor = ({
 
         switch (syntax) {
             case 'bold':
-                insertion = `**${selectedText || tr('bold text', 'អត្ថបទដិត')}**`;
+                insertion = `**${selectedText || t('admin.common.markdownEditor.boldText')}**`;
                 selectionStartOffset = 2;
                 selectionEndOffset = insertion.length - 2;
                 break;
             case 'italic':
-                insertion = `*${selectedText || tr('italic text', 'អត្ថបទទ្រេត')}*`;
+                insertion = `*${selectedText || t('admin.common.markdownEditor.italicText')}*`;
                 selectionStartOffset = 1;
                 selectionEndOffset = insertion.length - 1;
                 break;
             case 'link':
-                insertion = `[${selectedText || tr('Link text', 'អត្ថបទតំណ')}](https://example.com)`;
+                insertion = `[${selectedText || t('admin.common.markdownEditor.linkText')}](https://example.com)`;
                 if (hasSelection) {
                     selectionStartOffset = 1;
                     selectionEndOffset = 1 + selectedText.length;
@@ -107,7 +106,7 @@ const FormMarkdownEditor = ({
                 }
                 break;
             case 'code': {
-                const codePlaceholder = selectedText || tr('code here', 'កូដនៅទីនេះ');
+                const codePlaceholder = selectedText || t('admin.common.markdownEditor.codeHere');
                 insertion = `\n\`\`\`\n${codePlaceholder}\n\`\`\`\n`;
                 selectionStartOffset = insertion.indexOf(codePlaceholder);
                 selectionEndOffset = selectionStartOffset + codePlaceholder.length;
@@ -166,13 +165,13 @@ const FormMarkdownEditor = ({
                 <div className="ui-editorHeader">
                     <div className="ui-toolbar">
                         {!previewMode && (
-                            <div className="ui-formatGroup" role="toolbar" aria-label={tr('Markdown formatting controls', 'ការគ្រប់គ្រងទ្រង់ទ្រាយ Markdown')}>
+                            <div className="ui-formatGroup" role="toolbar" aria-label={t('admin.common.markdownEditor.formattingAria')}>
                                 <button
                                     type="button"
                                     className="ui-markdownAction"
                                     onClick={() => insertMarkdown('bold')}
-                                    title={tr('Bold (Ctrl/Cmd+B)', 'ដិត (Ctrl/Cmd+B)')}
-                                    aria-label={tr('Bold', 'ដិត')}
+                                    title={t('admin.common.markdownEditor.boldTitle')}
+                                    aria-label={t('admin.common.markdownEditor.boldAria')}
                                 >
                                     <Bold size={16} />
                                 </button>
@@ -180,8 +179,8 @@ const FormMarkdownEditor = ({
                                     type="button"
                                     className="ui-markdownAction"
                                     onClick={() => insertMarkdown('italic')}
-                                    title={tr('Italic (Ctrl/Cmd+I)', 'ទ្រេត (Ctrl/Cmd+I)')}
-                                    aria-label={tr('Italic', 'ទ្រេត')}
+                                    title={t('admin.common.markdownEditor.italicTitle')}
+                                    aria-label={t('admin.common.markdownEditor.italicAria')}
                                 >
                                     <Italic size={16} />
                                 </button>
@@ -189,8 +188,8 @@ const FormMarkdownEditor = ({
                                     type="button"
                                     className="ui-markdownAction"
                                     onClick={() => insertMarkdown('link')}
-                                    title={tr('Link (Ctrl/Cmd+K)', 'តំណ (Ctrl/Cmd+K)')}
-                                    aria-label={tr('Link', 'តំណ')}
+                                    title={t('admin.common.markdownEditor.linkTitle')}
+                                    aria-label={t('admin.common.markdownEditor.linkAria')}
                                 >
                                     <LinkIcon size={16} />
                                 </button>
@@ -198,8 +197,8 @@ const FormMarkdownEditor = ({
                                     type="button"
                                     className="ui-markdownAction"
                                     onClick={() => insertMarkdown('code')}
-                                    title={tr('Code block', 'ប្លុកកូដ')}
-                                    aria-label={tr('Code block', 'ប្លុកកូដ')}
+                                    title={t('admin.common.markdownEditor.codeBlockTitle')}
+                                    aria-label={t('admin.common.markdownEditor.codeBlockAria')}
                                 >
                                     <Code size={16} />
                                 </button>
@@ -210,25 +209,25 @@ const FormMarkdownEditor = ({
                             className={`ui-previewToggle ${previewMode ? 'ui-isActive' : ''}`}
                             onClick={handleTogglePreview}
                             aria-pressed={previewMode}
-                            aria-label={previewMode ? tr('Switch to edit mode', 'ប្ដូរទៅរបៀបកែសម្រួល') : tr('Switch to preview mode', 'ប្ដូរទៅរបៀបមើលជាមុន')}
+                            aria-label={previewMode ? t('admin.common.markdownEditor.switchToEdit') : t('admin.common.markdownEditor.switchToPreview')}
                         >
                             {previewMode
-                                ? <><Edit2 size={14} /> {tr('Edit', 'កែសម្រួល')}</>
-                                : <><Eye size={14} /> {tr('Preview', 'មើលជាមុន')}</>}
+                                ? <><Edit2 size={14} /> {t('admin.common.markdownEditor.edit')}</>
+                                : <><Eye size={14} /> {t('admin.common.markdownEditor.preview')}</>}
                         </button>
                     </div>
                 </div>
 
                 {previewMode ? (
                     <div className="ui-previewBox" aria-live="polite">
-                        <MarkdownRenderer content={currentValue || tr('*Nothing to preview yet.*', '*មិនទាន់មានអ្វីសម្រាប់មើលជាមុន។*')} />
+                        <MarkdownRenderer content={currentValue || t('admin.common.markdownEditor.nothingToPreview')} />
                     </div>
                 ) : (
                     <textarea
                         id={textareaId}
                         ref={textareaRef}
                         name={name}
-                        placeholder={placeholder || tr('Write in Markdown...', 'សរសេរជា Markdown...')}
+                        placeholder={placeholder || t('admin.common.markdownEditor.writePlaceholder')}
                         value={currentValue}
                         onChange={(event) => emitChange(event.target.value)}
                         onKeyDown={handleKeyDown}
@@ -241,8 +240,8 @@ const FormMarkdownEditor = ({
                 )}
 
                 <div className="ui-editorMeta">
-                    <span>{wordCount} {tr('words', 'ពាក្យ')} - {characterCount} {tr('characters', 'តួអក្សរ')}</span>
-                    {!previewMode && <span className="ui-editorHint">{tr('Shortcuts: Ctrl/Cmd+B, I, K', 'ផ្លូវកាត់: Ctrl/Cmd+B, I, K')}</span>}
+                    <span>{wordCount} {t('admin.common.markdownEditor.words')} - {characterCount} {t('admin.common.markdownEditor.characters')}</span>
+                    {!previewMode && <span className="ui-editorHint">{t('admin.common.markdownEditor.shortcuts')}</span>}
                 </div>
             </div>
         </div>

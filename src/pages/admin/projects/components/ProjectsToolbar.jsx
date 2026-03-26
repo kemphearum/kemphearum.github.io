@@ -17,8 +17,7 @@ const ProjectsToolbar = ({
   onDownloadTemplateJSON
 }) => {
   const fileInputRef = useRef(null);
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { t } = useTranslation();
 
   return (
     <section className="ui-blog-workspace">
@@ -26,15 +25,15 @@ const ProjectsToolbar = ({
         <div className="ui-blog-workspace__intro">
           <span className="ui-blog-workspace__eyebrow">
             <Sparkles size={14} />
-            {tr('Project workspace', 'ផ្ទៃការងារគម្រោង')}
+            {t('admin.projects.workspace.eyebrow')}
           </span>
           <div className="ui-blog-workspace__copy">
-            <h2>{tr('Organize featured work, links, and imports from one portfolio surface.', 'រៀបចំការងារពិសេស តំណ និងការនាំចូលពីផ្ទៃ portfolio តែមួយ។')}</h2>
-            <p>{tr('Search the catalog quickly, keep demos and repositories current, and launch new case studies without losing context.', 'ស្វែងរកកាតាឡុកបានរហ័ស រក្សា demo និង repository ឲ្យទាន់សម័យ ហើយបង្កើត case study ថ្មីដោយមិនបាត់បង់បរិបទ។')}</p>
+            <h2>{t('admin.projects.workspace.title')}</h2>
+            <p>{t('admin.projects.workspace.description')}</p>
           </div>
         </div>
 
-        <div className="ui-blog-workspace__stats" aria-label={tr('Project workspace summary', 'សង្ខេបផ្ទៃការងារគម្រោង')}>
+        <div className="ui-blog-workspace__stats" aria-label={t('admin.projects.workspace.summaryAria')}>
           {stats.map(({ label, value, hint, icon: Icon }) => (
             <div key={label} className="ui-blog-workspace__stat">
               <div className="ui-blog-workspace__statIcon">
@@ -54,7 +53,7 @@ const ProjectsToolbar = ({
         <div className="admin-search-wrapper ui-blog-toolbar__search">
           <Search size={18} />
           <Input
-            placeholder={tr('Search projects by title or stack...', 'ស្វែងរកគម្រោងតាមចំណងជើង ឬ tech stack...')}
+            placeholder={t('admin.projects.workspace.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
           />
@@ -75,20 +74,20 @@ const ProjectsToolbar = ({
                 }}
               />
               <div className="ui-blog-toolbar__actionGroup">
-                <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} title={tr('Import JSON or CSV', 'នាំចូល JSON ឬ CSV')}>
-                  <Upload size={16} /> {tr('Import', 'នាំចូល')}
+                <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} title={t('admin.projects.toolbar.importTitle')}>
+                  <Upload size={16} /> {t('admin.projects.toolbar.import')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={onExportSelected} disabled={selectedCount === 0} title={tr('Export selected projects as JSON', 'នាំចេញគម្រោងដែលបានជ្រើសជា JSON')}>
-                  <Download size={16} /> {tr('Export', 'នាំចេញ')} {selectedCount > 0 ? `(${selectedCount})` : ''}
+                <Button variant="ghost" size="sm" onClick={onExportSelected} disabled={selectedCount === 0} title={t('admin.projects.toolbar.exportTitle')}>
+                  <Download size={16} /> {t('admin.projects.toolbar.export')} {selectedCount > 0 ? `(${selectedCount})` : ''}
                 </Button>
               </div>
 
               <div className="ui-blog-toolbar__actionGroup">
-                <Button variant="ghost" size="sm" onClick={onDownloadTemplateCSV} title={tr('Download CSV template', 'ទាញយកគំរូ CSV')}>
-                  <FileText size={16} /> {tr('CSV Template', 'គំរូ CSV')}
+                <Button variant="ghost" size="sm" onClick={onDownloadTemplateCSV} title={t('admin.projects.toolbar.csvTemplateTitle')}>
+                  <FileText size={16} /> {t('admin.projects.toolbar.csvTemplate')}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={onDownloadTemplateJSON} title={tr('Download JSON template', 'ទាញយកគំរូ JSON')}>
-                  <FileText size={16} /> {tr('JSON Template', 'គំរូ JSON')}
+                <Button variant="ghost" size="sm" onClick={onDownloadTemplateJSON} title={t('admin.projects.toolbar.jsonTemplateTitle')}>
+                  <FileText size={16} /> {t('admin.projects.toolbar.jsonTemplate')}
                 </Button>
               </div>
             </>
@@ -96,15 +95,15 @@ const ProjectsToolbar = ({
         
           {canCreate && (
             <Button onClick={onAdd} className="ui-blog-toolbar__create">
-              <Plus size={18} /> {tr('Add New Project', 'បន្ថែមគម្រោងថ្មី')}
+              <Plus size={18} /> {t('admin.projects.workspace.addNew')}
             </Button>
           )}
         </div>
       </div>
 
       <div className="ui-blog-toolbar__foot">
-        <span>{tr('Import accepts `CSV` or `JSON` and updates existing entries when the slug already exists.', 'ការនាំចូលទទួល `CSV` ឬ `JSON` ហើយធ្វើបច្ចុប្បន្នភាពទិន្នន័យដែលមាន slug ដូចគ្នា។')}</span>
-        <span>{tr('JSON export uses your current selection; the table toolbar still exports the visible page as CSV.', 'JSON export ប្រើការជ្រើសបច្ចុប្បន្ន; toolbar តារាងនៅតែអាចនាំចេញទំព័រដែលមើលឃើញជា CSV។')}</span>
+        <span>{t('admin.projects.toolbar.importHint')}</span>
+        <span>{t('admin.projects.toolbar.exportHint')}</span>
       </div>
     </section>
   );

@@ -32,18 +32,18 @@ const DEFAULT_AUDIT_SETTINGS = {
 };
 
 const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userEmail }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { language, t } = useTranslation();
+    const tm = useCallback((key, params = {}) => t(`admin.database.${key}`, params), [t]);
     const { loading: auditLoading, execute: executeAudit } = useAsyncAction({
         showToast,
-        errorMessage: tr('Failed to update audit setting.', 'បរាជ័យក្នុងការធ្វើបច្ចុប្បន្នភាពការកំណត់សវនកម្ម។'),
+        errorMessage: tm('toasts.auditUpdateFailed'),
         invalidateKeys: [['database', 'auditSettings']]
     });
 
     const { loading: backupLoading, execute: executeBackup } = useAsyncAction({
         showToast,
-        successMessage: tr('Database exported successfully!', 'បាននាំចេញមូលដ្ឋានទិន្នន័យដោយជោគជ័យ!'),
-        errorMessage: tr('Failed to export database.', 'បរាជ័យក្នុងការនាំចេញមូលដ្ឋានទិន្នន័យ។')
+        successMessage: tm('toasts.exportSuccess'),
+        errorMessage: tm('toasts.exportFailed')
     });
 
     const { loading: archiveLoading, execute: executeArchive } = useAsyncAction({
@@ -93,7 +93,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                     const failureKey = Object.keys(failures).sort().join('|');
                     if (lastHealthErrorKeyRef.current !== failureKey) {
                         showToast(
-                            tr(`Could not load health metrics for: ${Object.keys(failures).join(', ')}`, `មិនអាចផ្ទុកម៉ែត្រសុខភាពសម្រាប់៖ ${Object.keys(failures).join(', ')}`),
+                            tm('toasts.healthMetricsLoadFailedFor', { collections: Object.keys(failures).join(', ') }),
                             'error'
                         );
                         lastHealthErrorKeyRef.current = failureKey;
@@ -107,7 +107,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 } else {
                     const fallbackKey = error?.code || error?.message || 'database-health-failure';
                     if (lastHealthErrorKeyRef.current !== fallbackKey) {
-                        showToast(error?.message || tr('Failed to load database health.', 'មិនអាចផ្ទុកសុខភាពមូលដ្ឋានទិន្នន័យបាន។'), 'error');
+                        showToast(error?.message || tm('toasts.loadHealthFailed'), 'error');
                         lastHealthErrorKeyRef.current = fallbackKey;
                     }
                 }
@@ -139,21 +139,21 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
 
     const handleUpdateAuditSetting = async (key, value) => {
         if (!canEditAudit) {
-            return showToast(tr('You do not have permission to perform this action.', 'អ្នកមិនមានសិទ្ធិធ្វើសកម្មភាពនេះទេ។'), "error");
+            return showToast(tm('toasts.noPermission'), "error");
         }
 
         await executeAudit(async () => {
             await DatabaseService.updateAuditSettings(userRole, userEmail, key, value, auditSettings, trackWrite);
         }, {
             successMessage: key === 'logAll'
-                ? tr(`All audit settings ${value ? 'enabled' : 'disabled'}.`, `ការកំណត់សវនកម្មទាំងអស់ត្រូវបាន${value ? 'បើក' : 'បិទ'}។`)
-                : tr(`Audit setting updated: ${key} = ${value}`, `បានធ្វើបច្ចុប្បន្នភាពការកំណត់សវនកម្ម៖ ${key} = ${value}`)
+                ? tm('toasts.allAuditSettingsStatus', { status: value ? tm('common.enabled') : tm('common.disabled') })
+                : tm('toasts.auditSettingUpdated', { key, value })
         });
     };
 
     const handleBackupDatabase = async () => {
         if (!canDatabaseActions) {
-            return showToast(tr('You do not have permission to perform this action.', 'អ្នកមិនមានសិទ្ធិធ្វើសកម្មភាពនេះទេ។'), "error");
+            return showToast(tm('toasts.noPermission'), "error");
         }
 
         await executeBackup(async () => {
@@ -163,11 +163,11 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
 
     const handleArchiveData = async () => {
         if (!canArchive) {
-            return showToast(tr('You do not have permission to perform this action.', 'អ្នកមិនមានសិទ្ធិធ្វើសកម្មភាពនេះទេ។'), "error");
+            return showToast(tm('toasts.noPermission'), "error");
         }
 
         setShowArchiveConfirm(false);
-        showToast(tr('Gathering data to archive...', 'កំពុងប្រមូលទិន្នន័យសម្រាប់ប័ណ្ណសារ...'), "info");
+        showToast(tm('toasts.gatheringArchive'), "info");
 
         await executeArchive(async () => {
             const { data, error } = await BaseService.safe(() => DatabaseService.archive(userRole, archiveDays, trackRead, trackDelete));
@@ -179,12 +179,12 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         }).then(({ success, data, error }) => {
             if (success) {
                 if (data.deleted === 0) {
-                    showToast(tr(`No records found older than ${archiveDays} days.`, `មិនមានកំណត់ត្រាដែលចាស់ជាង ${archiveDays} ថ្ងៃទេ។`), "success");
+                    showToast(tm('toasts.noOldRecords', { days: archiveDays }), "success");
                 } else {
-                    showToast(tr(`Successfully archived and deleted ${data.deleted} old records.`, `បានប័ណ្ណសារ និងលុបកំណត់ត្រាចាស់ ${data.deleted} ដោយជោគជ័យ។`), "success");
+                    showToast(tm('toasts.archiveDeleteSuccess', { count: data.deleted }), "success");
                 }
             } else {
-                showToast(error?.message || tr('Failed to archive data.', 'បរាជ័យក្នុងការប័ណ្ណសារទិន្នន័យ។'), "error");
+                showToast(error?.message || tm('toasts.archiveFailed'), "error");
             }
         });
     };
@@ -192,11 +192,11 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     const handleRestoreConfirm = async () => {
         if (!restoreFile) return;
         if (!canDatabaseActions) {
-            return showToast(tr('You do not have permission to perform this action.', 'អ្នកមិនមានសិទ្ធិធ្វើសកម្មភាពនេះទេ។'), "error");
+            return showToast(tm('toasts.noPermission'), "error");
         }
 
         setShowRestoreConfirm(false);
-        showToast(tr('Restoring backup, please wait...', 'កំពុងស្តារបម្រុងទុក សូមរង់ចាំ...'), 'info');
+        showToast(tm('toasts.restoringBackup'), 'info');
 
         await executeRestore(async () => {
             return new Promise((resolve, reject) => {
@@ -230,24 +230,21 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                     setTimeout(() => setRestoreProgress(null), 3000);
                     resolve(data);
                 };
-                reader.onerror = () => reject(new Error(tr('Failed to read file.', 'មិនអាចអានឯកសារបាន។')));
+                reader.onerror = () => reject(new Error(tm('toasts.readFileFailed')));
                 reader.readAsText(restoreFile);
             });
         }).then(({ success, data, error }) => {
             if (success) {
                 if (data.failedCollections.length > 0) {
                     showToast(
-                        tr(
-                            `Partially completed (${data.completedCount}/${data.totalDocs}). Issues on: ${data.failedCollections.join(', ')}`,
-                            `បានបញ្ចប់ផ្នែកខ្លះ (${data.completedCount}/${data.totalDocs})។ មានបញ្ហានៅ៖ ${data.failedCollections.join(', ')}`
-                        ),
+                        tm('toasts.partialRestore', { completed: data.completedCount, total: data.totalDocs, collections: data.failedCollections.join(', ') }),
                         'warning'
                     );
                 } else {
-                    showToast(tr(`Successfully restored ${data.completedCount} records!`, `បានស្តារកំណត់ត្រា ${data.completedCount} ដោយជោគជ័យ!`), 'success');
+                    showToast(tm('toasts.restoreSuccess', { count: data.completedCount }), 'success');
                 }
             } else {
-                showToast(error?.message || tr('Failed to restore. Invalid format?', 'បរាជ័យក្នុងការស្តារ។ ទម្រង់មិនត្រឹមត្រូវ?'), 'error');
+                showToast(error?.message || tm('toasts.restoreFailedInvalidFormat'), 'error');
             }
         });
     };
@@ -263,18 +260,18 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
 
         if (!isJsonFile) {
             showToast(
-                isKhmer ? 'សូមជ្រើសឯកសារ JSON backup ដែលត្រឹមត្រូវ។' : 'Please choose a valid JSON backup file.',
+                isKhmer ? tm('validation.invalidJsonBackup') : tm('validation.invalidJsonBackup'),
                 'error'
             );
             return;
         }
         if (!file.size) {
-            showToast(isKhmer ? 'ឯកសារដែលបានជ្រើសគ្មានទិន្នន័យ។' : 'Selected file is empty.', 'error');
+            showToast(tm('validation.selectedFileEmpty'), 'error');
             return;
         }
         if (file.size > maxSizeBytes) {
             showToast(
-                isKhmer ? 'ឯកសារ backup ធំពេក។ សូមប្រើឯកសារតូចជាង 25 MB។' : 'Backup file is too large. Please use a file smaller than 25 MB.',
+                isKhmer ? tm('validation.backupFileTooLarge') : tm('validation.backupFileTooLarge'),
                 'error'
             );
             return;
@@ -309,23 +306,23 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
             {Object.keys(healthFailures).length > 0 && (
                 <div className="ui-quota-banner" role="alert">
                     <div className="ui-quota-banner-content">
-                        <h3>{tr('Health Check Incomplete', 'ការត្រួតពិនិត្យសុខភាពមិនទាន់ពេញលេញ')}</h3>
+                        <h3>{tm('warnings.healthCheckIncomplete')}</h3>
                         <p>
-                            {tr('Some collection counts could not be loaded:', 'មិនអាចផ្ទុកចំនួនបណ្ដុំទិន្នន័យខ្លះបាន៖')} {Object.keys(healthFailures).join(', ')}.
+                            {tm('warnings.someCountsNotLoaded')} {Object.keys(healthFailures).join(', ')}.
                         </p>
                     </div>
                 </div>
             )}
 
             <SectionHeader
-                title={tr('Database Management', 'ការគ្រប់គ្រងមូលដ្ឋានទិន្នន័យ')}
-                description={tr('Track collection health, backup and restore safely, and tune audit retention.', 'តាមដានសុខភាពបណ្ដុំទិន្នន័យ បម្រុងទុក និងស្តារដោយសុវត្ថិភាព និងកែការរក្សាទុកសវនកម្ម។')}
+                title={tm('header.title')}
+                description={tm('header.description')}
                 icon={RefreshCw}
                 rightElement={
                     <Button 
                         variant="ghost" 
                         onClick={handleRefreshHealth}
-                        title={tr('Refresh Health', 'ធ្វើបច្ចុប្បន្នភាពសុខភាព')}
+                        title={tm('header.refreshHealth')}
                         className="ui-btn-icon-only"
                     >
                         <RefreshCw size={18} className={dbHealthFetching ? "ui-spin" : ''} />

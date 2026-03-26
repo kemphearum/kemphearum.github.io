@@ -16,8 +16,7 @@ const HomeSection = ({
     onOpenHistory,
     currentImageUrl
 }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t } = useTranslation();
 
     return (
         <div className="ui-card">
@@ -26,17 +25,17 @@ const HomeSection = ({
                     <Home size={24} />
                 </div>
                 <div className={'ui-title-meta'}>
-                    <h3>{tr('Home Section', 'ផ្នែកដើម')}</h3>
-                    <p>{tr('Configure the main hero content of your landing page.', 'កំណត់មាតិកា Hero សំខាន់សម្រាប់ទំព័រចម្បងរបស់អ្នក។')}</p>
+                    <h3>{t('admin.general.sections.home.title')}</h3>
+                    <p>{t('admin.general.sections.home.description')}</p>
                 </div>
                 <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => onOpenHistory('home', tr('Home Section', 'ផ្នែកដើម'))}
+                    onClick={() => onOpenHistory('home', t('admin.general.sections.home.title'))}
                     className={'ui-history-btn'}
                 >
-                    <History size={16} /> <span>{tr('History', 'ប្រវត្តិ')}</span>
+                    <History size={16} /> <span>{t('admin.general.sections.home.history')}</span>
                 </Button>
             </div>
             <div className={'ui-form'}>
@@ -44,51 +43,51 @@ const HomeSection = ({
                     <div className="ui-generalPrimary">
                         <div className="ui-generalAsideCard">
                             <div className="ui-generalAsideCard__head">
-                                <h4>{tr('Hero copy', 'មាតិកា Hero')}</h4>
-                                <p>{tr('Set the first lines visitors see when they land on the portfolio.', 'កំណត់បន្ទាត់ដំបូងដែលអ្នកទស្សនានឹងឃើញនៅពេលចូលមក Portfolio។')}</p>
+                                <h4>{t('admin.general.sections.home.heroCopy.title')}</h4>
+                                <p>{t('admin.general.sections.home.heroCopy.description')}</p>
                             </div>
 
                             <FormRow>
-                                <FormField label={tr('Greeting (EN)', 'ពាក្យស្វាគមន៍ (EN)')} name="greetingEn">
-                                    <FormInput placeholder={tr('e.g. Hello, I am', 'ឧ. សួស្តី ខ្ញុំគឺ')} />
+                                <FormField label={t('admin.general.sections.home.fields.greetingEn')} name="greetingEn">
+                                    <FormInput placeholder={t('admin.general.sections.home.fields.greetingPlaceholder')} />
                                 </FormField>
-                                <FormField label={tr('Greeting (KM)', 'ពាក្យស្វាគមន៍ (KM)')} name="greetingKm">
-                                    <FormInput placeholder={tr('e.g. Hello, I am', 'ឧ. សួស្តី ខ្ញុំគឺ')} />
-                                </FormField>
-                            </FormRow>
-
-                            <FormRow>
-                                <FormField label={tr('Full Name (EN)', 'ឈ្មោះពេញ (EN)')} name="nameEn">
-                                    <FormInput placeholder={tr('Your professional name', 'ឈ្មោះវិជ្ជាជីវៈរបស់អ្នក')} />
-                                </FormField>
-                                <FormField label={tr('Full Name (KM)', 'ឈ្មោះពេញ (KM)')} name="nameKm">
-                                    <FormInput placeholder={tr('Your professional name', 'ឈ្មោះវិជ្ជាជីវៈរបស់អ្នក')} />
+                                <FormField label={t('admin.general.sections.home.fields.greetingKm')} name="greetingKm">
+                                    <FormInput placeholder={t('admin.general.sections.home.fields.greetingPlaceholder')} />
                                 </FormField>
                             </FormRow>
 
                             <FormRow>
-                                <FormField label={tr('Professional Subtitle (EN)', 'ចំណងជើងវិជ្ជាជីវៈ (EN)')} name="subtitleEn">
-                                    <FormInput placeholder={tr('e.g. Senior Software Engineer', 'ឧ. វិស្វករកម្មវិធីជាន់ខ្ពស់')} />
+                                <FormField label={t('admin.general.sections.home.fields.nameEn')} name="nameEn">
+                                    <FormInput placeholder={t('admin.general.sections.home.fields.namePlaceholder')} />
                                 </FormField>
-                                <FormField label={tr('Professional Subtitle (KM)', 'ចំណងជើងវិជ្ជាជីវៈ (KM)')} name="subtitleKm">
-                                    <FormInput placeholder={tr('e.g. Senior Software Engineer', 'ឧ. វិស្វករកម្មវិធីជាន់ខ្ពស់')} />
+                                <FormField label={t('admin.general.sections.home.fields.nameKm')} name="nameKm">
+                                    <FormInput placeholder={t('admin.general.sections.home.fields.namePlaceholder')} />
                                 </FormField>
                             </FormRow>
 
-                            <FormField label={tr('Hero Description (EN)', 'ការពិពណ៌នា Hero (EN)')} name="descriptionEn">
+                            <FormRow>
+                                <FormField label={t('admin.general.sections.home.fields.subtitleEn')} name="subtitleEn">
+                                    <FormInput placeholder={t('admin.general.sections.home.fields.subtitlePlaceholder')} />
+                                </FormField>
+                                <FormField label={t('admin.general.sections.home.fields.subtitleKm')} name="subtitleKm">
+                                    <FormInput placeholder={t('admin.general.sections.home.fields.subtitlePlaceholder')} />
+                                </FormField>
+                            </FormRow>
+
+                            <FormField label={t('admin.general.sections.home.fields.descriptionEn')} name="descriptionEn">
                                 <FormMarkdownEditor
                                     id="home-description-en"
-                                    placeholder={tr('A brief, impactful introduction...', 'សេចក្តីណែនាំខ្លីៗដែលមានឥទ្ធិពល...')}
+                                    placeholder={t('admin.general.sections.home.fields.descriptionPlaceholderEn')}
                                     isPreviewMode={homePreview}
                                     onTogglePreview={() => setHomePreview(!homePreview)}
                                     rows="6"
                                 />
                             </FormField>
 
-                            <FormField label={tr('Hero Description (KM)', 'ការពិពណ៌នា Hero (KM)')} name="descriptionKm">
+                            <FormField label={t('admin.general.sections.home.fields.descriptionKm')} name="descriptionKm">
                                 <FormMarkdownEditor
                                     id="home-description-km"
-                                    placeholder={tr('A brief Khmer introduction...', 'សេចក្តីណែនាំជាខ្មែរខ្លីៗ...')}
+                                    placeholder={t('admin.general.sections.home.fields.descriptionPlaceholderKm')}
                                     isPreviewMode={homePreview}
                                     onTogglePreview={() => setHomePreview(!homePreview)}
                                     rows="6"
@@ -98,22 +97,22 @@ const HomeSection = ({
 
                         <div className="ui-generalAsideCard">
                             <div className="ui-generalAsideCard__head">
-                                <h4>{tr('Primary action', 'សកម្មភាពចម្បង')}</h4>
-                                <p>{tr('Guide visitors toward the next section or strongest conversion point.', 'ដឹកនាំអ្នកទស្សនាទៅកាន់ផ្នែកបន្ទាប់ ឬគោលដៅសំខាន់បំផុត។')}</p>
+                                <h4>{t('admin.general.sections.home.primaryAction.title')}</h4>
+                                <p>{t('admin.general.sections.home.primaryAction.description')}</p>
                             </div>
 
                             <FormRow>
-                                <FormField label={tr('Call to Action Text (EN)', 'អត្ថបទប៊ូតុងសកម្មភាព (EN)')} name="ctaTextEn">
-                                    <FormInput placeholder={tr('e.g. View My Work', 'ឧ. មើលការងាររបស់ខ្ញុំ')} />
+                                <FormField label={t('admin.general.sections.home.fields.ctaTextEn')} name="ctaTextEn">
+                                    <FormInput placeholder={t('admin.general.sections.home.fields.ctaPlaceholder')} />
                                 </FormField>
-                                <FormField label={tr('Call to Action Text (KM)', 'អត្ថបទប៊ូតុងសកម្មភាព (KM)')} name="ctaTextKm">
-                                    <FormInput placeholder={tr('e.g. View My Work', 'ឧ. មើលការងាររបស់ខ្ញុំ')} />
+                                <FormField label={t('admin.general.sections.home.fields.ctaTextKm')} name="ctaTextKm">
+                                    <FormInput placeholder={t('admin.general.sections.home.fields.ctaPlaceholder')} />
                                 </FormField>
                             </FormRow>
 
                             <FormRow>
-                                <FormField label={tr('CTA Anchor/Link', 'តំណ CTA')} name="ctaLink">
-                                    <FormInput placeholder={tr('e.g. #projects', '?. #projects')} />
+                                <FormField label={t('admin.general.sections.home.fields.ctaLink')} name="ctaLink">
+                                    <FormInput placeholder={t('admin.general.sections.home.fields.ctaLinkPlaceholder')} />
                                 </FormField>
                             </FormRow>
                         </div>
@@ -122,16 +121,16 @@ const HomeSection = ({
                     <aside className="ui-generalAside">
                         <div className="ui-generalAsideCard">
                             <div className="ui-generalAsideCard__head">
-                                <h4>{tr('Portrait', 'រូបភាពមុខ')}</h4>
-                                <p>{tr('Use a clean image that reads well in the hero and keeps attention on the headline.', 'ប្រើរូបភាពស្អាតដែលមើលច្បាស់ក្នុង Hero ហើយរក្សាឱ្យចំណាប់អារម្មណ៍នៅលើចំណងជើង។')}</p>
+                                <h4>{t('admin.general.sections.home.portrait.title')}</h4>
+                                <p>{t('admin.general.sections.home.portrait.description')}</p>
                             </div>
 
-                            <FormField label={tr('Profile Portrait', 'រូបភាពប្រវត្តិរូប')} name="image">
+                            <FormField label={t('admin.general.sections.home.portrait.label')} name="image">
                                 <Controller
                                     name="image"
                                     render={({ field }) => (
                                         <FormDropzone
-                                            hint={tr('Transparent PNG recommended', 'ណែនាំឱ្យប្រើ PNG ផ្ទៃថ្លា')}
+                                            hint={t('admin.general.sections.home.portrait.hint')}
                                             file={field.value}
                                             onFileChange={field.onChange}
                                             currentImageUrl={currentImageUrl}
@@ -147,7 +146,7 @@ const HomeSection = ({
 
                 <div className={'ui-formFooter'}>
                     <Button type="submit" isLoading={loading} className="ui-button-block">
-                        <Save size={18} /> {tr('Save Home Changes', 'រក្សាទុកការកែប្រែផ្នែកដើម')}
+                        <Save size={18} /> {t('admin.general.sections.home.save')}
                     </Button>
                 </div>
             </div>

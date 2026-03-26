@@ -9,8 +9,9 @@ import FormSelect from '../../components/FormSelect';
 import { getLanguageValue } from '../../../../utils/localization';
 import { useTranslation } from '../../../../hooks/useTranslation';
 
-const ExperienceLocalizedFields = ({ activeLanguage, setActiveLanguage, tr }) => {
-    const languageLabel = activeLanguage === 'en' ? tr('English', 'អង់គ្លេស') : tr('Khmer', 'ខ្មែរ');
+const ExperienceLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
+    const { t } = useTranslation();
+    const languageLabel = activeLanguage === 'en' ? t('admin.experience.form.languages.en') : t('admin.experience.form.languages.km');
     const companyName = activeLanguage === 'en' ? 'companyEn' : 'companyKm';
     const roleName = activeLanguage === 'en' ? 'roleEn' : 'roleKm';
     const descriptionName = activeLanguage === 'en' ? 'descriptionEn' : 'descriptionKm';
@@ -25,40 +26,41 @@ const ExperienceLocalizedFields = ({ activeLanguage, setActiveLanguage, tr }) =>
             </Tabs>
 
             <FormField
-                label={`${tr('Company Name', 'ឈ្មោះក្រុមហ៊ុន')} (${languageLabel})`}
+                label={`${t('admin.experience.form.fields.companyName')} (${languageLabel})`}
                 name={companyName}
-                validation={activeLanguage === 'en' ? { required: tr('English company name is required', 'ត្រូវការឈ្មោះក្រុមហ៊ុនជាអង់គ្លេស') } : {}}
-                hint={activeLanguage === 'km' ? tr('Optional. English fallback is automatic.', 'ស្រេចចិត្ត។ ប្រើអង់គ្លេសជំនួសដោយស្វ័យប្រវត្តិ។') : undefined}
+                validation={activeLanguage === 'en' ? { required: t('admin.experience.form.fields.companyRequired') } : {}}
+                hint={activeLanguage === 'km' ? t('admin.experience.form.fields.companyHint') : undefined}
             >
-                <FormInput placeholder={activeLanguage === 'en' ? 'e.g. Google Inc.' : 'ឧ. ក្រុមហ៊ុន Google'} />
+                <FormInput placeholder={activeLanguage === 'en' ? t('admin.experience.form.fields.companyPlaceholderEn') : t('admin.experience.form.fields.companyPlaceholderKm')} />
             </FormField>
 
             <FormField
-                label={`${tr('Role / Job Title', 'តួនាទី / មុខតំណែង')} (${languageLabel})`}
+                label={`${t('admin.experience.form.fields.role')} (${languageLabel})`}
                 name={roleName}
-                validation={activeLanguage === 'en' ? { required: tr('English role is required', 'ត្រូវការតួនាទីជាអង់គ្លេស') } : {}}
+                validation={activeLanguage === 'en' ? { required: t('admin.experience.form.fields.roleRequired') } : {}}
             >
-                <FormInput placeholder={activeLanguage === 'en' ? 'e.g. Senior Developer' : 'ឧ. អ្នកអភិវឌ្ឍជាន់ខ្ពស់'} />
+                <FormInput placeholder={activeLanguage === 'en' ? t('admin.experience.form.fields.rolePlaceholderEn') : t('admin.experience.form.fields.rolePlaceholderKm')} />
             </FormField>
 
             <FormField
-                label={`${tr('Description', 'ការពិពណ៌នា')} (${languageLabel})`}
+                label={`${t('admin.experience.form.fields.description')} (${languageLabel})`}
                 name={descriptionName}
-                validation={activeLanguage === 'en' ? { required: tr('English description is required', 'ត្រូវការការពិពណ៌នាជាអង់គ្លេស') } : {}}
-                hint={tr('Use Markdown to highlight impact and measurable outcomes.', 'ប្រើ Markdown ដើម្បីបង្ហាញផលប៉ះពាល់ និងលទ្ធផលដែលវាស់វែងបាន។')}
+                validation={activeLanguage === 'en' ? { required: t('admin.experience.form.fields.descriptionRequired') } : {}}
+                hint={t('admin.experience.form.fields.descriptionHint')}
             >
                 <FormMarkdownEditor
                     id={`experience-description-${activeLanguage}`}
                     rows={8}
                     fullWidth={false}
-                    placeholder={activeLanguage === 'en' ? 'Describe responsibilities in english...' : 'ពិពណ៌នាភារកិច្ចជាភាសាខ្មែរ...'}
+                    placeholder={activeLanguage === 'en' ? t('admin.experience.form.fields.descriptionPlaceholderEn') : t('admin.experience.form.fields.descriptionPlaceholderKm')}
                 />
             </FormField>
         </>
     );
 };
 
-const ExperienceFormFields = ({ activeLanguage, setActiveLanguage, tr }) => {
+const ExperienceFormFields = ({ activeLanguage, setActiveLanguage }) => {
+    const { t } = useTranslation();
     const { register, watch } = useFormContext();
     const isPresent = watch('isPresent');
     const startDate = watch('startDate');
@@ -68,24 +70,23 @@ const ExperienceFormFields = ({ activeLanguage, setActiveLanguage, tr }) => {
             <div className="ui-blog-formLayout__main">
                 <div className="ui-blog-formSection">
                     <div className="ui-blog-formSection__head">
-                        <h3>{tr('Role details', 'ព័ត៌មានតួនាទី')}</h3>
-                        <p>{tr('Use EN/KM tabs to maintain bilingual experience entries in one record.', 'ប្រើផ្ទាំង EN/KM ដើម្បីថែរក្សាទិន្នន័យពីរភាសាក្នុងកំណត់ត្រាតែមួយ។')}</p>
+                        <h3>{t('admin.experience.form.sections.roleDetails.title')}</h3>
+                        <p>{t('admin.experience.form.sections.roleDetails.description')}</p>
                     </div>
 
                     <ExperienceLocalizedFields
                         activeLanguage={activeLanguage}
                         setActiveLanguage={setActiveLanguage}
-                        tr={tr}
                     />
                 </div>
 
                 <div className="ui-blog-formSection ui-blog-formSection--editor">
                     <div className="ui-blog-formSection__head">
-                        <h3>{tr('Timeline guidance', 'ណែនាំពេលវេលា')}</h3>
-                        <p>{tr('Use month precision to keep sorting and career progression consistent.', 'ប្រើកម្រិតខែដើម្បីរក្សាការរៀបលំដាប់ និងវឌ្ឍនភាពការងារឲ្យត្រឹមត្រូវ។')}</p>
+                        <h3>{t('admin.experience.form.sections.timelineGuidance.title')}</h3>
+                        <p>{t('admin.experience.form.sections.timelineGuidance.description')}</p>
                     </div>
                     <div className="ui-experienceTimelineHint">
-                        {tr('Current roles can leave the end date empty. Past roles should include both start and end months.', 'តួនាទីបច្ចុប្បន្នអាចទុកកាលបរិច្ឆេទបញ្ចប់ទទេ។ តួនាទីអតីតគួរមានខែចាប់ផ្ដើម និងខែបញ្ចប់។')}
+                        {t('admin.experience.form.sections.timelineGuidance.hint')}
                     </div>
                 </div>
             </div>
@@ -93,14 +94,14 @@ const ExperienceFormFields = ({ activeLanguage, setActiveLanguage, tr }) => {
             <aside className="ui-blog-formLayout__aside">
                 <div className="ui-blog-formSection">
                     <div className="ui-blog-formSection__head">
-                        <h3>{tr('Timeline', 'ពេលវេលា')}</h3>
-                        <p>{tr('Set role duration accurately so the public timeline stays trustworthy.', 'កំណត់រយៈពេលតួនាទីឲ្យត្រឹមត្រូវ ដើម្បីឲ្យ timeline សាធារណៈអាចទុកចិត្តបាន។')}</p>
+                        <h3>{t('admin.experience.form.sections.timeline.title')}</h3>
+                        <p>{t('admin.experience.form.sections.timeline.description')}</p>
                     </div>
 
                     <FormField
-                        label={tr('Start Date', 'ថ្ងៃចាប់ផ្ដើម')}
+                        label={t('admin.experience.form.fields.startDate')}
                         name="startDate"
-                        validation={{ required: tr('Start date is required', 'ត្រូវការថ្ងៃចាប់ផ្ដើម') }}
+                        validation={{ required: t('admin.experience.form.fields.startDateRequired') }}
                     >
                         <FormInput type="month" />
                     </FormField>
@@ -109,20 +110,20 @@ const ExperienceFormFields = ({ activeLanguage, setActiveLanguage, tr }) => {
                         <input type="checkbox" {...register('isPresent')} />
                         <span className="ui-experiencePresentToggle__control" />
                         <span className="ui-experiencePresentToggle__copy">
-                            <strong>{tr('This role is current', 'តួនាទីនេះគឺបច្ចុប្បន្ន')}</strong>
-                            <span>{tr('Hide the end date and label the role as present.', 'លាក់ថ្ងៃបញ្ចប់ ហើយសម្គាល់ថាកំពុងបន្ត។')}</span>
+                            <strong>{t('admin.experience.form.fields.isCurrent')}</strong>
+                            <span>{t('admin.experience.form.fields.isCurrentDesc')}</span>
                         </span>
                     </label>
 
                     <FormField
-                        label={tr('End Date', 'ថ្ងៃបញ្ចប់')}
+                        label={t('admin.experience.form.fields.endDate')}
                         name="endDate"
-                        hint={isPresent ? tr('Current roles do not need an end date.', 'តួនាទីបច្ចុប្បន្នមិនចាំបាច់មានថ្ងៃបញ្ចប់។') : tr('Required for past roles.', 'ត្រូវការសម្រាប់តួនាទីអតីត។')}
+                        hint={isPresent ? t('admin.experience.form.fields.endDateHint') : t('admin.experience.form.fields.endDateRequiredHint')}
                         validation={{
-                            required: !isPresent ? tr('End date is required', 'ត្រូវការថ្ងៃបញ្ចប់') : false,
+                            required: !isPresent ? t('admin.experience.form.fields.endDateRequired') : false,
                             validate: (value) => {
                                 if (isPresent || !value || !startDate) return true;
-                                return value >= startDate || tr('End date must be the same or after start date', 'ថ្ងៃបញ្ចប់ត្រូវស្មើ ឬក្រោយថ្ងៃចាប់ផ្ដើម');
+                                return value >= startDate || t('admin.experience.form.fields.endDateInvalid');
                             }
                         }}
                     >
@@ -132,12 +133,12 @@ const ExperienceFormFields = ({ activeLanguage, setActiveLanguage, tr }) => {
 
                 <div className="ui-blog-formSection">
                     <div className="ui-blog-formSection__head">
-                        <h3>{tr('Visibility', 'ការបង្ហាញ')}</h3>
-                        <p>{tr('Control whether this role appears publicly or remains admin-only.', 'គ្រប់គ្រងថាតួនាទីនេះបង្ហាញជាសាធារណៈ ឬតែសម្រាប់ Admin ប៉ុណ្ណោះ។')}</p>
+                        <h3>{t('admin.experience.form.sections.visibility.title')}</h3>
+                        <p>{t('admin.experience.form.sections.visibility.description')}</p>
                     </div>
 
                     <FormField
-                        label={tr('Visibility', 'ការបង្ហាញ')}
+                        label={t('admin.experience.form.fields.visibility')}
                         name="visible"
                         validation={{
                             setValueAs: (value) => value === true || value === 'true'
@@ -145,8 +146,8 @@ const ExperienceFormFields = ({ activeLanguage, setActiveLanguage, tr }) => {
                     >
                         <FormSelect
                             options={[
-                                { label: tr('Visible on Homepage', 'បង្ហាញលើទំព័រដើម'), value: true },
-                                { label: tr('Hidden from Public', 'លាក់ពីសាធារណៈ'), value: false }
+                                { label: t('admin.experience.form.fields.optionVisible'), value: true },
+                                { label: t('admin.experience.form.fields.optionHidden'), value: false }
                             ]}
                         />
                     </FormField>
@@ -158,8 +159,7 @@ const ExperienceFormFields = ({ activeLanguage, setActiveLanguage, tr }) => {
 
 const ExperienceFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loading }) => {
     const [activeLanguage, setActiveLanguage] = useState('en');
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t } = useTranslation();
 
     const defaultValues = {
         companyEn: getLanguageValue(initialData?.company, 'en', true),
@@ -180,9 +180,9 @@ const ExperienceFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit,
             <Dialog.Content maxWidth="1040px" className="ui-blog-dialog">
                 <Dialog.Header className="ui-blog-dialog__header">
                     <div className="ui-blog-dialog__heading">
-                        <Dialog.Title>{mode === 'create' ? tr('Add New Experience', 'បន្ថែមបទពិសោធន៍ថ្មី') : tr('Edit Experience', 'កែសម្រួលបទពិសោធន៍')}</Dialog.Title>
+                        <Dialog.Title>{mode === 'create' ? t('admin.experience.form.dialogs.addTitle') : t('admin.experience.form.dialogs.editTitle')}</Dialog.Title>
                         <Dialog.Description>
-                            {tr('Keep each entry bilingual in one document. English is required, Khmer is optional.', 'រក្សាទុកទិន្នន័យពីរភាសា​ក្នុងឯកសារតែមួយ។ អង់គ្លេសត្រូវការ ខ្មែរស្រេចចិត្ត។')}
+                            {t('admin.experience.form.dialogs.description')}
                         </Dialog.Description>
                     </div>
                     <Dialog.Close />
@@ -197,20 +197,19 @@ const ExperienceFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit,
                         <ExperienceFormFields
                             activeLanguage={activeLanguage}
                             setActiveLanguage={setActiveLanguage}
-                            tr={tr}
                         />
                     </Dialog.Body>
 
                     <Dialog.Footer className="ui-blog-dialog__footer">
                         <div className="ui-blog-dialog__footerNote">
-                            {tr('EN and KM values are stored together. Khmer can stay empty while translations are pending.', 'តម្លៃ EN និង KM ត្រូវបានរក្សាទុកជាមួយគ្នា។ ភាសាខ្មែរអាចទុកទទេ ខណៈពេលកំពុងបកប្រែ។')}
+                            {t('admin.experience.form.dialogs.footerNote')}
                         </div>
                         <div className="ui-blog-dialog__footerActions">
                             <Button variant="ghost" onClick={() => onOpenChange(false)} type="button">
-                                {tr('Cancel', 'បោះបង់')}
+                                {t('admin.experience.form.actions.cancel')}
                             </Button>
                             <Button type="submit" isLoading={loading} className="ui-primary">
-                                {loading ? tr('Saving...', 'កំពុងរក្សាទុក...') : tr('Save Experience', 'រក្សាទុកបទពិសោធន៍')}
+                                {loading ? t('admin.experience.form.actions.saving') : t('admin.experience.form.actions.save')}
                             </Button>
                         </div>
                     </Dialog.Footer>

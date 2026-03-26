@@ -30,8 +30,8 @@ const ExperienceTable = ({
   onPageChange,
   paginationVariant = 'cursor'
 }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { language, t } = useTranslation();
+  
   const normalizeMonthValue = (value) => {
     if (!value) return '';
 
@@ -77,29 +77,29 @@ const ExperienceTable = ({
     const startRaw = row.startMonthYear || row.startDate || row.period;
     const endRaw = row.endMonthYear || row.endDate || row.period;
     const start = formatMonth(startRaw);
-    const end = isCurrent ? tr('Present', 'បច្ចុប្បន្ន') : formatMonth(endRaw);
+    const end = isCurrent ? t('admin.experience.table.present') : formatMonth(endRaw);
 
     if (start && end) return `${start} - ${end}`;
-    return row.period || start || end || tr('Timeline not set', 'មិនទាន់កំណត់ពេលវេលា');
+    return row.period || start || end || t('admin.experience.table.noTimeline');
   };
 
   const getDescription = (text = '') => {
     const normalized = String(getLocalizedField(text, language) || '').replace(/\s+/g, ' ').trim();
-    if (!normalized) return tr('No description added yet.', 'មិនទាន់មានការពិពណ៌នានៅឡើយទេ។');
+    if (!normalized) return t('admin.experience.table.noDescription');
     return normalized.length > 96 ? `${normalized.slice(0, 96)}...` : normalized;
   };
 
   const columns = [
     { 
       key: 'role', 
-      header: tr('Role', 'តួនាទី'),
+      header: t('admin.experience.table.columns.role'),
       sortable: true, 
       className: 'ui-table-cell--title',
       render: (row) => (
         <div className="ui-blog-tableTitle">
-          <div className="ui-blog-tableTitle__main">{getLocalizedField(row.role, language) || tr('Untitled role', 'តួនាទីគ្មានចំណងជើង')}</div>
+          <div className="ui-blog-tableTitle__main">{getLocalizedField(row.role, language) || t('admin.experience.table.roleMeta.untitled')}</div>
           <div className="ui-blog-tableTitle__meta">
-            <span>{getLocalizedField(row.company, language) || tr('Company not set', 'មិនទាន់កំណត់ក្រុមហ៊ុន')}</span>
+            <span>{getLocalizedField(row.company, language) || t('admin.experience.table.roleMeta.noCompany')}</span>
             <span>{getDescription(row.description)}</span>
           </div>
         </div>
@@ -107,14 +107,14 @@ const ExperienceTable = ({
     },
     { 
       key: 'period', 
-      header: tr('Timeline', 'ពេលវេលា'),
+      header: t('admin.experience.table.columns.timeline'),
       render: (row) => {
         const isCurrent = row.current === true || `${row.endMonthYear || row.endDate || row.period || ''}`.toLowerCase().includes('present');
         return (
           <div className="ui-blog-dateCell">
             <span className="ui-blog-dateCell__day">{getPeriodSummary(row)}</span>
             <span className="ui-blog-dateCell__time">
-              {isCurrent ? tr('Current position', 'តួនាទីបច្ចុប្បន្ន') : tr('Completed role', 'តួនាទីដែលបានបញ្ចប់')}
+              {isCurrent ? t('admin.experience.table.status.current') : t('admin.experience.table.status.completed')}
             </span>
           </div>
         );
@@ -122,7 +122,7 @@ const ExperienceTable = ({
     },
     {
       key: 'visible',
-      header: tr('Status', 'ស្ថានភាព'),
+      header: t('admin.experience.table.columns.status'),
       sortable: true,
       render: (row) => {
         const isCurrent = row.current === true || `${row.endMonthYear || row.endDate || row.period || ''}`.toLowerCase().includes('present');
@@ -130,14 +130,14 @@ const ExperienceTable = ({
           <div className="ui-blog-statusCell">
             <div className="ui-blog-statusCell__badges">
               <Badge variant={row.visible !== false ? 'success' : 'warning'}>
-                {row.visible !== false ? tr('Visible', 'បង្ហាញ') : tr('Hidden', 'លាក់')}
+                {row.visible !== false ? t('admin.experience.table.status.visible') : t('admin.experience.table.status.hidden')}
               </Badge>
-              {isCurrent && <Badge variant="primary">{tr('Current', 'បច្ចុប្បន្ន')}</Badge>}
+              {isCurrent && <Badge variant="primary">{t('admin.experience.table.status.isCurrent')}</Badge>}
             </div>
             <span className="ui-blog-statusCell__note">
               {row.visible !== false
-                ? tr('Appears on the public career timeline', 'បង្ហាញលើបទពិសោធន៍សាធារណៈ')
-                : tr('Saved only in admin for now', 'រក្សាទុកសម្រាប់តែ Admin សិន')}
+                ? t('admin.experience.table.status.visibleDesc')
+                : t('admin.experience.table.status.hiddenDesc')}
             </span>
           </div>
         );
@@ -145,7 +145,7 @@ const ExperienceTable = ({
     },
     {
       key: 'actions',
-      header: tr('Actions', 'សកម្មភាព'),
+      header: t('admin.experience.table.columns.actions'),
       className: 'ui-table-cell--actions',
       render: (row) => renderAdminActions({
         row,
@@ -178,10 +178,10 @@ const ExperienceTable = ({
       exportFileName="experience_export.csv"
       emptyState={{
         icon: Briefcase,
-        title: tr('No Experience Entries', 'មិនមានបទពិសោធន៍ការងារ'),
-        description: tr('Add your first role to start shaping the public career timeline and internal work history.', 'បន្ថែមតួនាទីដំបូងរបស់អ្នក ដើម្បីចាប់ផ្តើមរៀបចំពេលវេលាការងារសាធារណៈ និងប្រវត្តិការងារខាងក្នុង។'),
+        title: t('admin.experience.table.empty.title'),
+        description: t('admin.experience.table.empty.description'),
         action: canCreate ? {
-          label: tr('Create first entry', 'បង្កើតទិន្នន័យដំបូង'),
+          label: t('admin.experience.table.empty.action'),
           onClick: onCreate,
           icon: Plus
         } : null

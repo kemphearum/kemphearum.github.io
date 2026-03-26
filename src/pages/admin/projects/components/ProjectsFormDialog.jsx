@@ -10,8 +10,9 @@ import FormMarkdownEditor from '../../components/FormMarkdownEditor';
 import { getLanguageValue } from '../../../../utils/localization';
 import { useTranslation } from '../../../../hooks/useTranslation';
 
-const ProjectImageField = ({ currentImageUrl, tr }) => {
+const ProjectImageField = () => {
     const { control, setValue, watch } = useFormContext();
+    const { t } = useTranslation();
     const activeImage = watch('imageUrl');
 
     return (
@@ -27,9 +28,9 @@ const ProjectImageField = ({ currentImageUrl, tr }) => {
                             setValue('imageUrl', '', { shouldDirty: true });
                         }
                     }}
-                    currentImageUrl={activeImage || currentImageUrl}
+                    currentImageUrl={activeImage}
                     onClearExisting={() => setValue('imageUrl', '', { shouldDirty: true })}
-                    placeholder={tr('Upload project cover image', 'ផ្ទុករូបគម្របគម្រោង')}
+                    placeholder={t('admin.projects.form.fields.imagePlaceholder')}
                     aspectRatio="16 / 7"
                 />
             )}
@@ -37,11 +38,12 @@ const ProjectImageField = ({ currentImageUrl, tr }) => {
     );
 };
 
-const ProjectLocalizedFields = ({ activeLanguage, setActiveLanguage, tr }) => {
+const ProjectLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
+    const { t } = useTranslation();
     const titleName = activeLanguage === 'en' ? 'titleEn' : 'titleKm';
     const descriptionName = activeLanguage === 'en' ? 'descriptionEn' : 'descriptionKm';
     const contentName = activeLanguage === 'en' ? 'contentEn' : 'contentKm';
-    const languageLabel = activeLanguage === 'en' ? tr('English', 'អង់គ្លេស') : tr('Khmer', 'ខ្មែរ');
+    const languageLabel = activeLanguage === 'en' ? t('admin.projects.form.languages.en') : t('admin.projects.form.languages.km');
 
     return (
         <>
@@ -53,28 +55,28 @@ const ProjectLocalizedFields = ({ activeLanguage, setActiveLanguage, tr }) => {
             </Tabs>
 
             <FormField
-                label={`${tr('Project Title', 'ចំណងជើងគម្រោង')} (${languageLabel})`}
+                label={`${t('admin.projects.form.fields.projectTitle')} (${languageLabel})`}
                 name={titleName}
-                validation={activeLanguage === 'en' ? { required: tr('English title is required', 'ត្រូវការចំណងជើងជាអង់គ្លេស') } : {}}
-                hint={activeLanguage === 'km' ? tr('Optional. Empty Khmer falls back to English.', 'ស្រេចចិត្ត។ បើខ្មែរទទេ នឹងប្រើអង់គ្លេសជំនួស។') : undefined}
+                validation={activeLanguage === 'en' ? { required: t('admin.projects.form.fields.titleRequired') } : {}}
+                hint={activeLanguage === 'km' ? t('admin.projects.form.fields.titleHint') : undefined}
             >
-                <FormInput placeholder={activeLanguage === 'en' ? 'Enter english project title...' : 'បញ្ចូលចំណងជើងគម្រោងជាភាសាខ្មែរ...'} />
+                <FormInput placeholder={activeLanguage === 'en' ? t('admin.projects.form.fields.titlePlaceholderEn') : t('admin.projects.form.fields.titlePlaceholderKm')} />
             </FormField>
 
             <FormField
-                label={`${tr('Short Description', 'ការពិពណ៌នាខ្លី')} (${languageLabel})`}
+                label={`${t('admin.projects.form.fields.shortDescription')} (${languageLabel})`}
                 name={descriptionName}
-                validation={activeLanguage === 'en' ? { required: tr('English description is required', 'ត្រូវការការពិពណ៌នាជាអង់គ្លេស') } : {}}
-                hint={tr('Used in cards, previews, and supporting metadata.', 'ប្រើសម្រាប់កាត ការមើលជាមុន និង metadata បន្ថែម។')}
+                validation={activeLanguage === 'en' ? { required: t('admin.projects.form.fields.descriptionRequired') } : {}}
+                hint={t('admin.projects.form.fields.descriptionHint')}
             >
-                <FormInput isTextArea rows="4" placeholder={activeLanguage === 'en' ? 'Describe the project in english...' : 'ពិពណ៌នាគម្រោងជាភាសាខ្មែរ...'} />
+                <FormInput isTextArea rows="4" placeholder={activeLanguage === 'en' ? t('admin.projects.form.fields.descriptionPlaceholderEn') : t('admin.projects.form.fields.descriptionPlaceholderKm')} />
             </FormField>
 
-            <FormField label={`${tr('Project Content', 'មាតិកាគម្រោង')} (${languageLabel})`} name={contentName}>
+            <FormField label={`${t('admin.projects.form.fields.projectContent')} (${languageLabel})`} name={contentName}>
                 <FormMarkdownEditor
                     rows={14}
                     fullWidth={false}
-                    placeholder={activeLanguage === 'en' ? 'Detailed english case study in Markdown...' : 'មាតិកាលម្អិតជាភាសាខ្មែរ (Markdown)...'}
+                    placeholder={activeLanguage === 'en' ? t('admin.projects.form.fields.contentPlaceholderEn') : t('admin.projects.form.fields.contentPlaceholderKm')}
                 />
             </FormField>
         </>
@@ -83,8 +85,7 @@ const ProjectLocalizedFields = ({ activeLanguage, setActiveLanguage, tr }) => {
 
 const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loading }) => {
     const [activeLanguage, setActiveLanguage] = useState('en');
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t } = useTranslation();
 
     const defaultValues = {
         titleEn: getLanguageValue(initialData?.title, 'en', true),
@@ -108,9 +109,9 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
             <Dialog.Content maxWidth="1120px" className="ui-blog-dialog">
                 <Dialog.Header className="ui-blog-dialog__header">
                     <div className="ui-blog-dialog__heading">
-                        <Dialog.Title>{mode === 'create' ? tr('Add New Project', 'បន្ថែមគម្រោងថ្មី') : tr('Edit Project', 'កែសម្រួលគម្រោង')}</Dialog.Title>
+                        <Dialog.Title>{mode === 'create' ? t('admin.projects.form.dialogs.addTitle') : t('admin.projects.form.dialogs.editTitle')}</Dialog.Title>
                         <Dialog.Description>
-                            {tr('Maintain bilingual project storytelling in a single Firestore document with EN/KM tabs.', 'គ្រប់គ្រងព័ត៌មានគម្រោងពីរភាសា​ក្នុងឯកសារ Firestore តែមួយជាមួយផ្ទាំង EN/KM។')}
+                            {t('admin.projects.form.dialogs.description')}
                         </Dialog.Description>
                     </div>
                     <Dialog.Close />
@@ -126,23 +127,22 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                             <div className="ui-blog-formLayout__main">
                                 <div className="ui-blog-formSection">
                                     <div className="ui-blog-formSection__head">
-                                        <h3>{tr('Project basics', 'មូលដ្ឋានគម្រោង')}</h3>
-                                        <p>{tr('Edit content language-by-language while keeping one canonical record.', 'កែសម្រួលមាតិកាតាមភាសា ខណៈរក្សាកំណត់ត្រាសំខាន់តែមួយ។')}</p>
+                                        <h3>{t('admin.projects.form.sections.projectBasics.title')}</h3>
+                                        <p>{t('admin.projects.form.sections.projectBasics.description')}</p>
                                     </div>
 
                                     <ProjectLocalizedFields
                                         activeLanguage={activeLanguage}
                                         setActiveLanguage={setActiveLanguage}
-                                        tr={tr}
                                     />
 
                                     <FormField
-                                        label={tr('Tech Stack', 'បច្ចេកវិទ្យាប្រើប្រាស់')}
+                                        label={t('admin.projects.form.fields.techStack')}
                                         name="techStack"
-                                        validation={{ required: tr('Tech stack is required', 'ត្រូវការបញ្ជីបច្ចេកវិទ្យា') }}
-                                        hint={tr('Separate technologies with commas.', 'បំបែកបច្ចេកវិទ្យាដោយក្បៀស។')}
+                                        validation={{ required: t('admin.projects.form.fields.techStackRequired') }}
+                                        hint={t('admin.projects.form.fields.techStackHint')}
                                     >
-                                        <FormInput placeholder={tr('e.g. React, Firebase, SCSS', 'ឧ. React, Firebase, SCSS')} />
+                                        <FormInput placeholder={t('admin.projects.form.fields.techStackPlaceholder')} />
                                     </FormField>
                                 </div>
                             </div>
@@ -150,43 +150,43 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                             <aside className="ui-blog-formLayout__aside">
                                 <div className="ui-blog-formSection">
                                     <div className="ui-blog-formSection__head">
-                                        <h3>{tr('Links and URL', 'តំណ និង URL')}</h3>
-                                        <p>{tr('Keep the public slug and external links ready before publishing.', 'រៀបចំ slug សាធារណៈ និងតំណខាងក្រៅឲ្យរួចរាល់ មុនពេលបោះពុម្ព។')}</p>
+                                        <h3>{t('admin.projects.form.sections.linksAndUrl.title')}</h3>
+                                        <p>{t('admin.projects.form.sections.linksAndUrl.description')}</p>
                                     </div>
 
                                     <FormField
-                                        label={tr('GitHub URL', 'តំណ GitHub')}
+                                        label={t('admin.projects.form.fields.githubUrl')}
                                         name="githubUrl"
                                         validation={{
-                                            validate: (value) => !value || /^https?:\/\/.+/i.test(value) || tr('Enter a valid URL (http/https)', 'សូមបញ្ចូល URL ត្រឹមត្រូវ (http/https)')
+                                            validate: (value) => !value || /^https?:\/\/.+/i.test(value) || t('admin.projects.form.fields.urlInvalid')
                                         }}
                                     >
-                                        <FormInput type="url" placeholder={tr('https://github.com/...', 'https://github.com/...')} />
+                                        <FormInput type="url" placeholder={t('admin.projects.form.fields.githubPlaceholder')} />
                                     </FormField>
 
                                     <FormField
-                                        label={tr('Live Demo URL', 'តំណ Live Demo')}
+                                        label={t('admin.projects.form.fields.liveUrl')}
                                         name="liveUrl"
                                         validation={{
-                                            validate: (value) => !value || /^https?:\/\/.+/i.test(value) || tr('Enter a valid URL (http/https)', 'សូមបញ្ចូល URL ត្រឹមត្រូវ (http/https)')
+                                            validate: (value) => !value || /^https?:\/\/.+/i.test(value) || t('admin.projects.form.fields.urlInvalid')
                                         }}
                                     >
-                                        <FormInput type="url" placeholder={tr('https://...', 'https://...')} />
+                                        <FormInput type="url" placeholder={t('admin.projects.form.fields.livePlaceholder')} />
                                     </FormField>
 
-                                    <FormField label={tr('Custom Slug', 'Slug ផ្ទាល់ខ្លួន')} name="slug" hint={tr('Leave blank to generate from English title.', 'ទុកទទេ ដើម្បីបង្កើតពីចំណងជើងអង់គ្លេស។')}>
-                                        <FormInput placeholder={tr('e.g. portfolio-website', 'ឧ. គេហទំព័រ-ផតហ្វូលីយ៉ូ')} />
+                                    <FormField label={t('admin.projects.form.fields.slug')} name="slug" hint={t('admin.projects.form.fields.slugHint')}>
+                                        <FormInput placeholder={t('admin.projects.form.fields.slugPlaceholder')} />
                                     </FormField>
                                 </div>
 
                                 <div className="ui-blog-formSection">
                                     <div className="ui-blog-formSection__head">
-                                        <h3>{tr('Publishing', 'ការបោះពុម្ព')}</h3>
-                                        <p>{tr('Control public visibility and homepage highlighting.', 'គ្រប់គ្រងការបង្ហាញជាសាធារណៈ និងការលេចធ្លោលើទំព័រដើម។')}</p>
+                                        <h3>{t('admin.projects.form.sections.publishing.title')}</h3>
+                                        <p>{t('admin.projects.form.sections.publishing.description')}</p>
                                     </div>
 
                                     <FormField
-                                        label={tr('Visibility', 'ការបង្ហាញ')}
+                                        label={t('admin.projects.form.fields.visibility')}
                                         name="visible"
                                         validation={{
                                             setValueAs: (value) => value === true || value === 'true'
@@ -194,13 +194,13 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                                     >
                                         <FormSelect
                                             options={[
-                                                { label: tr('Published', 'បានបោះពុម្ព'), value: true },
-                                                { label: tr('Hidden', 'លាក់'), value: false }
+                                                { label: t('admin.projects.form.fields.optionPublished'), value: true },
+                                                { label: t('admin.projects.form.fields.optionHidden'), value: false }
                                             ]}
                                         />
                                     </FormField>
                                     <FormField
-                                        label={tr('Featured', 'ពិសេស')}
+                                        label={t('admin.projects.form.fields.featured')}
                                         name="featured"
                                         validation={{
                                             setValueAs: (value) => value === true || value === 'true'
@@ -208,8 +208,8 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                                     >
                                         <FormSelect
                                             options={[
-                                                { label: tr('Normal', 'ធម្មតា'), value: false },
-                                                { label: tr('Featured', 'ពិសេស'), value: true }
+                                                { label: t('admin.projects.form.fields.optionNormal'), value: false },
+                                                { label: t('admin.projects.form.fields.optionFeatured'), value: true }
                                             ]}
                                         />
                                     </FormField>
@@ -217,12 +217,12 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
 
                                 <div className="ui-blog-formSection">
                                     <div className="ui-blog-formSection__head">
-                                        <h3>{tr('Project cover', 'គម្របគម្រោង')}</h3>
-                                        <p>{tr('Use a wide image that works in cards and detail pages.', 'ប្រើរូបភាពទូលាយដែលសមស្របសម្រាប់កាត និងទំព័រលម្អិត។')}</p>
+                                        <h3>{t('admin.projects.form.fields.projectCover')}</h3>
+                                        <p>{t('admin.projects.form.fields.projectCoverDesc')}</p>
                                     </div>
 
-                                    <FormField label={tr('Project Image', 'រូបភាពគម្រោង')}>
-                                        <ProjectImageField currentImageUrl={initialData?.imageUrl} tr={tr} />
+                                    <FormField label={t('admin.projects.form.fields.projectImage')}>
+                                        <ProjectImageField />
                                     </FormField>
                                 </div>
                             </aside>
@@ -231,14 +231,14 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
 
                     <Dialog.Footer className="ui-blog-dialog__footer">
                         <div className="ui-blog-dialog__footerNote">
-                            {tr('EN and KM are saved together in one document. Khmer can remain empty while translation is in progress.', 'EN និង KM ត្រូវបានរក្សាទុកជាមួយគ្នា​ក្នុងឯកសារតែមួយ។ ភាសាខ្មែរអាចទុកទទេខណៈពេលកំពុងបកប្រែ។')}
+                            {t('admin.projects.form.dialogs.footerNote')}
                         </div>
                         <div className="ui-blog-dialog__footerActions">
                             <Button variant="ghost" onClick={() => onOpenChange(false)} type="button">
-                                {tr('Cancel', 'បោះបង់')}
+                                {t('admin.projects.form.actions.cancel')}
                             </Button>
                             <Button type="submit" isLoading={loading} className="ui-primary">
-                                {loading ? tr('Saving...', 'កំពុងរក្សាទុក...') : tr('Save Project', 'រក្សាទុកគម្រោង')}
+                                {loading ? t('admin.projects.form.actions.saving') : t('admin.projects.form.actions.save')}
                             </Button>
                         </div>
                     </Dialog.Footer>

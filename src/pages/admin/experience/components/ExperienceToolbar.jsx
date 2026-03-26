@@ -10,23 +10,23 @@ const ExperienceToolbar = ({
   canCreate = true,
   stats = []
 }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { t } = useTranslation();
+
   return (
     <section className="ui-blog-workspace">
       <div className="ui-blog-workspace__overview">
         <div className="ui-blog-workspace__intro">
           <span className="ui-blog-workspace__eyebrow">
             <Sparkles size={14} />
-            {tr('Career workspace', 'កន្លែងការងារអាជីព')}
+            {t('admin.experience.workspace.eyebrow')}
           </span>
           <div className="ui-blog-workspace__copy">
-            <h2>{tr('Keep your timeline, company history, and visibility settings easy to manage.', 'ធ្វើឱ្យការគ្រប់គ្រងពេលវេលាការងារ ប្រវត្តិក្រុមហ៊ុន និងស្ថានភាពបង្ហាញ ងាយស្រួល។')}</h2>
-            <p>{tr('Search by role or company, add new experience quickly, and keep the public career story polished without digging through dense rows.', 'ស្វែងរកតាមតួនាទី ឬក្រុមហ៊ុន បន្ថែមបទពិសោធន៍បានលឿន និងរក្សាអត្ថន័យអាជីពសាធារណៈឱ្យច្បាស់លាស់។')}</p>
+            <h2>{t('admin.experience.workspace.title')}</h2>
+            <p>{t('admin.experience.workspace.description')}</p>
           </div>
         </div>
 
-        <div className="ui-blog-workspace__stats" aria-label={tr('Experience workspace summary', 'សេចក្តីសង្ខេបកន្លែងការងារបទពិសោធន៍')}>
+        <div className="ui-blog-workspace__stats" aria-label={t('admin.experience.workspace.summaryAria')}>
           {stats.map(({ label, value, hint, icon: Icon }) => (
             <div key={label} className="ui-blog-workspace__stat">
               <div className="ui-blog-workspace__statIcon">
@@ -46,7 +46,7 @@ const ExperienceToolbar = ({
         <div className="admin-search-wrapper ui-blog-toolbar__search">
           <Search size={18} />
           <Input
-            placeholder={tr('Search experience by role or company...', 'ស្វែងរកបទពិសោធន៍តាមតួនាទី ឬក្រុមហ៊ុន...')}
+            placeholder={t('admin.experience.workspace.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
           />
@@ -55,15 +55,15 @@ const ExperienceToolbar = ({
         {canCreate && (
           <div className="ui-blog-toolbar__actions">
             <Button onClick={onAdd} className="ui-blog-toolbar__create">
-              <Plus size={18} /> {tr('Add New Experience', 'បន្ថែមបទពិសោធន៍ថ្មី')}
+              <Plus size={18} /> {t('admin.experience.workspace.addNew')}
             </Button>
           </div>
         )}
       </div>
 
       <div className="ui-blog-toolbar__foot">
-        <span>{tr('Use precise month ranges so the public timeline stays consistent.', 'ប្រើចន្លោះខែឱ្យត្រឹមត្រូវ ដើម្បីរក្សាពេលវេលាសាធារណៈឱ្យស៊ីសង្វាក់។')}</span>
-        <span>{tr('Mark current roles as present to keep sorting and timeline display clear.', 'សម្គាល់តួនាទីបច្ចុប្បន្នថា Present ដើម្បីឱ្យការរៀបចំ និងការបង្ហាញពេលវេលាច្បាស់លាស់។')}</span>
+        <span>{t('admin.experience.workspace.timelineHint')}</span>
+        <span>{t('admin.experience.workspace.presentHint')}</span>
       </div>
     </section>
   );
