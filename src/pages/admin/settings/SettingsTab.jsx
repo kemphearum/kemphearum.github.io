@@ -218,7 +218,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
             if (pollInterval) clearInterval(pollInterval);
             if (timeoutId) clearTimeout(timeoutId);
         };
-    }, [rebuildStatus.state, rebuildStatus.runId, rebuildStatus.startTime, githubToken]);
+    }, [rebuildStatus.state, rebuildStatus.runId, rebuildStatus.startTime, githubToken, t]);
 
     const handleTriggerRebuild = async () => {
         if (!githubToken) {

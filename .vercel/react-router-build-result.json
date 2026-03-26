@@ -16,6 +16,7 @@
       "project-detail": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "blog": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "blog-post": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "api-contact": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/sitemap[.]xml": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "section-redirect": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "not-found": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
@@ -77,6 +78,15 @@
         "parentId": "root",
         "file": "app/routes/blog.$slug.jsx",
         "path": "blog/:slug",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "api-contact": {
+        "id": "api-contact",
+        "parentId": "root",
+        "file": "app/routes/api.contact.jsx",
+        "path": "api/contact",
         "config": {
           "runtime": "nodejs"
         }
@@ -165,6 +175,12 @@
         "file": "routes/blog.$slug.jsx",
         "path": "blog/:slug"
       },
+      "api-contact": {
+        "id": "api-contact",
+        "parentId": "root",
+        "file": "routes/api.contact.jsx",
+        "path": "api/contact"
+      },
       "routes/sitemap[.]xml": {
         "id": "routes/sitemap[.]xml",
         "parentId": "root",
@@ -225,6 +241,11 @@
             "file": "routes/blog.$slug.jsx",
             "path": "blog/:slug",
             "id": "blog-post"
+          },
+          {
+            "file": "routes/api.contact.jsx",
+            "path": "api/contact",
+            "id": "api-contact"
           },
           {
             "file": "routes/sitemap[.]xml.jsx",

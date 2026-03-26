@@ -905,7 +905,7 @@
     gap: 0.45rem;
     padding: 1rem;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--divider);
     background: var(--card-bg);
     text-align: left;
     cursor: pointer;
@@ -1085,7 +1085,7 @@
     gap: 0.85rem;
     padding: 1rem;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--divider);
     background: var(--card-bg);
     cursor: pointer;
 
@@ -1148,7 +1148,7 @@
     min-width: 0;
     overflow: hidden;
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--divider);
     background: var(--card-bg);
     padding: 0.35rem;
 }
@@ -2053,8 +2053,8 @@
 }
 
 .mirrorInput {
-    background: rgba(0, 0, 0, 0.2) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid var(--divider) !important;
     border-radius: 10px !important;
 }
 
@@ -2124,7 +2124,7 @@
     align-items: center;
     justify-content: center;
     background: var(--bg-surface-light);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--divider);
 }
 
 .btnText {
