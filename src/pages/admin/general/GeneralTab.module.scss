@@ -250,7 +250,18 @@
     }
 
     .subtabsList {
-        grid-template-columns: 1fr;
+        display: flex;
+        grid-template-columns: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: thin;
+    }
+
+    .subTabTrigger {
+        flex: 0 0 min(84vw, 320px);
+        scroll-snap-align: start;
     }
 }
 
@@ -264,8 +275,13 @@
         grid-template-columns: 1fr;
     }
 
+    .subtabsList {
+        padding-bottom: 0.45rem;
+    }
+
     .subTabTrigger {
         min-height: 72px;
         padding: 0.78rem 0.9rem;
+        flex-basis: 88vw;
     }
 }

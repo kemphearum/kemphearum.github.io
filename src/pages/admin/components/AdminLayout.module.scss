@@ -7,6 +7,11 @@
     color: var(--text-primary);
     overflow-x: hidden;
     position: relative;
+
+    @media (max-width: 768px) {
+        display: block;
+        min-height: 100dvh;
+    }
 }
 
 .mainContent {
@@ -25,8 +30,14 @@
 
     @media (max-width: 768px) {
         margin-left: 0 !important;
+        margin-top: 0;
+        width: 100%;
         min-height: calc(100dvh - var(--admin-header-height, 56px));
-        padding: 2rem 1.25rem 2rem;
+        height: auto;
+        padding: 1.25rem 1rem calc(2.5rem + env(safe-area-inset-bottom));
+        overflow-x: clip;
+        overflow-y: visible;
+        -webkit-overflow-scrolling: touch;
     }
 }
 
@@ -44,6 +55,11 @@
         font-size: var(--font-size-admin-tab) !important;
         font-weight: var(--font-weight-admin-tab) !important;
         margin: 0 0 0.4rem;
+    }
+
+    @media (max-width: 768px) {
+        margin-bottom: 1.35rem;
+        padding-bottom: 1rem;
     }
 }
 

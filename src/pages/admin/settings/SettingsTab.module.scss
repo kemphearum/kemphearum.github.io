@@ -2340,6 +2340,22 @@
         margin-top: 1.1rem;
     }
 
+    .subtabsList {
+        display: flex;
+        grid-template-columns: none;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: thin;
+        padding-bottom: 0.45rem;
+    }
+
+    .subTabTrigger {
+        flex: 0 0 min(84vw, 320px);
+        scroll-snap-align: start;
+    }
+
     .tabContentFadeIn > :global(.ui-card) > .settingsPanel + .settingsPanel {
         margin-top: 1.15rem;
     }
@@ -2350,13 +2366,10 @@
         grid-template-columns: 1fr;
     }
 
-    .subtabsList {
-        grid-template-columns: 1fr;
-    }
-
     .subTabTrigger {
         min-height: 74px;
         padding: 0.8rem 0.9rem;
+        flex-basis: 88vw;
     }
 
     .livePreviewHero,

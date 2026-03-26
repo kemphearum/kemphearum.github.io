@@ -11,6 +11,10 @@
     gap: 0.5rem;
     border-bottom: 1px solid #1e293b;
     margin-bottom: 1.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
 }
 
 .ui-tabs-trigger {
@@ -20,6 +24,8 @@
     border-bottom: 2px solid transparent;
     transition: all 0.2s ease;
     background: transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
 
     &:hover {
         color: var(--text-primary);

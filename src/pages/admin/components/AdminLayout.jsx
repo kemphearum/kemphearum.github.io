@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import AnimatedBackground from '@/sections/AnimatedBackground';
@@ -27,6 +27,24 @@ const AdminLayout = ({
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [headerHeight, setHeaderHeight] = useState(56);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return undefined;
+        const isMobileViewport = window.innerWidth <= 768;
+        if (!isMobileViewport) return undefined;
+
+        const previousOverflow = document.body.style.overflow;
+
+        if (isMobileOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isMobileOpen]);
 
     const handleHeaderHeightChange = useCallback((nextHeight) => {
         if (!Number.isFinite(nextHeight)) return;
