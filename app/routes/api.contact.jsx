@@ -60,7 +60,3 @@ export async function loader({ request }) {
     const corsHeaders = buildCorsHeaders(origin);
     return toJsonResponse({ success: false, error: 'Method not allowed' }, 405, corsHeaders);
 }
-
-export default function ApiContactRoute() {
-    return null;
-}
