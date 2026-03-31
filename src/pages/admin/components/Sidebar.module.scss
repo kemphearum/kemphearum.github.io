@@ -1,13 +1,16 @@
 @use '../../../styles/variables' as *;
 
 .sidebar {
+    @include glass;
+    border-top: none;
+    border-bottom: none;
+    border-left: none;
+    border-radius: 0;
     position: fixed;
     left: 0;
     top: var(--admin-header-height, 56px);
     height: calc(100vh - var(--admin-header-height, 56px));
-    background: var(--sidebar-bg, linear-gradient(180deg, var(--bg-surface-light) 0%, var(--bg-surface) 100%));
-    backdrop-filter: none;
-    border-right: 1px solid var(--divider);
+    background: var(--mobile-menu-bg, var(--topnav-bg, var(--bg-surface-light)));
     display: flex;
     flex-direction: column;
     width: 260px;
@@ -68,7 +71,7 @@
         @media (max-width: 768px) {
             transform: translateX(0);
             width: 260px;
-            z-index: 1001; // Above overlay
+            z-index: 340; // Above overlay, below mobile header controls
             pointer-events: auto;
             visibility: visible;
         }
@@ -181,13 +184,13 @@
 
 .overlay {
     position: fixed;
-    top: 0;
+    top: var(--admin-header-height, 56px);
     left: 0;
     width: 100%;
-    height: 100dvh;
+    height: calc(100dvh - var(--admin-header-height, 56px));
     background: var(--backdrop-bg);
     backdrop-filter: blur(4px);
-    z-index: 1000;
+    z-index: 330;
     display: none;
     opacity: 0;
     pointer-events: none;

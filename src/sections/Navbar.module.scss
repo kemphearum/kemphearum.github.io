@@ -42,11 +42,15 @@
 
 .logo {
     z-index: 1002;
+    display: flex;
+    align-items: center;
 
     a {
         text-decoration: none;
         color: inherit;
         transition: opacity 0.3s ease;
+        display: inline-flex;
+        align-items: center;
 
         // Apply typography properties directly to the anchor to override global nav a styles
         font-family: var(--font-logo) !important;
@@ -280,12 +284,14 @@
     .navRight {
         position: relative;
         z-index: 2200;
+        gap: 0.35rem;
+        flex-shrink: 0;
     }
 
     .navbar {
         --mobile-nav-offset: #{$nav-height};
         .container {
-            padding: 0 1rem;
+            padding: 0 0.75rem;
         }
     }
 
@@ -297,10 +303,14 @@
     .logo {
         position: relative;
         z-index: 2200;
-        max-width: clamp(110px, 36vw, 180px);
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: clamp(140px, 50vw, 220px);
+        display: flex; /* Ensure centered */
+        align-items: center;
 
         a {
-            display: inline-block;
+            display: inline-flex; /* Changed from inline-block */
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -324,8 +334,8 @@
         position: fixed;
         top: var(--mobile-nav-offset, #{$nav-height});
         right: 0;
-        width: 300px;
-        max-width: min(300px, 100vw);
+        width: 260px;
+        max-width: min(260px, 85vw);
         height: calc(100dvh - var(--mobile-nav-offset, #{$nav-height}));
         background: var(--mobile-menu-bg, var(--topnav-bg, var(--bg-surface-light)));
         backdrop-filter: none;
@@ -412,6 +422,7 @@
         display: inline-flex;
         position: relative;
         z-index: 2200;
+        gap: 0.35rem;
     }
 
     .menuOpen {
@@ -428,6 +439,32 @@
 
     .hamburger {
         display: none;
+    }
+
+    @media (max-width: 420px) {
+        .navbar {
+            .container {
+                padding: 0 0.6rem;
+            }
+        }
+
+        .navRight {
+            --nav-control-size: 30px;
+            gap: 0.28rem;
+        }
+
+        .mobileControls {
+            gap: 0.28rem;
+        }
+
+        .logo {
+            max-width: none;
+
+            a {
+                font-size: clamp(1.15rem, 5vw, 1.35rem) !important;
+                letter-spacing: 0.2px;
+            }
+        }
     }
 }
 

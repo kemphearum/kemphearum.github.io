@@ -18,7 +18,6 @@ const Navbar = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { language, t } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const isHome = location.pathname === '/';
     const currentHash = (location.hash || '').replace('#', '');
     const themeContext = useTheme() || { theme: 'dark', toggleTheme: () => {} };
@@ -169,16 +168,6 @@ const Navbar = () => {
         return activeSection === item.key;
     };
 
-    const handleMobileViewSite = () => {
-        setIsOpen(false);
-        if (!isHome) {
-            navigate('/');
-            return;
-        }
-        setTimeout(() => {
-            window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-        }, 50);
-    };
 
     return (
         <nav className={`${styles.navbar} ${scrolled ? styles.scrolled : ''} ${isOpen ? styles.menuOpen : ''}`}>
@@ -263,19 +252,6 @@ const Navbar = () => {
 
                     <div className={styles.mobileControls}>
                         <LanguageSwitcher />
-                        <button
-                            type="button"
-                            className={styles.mobileIconBtn}
-                            onClick={handleMobileViewSite}
-                            aria-label={tr('View site', 'មើលគេហទំព័រ')}
-                            title={tr('View site', 'មើលគេហទំព័រ')}
-                        >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M15 3h6v6" />
-                                <path d="M10 14 21 3" />
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                            </svg>
-                        </button>
                         <button
                             className={styles.themeToggle}
                             onClick={toggleTheme}
