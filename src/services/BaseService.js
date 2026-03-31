@@ -241,16 +241,27 @@ export default class BaseService {
         const queryText = search.toLowerCase().trim();
         if (!queryText) return data;
 
+        /**
+         * Resolve a dot-notated field path (e.g. 'title.en') on an object.
+         * Falls back to the top-level key if no dots are present.
+         */
+        const getNestedValue = (obj, path) => {
+            return path.split('.').reduce((acc, key) => {
+                if (acc === null || acc === undefined) return undefined;
+                return acc[key];
+            }, obj);
+        };
+
         return data.filter(item => {
             return fields.some(field => {
-                const value = item[field];
+                const value = getNestedValue(item, field);
                 if (value === null || value === undefined) return false;
-                
+
                 // Handle strings, arrays, and objects (basic stringify)
-                const stringValue = typeof value === 'string' 
-                    ? value.toLowerCase() 
+                const stringValue = typeof value === 'string'
+                    ? value.toLowerCase()
                     : JSON.stringify(value).toLowerCase();
-                
+
                 return stringValue.includes(queryText);
             });
         });
