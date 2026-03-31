@@ -236,7 +236,9 @@
       "roleNameRequired": "Role name is required.",
       "roleNameInvalid": "Use letters, numbers, underscore, or dash.",
       "roleReserved": "This role name is reserved.",
-      "roleExists": "This role already exists."
+      "roleExists": "This role already exists.",
+      "inherited": "Inherited",
+      "inheritedHint": "This permission is granted by the base role and cannot be removed here. Explicitly grant actions to add more capability."
     },
     "roles": {
       "pending": "Pending",

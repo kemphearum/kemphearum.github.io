@@ -3,7 +3,7 @@ import { tabLabels } from '../../components/constants';
 import { Button } from '../../../../shared/components/ui';
 import DeleteConfirmDialog from '../../../../shared/components/dialog/DeleteConfirmDialog';
 import { useTranslation } from '../../../../hooks/useTranslation';
-import { formatRoleDisplayName, normalizeRole, normalizeRolePermissionEntry, ACTIONS } from '../../../../utils/permissions';
+import { formatRoleDisplayName, normalizeRole, normalizeRolePermissionEntry, ACTIONS, isActionAllowed } from '../../../../utils/permissions';
 
 const NON_CONFIGURABLE_TABS = ['profile', 'audit'];
 const RESERVED_ROLES = ['superadmin'];
