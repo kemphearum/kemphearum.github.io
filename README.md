@@ -175,7 +175,7 @@ src/
 
 ### Install
 ```bash
-git clone https://github.com/kemphearum/portfolio.git
+git clone https://github.com/kemphearum/kemphearum.github.io.git
 cd portfolio
 npm install
 ```

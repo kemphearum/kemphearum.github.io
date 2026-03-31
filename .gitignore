@@ -52,6 +52,14 @@ workflow/
 workflows/
 workflow=walkthrough.md
 walkthrough.md
+scripts/seed-*.cjs
+scripts/seed-utils.cjs
+scripts/check-general-content.cjs
+scripts/count-all.cjs
+scripts/fetch-experience.cjs
+sa-source.json
+diff.txt
+.agents/
 
 # Local caches / temp
 *.cache
