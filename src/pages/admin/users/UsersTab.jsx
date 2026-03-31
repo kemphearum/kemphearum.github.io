@@ -13,7 +13,7 @@ import UsersFormDialog from './components/UsersFormDialog';
 import UserDetailDialog from './components/UserDetailDialog';
 import RolePermissionsPanel from './components/RolePermissionsPanel';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { ACTIONS, MODULES, isSuperAdminRole, normalizeRole } from '../../../utils/permissions';
+import { ACTIONS, MODULES, formatRoleDisplayName, isSuperAdminRole, normalizeRole } from '../../../utils/permissions';
 
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 
@@ -198,7 +198,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
         setEditingUser(prev => ({ ...prev, role: newRole }));
       }
     }, {
-      successMessage: `${tm('toasts.roleUpdatedTo')} ${newRole}`
+      successMessage: `${tm('toasts.roleUpdatedTo')} ${formatRoleDisplayName(newRole)}`
     });
   };
 
@@ -249,7 +249,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     await executePermissions(async () => {
       await UserService.saveRolePermissions(role, allowedTabs, trackWrite, baseRole);
     }, {
-      successMessage: `${tm('toasts.permissionsFor')} '${role}' ${tm('toasts.saved')}`
+      successMessage: `${tm('toasts.permissionsFor')} '${formatRoleDisplayName(role)}' ${tm('toasts.saved')}`
     });
   };
 
@@ -261,7 +261,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     await executePermissions(async () => {
       await UserService.deleteRoleAndReassignUsers(role, 'pending', trackWrite);
     }, {
-      successMessage: `Role '${role}' removed. Users were reassigned to pending.`
+      successMessage: `Role '${formatRoleDisplayName(role)}' removed. Users were reassigned to pending.`
     });
   };
 

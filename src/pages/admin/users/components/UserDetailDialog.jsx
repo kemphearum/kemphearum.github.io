@@ -13,7 +13,7 @@ import {
 import { Dialog, Button, Badge } from '../../../../shared/components/ui';
 import FormSelect from '../../components/FormSelect';
 import { useTranslation } from '../../../../hooks/useTranslation';
-import { normalizeRole } from '../../../../utils/permissions';
+import { formatRoleDisplayName, normalizeRole } from '../../../../utils/permissions';
 
 const ROLE_VARIANTS = {
   pending: 'warning',
@@ -53,6 +53,7 @@ const UserDetailDialog = ({
   if (!user) return null;
 
   const isUserDisabled = user.isActive === false || user.disabled === true;
+  const normalizedCurrentRole = normalizeRole(user.role) || 'pending';
   const registeredAt = user.createdAt?.seconds
     ? new Date(user.createdAt.seconds * 1000).toLocaleString()
     : tr('Unknown', 'មិនស្គាល់');
@@ -71,7 +72,7 @@ const UserDetailDialog = ({
   };
   const assignableRoles = Array.from(new Set(['pending', 'editor', 'admin', 'superadmin', ...availableRoles.map((role) => normalizeRole(role)).filter(Boolean)]));
   const roleOptions = assignableRoles.map((role) => ({
-    label: roleLabels[role] || role,
+    label: roleLabels[role] || formatRoleDisplayName(role),
     value: role
   }));
 
@@ -92,8 +93,8 @@ const UserDetailDialog = ({
                 <Badge variant={isUserDisabled ? 'ghost' : 'success'}>
                   {isUserDisabled ? tr('Disabled account', 'គណនីត្រូវបានបិទ') : tr('Active account', 'គណនីសកម្ម')}
                 </Badge>
-                <Badge variant={ROLE_VARIANTS[user.role] || 'default'}>
-                  {roleLabels[user.role] || user.role}
+                <Badge variant={ROLE_VARIANTS[normalizedCurrentRole] || 'default'}>
+                  {roleLabels[normalizedCurrentRole] || formatRoleDisplayName(normalizedCurrentRole)}
                 </Badge>
                 {user.email === currentUser?.email && (
                   <Badge variant="primary">{tr('Current session', 'សម័យបច្ចុប្បន្ន')}</Badge>
@@ -143,13 +144,13 @@ const UserDetailDialog = ({
                   {user.email === currentUser?.email ? (
                     <div className="ui-role-badge-container">
                       <Badge variant="success">
-                        {(roleLabels[user.role] || user.role).toUpperCase()} {tr('(YOU)', '(អ្នក)')}
+                        {(roleLabels[normalizedCurrentRole] || formatRoleDisplayName(normalizedCurrentRole)).toUpperCase()} {tr('(YOU)', '(អ្នក)')}
                       </Badge>
                     </div>
                   ) : (
                     <div className="ui-role-select-container">
                       <FormSelect
-                        value={user.role}
+                        value={normalizedCurrentRole}
                         disabled={!canEditUsers}
                         onChange={(e) => onRoleChange(user.id, e.target.value)}
                         options={roleOptions}

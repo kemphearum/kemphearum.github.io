@@ -3,7 +3,7 @@ import { tabLabels } from '../../components/constants';
 import { Button } from '../../../../shared/components/ui';
 import DeleteConfirmDialog from '../../../../shared/components/dialog/DeleteConfirmDialog';
 import { useTranslation } from '../../../../hooks/useTranslation';
-import { normalizeRole, normalizeRolePermissionEntry } from '../../../../utils/permissions';
+import { formatRoleDisplayName, normalizeRole, normalizeRolePermissionEntry } from '../../../../utils/permissions';
 
 const NON_CONFIGURABLE_TABS = ['profile', 'audit'];
 const RESERVED_ROLES = ['superadmin'];
@@ -32,7 +32,7 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
     return translated === key ? fallback : translated;
   };
 
-  const getRoleLabel = (role) => getLocalizedLabel(`admin.roles.${role}`, role);
+  const getRoleLabel = (role) => getLocalizedLabel(`admin.roles.${role}`, formatRoleDisplayName(role));
   const getTabLabel = (tab) => getLocalizedLabel(`admin.tabs.${tab}`, tabLabels[tab]);
   const newRolePreviewLabel = (roleValue) => {
     const translated = t('admin.rolePermissions.newRolePreview', { role: roleValue });

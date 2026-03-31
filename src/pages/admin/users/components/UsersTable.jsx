@@ -3,7 +3,7 @@ import { Edit, Key, Trash2, UserPlus, Users } from 'lucide-react';
 import DataTable from '../../../../shared/components/ui/data-table/DataTable';
 import { Button, Badge } from '../../../../shared/components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
-import { isSuperAdminRole, normalizeRole } from '../../../../utils/permissions';
+import { formatRoleDisplayName, isSuperAdminRole, normalizeRole } from '../../../../utils/permissions';
 
 
 const UsersTable = ({ 
@@ -104,7 +104,7 @@ const UsersTable = ({
         return (
           <div className="ui-user-roleCell">
             <Badge variant={roleVariants[normalizedRole] || 'ghost'}>
-              {roleLabels[normalizedRole] || user.role}
+              {roleLabels[normalizedRole] || formatRoleDisplayName(user.role)}
             </Badge>
             <span className="ui-user-roleCell__note">{tr('Role assignment', 'ការកំណត់តួនាទី')}</span>
           </div>

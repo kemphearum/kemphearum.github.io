@@ -5,7 +5,7 @@ import Form from '../../components/Form';
 import FormField from '../../components/FormField';
 import FormSelect from '../../components/FormSelect';
 import { useTranslation } from '../../../../hooks/useTranslation';
-import { normalizeRole } from '../../../../utils/permissions';
+import { formatRoleDisplayName, normalizeRole } from '../../../../utils/permissions';
 
 const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading, availableRoles = [] }) => {
   const { language } = useTranslation();
@@ -19,7 +19,7 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading, availableRoles
           ? tr('Content Editor', 'អ្នកកែសម្រួលមាតិកា')
           : role === 'admin'
             ? tr('System Admin', 'អ្នកគ្រប់គ្រងប្រព័ន្ធ')
-            : role,
+            : formatRoleDisplayName(role),
       value: role
     }));
 

@@ -47,6 +47,17 @@ export const normalizeRole = (role) => {
     return lowered;
 };
 
+export const formatRoleDisplayName = (role) => {
+    const normalized = normalizeRole(role);
+    if (!normalized) return '';
+
+    return normalized
+        .split(/[_\-\s]+/g)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+};
+
 export const isSuperAdminRole = (role) => normalizeRole(role) === 'superadmin';
 export const isAdminRole = (role) => {
     const normalized = normalizeRole(role);

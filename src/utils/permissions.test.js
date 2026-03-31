@@ -1,7 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { isActionAllowed, ACTIONS, MODULES, normalizeRole, isSuperAdminRole } from './permissions';
+import { isActionAllowed, ACTIONS, MODULES, normalizeRole, isSuperAdminRole, formatRoleDisplayName } from './permissions';
 
 describe('permissions', () => {
+    describe('role display formatting', () => {
+        it('should format custom role ids into readable labels', () => {
+            expect(formatRoleDisplayName('test')).toBe('Test');
+            expect(formatRoleDisplayName('test_manager')).toBe('Test Manager');
+            expect(formatRoleDisplayName('content-reviewer')).toBe('Content Reviewer');
+        });
+    });
+
     describe('superadmin', () => {
         it('should allow everything always', () => {
             expect(isActionAllowed(ACTIONS.CREATE, MODULES.BLOG, 'superadmin')).toBe(true);
