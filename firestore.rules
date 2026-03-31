@@ -63,6 +63,11 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && (isAdminRole(getRole()) || isSuperAdmin());
     }
+
+    function isStaff() {
+      let r = getRole();
+      return isSignedIn() && r != 'anonymous' && r != 'pending' && r != null && r != '';
+    }
     
     function isEditor() {
       return isSignedIn() && (getRole() == 'editor' || getRole() == 'EDITOR' || getRole() == 'writer' || isAdmin());
@@ -139,17 +144,17 @@ service cloud.firestore {
     // Allow public read for content, projects, experience, and posts
     match /content/{document=**} { 
       allow read; 
-      allow write: if isAdmin(); 
+      allow write: if isStaff(); 
     }
     
     match /projects/{document=**} { 
       allow read; 
-      allow write: if isEditor(); 
+      allow write: if isStaff(); 
     }
     
     match /experience/{document=**} { 
       allow read; 
-      allow write: if isAdmin(); 
+      allow write: if isStaff(); 
     }
     
     // Application Settings (Logo, Page Title, Audit Log Config, etc.)
@@ -161,15 +166,15 @@ service cloud.firestore {
     // Blog Posts Rules
     match /posts/{document=**} { 
       allow read; 
-      allow write: if isEditor(); 
+      allow write: if isStaff(); 
     }
 
-    // Messages: Public can write (send), only Admin can read/manage
+    // Messages: Public can write (send), only staff can read/manage
     match /messages/{document=**} {
       // Public writes are handled through Cloud Functions (Admin SDK bypasses rules).
       // This blocks direct client spam against Firestore quota.
-      allow create: if isAdmin();
-      allow read, update, delete: if isAdmin();
+      allow create: if isStaff();
+      allow read, update, delete: if isStaff();
     }
 
     // Users: Highly restricted access
@@ -194,7 +199,7 @@ service cloud.firestore {
                     && (
                       !request.resource.data.diff(resource.data).affectedKeys()
                         .hasAny(['role', 'isActive', 'email'])
-                      || (
+                       || (
                         isBootstrapSuperAdminEmail(request.auth.token.email)
                         && isOwnEmail(request.resource.data.email)
                         && request.resource.data.role == 'superadmin'
