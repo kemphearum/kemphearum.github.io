@@ -15,7 +15,8 @@ const HomeSection = ({
     loading,
     onOpenHistory,
     currentImageUrl,
-    canEdit = true
+    canEdit = true,
+    canViewHistory = true
 }) => {
 
     const { t } = useTranslation();
@@ -36,6 +37,7 @@ const HomeSection = ({
                     size="sm"
                     onClick={() => onOpenHistory('home', t('admin.general.sections.home.title'))}
                     className={'ui-history-btn'}
+                    disabled={!canViewHistory}
                 >
                     <History size={16} /> <span>{t('admin.general.sections.home.history')}</span>
                 </Button>

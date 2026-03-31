@@ -67,6 +67,15 @@ describe('permissions', () => {
             expect(isActionAllowed(ACTIONS.VIEW, MODULES.DATABASE, 'admin')).toBe(true);
             expect(isActionAllowed(ACTIONS.DATABASE_ACTIONS, MODULES.DATABASE, 'admin')).toBe(false);
         });
+
+        it('should allow feature, toggle_visibility, and view_history by default', () => {
+            expect(isActionAllowed(ACTIONS.FEATURE, MODULES.BLOG, 'admin')).toBe(true);
+            expect(isActionAllowed(ACTIONS.FEATURE, MODULES.PROJECTS, 'admin')).toBe(true);
+            expect(isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.BLOG, 'admin')).toBe(true);
+            expect(isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.PROJECTS, 'admin')).toBe(true);
+            expect(isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.BLOG, 'admin')).toBe(true);
+            expect(isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.GENERAL, 'admin')).toBe(true);
+        });
     });
 
     describe('editor', () => {
@@ -82,6 +91,15 @@ describe('permissions', () => {
         it('should NOT allow delete or database actions even on allowed modules', () => {
             expect(isActionAllowed(ACTIONS.DELETE, MODULES.BLOG, 'editor')).toBe(false);
             expect(isActionAllowed(ACTIONS.DATABASE_ACTIONS, MODULES.BLOG, 'editor')).toBe(false);
+        });
+
+        it('should NOT allow feature or toggle_visibility but SHOULD allow view_history', () => {
+            expect(isActionAllowed(ACTIONS.FEATURE, MODULES.BLOG, 'editor')).toBe(false);
+            expect(isActionAllowed(ACTIONS.FEATURE, MODULES.PROJECTS, 'editor')).toBe(false);
+            expect(isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.BLOG, 'editor')).toBe(false);
+            expect(isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.PROJECTS, 'editor')).toBe(false);
+            expect(isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.BLOG, 'editor')).toBe(true);
+            expect(isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.PROJECTS, 'editor')).toBe(true);
         });
 
         it('should respect dynamic configuration if provided', () => {

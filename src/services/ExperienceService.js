@@ -16,7 +16,7 @@ class ExperienceService extends BaseService {
     }
 
     async toggleVisibility(userRole, id, currentVisible, trackWrite) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.EXPERIENCE, userRole)) {
+        if (!isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.EXPERIENCE, userRole)) {
             throw new Error("Unauthorized action");
         }
         return this.update(id, { visible: !currentVisible }, trackWrite);

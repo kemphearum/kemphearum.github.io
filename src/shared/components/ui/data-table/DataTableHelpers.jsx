@@ -57,9 +57,13 @@ export const renderAdminActions = ({
   viewUrlPrefix,
   canEdit = true,
   canDelete = true,
+  canFeature,
+  canToggleVisibility,
   extraActions = null
 }) => {
   const isVisible = row.visible !== false;
+  const resolvedCanFeature = canFeature !== undefined ? canFeature : canEdit;
+  const resolvedCanToggleVisibility = canToggleVisibility !== undefined ? canToggleVisibility : canEdit;
   
   return (
     <div className="ui-table-actions-grid">
@@ -81,7 +85,7 @@ export const renderAdminActions = ({
           variant="ghost" 
           size="sm" 
           onClick={() => onToggleFeatured(row.id, !!row.featured)} 
-          disabled={!canEdit}
+          disabled={!resolvedCanFeature}
           title={row.featured ? "Unfeature" : "Feature"}
         >
           <Star 
@@ -98,7 +102,7 @@ export const renderAdminActions = ({
           variant="ghost" 
           size="sm" 
           onClick={() => onToggleVisibility(row.id, isVisible)} 
-          disabled={!canEdit}
+          disabled={!resolvedCanToggleVisibility}
           title={isVisible ? "Hide" : "Show"}
         >
           {isVisible ? <Eye size={16} /> : <EyeOff size={16} />}

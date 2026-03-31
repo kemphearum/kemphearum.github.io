@@ -10,7 +10,8 @@ const ContactSection = ({
     setContactPreview,
     loading,
     onOpenHistory,
-    canEdit = true
+    canEdit = true,
+    canViewHistory = true
 }) => {
 
     const { t } = useTranslation();
@@ -31,6 +32,7 @@ const ContactSection = ({
                     size="sm"
                     onClick={() => onOpenHistory('contact', t('admin.general.sections.contact.title'))}
                     className={'ui-history-btn'}
+                    disabled={!canViewHistory}
                 >
                     <History size={16} /> <span>{t('admin.general.sections.contact.history')}</span>
                 </Button>

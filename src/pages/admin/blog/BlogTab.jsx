@@ -156,6 +156,9 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const canCreate = isActionAllowed(ACTIONS.CREATE, MODULES.BLOG);
   const canEdit = isActionAllowed(ACTIONS.EDIT, MODULES.BLOG);
   const canDelete = isActionAllowed(ACTIONS.DELETE, MODULES.BLOG);
+  const canFeature = isActionAllowed(ACTIONS.FEATURE, MODULES.BLOG);
+  const canToggleVisibility = isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.BLOG);
+  const canViewHistory = isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.BLOG);
 
   const handleCreate = () => {
     if (!canCreate) {
@@ -278,12 +281,12 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const handleToggleVisibility = (id, currentVisible) => {
-    if (!canEdit) return showToast(t('admin.common.noPermissionAction'), "error");
+    if (!canToggleVisibility) return showToast(t('admin.common.noPermissionAction'), "error");
     visibilityMutation.mutate({ id, currentVisible });
   };
 
   const handleToggleFeatured = (id, currentFeatured) => {
-    if (!canEdit) return showToast(t('admin.common.noPermissionAction'), "error");
+    if (!canFeature) return showToast(t('admin.common.noPermissionAction'), "error");
     featuredMutation.mutate({ id, currentFeatured });
   };
 
@@ -345,6 +348,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleViewHistory = (post) => {
+    if (!canViewHistory) return showToast(t('admin.common.noPermissionAction'), "error");
     setSelectedPost(post.__raw || post);
     setIsHistoryOpen(true);
   };
@@ -616,17 +620,17 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
           </div>
 
           <div className="ui-bulk-actions-controls">
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title={t('admin.blog.bulk.publishSelected')}>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title={t('admin.blog.bulk.publishSelected')} disabled={!canToggleVisibility}>
               <Eye size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.publish')}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title={t('admin.blog.bulk.hideSelected')}>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title={t('admin.blog.bulk.hideSelected')} disabled={!canToggleVisibility}>
               <EyeOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.hide')}
             </Button>
             <div className="ui-bulk-divider" />
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title={t('admin.blog.bulk.featureSelected')}>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title={t('admin.blog.bulk.featureSelected')} disabled={!canFeature}>
               <Star size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.feature')}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title={t('admin.blog.bulk.unfeatureSelected')}>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title={t('admin.blog.bulk.unfeatureSelected')} disabled={!canFeature}>
               <StarOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.unfeature')}
             </Button>
             <div className="ui-bulk-divider" />
@@ -648,6 +652,9 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         canCreate={canCreate}
         canEdit={canEdit}
         canDelete={canDelete}
+        canFeature={canFeature}
+        canToggleVisibility={canToggleVisibility}
+        canViewHistory={canViewHistory}
         loading={isLoading || bulkDeleteMutation.isPending || bulkVisibilityMutation.isPending || bulkFeaturedMutation.isPending}
         page={pagination.page}
         pageSize={pagination.limit}

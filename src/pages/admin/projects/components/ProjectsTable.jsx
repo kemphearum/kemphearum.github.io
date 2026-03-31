@@ -22,6 +22,9 @@ const ProjectsTable = ({
   canCreate = true,
   canEdit = true,
   canDelete = true,
+  canFeature,
+  canToggleVisibility,
+  canViewHistory = true,
   loading = false,
   page = 1,
   pageSize = 5,
@@ -149,12 +152,15 @@ const ProjectsTable = ({
         viewUrlPrefix: '/projects/',
         canEdit,
         canDelete,
+        canFeature,
+        canToggleVisibility,
         extraActions: (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onViewHistory(row)}
             title={t('admin.projects.table.viewHistory')}
+            disabled={!canViewHistory}
           >
             <History size={16} />
           </Button>

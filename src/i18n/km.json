@@ -324,7 +324,10 @@
         "delete": "លុប",
         "view": "មើល",
         "database_actions": "សកម្មភាព DB",
-        "disable": "បិទ"
+        "disable": "បិទ",
+        "feature": "ពិសេស",
+        "toggle_visibility": "ការបង្ហាញ",
+        "view_history": "ប្រវត្តិ"
       }
     },
     "roles": {

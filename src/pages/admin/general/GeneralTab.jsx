@@ -28,6 +28,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
     const [contactPreview, setContactPreview] = useState(false);
 
     const canEdit = isActionAllowed(ACTIONS.EDIT, MODULES.GENERAL);
+    const canViewHistory = isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.GENERAL);
 
 
     const handleSaveHome = async (data) => {
@@ -84,6 +85,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
     };
 
     const handleOpenHistory = (recordId, title) => {
+        if (!canViewHistory) return;
         setHistoryModal({ isOpen: true, recordId, title });
     };
 
@@ -212,6 +214,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                             onOpenHistory={handleOpenHistory}
                             currentImageUrl={homeData.profileImageUrl}
                             canEdit={canEdit}
+                            canViewHistory={canViewHistory}
                         />
 
                     </Form>
@@ -233,6 +236,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                             loading={loading}
                             onOpenHistory={handleOpenHistory}
                             canEdit={canEdit}
+                            canViewHistory={canViewHistory}
                         />
 
                     </Form>
@@ -253,6 +257,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                             loading={loading}
                             onOpenHistory={handleOpenHistory}
                             canEdit={canEdit}
+                            canViewHistory={canViewHistory}
                         />
 
                     </Form>

@@ -25,7 +25,7 @@ class ProjectService extends BaseService {
      * @returns {Promise<void>}
      */
     async toggleVisibility(userRole, id, currentVisible, trackWrite) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS, userRole)) {
+        if (!isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.PROJECTS, userRole)) {
             throw new Error("Unauthorized action");
         }
         return this.update(id, { visible: !currentVisible }, trackWrite);
@@ -40,7 +40,7 @@ class ProjectService extends BaseService {
      * @returns {Promise<void>}
      */
     async toggleFeatured(userRole, id, currentFeatured, trackWrite) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS, userRole)) {
+        if (!isActionAllowed(ACTIONS.FEATURE, MODULES.PROJECTS, userRole)) {
             throw new Error("Unauthorized action");
         }
         return this.update(id, { featured: !currentFeatured }, trackWrite);
@@ -85,7 +85,7 @@ class ProjectService extends BaseService {
      * @returns {Promise<boolean>}
      */
     async batchUpdateProjectsVisibility(userRole, ids, visible, trackWrite) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS, userRole)) {
+        if (!isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.PROJECTS, userRole)) {
             throw new Error("Unauthorized action");
         }
         return this.batchUpdate(ids, { visible }, trackWrite);
@@ -100,7 +100,7 @@ class ProjectService extends BaseService {
      * @returns {Promise<boolean>}
      */
     async batchUpdateProjectsFeatured(userRole, ids, featured, trackWrite) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS, userRole)) {
+        if (!isActionAllowed(ACTIONS.FEATURE, MODULES.PROJECTS, userRole)) {
             throw new Error("Unauthorized action");
         }
         return this.batchUpdate(ids, { featured }, trackWrite);

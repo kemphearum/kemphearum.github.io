@@ -19,6 +19,7 @@ const ExperienceTable = ({
   canCreate = true,
   canEdit = true,
   canDelete = true,
+  canToggleVisibility,
   loading = false,
   page = 1,
   pageSize = 5,
@@ -153,7 +154,8 @@ const ExperienceTable = ({
         onDelete,
         onToggleVisibility,
         canEdit,
-        canDelete
+        canDelete,
+        canToggleVisibility
       })
     }
   ];

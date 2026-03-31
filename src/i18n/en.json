@@ -245,7 +245,10 @@
         "delete": "Delete",
         "view": "View",
         "database_actions": "DB Actions",
-        "disable": "Disable"
+        "disable": "Disable",
+        "feature": "Feature",
+        "toggle_visibility": "Visibility",
+        "view_history": "History"
       }
     },
     "roles": {

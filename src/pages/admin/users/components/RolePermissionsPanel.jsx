@@ -435,7 +435,7 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
               {roleTabsMap[role].map((tab) => {
                 const checked = (selectedByRole[role] || []).includes(tab);
 
-                const actionsList = [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE];
+                const actionsList = [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.FEATURE, ACTIONS.TOGGLE_VISIBILITY, ACTIONS.VIEW_HISTORY];
 
                 return (
                   <div key={tab} className="ui-tab-permission-group">

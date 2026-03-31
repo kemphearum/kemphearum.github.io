@@ -148,6 +148,9 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const canCreate = isActionAllowed(ACTIONS.CREATE, MODULES.PROJECTS);
   const canEdit = isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS);
   const canDelete = isActionAllowed(ACTIONS.DELETE, MODULES.PROJECTS);
+  const canFeature = isActionAllowed(ACTIONS.FEATURE, MODULES.PROJECTS);
+  const canToggleVisibility = isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.PROJECTS);
+  const canViewHistory = isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.PROJECTS);
 
   const handleAdd = () => {
     if (!isActionAllowed(ACTIONS.CREATE, MODULES.PROJECTS)) {
@@ -183,6 +186,9 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleViewHistory = (item) => {
+    if (!isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.PROJECTS)) {
+      return showToast(t('admin.common.noPermissionAction'), "error");
+    }
     setHistoryItem(item.__raw || item);
     setIsHistoryOpen(true);
   };
@@ -504,14 +510,14 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const toggleVisibility = (id, currentVisible) => {
-    if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS)) {
+    if (!isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.PROJECTS)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     visibilityMutation.mutate({ id, currentVisible });
   };
 
   const toggleFeatured = (id, currentFeatured) => {
-    if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS)) {
+    if (!isActionAllowed(ACTIONS.FEATURE, MODULES.PROJECTS)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     featuredMutation.mutate({ id, currentFeatured });
@@ -623,17 +629,17 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
           </div>
 
           <div className="ui-bulk-actions-controls">
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title={t('admin.projects.bulk.showSelected')}>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title={t('admin.projects.bulk.showSelected')} disabled={!canToggleVisibility}>
               <Eye size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.show')}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title={t('admin.projects.bulk.hideSelected')}>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title={t('admin.projects.bulk.hideSelected')} disabled={!canToggleVisibility}>
               <EyeOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.hide')}
             </Button>
             <div className="ui-bulk-divider" />
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title={t('admin.projects.bulk.featureSelected')}>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title={t('admin.projects.bulk.featureSelected')} disabled={!canFeature}>
               <Star size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.feature')}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title={t('admin.projects.bulk.unfeatureSelected')}>
+            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title={t('admin.projects.bulk.unfeatureSelected')} disabled={!canFeature}>
               <StarOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.unfeature')}
             </Button>
             <div className="ui-bulk-divider" />
@@ -655,6 +661,9 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         canCreate={canCreate}
         canEdit={canEdit}
         canDelete={canDelete}
+        canFeature={canFeature}
+        canToggleVisibility={canToggleVisibility}
+        canViewHistory={canViewHistory}
         loading={isLoading || bulkDeleteMutation.isPending || bulkVisibilityMutation.isPending || bulkFeaturedMutation.isPending}
         page={pagination.page}
         pageSize={pagination.limit}

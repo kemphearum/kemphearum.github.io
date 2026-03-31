@@ -12,7 +12,8 @@ const AboutSection = ({
     setAboutPreview,
     loading,
     onOpenHistory,
-    canEdit = true
+    canEdit = true,
+    canViewHistory = true
 }) => {
 
     const { t } = useTranslation();
@@ -35,6 +36,7 @@ const AboutSection = ({
                     size="sm"
                     onClick={() => onOpenHistory('about', t('admin.general.sections.about.title'))}
                     className={'ui-history-btn'}
+                    disabled={!canViewHistory}
                 >
                     <History size={16} /> <span>{t('admin.general.sections.about.history')}</span>
                 </Button>

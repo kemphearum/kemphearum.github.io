@@ -237,6 +237,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const canCreate = isActionAllowed(ACTIONS.CREATE, MODULES.EXPERIENCE);
   const canEdit = isActionAllowed(ACTIONS.EDIT, MODULES.EXPERIENCE);
   const canDelete = isActionAllowed(ACTIONS.DELETE, MODULES.EXPERIENCE);
+  const canToggleVisibility = isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.EXPERIENCE);
 
   const handleAdd = () => {
     if (!canCreate) {
@@ -357,7 +358,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const toggleVisibility = (id, currentVisible) => {
-    if (!isActionAllowed(ACTIONS.EDIT, MODULES.EXPERIENCE)) {
+    if (!isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.EXPERIENCE)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     visibilityMutation.mutate({ id, currentVisible });
@@ -384,6 +385,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         canCreate={canCreate}
         canEdit={canEdit}
         canDelete={canDelete}
+        canToggleVisibility={canToggleVisibility}
         loading={isLoading}
         page={pagination.page}
         pageSize={pagination.limit}

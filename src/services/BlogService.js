@@ -25,7 +25,7 @@ class BlogService extends BaseService {
      * @returns {Promise<void>}
      */
     async toggleVisibility(userRole, id, currentVisible, trackWrite) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG, userRole)) {
+        if (!isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.BLOG, userRole)) {
             throw new Error("Unauthorized action");
         }
         return this.update(id, { visible: !currentVisible }, trackWrite);
@@ -40,7 +40,7 @@ class BlogService extends BaseService {
      * @returns {Promise<void>}
      */
     async toggleFeatured(userRole, id, currentFeatured, trackWrite) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG, userRole)) {
+        if (!isActionAllowed(ACTIONS.FEATURE, MODULES.BLOG, userRole)) {
             throw new Error("Unauthorized action");
         }
         return this.update(id, { featured: !currentFeatured }, trackWrite);
@@ -85,7 +85,7 @@ class BlogService extends BaseService {
      * @returns {Promise<boolean>}
      */
     async batchUpdatePostsVisibility(userRole, ids, visible, trackWrite) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG, userRole)) {
+        if (!isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.BLOG, userRole)) {
             throw new Error("Unauthorized action");
         }
         return this.batchUpdate(ids, { visible }, trackWrite);
@@ -100,7 +100,7 @@ class BlogService extends BaseService {
      * @returns {Promise<boolean>}
      */
     async batchUpdatePostsFeatured(userRole, ids, featured, trackWrite) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG, userRole)) {
+        if (!isActionAllowed(ACTIONS.FEATURE, MODULES.BLOG, userRole)) {
             throw new Error("Unauthorized action");
         }
         return this.batchUpdate(ids, { featured }, trackWrite);
