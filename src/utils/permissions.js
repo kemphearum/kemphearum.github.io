@@ -202,11 +202,11 @@ export const isActionAllowed = (action, moduleName, role, rolePermissions = {}) 
         const explicitActionsForModule = Array.isArray(configuredActions[moduleName])
             ? configuredActions[moduleName]
             : [];
-        if (explicitActionsForModule.length > 0) {
-            return explicitActionsForModule.includes(action);
-        }
+        
+        // 1. Explicitly granted actions always win
+        if (explicitActionsForModule.includes(action)) return true;
 
-        // Dynamic/custom roles inherit capability behavior from their declared base role.
+        // 2. Fallback to inheritance from base role
         const capabilityRole = ['admin', 'editor', 'pending'].includes(normalizedRole)
             ? normalizedRole
             : permissionEntry.baseRole;

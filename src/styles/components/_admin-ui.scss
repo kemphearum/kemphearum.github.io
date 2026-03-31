@@ -2201,6 +2201,79 @@
     }
 }
 
+.ui-tab-actions-row {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+    margin-top: -0.1rem;
+    margin-bottom: 0.35rem;
+    border-radius: 12px;
+    background: rgba(var(--bg-card-rgb), 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.ui-action-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    input {
+        margin: 0;
+        accent-color: $primary-color;
+    }
+
+    &:hover:not(.is-inherited) {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    &.is-checked {
+        color: var(--text-primary);
+        background: rgba($primary-color, 0.08);
+        border-color: rgba($primary-color, 0.2);
+    }
+
+    &.is-inherited {
+        cursor: default;
+        opacity: 0.85;
+        background: rgba($primary-color, 0.12);
+        border-color: rgba($primary-color, 0.25);
+        color: $primary-color;
+    }
+}
+
+.ui-action-checkbox__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.ui-inherited-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    background: rgba($primary-color, 0.2);
+    color: $primary-color;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
 .ui-role-save-btn {
     width: 100%;
     justify-content: center;
@@ -3354,6 +3427,7 @@
     line-height: 1.65;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }

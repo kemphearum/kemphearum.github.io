@@ -452,15 +452,30 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
                     {checked && (
                       <div className="ui-tab-actions-row">
                         {actionsList.map((action) => {
+                          const selectedBaseRole = baseByRole[role] || roleEntryMap[role]?.baseRole || role;
+                          const isInherited = isActionAllowed(action, tab, selectedBaseRole);
                           const isActionChecked = (actionsByRole[role]?.[tab] || []).includes(action);
+                          
                           return (
-                            <label key={action} className={`ui-action-checkbox ${isActionChecked ? 'is-checked' : ''}`}>
+                            <label 
+                              key={action} 
+                              className={`ui-action-checkbox ${isActionChecked || isInherited ? 'is-checked' : ''} ${isInherited ? 'is-inherited' : ''}`}
+                              title={isInherited ? t('admin.rolePermissions.inheritedHint') : ''}
+                            >
                               <input
                                 type="checkbox"
-                                checked={isActionChecked}
-                                onChange={() => toggleAction(role, tab, action)}
+                                checked={isActionChecked || isInherited}
+                                onChange={() => !isInherited && toggleAction(role, tab, action)}
+                                disabled={isInherited}
                               />
-                              <span>{t(`admin.rolePermissions.actionLabels.${action}`)}</span>
+                              <span className="ui-action-checkbox__label">
+                                {t(`admin.rolePermissions.actionLabels.${action}`)}
+                                {isInherited && (
+                                  <span className="ui-inherited-badge" title={t('admin.rolePermissions.inheritedHint')}>
+                                    {t('admin.rolePermissions.inherited')}
+                                  </span>
+                                )}
+                              </span>
                             </label>
                           );
                         })}

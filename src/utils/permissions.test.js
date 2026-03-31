@@ -132,7 +132,42 @@ describe('permissions', () => {
             expect(isActionAllowed(ACTIONS.VIEW, MODULES.USERS, 'manager', rolePermissions)).toBe(true);
             expect(isActionAllowed(ACTIONS.EDIT, MODULES.USERS, 'manager', rolePermissions)).toBe(true);
             expect(isActionAllowed(ACTIONS.DISABLE, MODULES.USERS, 'manager', rolePermissions)).toBe(true);
-            expect(isActionAllowed(ACTIONS.DELETE, MODULES.USERS, 'manager', rolePermissions)).toBe(false);
+            // In the additive model, DELETE is inherited from 'admin' (even though omitted in explicit list)
+            // because 'admin' has general delete capabilities once the tab is unlocked.
+            expect(isActionAllowed(ACTIONS.DELETE, MODULES.USERS, 'manager', rolePermissions)).toBe(true);
+        });
+
+        it('should handle additive permissions (inherit from base even if explicit list is not empty)', () => {
+            const rolePermissions = {
+                custom_editor: {
+                    baseRole: 'editor',
+                    allowedTabs: [MODULES.PROJECTS],
+                    allowedActions: {
+                        [MODULES.PROJECTS]: [ACTIONS.CREATE]
+                    }
+                }
+            };
+
+            expect(isActionAllowed(ACTIONS.CREATE, MODULES.PROJECTS, 'custom_editor', rolePermissions)).toBe(true);
+            // Even though 'edit' is not in the explicit list, it should be inherited from 'editor'
+            expect(isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS, 'custom_editor', rolePermissions)).toBe(true);
+            // 'delete' is blocked for 'editor', so it stays blocked
+            expect(isActionAllowed(ACTIONS.DELETE, MODULES.PROJECTS, 'custom_editor', rolePermissions)).toBe(false);
+        });
+
+        it('should allow actions on restricted modules if the tab is explicitly granted to a custom role', () => {
+            const rolePermissions = {
+                custom_exp: {
+                    baseRole: 'editor',
+                    allowedTabs: [MODULES.EXPERIENCE],
+                    allowedActions: {}
+                }
+            };
+
+            // Default editors cannot see/edit Experience, but this role has the tab explicitly granted
+            expect(isActionAllowed(ACTIONS.VIEW, MODULES.EXPERIENCE, 'custom_exp', rolePermissions)).toBe(true);
+            expect(isActionAllowed(ACTIONS.EDIT, MODULES.EXPERIENCE, 'custom_exp', rolePermissions)).toBe(true);
+            expect(isActionAllowed(ACTIONS.DELETE, MODULES.EXPERIENCE, 'custom_exp', rolePermissions)).toBe(false);
         });
     });
 });
