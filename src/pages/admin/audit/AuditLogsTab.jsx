@@ -16,9 +16,11 @@ import ActivityAuditDialog from './components/ActivityAuditDialog';
 import QuotaResilienceBanner from '../components/QuotaResilienceBanner';
 import styles from './AuditLogsTab.module.scss';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { isSuperAdminRole } from '../../../utils/permissions';
+import { isSuperAdminRole, ACTIONS, MODULES } from '../../../utils/permissions';
 
-const AuditLogsTab = ({ userRole, showToast }) => {
+
+const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
+
   const { t } = useTranslation();
   const tm = useCallback((key, params = {}) => t(`admin.audit.${key}`, params), [t]);
   const { trackRead, currentDateKey, dailyUsage } = useActivity();
@@ -47,7 +49,8 @@ const AuditLogsTab = ({ userRole, showToast }) => {
   // UI State for Dialogs
   const [selectedLog, setSelectedLog] = useState(null);
   const [activityDetailType, setActivityDetailType] = useState(null); // 'read', 'write', or 'delete'
-  const canViewSecurityAudit = isSuperAdminRole(userRole);
+  const canViewSecurityAudit = isActionAllowed(ACTIONS.VIEW, MODULES.AUDIT);
+
 
   // 1. Fetch Aggregated Stats
   const { data: stats = {}, refetch: refetchStats } = useQuery({

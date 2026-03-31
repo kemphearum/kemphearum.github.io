@@ -11,8 +11,10 @@ const AboutSection = ({
     aboutPreview,
     setAboutPreview,
     loading,
-    onOpenHistory
+    onOpenHistory,
+    canEdit = true
 }) => {
+
     const { t } = useTranslation();
     const { watch } = useFormContext();
     const skills = watch('skills') || '';
@@ -104,10 +106,11 @@ const AboutSection = ({
                 </div>
 
                 <div className={'ui-formFooter'}>
-                    <Button type="submit" isLoading={loading} className="ui-button-block">
+                    <Button type="submit" isLoading={loading} className="ui-button-block" disabled={!canEdit}>
                         <Save size={18} /> {t('admin.general.sections.about.save')}
                     </Button>
                 </div>
+
             </div>
         </div>
     );

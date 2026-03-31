@@ -14,8 +14,10 @@ const HomeSection = ({
     setHomePreview,
     loading,
     onOpenHistory,
-    currentImageUrl
+    currentImageUrl,
+    canEdit = true
 }) => {
+
     const { t } = useTranslation();
 
     return (
@@ -145,10 +147,11 @@ const HomeSection = ({
                 </div>
 
                 <div className={'ui-formFooter'}>
-                    <Button type="submit" isLoading={loading} className="ui-button-block">
+                    <Button type="submit" isLoading={loading} className="ui-button-block" disabled={!canEdit}>
                         <Save size={18} /> {t('admin.general.sections.home.save')}
                     </Button>
                 </div>
+
             </div>
         </div>
     );

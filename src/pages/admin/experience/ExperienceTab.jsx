@@ -13,6 +13,8 @@ import { BriefcaseBusiness, Eye, Building2, Clock3 } from 'lucide-react';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { getLocalizedField } from '../../../utils/localization';
+import { ACTIONS, MODULES } from '../../../utils/permissions';
+
 
 const normalizeTimelineMonth = (value, isEnd = false) => {
   if (!value) return '';
@@ -64,8 +66,6 @@ const isCurrentRole = (item) => {
   const rawEnd = `${item.endMonthYear || item.endDate || item.period || ''}`.toLowerCase();
   return rawEnd.includes('present');
 };
-
-import { ACTIONS, MODULES } from '../../../utils/permissions';
 
 const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const { language, t } = useTranslation();

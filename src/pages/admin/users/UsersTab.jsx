@@ -14,7 +14,7 @@ import UsersFormDialog from './components/UsersFormDialog';
 import UserDetailDialog from './components/UserDetailDialog';
 import RolePermissionsPanel from './components/RolePermissionsPanel';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { ACTIONS, MODULES, formatRoleDisplayName } from '../../../utils/permissions';
+import { ACTIONS, MODULES, formatRoleDisplayName, normalizeRole } from '../../../utils/permissions';
 
 
 import { useCursorPagination } from '../../../hooks/useCursorPagination';

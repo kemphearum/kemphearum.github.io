@@ -13,8 +13,11 @@ import AboutSection from './components/AboutSection';
 import ContactSection from './components/ContactSection';
 import { getLanguageValue } from '../../../utils/localization';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { ACTIONS, MODULES } from '../../../utils/permissions';
 
-const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData }) => {
+
+const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData, isActionAllowed }) => {
+
     const { t } = useTranslation();
     const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
     const [activeSection, setActiveSection] = useState('home');
@@ -23,6 +26,9 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
     const [homePreview, setHomePreview] = useState(false);
     const [aboutPreview, setAboutPreview] = useState(false);
     const [contactPreview, setContactPreview] = useState(false);
+
+    const canEdit = isActionAllowed(ACTIONS.EDIT, MODULES.GENERAL);
+
 
     const handleSaveHome = async (data) => {
         let imageUrl = homeData.profileImageUrl;
@@ -205,7 +211,9 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                             loading={loading}
                             onOpenHistory={handleOpenHistory}
                             currentImageUrl={homeData.profileImageUrl}
+                            canEdit={canEdit}
                         />
+
                     </Form>
                 </Tabs.Content>
 
@@ -224,7 +232,9 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                             setAboutPreview={setAboutPreview}
                             loading={loading}
                             onOpenHistory={handleOpenHistory}
+                            canEdit={canEdit}
                         />
+
                     </Form>
                 </Tabs.Content>
 
@@ -242,7 +252,9 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                             setContactPreview={setContactPreview}
                             loading={loading}
                             onOpenHistory={handleOpenHistory}
+                            canEdit={canEdit}
                         />
+
                     </Form>
                 </Tabs.Content>
             </Tabs>

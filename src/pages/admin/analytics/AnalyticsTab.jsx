@@ -27,7 +27,8 @@ import AnalyticsChart from './components/AnalyticsChart';
 import LoadingOverlay from '../../../shared/components/ui/loading-overlay/LoadingOverlay';
 import EmptyState from '../../../shared/components/ui/empty-state/EmptyState';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { isAdminRole } from '../../../utils/permissions';
+import { isAdminRole, ACTIONS, MODULES } from '../../../utils/permissions';
+
 
 const toDateKey = (value) => {
     if (!value) return null;
@@ -41,7 +42,8 @@ const formatShortDate = (value) => {
     return new Date(`${value}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-const AnalyticsTab = ({ userRole, showToast }) => {
+const AnalyticsTab = ({ userRole, showToast, isActionAllowed }) => {
+
     const { t } = useTranslation();
     const tm = useCallback((key, params = {}) => t(`admin.analytics.${key}`, params), [t]);
     const { trackRead } = useActivity();
@@ -75,7 +77,8 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     const detailLimit = 5;
     const [quotaExceeded, setQuotaExceeded] = useState(false);
     const shouldFetchDetailLogs = analyticsDetail === 'visits';
-    const canViewAnalytics = isAdminRole(userRole);
+    const canViewAnalytics = isActionAllowed(ACTIONS.VIEW, MODULES.ANALYTICS);
+
 
     // 2. DATA FETCHING (STANDARD REACT QUERY)
     const {

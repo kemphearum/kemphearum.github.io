@@ -9,8 +9,10 @@ const ContactSection = ({
     contactPreview,
     setContactPreview,
     loading,
-    onOpenHistory
+    onOpenHistory,
+    canEdit = true
 }) => {
+
     const { t } = useTranslation();
 
     return (
@@ -81,10 +83,11 @@ const ContactSection = ({
                     </aside>
                 </div>
                 <div className={'ui-formFooter'}>
-                    <Button type="submit" isLoading={loading} className="ui-button-block">
+                    <Button type="submit" isLoading={loading} className="ui-button-block" disabled={!canEdit}>
                         <Save size={18} /> {t('admin.general.sections.contact.save')}
                     </Button>
                 </div>
+
             </div>
         </div>
     );
