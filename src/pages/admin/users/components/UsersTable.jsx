@@ -4,6 +4,7 @@ import DataTable from '../../../../shared/components/ui/data-table/DataTable';
 import { Button, Badge } from '../../../../shared/components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { formatRoleDisplayName, isSuperAdminRole, normalizeRole } from '../../../../utils/permissions';
+import HighlightText from '../../../../shared/components/ui/HighlightText';
 
 
 const UsersTable = ({ 
@@ -71,9 +72,13 @@ const UsersTable = ({
             </div>
             <div className="ui-user-identity-text">
               <span className="ui-user-email-text">
-                {isUserDisabled ? <strike>{user.email}</strike> : user.email}
+                {isUserDisabled ? <strike>{user.email}</strike> : <HighlightText text={user.email} query={searchQuery} />}
               </span>
-              {user.displayName && <span className="ui-user-display-name">{user.displayName}</span>}
+              {user.displayName && (
+                <span className="ui-user-display-name">
+                  <HighlightText text={user.displayName} query={searchQuery} />
+                </span>
+              )}
             </div>
           </div>
         );
@@ -226,5 +231,3 @@ const UsersTable = ({
 };
 
 export default UsersTable;
-
-

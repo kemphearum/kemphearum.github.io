@@ -5,6 +5,7 @@ import DataTable from '@/shared/components/ui/data-table/DataTable';
 import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableHelpers';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { getLocalizedField } from '../../../../utils/localization';
+import HighlightText from '@/shared/components/ui/HighlightText';
 
 /**
  * BlogTable Component
@@ -31,7 +32,8 @@ const BlogTable = ({
   onPrevious,
   onPageChange,
   paginationVariant = 'cursor',
-  selection = null
+  selection = null,
+  searchQuery = ''
 }) => {
   const { t, language } = useTranslation();
   const formatPostDate = (value) => {
@@ -76,9 +78,14 @@ const BlogTable = ({
 
         return (
           <div className="ui-blog-tableTitle">
-            <div className="ui-blog-tableTitle__main">{getLocalizedField(row.title, language) || t('admin.blog.table.untitled')}</div>
+            <div className="ui-blog-tableTitle__main">
+              <HighlightText 
+                text={getLocalizedField(row.title, language) || t('admin.blog.table.untitled')} 
+                query={searchQuery} 
+              />
+            </div>
             <div className="ui-blog-tableTitle__meta">
-              <span>/{row.slug || row.id}</span>
+              <span>/<HighlightText text={row.slug || row.id} query={searchQuery} /></span>
               <span>{getExcerpt(row.excerpt)}</span>
             </div>
             {tags.length > 0 && (

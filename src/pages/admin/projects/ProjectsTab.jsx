@@ -20,6 +20,8 @@ import ImageProcessingService from '../../../services/ImageProcessingService';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { getLanguageValue, getLocalizedField } from '../../../utils/localization';
 
+import { ACTIONS, MODULES } from '../../../utils/permissions';
+
 const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const { language, t } = useTranslation();
   const [editingItem, setEditingItem] = useState(null);
@@ -74,7 +76,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         lastDoc: requestCursor,
         limit: pagination.limit,
         search: debouncedSearch,
-        searchField: 'title.en',
+        searchFields: ['title.en', 'title.km', 'description.en', 'description.km', 'techStack', 'slug'],
         sortBy: "createdAt",
         sortDirection: "desc",
         includeTotal: true,
@@ -143,12 +145,12 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   ];
 
   // Permission Booleans
-  const canCreate = isActionAllowed('create', 'projects');
-  const canEdit = isActionAllowed('edit', 'projects');
-  const canDelete = isActionAllowed('delete', 'projects');
+  const canCreate = isActionAllowed(ACTIONS.CREATE, MODULES.PROJECTS);
+  const canEdit = isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS);
+  const canDelete = isActionAllowed(ACTIONS.DELETE, MODULES.PROJECTS);
 
   const handleAdd = () => {
-    if (!isActionAllowed('create', 'projects')) {
+    if (!isActionAllowed(ACTIONS.CREATE, MODULES.PROJECTS)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     setEditingItem(null);
@@ -162,7 +164,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleEdit = (item) => {
-    if (!isActionAllowed('edit', 'projects')) {
+    if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     const source = item.__raw || item;
@@ -174,7 +176,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleDelete = (item) => {
-    if (!isActionAllowed('delete', 'projects')) {
+    if (!isActionAllowed(ACTIONS.DELETE, MODULES.PROJECTS)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     setDeletingItem(item.__raw || item);
@@ -207,7 +209,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleSave = async (formData) => {
-    if (!isActionAllowed(editingItem ? 'edit' : 'create', 'projects')) {
+    if (!isActionAllowed(editingItem ? ACTIONS.EDIT : ACTIONS.CREATE, MODULES.PROJECTS)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     
@@ -502,14 +504,14 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const toggleVisibility = (id, currentVisible) => {
-    if (!isActionAllowed('edit', 'projects')) {
+    if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     visibilityMutation.mutate({ id, currentVisible });
   };
 
   const toggleFeatured = (id, currentFeatured) => {
-    if (!isActionAllowed('edit', 'projects')) {
+    if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     featuredMutation.mutate({ id, currentFeatured });
@@ -575,7 +577,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const confirmDelete = async () => {
     if (!deletingItem) return;
-    if (!isActionAllowed('delete', 'projects')) {
+    if (!isActionAllowed(ACTIONS.DELETE, MODULES.PROJECTS)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
 
@@ -666,6 +668,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
             pagination.handlePageSizeChange(size);
           }
         }}
+        searchQuery={searchQuery}
         selection={{
           selectedIds: selectedProjects,
           onSelect: handleToggleSelectProject,

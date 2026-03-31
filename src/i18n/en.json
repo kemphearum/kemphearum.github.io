@@ -238,7 +238,15 @@
       "roleReserved": "This role name is reserved.",
       "roleExists": "This role already exists.",
       "inherited": "Inherited",
-      "inheritedHint": "This permission is granted by the base role and cannot be removed here. Explicitly grant actions to add more capability."
+      "inheritedHint": "This permission is granted by the base role and cannot be removed here. Explicitly grant actions to add more capability.",
+      "actionLabels": {
+        "create": "Create",
+        "edit": "Edit",
+        "delete": "Delete",
+        "view": "View",
+        "database_actions": "DB Actions",
+        "disable": "Disable"
+      }
     },
     "roles": {
       "pending": "Pending",

@@ -144,7 +144,7 @@ export default class BaseService {
      * @param {import('firebase/firestore').DocumentSnapshot|null} [options.lastDoc]
      * @param {number} [options.limit=10]
      * @param {string} [options.search]
-     * @param {string|null} [options.searchField]
+     * @param {string[]} [options.searchFields]
      * @param {string} [options.sortBy='createdAt']
      * @param {'asc'|'desc'} [options.sortDirection='desc']
      * @param {boolean} [options.includeTotal=false]
@@ -156,6 +156,7 @@ export default class BaseService {
         limit = 10, 
         search = '', 
         searchField = null, 
+        searchFields = [],
         sortBy = 'createdAt', 
         sortDirection = 'desc', 
         includeTotal = false,
@@ -188,7 +189,8 @@ export default class BaseService {
                 }
             }
 
-            let constraints = [orderBy(sortBy, sortDirection), firestoreLimit(limit + 1)];
+            const fetchLimit = search ? Math.max(limit, 100) : limit;
+            let constraints = [orderBy(sortBy, sortDirection), firestoreLimit(fetchLimit + 1)];
 
             if (lastDoc) {
                 constraints.push(startAfter(lastDoc));
@@ -199,14 +201,21 @@ export default class BaseService {
             
             const docs = querySnapshot.docs;
             const hasMore = docs.length > limit;
-            const resultDocs = hasMore ? docs.slice(0, limit) : docs;
+            const fetchedDocs = hasMore ? docs.slice(0, limit) : docs;
+
+            let data = fetchedDocs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Advanced Client-side filtering if search is active
+            if (search && (searchField || searchFields.length > 0)) {
+                const targetFields = searchFields.length > 0 ? searchFields : [searchField];
+                data = this._searchFilter(data, search, targetFields);
+            }
 
             if (trackRead) {
                 trackRead(querySnapshot.size, `Fetched paginated ${this.collectionName}`, { count: querySnapshot.size });
             }
 
-            const data = resultDocs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const lastVisible = resultDocs.length > 0 ? resultDocs[resultDocs.length - 1] : null;
+            const lastVisible = fetchedDocs.length > 0 ? fetchedDocs[fetchedDocs.length - 1] : null;
 
             return {
                 data,
@@ -218,6 +227,33 @@ export default class BaseService {
             console.error(`Error in fetchPaginated for ${this.collectionName}:`, error);
             throw error;
         }
+    }
+
+    /**
+     * Advanced case-insensitive substring filter for local arrays.
+     * @param {Array<Object>} data 
+     * @param {string} search 
+     * @param {string[]} fields 
+     * @returns {Array<Object>}
+     */
+    _searchFilter(data, search, fields) {
+        if (!search || !fields || fields.length === 0) return data;
+        const queryText = search.toLowerCase().trim();
+        if (!queryText) return data;
+
+        return data.filter(item => {
+            return fields.some(field => {
+                const value = item[field];
+                if (value === null || value === undefined) return false;
+                
+                // Handle strings, arrays, and objects (basic stringify)
+                const stringValue = typeof value === 'string' 
+                    ? value.toLowerCase() 
+                    : JSON.stringify(value).toLowerCase();
+                
+                return stringValue.includes(queryText);
+            });
+        });
     }
 
     /**

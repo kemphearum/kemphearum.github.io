@@ -20,6 +20,8 @@ import ImageProcessingService from '../../../services/ImageProcessingService';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { getLanguageValue, getLocalizedField } from '../../../utils/localization';
 
+import { ACTIONS, MODULES } from '../../../utils/permissions';
+
 const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const { language, t } = useTranslation();
   // State
@@ -81,7 +83,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         lastDoc: requestCursor,
         limit: pagination.limit,
         search: debouncedSearch,
-        searchField: 'title.en',
+        searchFields: ['title.en', 'title.km', 'excerpt.en', 'excerpt.km', 'tags', 'slug'],
         sortBy: "createdAt",
         sortDirection: "desc",
         includeTotal: true,
@@ -151,9 +153,9 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
   // Handlers
   // Permission Booleans
-  const canCreate = isActionAllowed('create', 'blog');
-  const canEdit = isActionAllowed('edit', 'blog');
-  const canDelete = isActionAllowed('delete', 'blog');
+  const canCreate = isActionAllowed(ACTIONS.CREATE, MODULES.BLOG);
+  const canEdit = isActionAllowed(ACTIONS.EDIT, MODULES.BLOG);
+  const canDelete = isActionAllowed(ACTIONS.DELETE, MODULES.BLOG);
 
   const handleCreate = () => {
     if (!canCreate) {
@@ -164,7 +166,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleEdit = (post) => {
-    if (!isActionAllowed('edit', 'blog')) {
+    if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     const source = post.__raw || post;
@@ -176,7 +178,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleDelete = (post) => {
-    if (!isActionAllowed('delete', 'blog')) {
+    if (!isActionAllowed(ACTIONS.DELETE, MODULES.BLOG)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     setSelectedPost(post.__raw || post);
@@ -348,7 +350,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleFormSubmit = async (formData) => {
-    if (!isActionAllowed(selectedPost ? 'edit' : 'create', 'blog')) {
+    if (!isActionAllowed(selectedPost ? ACTIONS.EDIT : ACTIONS.CREATE, MODULES.BLOG)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     
@@ -568,7 +570,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const handleConfirmDelete = async () => {
     if (!selectedPost?.id) return;
-    if (!isActionAllowed('delete', 'blog')) {
+    if (!isActionAllowed(ACTIONS.DELETE, MODULES.BLOG)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
 
@@ -659,6 +661,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
             pagination.handlePageSizeChange(size);
           }
         }}
+        searchQuery={searchQuery}
         selection={{
           selectedIds: selectedPosts,
           onSelect: handleToggleSelectPost,

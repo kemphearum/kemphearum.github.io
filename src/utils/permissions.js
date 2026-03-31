@@ -216,7 +216,8 @@ export const isActionAllowed = (action, moduleName, role, rolePermissions = {}) 
         if (capabilityRole === 'superadmin') return true;
         
         if (capabilityRole === 'admin') {
-            // Admins can't perform full destructive database actions
+            // Admins can do anything that isn't SuperAdmin-only,
+            // except full DB destructive actions
             if (moduleName === MODULES.DATABASE && action === ACTIONS.DATABASE_ACTIONS) return false;
             return true;
         }
@@ -232,5 +233,6 @@ export const isActionAllowed = (action, moduleName, role, rolePermissions = {}) 
     }
 
     // 5. Default Role Matrices (Fallback logic if no specific config exists)
+    // Only applied if we don't have a dynamic config for the role.
     return isDefaultRoleCapabilityAllowed(action, moduleName, normalizedRole);
 };

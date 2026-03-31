@@ -20,6 +20,7 @@ import AuditSettingsPanel from './components/AuditSettingsPanel';
 import RestoreProgress from './components/RestoreProgress';
 import QuotaResilienceBanner from '../components/QuotaResilienceBanner';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { ACTIONS, MODULES } from '../../../utils/permissions';
 
 // Styles
 
@@ -133,9 +134,9 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     });
 
     // Handlers
-    const canEditAudit = isActionAllowed('edit', 'database');
-    const canDatabaseActions = isActionAllowed('database_actions', 'database');
-    const canArchive = isActionAllowed('delete', 'database');
+    const canEditAudit = isActionAllowed(ACTIONS.EDIT, MODULES.DATABASE);
+    const canDatabaseActions = isActionAllowed(ACTIONS.DATABASE_ACTIONS, MODULES.DATABASE);
+    const canArchive = isActionAllowed(ACTIONS.DELETE, MODULES.DATABASE);
 
     const handleUpdateAuditSetting = async (key, value) => {
         if (!canEditAudit) {

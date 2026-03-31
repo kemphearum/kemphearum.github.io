@@ -18,6 +18,7 @@ class UserService extends BaseService {
      * @param {import('firebase/firestore').DocumentSnapshot|null} [params.lastDoc]
      * @param {number} [params.limit]
      * @param {string} [params.search]
+     * @param {boolean} [params.includeTotal]
      * @returns {Promise<import('./BaseService').PaginatedResult>}
      */
     async fetchUsers({ userRole, trackRead, lastDoc = null, limit = 20, search = '', includeTotal = false }) {
@@ -27,7 +28,7 @@ class UserService extends BaseService {
             lastDoc,
             limit,
             search,
-            searchField: 'email',
+            searchFields: ['email', 'displayName', 'role'],
             sortBy: 'createdAt',
             sortDirection: 'desc',
             includeTotal,
@@ -62,6 +63,7 @@ class UserService extends BaseService {
      * @param {string} userId 
      * @param {string} newRole 
      * @param {function(number, string): void} [trackWrite] 
+     * @param {Object} [rolePermissions]
      * @returns {Promise<void>}
      */
     async updateRole(userRole, userId, newRole, trackWrite, rolePermissions = {}) {
@@ -76,7 +78,7 @@ class UserService extends BaseService {
      * @param {string} userId
      * @param {boolean} shouldDisable
      * @param {function(number, string): void} [trackWrite]
-     * @param {Object} [rolePermissions={}]
+     * @param {Object} [rolePermissions]
      * @returns {Promise<void>}
      */
     async setUserDisabled(userRole, userId, shouldDisable, trackWrite, rolePermissions = {}) {
@@ -92,6 +94,7 @@ class UserService extends BaseService {
      * @param {string} userRole 
      * @param {string} userId 
      * @param {function(number, string, Object): void} [trackDelete] 
+     * @param {Object} [rolePermissions]
      * @returns {Promise<void>}
      */
     async removeUser(userRole, userId, trackDelete, rolePermissions = {}) {
@@ -104,6 +107,7 @@ class UserService extends BaseService {
      * Send password reset email.
      * @param {string} userRole 
      * @param {string} email 
+     * @param {Object} [rolePermissions]
      * @returns {Promise<void>}
      */
     async sendPasswordReset(userRole, email, rolePermissions = {}) {
@@ -118,6 +122,7 @@ class UserService extends BaseService {
      * @param {string} password 
      * @param {string} role 
      * @param {function(number, string): void} [trackRead] 
+     * @param {Object} [rolePermissions]
      * @returns {Promise<void>}
      */
     async createUser(userRole, email, password, role, trackRead, rolePermissions = {}) {
@@ -175,7 +180,7 @@ class UserService extends BaseService {
     /**
      * Fetch role-based tab permissions.
      * @param {function(number, string): void} [trackRead] 
-     * @returns {Promise<Record<string, Array<string>>>} Map of roles to allowed tabs
+     * @returns {Promise<Record<string, Object>>} Map of roles to normalized permission objects
      */
     async fetchRolePermissions(trackRead) {
         const q = query(collection(db, "rolePermissions"));
@@ -205,6 +210,8 @@ class UserService extends BaseService {
      * @param {string} role 
      * @param {Array<string>} allowedTabs 
      * @param {function(number, string): void} [trackWrite] 
+     * @param {string} [baseRole]
+     * @param {Object} [allowedActions]
      * @returns {Promise<void>}
      */
     async saveRolePermissions(role, allowedTabs, trackWrite, baseRole, allowedActions = {}) {

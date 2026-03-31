@@ -10,6 +10,7 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import MessagesTable from './components/MessagesTable';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { ACTIONS, MODULES } from '../../../utils/permissions';
 
 const getDateFromTimestamp = (timestamp) => {
     if (!timestamp?.seconds) return null;
@@ -203,7 +204,7 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
 
     const handleBatchDeleteMessages = () => {
         if (selectedMessages.length === 0) return;
-        if (!isActionAllowed('delete', 'messages')) {
+        if (!isActionAllowed(ACTIONS.DELETE, MODULES.MESSAGES)) {
             return showToast(t('admin.common.noPermissionAction'), 'error');
         }
 
@@ -228,7 +229,7 @@ const MessagesTab = ({ userRole, showToast, isActionAllowed, onMessagesChange })
     };
 
     const handleDeleteMessage = (id) => {
-        if (!isActionAllowed('delete', 'messages')) {
+        if (!isActionAllowed(ACTIONS.DELETE, MODULES.MESSAGES)) {
             return showToast(t('admin.common.noPermissionAction'), 'error');
         }
 

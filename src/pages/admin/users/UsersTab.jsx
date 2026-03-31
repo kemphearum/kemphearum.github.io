@@ -14,7 +14,8 @@ import UsersFormDialog from './components/UsersFormDialog';
 import UserDetailDialog from './components/UserDetailDialog';
 import RolePermissionsPanel from './components/RolePermissionsPanel';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { ACTIONS, MODULES, formatRoleDisplayName, isSuperAdminRole, normalizeRole } from '../../../utils/permissions';
+import { ACTIONS, MODULES, formatRoleDisplayName } from '../../../utils/permissions';
+
 
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 
@@ -59,7 +60,8 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   });
 
   const { trackRead, trackWrite } = useActivity();
-  const normalizedUserRole = normalizeRole(userRole);
+  const canViewUsers = isActionAllowed(ACTIONS.VIEW, MODULES.USERS);
+
 
   // cursor pagination hook
   const pagination = useCursorPagination(5, [debouncedSearch]);
@@ -89,23 +91,26 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
       pagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
       return result.data;
     },
-    enabled: isSuperAdminRole(normalizedUserRole)
+    enabled: canViewUsers
+
   });
 
   const { data: userStatsResult = { total: 0, active: 0, elevated: 0, disabled: 0 } } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['users', 'stats', normalizedUserRole],
+    queryKey: ['users', 'stats', userRole],
     queryFn: async () => {
-      const result = await BaseService.safe(() => UserService.fetchStats(normalizedUserRole));
+      const result = await BaseService.safe(() => UserService.fetchStats(userRole));
+
       if (result.error) {
         showToast(result.error, 'error');
         return { total: 0, active: 0, elevated: 0, disabled: 0 };
       }
       return result.data;
     },
-    enabled: isSuperAdminRole(normalizedUserRole)
+    enabled: canViewUsers
+
   });
 
   const usersList = usersResult.data;
@@ -146,7 +151,8 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
       }
       return result.data;
     },
-    enabled: isSuperAdminRole(normalizedUserRole)
+    enabled: canViewUsers
+
   });
 
   const availableRoles = Array.from(new Set([
@@ -272,7 +278,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   const canEditUsers = isActionAllowed(ACTIONS.EDIT, MODULES.USERS);
   const canDisableUsers = isActionAllowed(ACTIONS.DISABLE, MODULES.USERS);
 
-  if (!isSuperAdminRole(normalizedUserRole)) {
+  if (!isActionAllowed(ACTIONS.VIEW, MODULES.USERS)) {
     return (
       <EmptyState 
         title={tm('restricted.title')}

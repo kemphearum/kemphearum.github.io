@@ -65,6 +65,8 @@ const isCurrentRole = (item) => {
   return rawEnd.includes('present');
 };
 
+import { ACTIONS, MODULES } from '../../../utils/permissions';
+
 const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const { language, t } = useTranslation();
   const [editingItem, setEditingItem] = useState(null);
@@ -232,9 +234,9 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   // Permission Booleans
-  const canCreate = isActionAllowed('create', 'experience');
-  const canEdit = isActionAllowed('edit', 'experience');
-  const canDelete = isActionAllowed('delete', 'experience');
+  const canCreate = isActionAllowed(ACTIONS.CREATE, MODULES.EXPERIENCE);
+  const canEdit = isActionAllowed(ACTIONS.EDIT, MODULES.EXPERIENCE);
+  const canDelete = isActionAllowed(ACTIONS.DELETE, MODULES.EXPERIENCE);
 
   const handleAdd = () => {
     if (!canCreate) {
@@ -250,7 +252,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleEdit = (exp) => {
-    if (!isActionAllowed('edit', 'experience')) {
+    if (!isActionAllowed(ACTIONS.EDIT, MODULES.EXPERIENCE)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     const source = exp.__raw || exp;
@@ -268,14 +270,14 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleDelete = (item) => {
-    if (!isActionAllowed('delete', 'experience')) {
+    if (!isActionAllowed(ACTIONS.DELETE, MODULES.EXPERIENCE)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     setDeletingItem(item.__raw || item);
   };
 
   const handleSave = async (formData) => {
-    if (!isActionAllowed(editingItem ? 'edit' : 'create', 'experience')) {
+    if (!isActionAllowed(editingItem ? ACTIONS.EDIT : ACTIONS.CREATE, MODULES.EXPERIENCE)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     
@@ -302,7 +304,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const confirmDelete = async () => {
     if (!deletingItem) return;
-    if (!isActionAllowed('delete', 'experience')) {
+    if (!isActionAllowed(ACTIONS.DELETE, MODULES.EXPERIENCE)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
 
@@ -355,7 +357,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const toggleVisibility = (id, currentVisible) => {
-    if (!isActionAllowed('edit', 'experience')) {
+    if (!isActionAllowed(ACTIONS.EDIT, MODULES.EXPERIENCE)) {
       return showToast(t('admin.common.noPermissionAction'), "error");
     }
     visibilityMutation.mutate({ id, currentVisible });
