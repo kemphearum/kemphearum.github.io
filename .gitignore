@@ -50,3 +50,27 @@ seed/
 seeds/
 workflow/
 workflows/
+workflow=walkthrough.md
+walkthrough.md
+
+# Local caches / temp
+*.cache
+.eslintcache
+.stylelintcache
+.sass-cache/
+tmp/
+temp/
+*.pid
+Thumbs.db
+
+# Firebase / local emulator logs
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Test reports
+playwright-report/
+test-results/
+
+# JetBrains
+*.iml
