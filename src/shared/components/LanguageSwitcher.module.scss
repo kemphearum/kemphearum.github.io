@@ -96,3 +96,14 @@
         font-size: 0.75rem;
     }
 }
+
+@media (max-width: 640px) {
+    .pillContainer {
+        width: 82px;
+        height: 32px;
+    }
+
+    .buttonText {
+        font-size: 0.72rem;
+    }
+}
