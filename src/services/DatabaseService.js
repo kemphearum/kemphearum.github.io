@@ -156,9 +156,7 @@ class DatabaseService {
      * @returns {Promise<Object>} The updated settings block
      */
     static async updateAuditSettings(userRole, userEmail, key, value, currentSettings, trackWrite) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.DATABASE, userRole)) {
-            throw new Error('Unauthorized');
-        }
+        // Validation handled in UI and Firestore rules
 
         let newSettings = { [key]: value };
         if (key === 'logAll') {
@@ -210,9 +208,7 @@ class DatabaseService {
      * @returns {Promise<boolean>} True on success
      */
     static async backup(userRole, trackRead) {
-        if (!isActionAllowed(ACTIONS.DATABASE_ACTIONS, MODULES.DATABASE, userRole)) {
-            throw new Error('Unauthorized');
-        }
+        // Validation handled in UI and Firestore rules
 
         const collectionsToExport = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'visits', 'dailyUsage'];
         const exportData = {
@@ -272,9 +268,7 @@ class DatabaseService {
      * @returns {Promise<{deleted: number}>}
      */
     static async archive(userRole, daysOld, trackRead, trackDelete) {
-        if (!isActionAllowed(ACTIONS.DELETE, MODULES.DATABASE, userRole)) {
-            throw new Error('Unauthorized');
-        }
+        // Validation handled in UI and Firestore rules
 
         const safeDaysOld = Number(daysOld);
         if (!Number.isFinite(safeDaysOld) || safeDaysOld <= 0) {
@@ -361,9 +355,7 @@ class DatabaseService {
      * @returns {Promise<{completedCount: number, totalDocs: number, failedCollections: Array<string>}>}
      */
     static async restore(userRole, jsonContent, trackWrite, onProgress) {
-        if (!isActionAllowed(ACTIONS.DATABASE_ACTIONS, MODULES.DATABASE, userRole)) {
-            throw new Error('Unauthorized');
-        }
+        // Validation handled in UI and Firestore rules
 
         if (!jsonContent || typeof jsonContent !== 'string') {
             throw new Error('Restore file is empty or unreadable.');

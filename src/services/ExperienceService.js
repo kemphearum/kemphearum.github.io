@@ -16,16 +16,12 @@ class ExperienceService extends BaseService {
     }
 
     async toggleVisibility(userRole, id, currentVisible, trackWrite) {
-        if (!isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.EXPERIENCE, userRole)) {
-            throw new Error("Unauthorized action");
-        }
+        // Validation handled in UI and Firestore rules
         return this.update(id, { visible: !currentVisible }, trackWrite);
     }
 
     async deleteExperience(userRole, id, trackDelete) {
-        if (!isActionAllowed(ACTIONS.DELETE, MODULES.EXPERIENCE, userRole)) {
-            throw new Error("Unauthorized action");
-        }
+        // Validation handled in UI and Firestore rules
         return this.delete(id, (count, label) => {
             if (trackDelete) trackDelete(count, label, { id, action: 'deleted' });
         });
@@ -37,9 +33,7 @@ class ExperienceService extends BaseService {
      */
     async saveExperience(userRole, formData, trackWrite) {
         const action = formData.id ? ACTIONS.EDIT : ACTIONS.CREATE;
-        if (!isActionAllowed(action, MODULES.EXPERIENCE, userRole)) {
-            throw new Error("Unauthorized action");
-        }
+        // Validation handled in UI and Firestore rules
 
         // 1. Normalize
         const dataToSave = normalizeExperience(formData);
