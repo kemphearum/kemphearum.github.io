@@ -3,7 +3,7 @@ import { tabLabels } from '../../components/constants';
 import { Button } from '../../../../shared/components/ui';
 import DeleteConfirmDialog from '../../../../shared/components/dialog/DeleteConfirmDialog';
 import { useTranslation } from '../../../../hooks/useTranslation';
-import { formatRoleDisplayName, normalizeRole, normalizeRolePermissionEntry } from '../../../../utils/permissions';
+import { formatRoleDisplayName, normalizeRole, normalizeRolePermissionEntry, ACTIONS } from '../../../../utils/permissions';
 
 const NON_CONFIGURABLE_TABS = ['profile', 'audit'];
 const RESERVED_ROLES = ['superadmin'];
@@ -83,6 +83,7 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
   ), [roleEntryMap]);
 
   const [selectedByRole, setSelectedByRole] = useState({});
+  const [actionsByRole, setActionsByRole] = useState({});
   const [baseByRole, setBaseByRole] = useState({});
   const [dirtyByRole, setDirtyByRole] = useState({});
   const [savingRole, setSavingRole] = useState(null);
@@ -135,8 +136,15 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
       acc[role] = selected;
       return acc;
     }, {});
+
+    const normalizedActions = managedRoles.reduce((acc, role) => {
+      acc[role] = roleEntryMap[role]?.allowedActions || {};
+      return acc;
+    }, {});
+
     setBaseByRole(normalizedBaseMap);
     setSelectedByRole(normalizedSelection);
+    setActionsByRole(normalizedActions);
     setDirtyByRole(managedRoles.reduce((acc, role) => {
       acc[role] = false;
       return acc;
@@ -154,12 +162,41 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
   const toggleTab = (role, tab) => {
     setSelectedByRole((prev) => {
       const current = new Set(prev[role] || []);
-      if (current.has(tab)) {
+      const isRemoving = current.has(tab);
+      if (isRemoving) {
         current.delete(tab);
       } else {
         current.add(tab);
       }
       return { ...prev, [role]: Array.from(current) };
+    });
+
+    // If removing a tab, also clear its actions
+    setActionsByRole((prev) => {
+      const currentRoleActions = { ...(prev[role] || {}) };
+      const isCurrentlySelected = (selectedByRole[role] || []).includes(tab);
+      if (isCurrentlySelected) {
+        delete currentRoleActions[tab];
+      }
+      return { ...prev, [role]: currentRoleActions };
+    });
+
+    setDirtyByRole((prev) => ({ ...prev, [role]: true }));
+  };
+
+  const toggleAction = (role, tab, action) => {
+    setActionsByRole((prev) => {
+      const currentRoleActions = { ...(prev[role] || {}) };
+      const currentTabActions = new Set(currentRoleActions[tab] || []);
+      
+      if (currentTabActions.has(action)) {
+        currentTabActions.delete(action);
+      } else {
+        currentTabActions.add(action);
+      }
+
+      currentRoleActions[tab] = Array.from(currentTabActions);
+      return { ...prev, [role]: currentRoleActions };
     });
     setDirtyByRole((prev) => ({ ...prev, [role]: true }));
   };
@@ -169,6 +206,11 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
       ...prev,
       [role]: shouldSelectAll ? [...roleTabsMap[role]] : []
     }));
+
+    if (!shouldSelectAll) {
+      setActionsByRole((prev) => ({ ...prev, [role]: {} }));
+    }
+
     setDirtyByRole((prev) => ({ ...prev, [role]: true }));
   };
 
@@ -191,7 +233,8 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
       await onSave(
         role,
         selectedByRole[role] || [],
-        baseByRole[role] || roleEntryMap[role]?.baseRole || role
+        baseByRole[role] || roleEntryMap[role]?.baseRole || role,
+        actionsByRole[role] || {}
       );
       setDirtyByRole((prev) => ({ ...prev, [role]: false }));
     } finally {
@@ -213,7 +256,8 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
       await onSave(
         normalizedNewRole,
         defaultTabsByBaseRole[newRoleBase] || [],
-        newRoleBase
+        newRoleBase,
+        {} // New roles start with empty explicit actions
       );
       setNewRoleName('');
       setNewRoleBase('editor');
@@ -227,9 +271,11 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
     const savedBaseRole = roleEntryMap[role]?.baseRole || role;
     const allowedSet = new Set(getTabsForBaseRole(savedBaseRole));
     const savedTabs = (roleEntryMap[role]?.allowedTabs || []).filter((tab) => allowedSet.has(tab));
+    const savedActions = roleEntryMap[role]?.allowedActions || {};
 
     setBaseByRole((prev) => ({ ...prev, [role]: savedBaseRole }));
     setSelectedByRole((prev) => ({ ...prev, [role]: savedTabs }));
+    setActionsByRole((prev) => ({ ...prev, [role]: savedActions }));
     setDirtyByRole((prev) => ({ ...prev, [role]: false }));
   };
 
@@ -389,18 +435,38 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
               {roleTabsMap[role].map((tab) => {
                 const checked = (selectedByRole[role] || []).includes(tab);
 
+                const actionsList = [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE];
+
                 return (
-                  <label
-                    key={tab}
-                    className={`ui-tab-label ${checked ? 'ui-active' : ''}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggleTab(role, tab)}
-                    />
-                    <span>{getTabLabel(tab)}</span>
-                  </label>
+                  <div key={tab} className="ui-tab-permission-group">
+                    <label
+                      className={`ui-tab-label ${checked ? 'ui-active' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleTab(role, tab)}
+                      />
+                      <span>{getTabLabel(tab)}</span>
+                    </label>
+                    {checked && (
+                      <div className="ui-tab-actions-row">
+                        {actionsList.map((action) => {
+                          const isActionChecked = (actionsByRole[role]?.[tab] || []).includes(action);
+                          return (
+                            <label key={action} className={`ui-action-checkbox ${isActionChecked ? 'is-checked' : ''}`}>
+                              <input
+                                type="checkbox"
+                                checked={isActionChecked}
+                                onChange={() => toggleAction(role, tab, action)}
+                              />
+                              <span>{t(`admin.rolePermissions.actionLabels.${action}`)}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>

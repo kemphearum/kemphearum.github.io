@@ -7,6 +7,7 @@ const BlogToolbar = ({
   onCreate,
   onSearch,
   searchQuery = '',
+  isSearching = false,
   canCreate = true,
   canBulkManage = true,
   selectedCount = 0,
@@ -51,7 +52,7 @@ const BlogToolbar = ({
 
       <div className="ui-blog-toolbar admin-toolbar">
         <div className="admin-search-wrapper ui-blog-toolbar__search">
-          <Search size={16} />
+          {isSearching ? <div className="admin-search-spinner" /> : <Search size={16} />}
           <Input
             placeholder={t('admin.blog.toolbar.searchPlaceholder')}
             value={searchQuery}

@@ -3,6 +3,7 @@ import { Eye, EyeOff, Star, StarOff, Trash2, LayoutTemplate, Globe2, Sparkles, L
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
+import { useDebounce } from '../../../hooks/useDebounce';
 import ProjectService from '../../../services/ProjectService';
 import BaseService from '../../../services/BaseService';
 import ProjectsToolbar from './components/ProjectsToolbar';
@@ -27,6 +28,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 500);
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [bulkConfirm, setBulkConfirm] = useState({ isOpen: false, type: '', ids: [] });
   const [importDialog, setImportDialog] = useState({
@@ -42,7 +44,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const [importLoading, setImportLoading] = useState(false);
   
   // Cursor pagination hook
-  const pagination = useCursorPagination(5, [searchQuery]);
+  const pagination = useCursorPagination(5, [debouncedSearch]);
   const queryClient = useQueryClient();
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
@@ -65,13 +67,13 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['projects', searchQuery, pagination.cursor, pagination.limit],
+    queryKey: ['projects', debouncedSearch, pagination.cursor, pagination.limit],
     queryFn: async () => {
       const requestCursor = pagination.cursor;
       const result = await BaseService.safe(() => ProjectService.fetchPaginated({
         lastDoc: requestCursor,
         limit: pagination.limit,
-        search: searchQuery,
+        search: debouncedSearch,
         searchField: 'title.en',
         sortBy: "createdAt",
         sortDirection: "desc",
@@ -105,6 +107,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const projects = projectsResult.data;
+  const isSearching = searchQuery !== debouncedSearch;
   const tableProjects = useMemo(() => projects.map((project) => ({
     ...project,
     __raw: project,
@@ -595,6 +598,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         onAdd={handleAdd}
         searchQuery={searchQuery}
         onSearchChange={handleSearch}
+        isSearching={isSearching}
         canCreate={canCreate}
         canBulkManage={canCreate || canEdit}
         selectedCount={selectedProjects.length}

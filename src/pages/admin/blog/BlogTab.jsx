@@ -5,6 +5,7 @@ import BlogService from '../../../services/BlogService';
 import BaseService from '../../../services/BaseService';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
+import { useDebounce } from '../../../hooks/useDebounce';
 import { Button } from '@/shared/components/ui';
 import BlogToolbar from './components/BlogToolbar';
 import BlogFormDialog from './components/BlogFormDialog';
@@ -23,6 +24,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const { language, t } = useTranslation();
   // State
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 500);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -43,7 +45,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const queryClient = useQueryClient();
   
   // Cursor pagination hook
-  const pagination = useCursorPagination(5, [searchQuery]);
+  const pagination = useCursorPagination(5, [debouncedSearch]);
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
     showToast,
@@ -68,17 +70,17 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   // Queries
-  const { data: postsResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading } = useQuery({
+  const { data: postsResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading, isFetching } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['posts', searchQuery, pagination.cursor, pagination.limit],
+    queryKey: ['posts', debouncedSearch, pagination.cursor, pagination.limit],
     queryFn: async () => {
       const requestCursor = pagination.cursor;
       const result = await BaseService.safe(() => BlogService.fetchPaginated({
         lastDoc: requestCursor,
         limit: pagination.limit,
-        search: searchQuery,
+        search: debouncedSearch,
         searchField: 'title.en',
         sortBy: "createdAt",
         sortDirection: "desc",
@@ -112,6 +114,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const posts = postsResult.data;
+  const isSearching = searchQuery !== debouncedSearch;
   const tablePosts = useMemo(() => posts.map((post) => ({
     ...post,
     __raw: post,
@@ -588,6 +591,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         onCreate={handleCreate}
         onSearch={handleSearch}
         searchQuery={searchQuery}
+        isSearching={isSearching || isFetching}
         canCreate={canCreate}
         canBulkManage={canCreate || canEdit}
         selectedCount={selectedPosts.length}

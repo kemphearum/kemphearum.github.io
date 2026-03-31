@@ -35,6 +35,8 @@ const AuditLogsTab = ({ userRole, showToast }) => {
   });
   const normalizedActivitySearch = debouncedActivitySearch.trim().toLowerCase();
   const normalizedSecuritySearch = debouncedSecuritySearch.trim().toLowerCase();
+  const isActivitySearching = activitySearch !== debouncedActivitySearch;
+  const isSecuritySearching = securitySearch !== debouncedSecuritySearch;
 
   // Reusable Pagination Hook for Activity Logs
   const activityPagination = useCursorPagination(5, [debouncedActivitySearch, activityDateRange, activityFilters]);
@@ -319,6 +321,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
           onReset={resetActivityView}
           totalItems={filteredActivityLogs.length}
           isExportDisabled={!filteredActivityLogs.length}
+          isSearching={isActivitySearching || activityFetching}
           searchHint={normalizedActivitySearch ? tm('sections.activity.searchHint', { query: debouncedActivitySearch }) : ''}
           placeholder={tm('sections.activity.searchPlaceholder')}
         />
@@ -363,6 +366,7 @@ const AuditLogsTab = ({ userRole, showToast }) => {
           onReset={resetSecurityView}
           totalItems={filteredSecurityLogs.length}
           isExportDisabled={!filteredSecurityLogs.length}
+          isSearching={isSecuritySearching || securityFetching}
           searchHint={normalizedSecuritySearch ? tm('sections.security.searchHint', { query: debouncedSecuritySearch }) : ''}
           placeholder={tm('sections.security.searchPlaceholder')}
         />

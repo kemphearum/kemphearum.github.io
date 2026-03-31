@@ -7,6 +7,7 @@ const ExperienceToolbar = ({
   onAdd,
   searchQuery,
   onSearchChange,
+  isSearching = false,
   canCreate = true,
   stats = []
 }) => {
@@ -44,7 +45,7 @@ const ExperienceToolbar = ({
 
       <div className="ui-blog-toolbar admin-toolbar">
         <div className="admin-search-wrapper ui-blog-toolbar__search">
-          <Search size={18} />
+          {isSearching ? <div className="admin-search-spinner" /> : <Search size={18} />}
           <Input
             placeholder={t('admin.experience.workspace.searchPlaceholder')}
             value={searchQuery}

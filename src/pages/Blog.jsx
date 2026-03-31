@@ -39,6 +39,7 @@ import Navbar from '@/sections/Navbar';
 import Footer from '@/sections/Footer';
 import styles from './Blog.module.scss';
 import { useTranslation } from '../hooks/useTranslation';
+import { useDebounce } from '../hooks/useDebounce';
 
 const Blog = () => {
     const loaderData = useLoaderData();
@@ -71,6 +72,7 @@ const Blog = () => {
     }));
     const loading = loadingPosts;
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearch = useDebounce(searchTerm, 400);
     const [selectedTag, setSelectedTag] = useState(null);
 
     const itemsPerPage = 5;
@@ -107,9 +109,9 @@ const Blog = () => {
         if (!post.visible) return false;
 
         const matchesSearch =
-            post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            post.tags?.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+            post.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            post.excerpt?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            post.tags?.some(tag => tag.toLowerCase().includes(debouncedSearch.toLowerCase()));
 
         const matchesTag = selectedTag ? post.tags?.includes(selectedTag) : true;
         return matchesSearch && matchesTag;

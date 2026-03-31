@@ -17,7 +17,8 @@ const AuditLogsToolbar = ({
   totalItems,
   isExportDisabled = false,
   searchHint = '',
-  placeholder = ''
+  placeholder = '',
+  isSearching = false
 }) => {
   const { language } = useTranslation();
   const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
@@ -34,12 +35,15 @@ const AuditLogsToolbar = ({
     <div className={styles.toolbar}>
       <div className={styles.filters}>
         <div className={styles.search}>
-          <Input
-            icon={Search}
-            placeholder={resolvedPlaceholder}
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
+          <div className="admin-search-wrapper">
+            {isSearching ? <div className="admin-search-spinner" /> : <Search size={16} />}
+            <Input
+              placeholder={resolvedPlaceholder}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className={styles.searchInput}
+            />
+          </div>
         </div>
 
         <div className={styles.filterItem}>

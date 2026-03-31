@@ -8,6 +8,7 @@ import styles from './Projects.module.scss';
 import { motion } from 'framer-motion';
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
+import { useDebounce } from '../hooks/useDebounce';
 
 const Projects = ({ isStandalone = false }) => {
     const { language, t } = useTranslation();
@@ -40,6 +41,7 @@ const Projects = ({ isStandalone = false }) => {
     const loading = loadingProjects;
     const [filter, setFilter] = useState(ALL_FILTER);
     const [searchTerm, setSearchTerm] = useState('');
+    const debouncedSearch = useDebounce(searchTerm, 400);
 
     // Pagination definitions
     const itemsPerPage = 5;
@@ -88,10 +90,10 @@ const Projects = ({ isStandalone = false }) => {
 
     // Apply search + tag filter
     const filteredProjects = visibleProjects.filter(p => {
-        const matchesSearch = searchTerm === '' ||
-            p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (Array.isArray(p.techStack) && p.techStack.some(t => t.toLowerCase().includes(searchTerm.toLowerCase())));
+        const matchesSearch = debouncedSearch === '' ||
+            p.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            p.description?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            (Array.isArray(p.techStack) && p.techStack.some(t => t.toLowerCase().includes(debouncedSearch.toLowerCase())));
 
         const matchesFilter = filter === ALL_FILTER ||
             (Array.isArray(p.techStack) && p.techStack.some(t => t.trim() === filter));

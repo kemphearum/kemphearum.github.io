@@ -3,7 +3,7 @@ import { Search, UserPlus, Users } from 'lucide-react';
 import { Input, Button } from '../../../../shared/components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
 
-const UsersToolbar = ({ search, onSearch, onCreate, canCreate = true, searchResultCount, totalCount, stats = [] }) => {
+const UsersToolbar = ({ search, onSearch, onCreate, isSearching = false, canCreate = true, searchResultCount, totalCount, stats = [] }) => {
   const { language } = useTranslation();
   const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
 
@@ -43,7 +43,7 @@ const UsersToolbar = ({ search, onSearch, onCreate, canCreate = true, searchResu
 
       <div className="admin-toolbar ui-users-toolbar__controls">
         <div className="admin-search-container ui-users-toolbar__search">
-          <Search size={16} className="admin-search-icon" />
+          {isSearching ? <div className="admin-search-spinner" /> : <Search size={16} className="admin-search-icon" />}
           <Input 
             type="text" 
             placeholder={tr('Search by email or role...', 'ស្វែងរកតាមអ៊ីមែល ឬតួនាទី...')} 

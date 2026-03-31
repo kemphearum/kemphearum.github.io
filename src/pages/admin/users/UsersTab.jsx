@@ -6,6 +6,7 @@ import BaseService from '../../../services/BaseService';
 import UserService from '../../../services/UserService';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
+import { useDebounce } from '../../../hooks/useDebounce';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
 import UsersToolbar from './components/UsersToolbar';
 import UsersTable from './components/UsersTable';
@@ -21,6 +22,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   const { t } = useTranslation();
   const tm = (key, params = {}) => t(`admin.users.${key}`, params);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 500);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
@@ -60,14 +62,14 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   const normalizedUserRole = normalizeRole(userRole);
 
   // cursor pagination hook
-  const pagination = useCursorPagination(5, [searchQuery]);
+  const pagination = useCursorPagination(5, [debouncedSearch]);
 
   // Queries
   const { data: usersResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading: usersLoading, isFetching: usersFetching } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['users', searchQuery, pagination.cursor, pagination.limit],
+    queryKey: ['users', debouncedSearch, pagination.cursor, pagination.limit],
     queryFn: async () => {
       const requestCursor = pagination.cursor;
       const result = await BaseService.safe(() => UserService.fetchUsers({
@@ -75,7 +77,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
         trackRead,
         lastDoc: requestCursor,
         limit: pagination.limit,
-        search: searchQuery,
+        search: debouncedSearch,
         includeTotal: true
       }));
 
@@ -107,6 +109,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   });
 
   const usersList = usersResult.data;
+  const isSearching = searchQuery !== debouncedSearch || usersFetching;
   const userStatsCards = [
     {
       label: tm('stats.totalUsers.label'),
@@ -241,13 +244,13 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     });
   };
 
-  const handleSavePermissions = async (role, allowedTabs, baseRole) => {
+  const handleSavePermissions = async (role, allowedTabs, baseRole, allowedActions = {}) => {
     if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS)) {
       return showToast(tm('toasts.noPermission'), "error");
     }
 
     await executePermissions(async () => {
-      await UserService.saveRolePermissions(role, allowedTabs, trackWrite, baseRole);
+      await UserService.saveRolePermissions(role, allowedTabs, trackWrite, baseRole, allowedActions);
     }, {
       successMessage: `${tm('toasts.permissionsFor')} '${formatRoleDisplayName(role)}' ${tm('toasts.saved')}`
     });
@@ -284,6 +287,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
       <UsersToolbar 
         search={searchQuery}
         onSearch={setSearchQuery}
+        isSearching={isSearching}
         onCreate={() => setIsFormOpen(true)}
         canCreate={canCreateUsers}
         searchResultCount={usersList.length}

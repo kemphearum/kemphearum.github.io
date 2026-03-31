@@ -166,12 +166,16 @@ export default class BaseService {
 
             if (search && searchField) {
                 // Server-side prefix search (Firestore friendly)
-                const searchLower = search.toLowerCase();
-                baseQuery = query(
-                    baseQuery,
-                    where(searchField, '>=', searchLower),
-                    where(searchField, '<=', searchLower + '\uf8ff')
-                );
+                const trimmedSearch = (search || '').trim();
+                
+                if (trimmedSearch) {
+                    const searchLower = trimmedSearch.toLowerCase();
+                    baseQuery = query(
+                        baseQuery,
+                        where(searchField, '>=', searchLower),
+                        where(searchField, '<=', searchLower + '\uf8ff')
+                    );
+                }
             }
 
             let totalCount = null;

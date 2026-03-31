@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
+import { useDebounce } from '../../../hooks/useDebounce';
 import ExperienceService from '../../../services/ExperienceService';
 import BaseService from '../../../services/BaseService';
 import ExperienceToolbar from './components/ExperienceToolbar';
@@ -70,9 +71,10 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const [deletingItem, setDeletingItem] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 500);
   
   // Cursor pagination hook
-  const pagination = useCursorPagination(5, [searchQuery]);
+  const pagination = useCursorPagination(5, [debouncedSearch]);
   const queryClient = useQueryClient();
 
   const { loading: formLoading, execute: executeForm } = useAsyncAction({
@@ -95,13 +97,13 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['experience', searchQuery, pagination.cursor, pagination.limit],
+    queryKey: ['experience', debouncedSearch, pagination.cursor, pagination.limit],
     queryFn: async () => {
       const requestCursor = pagination.cursor;
       const result = await BaseService.safe(() => ExperienceService.fetchPaginated({
         lastDoc: requestCursor,
         limit: pagination.limit || 10,
-        search: searchQuery,
+        search: debouncedSearch,
         searchField: 'company.en',
         sortBy: "createdAt",
         sortDirection: "desc",
@@ -135,6 +137,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   const experiences = experiencesResult.data;
+  const isSearching = searchQuery !== debouncedSearch;
 
   const experiencesByTimeline = useMemo(() => {
     return [...experiences].sort((a, b) => {
@@ -321,7 +324,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
       ExperienceService.toggleVisibility(userRole, id, currentVisible, trackWrite),
     onMutate: async ({ id, currentVisible }) => {
       await queryClient.cancelQueries({ queryKey: ['experience'] });
-      const previousExperience = queryClient.getQueryData(['experience', searchQuery, pagination.cursor]);
+      const previousExperience = queryClient.getQueryData(['experience', debouncedSearch, pagination.cursor]);
       
       if (previousExperience) {
         queryClient.setQueryData(['experience', searchQuery, pagination.cursor], {
@@ -335,7 +338,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
     },
     onError: (err, variables, context) => {
       if (context?.previousExperience) {
-        queryClient.setQueryData(['experience', searchQuery, pagination.cursor], context.previousExperience);
+        queryClient.setQueryData(['experience', debouncedSearch, pagination.cursor], context.previousExperience);
       }
       showToast(err?.message || 'Failed to update visibility', 'error');
     },
@@ -365,6 +368,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         onAdd={handleAdd}
         searchQuery={searchQuery}
         onSearchChange={handleSearch}
+        isSearching={isSearching}
         canCreate={canCreate}
         stats={workspaceStats}
       />
