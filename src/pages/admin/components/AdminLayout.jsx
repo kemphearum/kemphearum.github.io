@@ -3,7 +3,6 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import AnimatedBackground from '@/sections/AnimatedBackground';
 import styles from './AdminLayout.module.scss';
-import { isSuperAdminRole } from '../../../utils/permissions';
 
 const AdminLayout = ({ 
     children, 
@@ -92,7 +91,13 @@ const AdminLayout = ({
                 onSettingsClick={() => handleNavigate('settings')}
                 onProfileClick={() => handleNavigate('profile')}
                 currentRoute={currentRoute}
-                isSettingsAllowed={isSuperAdminRole(userRole) || rolePermissions?.[userRole]?.includes('settings')}
+                isSettingsAllowed={typeof isTabAllowed === 'function'
+                    ? isTabAllowed('settings')
+                    : Boolean(
+                        Array.isArray(rolePermissions?.[userRole])
+                            ? rolePermissions?.[userRole]?.includes('settings')
+                            : rolePermissions?.[userRole]?.allowedTabs?.includes('settings')
+                    )}
                 onHeightChange={handleHeaderHeightChange}
             />
             

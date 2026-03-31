@@ -56,5 +56,6 @@ export const tabLabels = {
     database: 'Database',
     users: 'Users',
     audit: 'Audit Logs',
-    analytics: 'Analytics'
+    analytics: 'Analytics',
+    settings: 'Settings'
 };

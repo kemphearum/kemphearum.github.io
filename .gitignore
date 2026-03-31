@@ -44,3 +44,9 @@ check_actions.cjs
 .vercel
 .firebase/
 .env*.local
+
+# Local seed/workflow artifacts
+seed/
+seeds/
+workflow/
+workflows/

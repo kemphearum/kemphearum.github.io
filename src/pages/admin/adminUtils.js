@@ -1,5 +1,5 @@
 import { getLocalizedField } from '../../utils/localization';
-import { ACTIONS, isActionAllowed, isAdminRole, isSuperAdminRole, normalizeRole } from '../../utils/permissions';
+import { ACTIONS, isActionAllowed, normalizeRole } from '../../utils/permissions';
 
 export const tabLabelKeys = {
     general: 'admin.tabs.general',
@@ -22,7 +22,13 @@ export const tabSubtitleKeys = {
 };
 
 export const AUTH_REMEMBER_EMAIL_KEY = 'adminRememberedEmail';
-export const SUPERADMIN_EMAIL = 'kem.phearum@gmail.com';
+const BOOTSTRAP_SUPERADMIN_EMAIL = 'kem.phearum@gmail.com';
+
+export const SUPERADMIN_EMAILS = [BOOTSTRAP_SUPERADMIN_EMAIL];
+export const isBootstrapSuperAdminEmail = (email) => {
+    const normalized = String(email || '').trim().toLowerCase();
+    return normalized === BOOTSTRAP_SUPERADMIN_EMAIL;
+};
 
 export const normalizeRenderableText = (value, language = 'en', fallback = '') => {
     if (typeof value === 'string') return value;
@@ -83,22 +89,14 @@ export const formatAuthErrorMessage = (error, t, language = 'en', fallback) => {
     return message || defaultFallback;
 };
 
+/**
+ * Unified tab permission check that delegates to core logic.
+ * @param {string} tab The module/tab key to check
+ * @param {string} role The user's role
+ * @param {Object} permissions Dynamic role permissions from DB
+ * @returns {boolean} Whether the tab is visible/accessible
+ */
 export const isTabAllowedForRole = (tab, role, permissions) => {
-    const normalizedRole = normalizeRole(role);
-    if (!normalizedRole) return false;
-    if (isSuperAdminRole(normalizedRole)) return true;
-    if (tab === 'profile') return true;
-
-    if (!isActionAllowed(ACTIONS.VIEW, tab, normalizedRole, permissions)) return false;
-
-    if (['users', 'database', 'audit'].includes(tab) && !isAdminRole(normalizedRole)) return false;
-
-    if (permissions?.[normalizedRole]?.includes(tab)) return true;
-
-    if (isAdminRole(normalizedRole)) return true;
-    if (normalizedRole === 'editor') {
-        return ['general', 'experience', 'projects', 'blog', 'messages'].includes(tab);
-    }
-
-    return false;
+    // Note: ACTIONS.VIEW is normalized internally in isActionAllowed
+    return isActionAllowed(ACTIONS.VIEW, tab, role, permissions);
 };

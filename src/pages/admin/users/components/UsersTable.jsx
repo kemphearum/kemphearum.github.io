@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Edit, Key, Trash2, UserPlus, Users } from 'lucide-react';
 import DataTable from '../../../../shared/components/ui/data-table/DataTable';
 import { Button, Badge } from '../../../../shared/components/ui';
@@ -9,7 +9,8 @@ import { isSuperAdminRole, normalizeRole } from '../../../../utils/permissions';
 const UsersTable = ({ 
   data, 
   currentUser, 
-  userRole, 
+  canEditUsers = true,
+  canDisableUsers = true,
   onEdit, 
   onResetPassword, 
   onDelete,
@@ -147,6 +148,7 @@ const UsersTable = ({
               variant="ghost" 
               size="sm" 
               onClick={(event) => { event.stopPropagation(); onEdit(user); }}
+              disabled={!canEditUsers}
               title={tr('Edit Profile', 'កែសម្រួលប្រវត្តិរូប')}
             >
               <Edit size={16} />
@@ -155,6 +157,7 @@ const UsersTable = ({
               variant="ghost" 
               size="sm" 
               onClick={(event) => { event.stopPropagation(); onResetPassword(user); }}
+              disabled={!canEditUsers}
               title={tr('Send Password Reset', 'ផ្ញើការកំណត់ពាក្យសម្ងាត់ឡើងវិញ')}
             >
               <Key size={16} />
@@ -163,7 +166,7 @@ const UsersTable = ({
               variant="danger" 
               size="sm" 
               onClick={(event) => { event.stopPropagation(); onDelete(user); }}
-              disabled={!isSuperAdminRole(userRole) || isSuperAdminRole(user.role)}
+              disabled={!canDisableUsers || isSuperAdminRole(user.role)}
               title={tr('Disable User', 'បិទអ្នកប្រើ')}
             >
               <Trash2 size={16} />
@@ -223,4 +226,5 @@ const UsersTable = ({
 };
 
 export default UsersTable;
+
 

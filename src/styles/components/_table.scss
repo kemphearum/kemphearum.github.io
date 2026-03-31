@@ -32,6 +32,7 @@
     padding: 1rem;
     border-bottom: 1px solid var(--divider);
     color: var(--text-primary);
+    vertical-align: middle;
   }
 
   tr:last-child td {
@@ -44,9 +45,20 @@
 }
 
 .ui-table-actions {
-  display: flex;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ui-table th.ui-table-actions .ui-table-header-content {
+  justify-content: flex-end;
+}
+
+.ui-table-action-group {
+  display: inline-flex;
   gap: 0.5rem;
   justify-content: flex-end;
+  align-items: center;
+  width: 100%;
 }
 
 .ui-table-actions-grid {

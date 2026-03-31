@@ -8,7 +8,7 @@ import AuthService from '../../../services/AuthService';
 import AuditLogService from '../../../services/AuditLogService';
 import {
     AUTH_REMEMBER_EMAIL_KEY,
-    SUPERADMIN_EMAIL,
+    isBootstrapSuperAdminEmail,
     formatAuthErrorMessage,
     normalizeRenderableText
 } from '../adminUtils';
@@ -57,6 +57,8 @@ export const useAdminAuth = ({
         const unsubscribe = AuthService.onAuthChange(async (currentUser) => {
             setUser(currentUser);
             if (currentUser) {
+                // Reset stale login errors once a session is present.
+                setAuthError('');
                 const currentEmail = String(currentUser.email || '').toLowerCase();
                 try {
                     let userData = await UserService.fetchUserById(currentUser.uid);
@@ -66,26 +68,32 @@ export const useAdminAuth = ({
                         if (legacyData) {
                             console.log(`Migrating legacy user ${currentUser.email} to UID-keyed document...`);
                             const { id, ...data } = legacyData;
-                            await UserService.createUserDoc(data, currentUser.uid);
                             try {
-                                await UserService.deleteUserDoc(id);
-                            } catch (cleanupError) {
-                                console.warn(`Legacy user doc cleanup failed for ${currentUser.email}, but continuing session natively:`, cleanupError);
+                                await UserService.createUserDoc(data, currentUser.uid);
+                                try {
+                                    await UserService.deleteUserDoc(id);
+                                } catch (cleanupError) {
+                                    console.warn(`Legacy user doc cleanup failed for ${currentUser.email}, but continuing session natively:`, cleanupError);
+                                }
+                                userData = await UserService.fetchUserById(currentUser.uid);
+                                console.log('Migration successful.');
+                            } catch (migrationError) {
+                                // Keep legacy account usable instead of downgrading to pending access.
+                                console.warn(`Legacy migration failed for ${currentUser.email}; continuing with legacy document permissions.`, migrationError);
+                                userData = legacyData;
                             }
-                            userData = await UserService.fetchUserById(currentUser.uid);
-                            console.log('Migration successful.');
                         }
                     }
 
                     if (!userData) {
-                        const initialRole = currentEmail === SUPERADMIN_EMAIL ? 'superadmin' : 'pending';
+                        const initialRole = isBootstrapSuperAdminEmail(currentEmail) ? 'superadmin' : 'pending';
                         await UserService.createUserDoc({
                             email: currentEmail,
                             role: initialRole,
                             isActive: true
                         }, currentUser.uid);
                         userData = await UserService.fetchUserById(currentUser.uid);
-                    } else if (!userData.createdAt || userData.isActive === undefined) {
+                    } else if (userData.id === currentUser.uid && (!userData.createdAt || userData.isActive === undefined)) {
                         const updates = {};
                         if (!userData.createdAt) updates.createdAt = serverTimestamp();
                         if (userData.isActive === undefined) updates.isActive = true;
@@ -109,7 +117,7 @@ export const useAdminAuth = ({
                         setUserId(userData.id);
                         setUserDisplayName(normalizeRenderableText(userData.displayName, language, ''));
 
-                        if (currentEmail === SUPERADMIN_EMAIL && !isSuperAdminRole(fetchedRole)) {
+                        if (isBootstrapSuperAdminEmail(currentEmail) && !isSuperAdminRole(fetchedRole)) {
                             fetchedRole = 'superadmin';
                             UserService.updateUserField(userData.id, { role: 'superadmin' }).catch(console.error);
                         } else if (userData.role !== fetchedRole && isSuperAdminRole(fetchedRole)) {
@@ -120,11 +128,24 @@ export const useAdminAuth = ({
                     }
                 } catch (error) {
                     console.error('Error fetching user role:', error);
-                    setUserRole(currentEmail === SUPERADMIN_EMAIL ? 'superadmin' : 'pending');
+                    try {
+                        const fallbackUser = await UserService.fetchUserByEmail(currentEmail);
+                        if (fallbackUser) {
+                            setUserId(fallbackUser.id);
+                            setUserDisplayName(normalizeRenderableText(fallbackUser.displayName, language, ''));
+                            setUserRole(normalizeRole(fallbackUser.role) || 'pending');
+                        } else {
+                            setUserRole(isBootstrapSuperAdminEmail(currentEmail) ? 'superadmin' : 'pending');
+                        }
+                    } catch {
+                        setUserRole(isBootstrapSuperAdminEmail(currentEmail) ? 'superadmin' : 'pending');
+                    }
                 } finally {
                     setIsAuthLoading(false);
                 }
             } else {
+                // Clear stale auth errors after logout so login form starts clean.
+                setAuthError('');
                 setUserRole(null);
                 setUserId(null);
                 setUserDisplayName('');

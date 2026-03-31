@@ -1,9 +1,9 @@
-import React from 'react';
+
 import { Search, UserPlus, Users } from 'lucide-react';
 import { Input, Button } from '../../../../shared/components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
 
-const UsersToolbar = ({ search, onSearch, onCreate, searchResultCount, totalCount, stats = [] }) => {
+const UsersToolbar = ({ search, onSearch, onCreate, canCreate = true, searchResultCount, totalCount, stats = [] }) => {
   const { language } = useTranslation();
   const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
 
@@ -56,7 +56,7 @@ const UsersToolbar = ({ search, onSearch, onCreate, searchResultCount, totalCoun
           </span>
         </div>
 
-        <Button onClick={onCreate} className="ui-primary ui-users-toolbar__create">
+        <Button onClick={onCreate} disabled={!canCreate} className="ui-primary ui-users-toolbar__create">
           <UserPlus size={18} /> {tr('Add User', 'បន្ថែមអ្នកប្រើ')}
         </Button>
       </div>

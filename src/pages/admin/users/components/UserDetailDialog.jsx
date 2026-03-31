@@ -1,4 +1,4 @@
-import React from 'react';
+
 import {
   Users,
   Trash2,
@@ -13,6 +13,7 @@ import {
 import { Dialog, Button, Badge } from '../../../../shared/components/ui';
 import FormSelect from '../../components/FormSelect';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { normalizeRole } from '../../../../utils/permissions';
 
 const ROLE_VARIANTS = {
   pending: 'warning',
@@ -30,6 +31,9 @@ const UserDetailDialog = ({
   onRoleChange,
   onResetPassword,
   onDisable,
+  canEditUsers = true,
+  canDisableUsers = true,
+  availableRoles = []
 }) => {
   const { language } = useTranslation();
   const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
@@ -65,6 +69,11 @@ const UserDetailDialog = ({
     admin: tr('Admin', 'អ្នកគ្រប់គ្រង'),
     superadmin: tr('Super Admin', 'អ្នកគ្រប់គ្រងកំពូល'),
   };
+  const assignableRoles = Array.from(new Set(['pending', 'editor', 'admin', 'superadmin', ...availableRoles.map((role) => normalizeRole(role)).filter(Boolean)]));
+  const roleOptions = assignableRoles.map((role) => ({
+    label: roleLabels[role] || role,
+    value: role
+  }));
 
   return (
     <Dialog open={!!user} onOpenChange={onClose}>
@@ -141,13 +150,9 @@ const UserDetailDialog = ({
                     <div className="ui-role-select-container">
                       <FormSelect
                         value={user.role}
+                        disabled={!canEditUsers}
                         onChange={(e) => onRoleChange(user.id, e.target.value)}
-                        options={[
-                          { label: tr('Pending', 'រង់ចាំ'), value: 'pending' },
-                          { label: tr('Editor', 'អ្នកកែសម្រួល'), value: 'editor' },
-                          { label: tr('Admin', 'អ្នកគ្រប់គ្រង'), value: 'admin' },
-                          { label: tr('Super Admin', 'អ្នកគ្រប់គ្រងកំពូល'), value: 'superadmin' },
-                        ]}
+                        options={roleOptions}
                       />
                     </div>
                   )}
@@ -267,13 +272,13 @@ const UserDetailDialog = ({
           <div className="ui-footer-actions-container">
             <div className="ui-footer-actions-left">
               {user.email !== currentUser?.email && (
-                <Button variant="danger" onClick={() => onDisable(user)}>
+                <Button variant="danger" disabled={!canDisableUsers} onClick={() => onDisable(user)}>
                   <Trash2 size={16} /> {isUserDisabled ? tr('Re-enable Account', 'បើកដំណើរការគណនីឡើងវិញ') : tr('Disable Account', 'បិទដំណើរការគណនី')}
                 </Button>
               )}
             </div>
             <div className="ui-footer-actions-right">
-              <Button variant="ghost" onClick={() => onResetPassword(user)}>
+              <Button variant="ghost" disabled={!canEditUsers} onClick={() => onResetPassword(user)}>
                 <Key size={16} /> {tr('Reset Password', 'កំណត់ពាក្យសម្ងាត់ឡើងវិញ')}
               </Button>
               <Button onClick={onClose} className="ui-primary">
@@ -288,3 +293,4 @@ const UserDetailDialog = ({
 };
 
 export default UserDetailDialog;
+

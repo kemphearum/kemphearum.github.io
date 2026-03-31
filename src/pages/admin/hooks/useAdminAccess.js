@@ -33,9 +33,9 @@ export const useAdminAccess = (userRole) => {
         isActionAllowed(action, moduleName, userRole, rolePermissions)
     ), [userRole, rolePermissions]);
 
-    const isTabAllowed = useCallback((tab, role, permissions) => (
+    const isTabAllowed = useCallback((tab, role = userRole, permissions = rolePermissions) => (
         isTabAllowedForRole(tab, role, permissions)
-    ), []);
+    ), [rolePermissions, userRole]);
 
     return {
         rolePermissions,

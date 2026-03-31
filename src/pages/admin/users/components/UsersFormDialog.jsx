@@ -1,14 +1,27 @@
-import React from 'react';
+
 import { UserPlus, ShieldCheck, Mail, KeyRound } from 'lucide-react';
 import { Dialog, Button, Input } from '../../../../shared/components/ui';
 import Form from '../../components/Form';
 import FormField from '../../components/FormField';
 import FormSelect from '../../components/FormSelect';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { normalizeRole } from '../../../../utils/permissions';
 
-const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading }) => {
+const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading, availableRoles = [] }) => {
   const { language } = useTranslation();
   const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const roleOptions = Array.from(new Set(['pending', 'editor', 'admin', ...availableRoles.map((role) => normalizeRole(role)).filter(Boolean)]))
+    .filter((role) => role && role !== 'superadmin')
+    .map((role) => ({
+      label: role === 'pending'
+        ? tr('Pending Verification', 'រង់ចាំផ្ទៀងផ្ទាត់')
+        : role === 'editor'
+          ? tr('Content Editor', 'អ្នកកែសម្រួលមាតិកា')
+          : role === 'admin'
+            ? tr('System Admin', 'អ្នកគ្រប់គ្រងប្រព័ន្ធ')
+            : role,
+      value: role
+    }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -74,11 +87,7 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading }) => {
                     validation={{ required: tr('Role is required', 'ត្រូវការតួនាទី') }}
                   >
                     <FormSelect
-                      options={[
-                        { label: tr('Pending Verification', 'រង់ចាំផ្ទៀងផ្ទាត់'), value: 'pending' },
-                        { label: tr('Content Editor', 'អ្នកកែសម្រួលមាតិកា'), value: 'editor' },
-                        { label: tr('System Admin', 'អ្នកគ្រប់គ្រងប្រព័ន្ធ'), value: 'admin' }
-                      ]}
+                      options={roleOptions}
                     />
                   </FormField>
                 </div>

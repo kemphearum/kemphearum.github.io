@@ -2,6 +2,12 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
+const DEFAULT_SUPERADMIN_EMAILS = ['kem.phearum@gmail.com'];
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+const SUPERADMIN_EMAILS = new Set(
+    DEFAULT_SUPERADMIN_EMAILS.map(normalizeEmail)
+);
+
 // Existing toggleUserStatus function...
 exports.toggleUserStatus = functions.https.onCall(async (data, context) => {
     // ... existing implementation ...
@@ -12,7 +18,8 @@ exports.toggleUserStatus = functions.https.onCall(async (data, context) => {
         );
     }
 
-    if (context.auth.token.email !== 'kem.phearum@gmail.com') {
+    const requesterEmail = normalizeEmail(context.auth.token.email);
+    if (!SUPERADMIN_EMAILS.has(requesterEmail)) {
         throw new functions.https.HttpsError(
             'permission-denied',
             'Only the Super Admin can enable or disable user accounts.'

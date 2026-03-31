@@ -47,8 +47,10 @@ export const useAdminBootstrap = ({
 
     useEffect(() => {
         if (user && userRole) {
+            // Dynamic roles depend on rolePermissions for tab visibility/action capability.
+            // Fetch for every authenticated user role (not only static admin roles).
+            fetchRolePermissions();
             if (isAdminRole(userRole)) {
-                fetchRolePermissions();
                 fetchMessages();
             }
 

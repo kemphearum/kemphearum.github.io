@@ -4,6 +4,7 @@ import UserService from '../../../services/UserService';
 import BaseService from '../../../services/BaseService';
 import { useActivity } from '../../../hooks/useActivity';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { Button } from '../../../shared/components/ui';
 
 const ProfileTab = ({ user, userId, userDisplayName, setUserDisplayName, showToast }) => {
     const { t } = useTranslation();
@@ -46,9 +47,9 @@ const ProfileTab = ({ user, userId, userDisplayName, setUserDisplayName, showToa
                     <input type="text" value={user.email} disabled style={{ backgroundColor: 'var(--input-bg)', color: 'var(--text-secondary)', opacity: 0.7 }} />
                 </div>
                 <div className="ui-formFooter">
-                    <button type="submit" disabled={isSaving} className="ui-button ui-button--primary">
-                        {isSaving ? <><span className="ui-spinner" /> {t('admin.profile.saving')}</> : <><Save size={18} /> {t('admin.common.save')}</>}
-                    </button>
+                    <Button type="submit" variant="primary" isLoading={isSaving} icon={isSaving ? undefined : Save}>
+                        {isSaving ? t('admin.profile.saving') : t('admin.common.save')}
+                    </Button>
                 </div>
             </form>
         </div>

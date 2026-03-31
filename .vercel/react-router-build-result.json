@@ -121,9 +121,9 @@
     }
   },
   "reactRouterConfig": {
-    "appDirectory": "D:/portfolio/app",
+    "appDirectory": "C:/Users/phearum/OneDrive/Documents/kemphearum.github.io/app",
     "basename": "/",
-    "buildDirectory": "D:/portfolio/build",
+    "buildDirectory": "C:/Users/phearum/OneDrive/Documents/kemphearum.github.io/build",
     "future": {
       "unstable_optimizeDeps": false,
       "unstable_subResourceIntegrity": false,

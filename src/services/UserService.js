@@ -1,8 +1,8 @@
 import BaseService from './BaseService';
 import { db, auth } from '../firebase';
-import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, query, updateDoc, where, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, query, updateDoc, where, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { isActionAllowed, ACTIONS, MODULES, isSuperAdminRole, normalizeRole } from '../utils/permissions';
+import { isActionAllowed, ACTIONS, MODULES, isSuperAdminRole, normalizeRole, normalizeRolePermissionEntry } from '../utils/permissions';
 import { normalizeUser, validateUser } from '../domain/user/userDomain';
 
 class UserService extends BaseService {
@@ -43,7 +43,10 @@ class UserService extends BaseService {
         const users = await this.getAll();
         const active = users.filter((entry) => entry.isActive !== false && entry.disabled !== true).length;
         const disabled = users.length - active;
-        const elevated = users.filter((entry) => ['admin', 'superadmin'].includes(normalizeRole(entry.role))).length;
+        const elevated = users.filter((entry) => {
+            const role = normalizeRole(entry.role);
+            return role === 'admin' || role === 'superadmin';
+        }).length;
 
         return {
             total: users.length,
@@ -61,10 +64,27 @@ class UserService extends BaseService {
      * @param {function(number, string): void} [trackWrite] 
      * @returns {Promise<void>}
      */
-    async updateRole(userRole, userId, newRole, trackWrite) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
+    async updateRole(userRole, userId, newRole, trackWrite, rolePermissions = {}) {
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS, userRole, rolePermissions)) throw new Error("Unauthorized action");
         const normalizedRole = normalizeRole(newRole) || 'pending';
         return this.update(userId, { role: normalizedRole }, trackWrite);
+    }
+
+    /**
+     * Toggle user disabled state.
+     * @param {string} userRole
+     * @param {string} userId
+     * @param {boolean} shouldDisable
+     * @param {function(number, string): void} [trackWrite]
+     * @param {Object} [rolePermissions={}]
+     * @returns {Promise<void>}
+     */
+    async setUserDisabled(userRole, userId, shouldDisable, trackWrite, rolePermissions = {}) {
+        if (!isActionAllowed(ACTIONS.DISABLE, MODULES.USERS, userRole, rolePermissions)) throw new Error("Unauthorized action");
+        await this.update(userId, {
+            isActive: !shouldDisable,
+            disabled: shouldDisable
+        }, trackWrite);
     }
 
     /**
@@ -74,8 +94,8 @@ class UserService extends BaseService {
      * @param {function(number, string, Object): void} [trackDelete] 
      * @returns {Promise<void>}
      */
-    async removeUser(userRole, userId, trackDelete) {
-        if (!isActionAllowed(ACTIONS.DELETE, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
+    async removeUser(userRole, userId, trackDelete, rolePermissions = {}) {
+        if (!isActionAllowed(ACTIONS.DELETE, MODULES.USERS, userRole, rolePermissions)) throw new Error("Unauthorized action");
         // We use updateDoc to logically disable them
         await this.update(userId, { isActive: false }, trackDelete);
     }
@@ -86,8 +106,8 @@ class UserService extends BaseService {
      * @param {string} email 
      * @returns {Promise<void>}
      */
-    async sendPasswordReset(userRole, email) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
+    async sendPasswordReset(userRole, email, rolePermissions = {}) {
+        if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS, userRole, rolePermissions)) throw new Error("Unauthorized action");
         return sendPasswordResetEmail(auth, email);
     }
 
@@ -100,8 +120,8 @@ class UserService extends BaseService {
      * @param {function(number, string): void} [trackRead] 
      * @returns {Promise<void>}
      */
-    async createUser(userRole, email, password, role, trackRead) {
-        if (!isActionAllowed(ACTIONS.CREATE, MODULES.USERS, userRole)) throw new Error("Unauthorized action");
+    async createUser(userRole, email, password, role, trackRead, rolePermissions = {}) {
+        if (!isActionAllowed(ACTIONS.CREATE, MODULES.USERS, userRole, rolePermissions)) throw new Error("Unauthorized action");
         const normalizedRole = normalizeRole(role) || 'pending';
 
         const dataToValidate = { email, role: normalizedRole };
@@ -167,7 +187,15 @@ class UserService extends BaseService {
             const rawRole = d.data().role;
             const normalizedRole = normalizeRole(rawRole);
             if (!normalizedRole) return;
-            perms[normalizedRole] = d.data().allowedTabs || [];
+            const normalizedEntry = normalizeRolePermissionEntry(
+                {
+                    allowedTabs: d.data().allowedTabs || [],
+                    baseRole: d.data().baseRole,
+                    allowedActions: d.data().allowedActions || {}
+                },
+                normalizedRole
+            );
+            perms[normalizedRole] = normalizedEntry;
         });
         return perms;
     }
@@ -179,20 +207,97 @@ class UserService extends BaseService {
      * @param {function(number, string): void} [trackWrite] 
      * @returns {Promise<void>}
      */
-    async saveRolePermissions(role, allowedTabs, trackWrite) {
+    async saveRolePermissions(role, allowedTabs, trackWrite, baseRole, allowedActions = {}) {
         const normalizedRole = normalizeRole(role);
         if (!normalizedRole) throw new Error('Invalid role provided.');
+        const normalizedBaseRole = normalizeRole(baseRole);
+        const safeBaseRole = ['admin', 'editor', 'pending'].includes(normalizedBaseRole)
+            ? normalizedBaseRole
+            : (['admin', 'editor', 'pending'].includes(normalizedRole) ? normalizedRole : 'pending');
+        const normalizedEntry = normalizeRolePermissionEntry(
+            { allowedTabs, baseRole: safeBaseRole, allowedActions },
+            normalizedRole
+        );
+        const payload = {
+            role: normalizedRole,
+            allowedTabs: normalizedEntry.allowedTabs,
+            baseRole: safeBaseRole,
+            allowedActions: normalizedEntry.allowedActions
+        };
 
         const q = query(collection(db, "rolePermissions"), where("role", "==", normalizedRole));
         const snap = await getDocs(q);
 
         if (snap.empty) {
-            await addDoc(collection(db, "rolePermissions"), { role: normalizedRole, allowedTabs });
+            await addDoc(collection(db, "rolePermissions"), payload);
             if (trackWrite) trackWrite(1, `Created ${normalizedRole} permissions`);
         } else {
-            await updateDoc(snap.docs[0].ref, { allowedTabs });
+            await updateDoc(snap.docs[0].ref, {
+                allowedTabs: normalizedEntry.allowedTabs,
+                baseRole: safeBaseRole,
+                allowedActions: normalizedEntry.allowedActions
+            });
             if (trackWrite) trackWrite(1, `Updated ${normalizedRole} permissions`);
         }
+    }
+
+    /**
+     * Remove a custom role permission profile and reassign users to a fallback role.
+     * @param {string} role
+     * @param {string} [replacementRole='pending']
+     * @param {function(number, string): void} [trackWrite]
+     * @returns {Promise<{reassignedUsers:number, removedPermissionDocs:number}>}
+     */
+    async deleteRoleAndReassignUsers(role, replacementRole = 'pending', trackWrite) {
+        const normalizedRole = normalizeRole(role);
+        const normalizedReplacement = normalizeRole(replacementRole) || 'pending';
+        const protectedRoles = new Set(['superadmin', 'admin', 'editor', 'pending']);
+
+        if (!normalizedRole) throw new Error('Invalid role provided.');
+        if (protectedRoles.has(normalizedRole)) {
+            throw new Error('System roles cannot be removed.');
+        }
+        if (normalizedReplacement === normalizedRole) {
+            throw new Error('Replacement role must be different from the role being removed.');
+        }
+
+        const permissionSnap = await getDocs(query(collection(db, "rolePermissions"), where("role", "==", normalizedRole)));
+        const usersSnap = await getDocs(query(collection(db, "users"), where("role", "==", normalizedRole)));
+
+        const operations = [];
+        permissionSnap.docs.forEach((entry) => {
+            operations.push({ type: 'delete', ref: entry.ref });
+        });
+        usersSnap.docs.forEach((entry) => {
+            operations.push({ type: 'update', ref: entry.ref, data: { role: normalizedReplacement } });
+        });
+
+        // Keep each commit below Firestore batch operation limits.
+        const chunkSize = 400;
+        for (let index = 0; index < operations.length; index += chunkSize) {
+            const batch = writeBatch(db);
+            const chunk = operations.slice(index, index + chunkSize);
+            chunk.forEach((operation) => {
+                if (operation.type === 'delete') {
+                    batch.delete(operation.ref);
+                } else {
+                    batch.update(operation.ref, operation.data);
+                }
+            });
+            await batch.commit();
+        }
+
+        if (trackWrite) {
+            trackWrite(
+                operations.length,
+                `Removed role '${normalizedRole}' and reassigned ${usersSnap.size} users to '${normalizedReplacement}'`
+            );
+        }
+
+        return {
+            reassignedUsers: usersSnap.size,
+            removedPermissionDocs: permissionSnap.size
+        };
     }
 
     /**
