@@ -19,7 +19,7 @@
     z-index: 300;
 
     @media (max-width: 768px) {
-        position: sticky;
+        position: fixed;
         top: 0;
         height: auto;
         min-height: 56px;

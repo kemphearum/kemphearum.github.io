@@ -206,29 +206,37 @@ npm test
 - `npm run build` - production build (client + server output)
 - `npm run preview` - preview production build
 - `npm run lint` - lint project
+
+### Development
+```bash
+npm run dev
+```
+
+### Build
+```bash
+npm run build
+```
+
+### Preview
+```bash
+npm run preview
+```
+
+### Test
+```bash
+npm test
+```
+
+## Scripts
+
+- `npm run dev` - start local dev server
+- `npm run build` - production build (client + server output)
+- `npm run preview` - preview production build
+- `npm run lint` - lint project
 - `npm test` - run unit tests
 - `npm run deploy:firebase:hosting` - deploy static hosting only
 - `npm run deploy:firebase:rules` - deploy Firestore security rules only
 - `npm run deploy:firebase:backend` - deploy Functions + Firestore rules together
-
-## Seed Scripts
-
-Seed scripts live in `scripts/` and use Firebase Admin credentials from:
-- `SA_FILE`, or
-- `GOOGLE_APPLICATION_CREDENTIALS`, or
-- fallback `sa-source.json` in the project root
-
-Main reset + seed entrypoint:
-- `node scripts/seed-all.cjs`
-
-Reset modes:
-- Standard reset (default): truncates content + operational collections, then reseeds.
-  - Truncated: `posts`, `projects`, `experience`, `content`, `messages`, `settings`, `auditLogs`, `visits`, `dailyUsage`
-  - Preserved: `users`, `rolePermissions`
-- Hard reset: also truncates `users` and `rolePermissions`.
-  - CLI flag: `node scripts/seed-all.cjs --hard-reset`
-- Env mode (bash): `HARD_RESET=1 node scripts/seed-all.cjs`
-- Env mode (PowerShell): `$env:HARD_RESET=1; node scripts/seed-all.cjs`
 
 ## Deployment Safety Notes
 
@@ -238,14 +246,6 @@ For production contact form handling, deploy backend before or with frontend:
 2. `npm run deploy:firebase:hosting`
 
 If hosting deploys first while Functions/Rules are not live yet, contact submissions can fail until backend deployment completes.
-- Full reset: truncates every top-level collection currently in Firestore before reseeding.
-  - CLI flag: `node scripts/seed-all.cjs --full-reset`
-  - Env mode (bash): `FULL_RESET=1 node scripts/seed-all.cjs`
-  - Env mode (PowerShell): `$env:FULL_RESET=1; node scripts/seed-all.cjs`
-
-Implementation notes:
-- Truncation recursively deletes nested subcollections.
-- `settings` seed uses full document replacement (`merge: false`) to prevent stale keys after repeated seed runs.
 
 ## License
 

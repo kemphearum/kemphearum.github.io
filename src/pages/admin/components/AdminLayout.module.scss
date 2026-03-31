@@ -30,7 +30,6 @@
 
     @media (max-width: 768px) {
         margin-left: 0 !important;
-        margin-top: 0;
         width: 100%;
         min-height: calc(100dvh - var(--admin-header-height, 56px));
         height: auto;
