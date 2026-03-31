@@ -3,7 +3,7 @@ import { tabLabels } from '../../components/constants';
 import { Button } from '../../../../shared/components/ui';
 import DeleteConfirmDialog from '../../../../shared/components/dialog/DeleteConfirmDialog';
 import { useTranslation } from '../../../../hooks/useTranslation';
-import { formatRoleDisplayName, normalizeRole, normalizeRolePermissionEntry, ACTIONS, isActionAllowed } from '../../../../utils/permissions';
+import { formatRoleDisplayName, normalizeRole, normalizeRolePermissionEntry, ACTIONS, MODULE_ACTIONS, isActionAllowed } from '../../../../utils/permissions';
 
 const NON_CONFIGURABLE_TABS = ['profile', 'audit'];
 const RESERVED_ROLES = ['superadmin'];
@@ -435,7 +435,7 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
               {roleTabsMap[role].map((tab) => {
                 const checked = (selectedByRole[role] || []).includes(tab);
 
-                const actionsList = [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.FEATURE, ACTIONS.TOGGLE_VISIBILITY, ACTIONS.VIEW_HISTORY];
+                const actionsList = MODULE_ACTIONS[tab] || [];
 
                 return (
                   <div key={tab} className="ui-tab-permission-group">
