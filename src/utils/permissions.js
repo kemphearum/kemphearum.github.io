@@ -181,13 +181,16 @@ export const isActionAllowed = (action, moduleName, role, rolePermissions = {}) 
     if (moduleName === MODULES.PROFILE) return true;
 
     // 4. Handle dynamic configuration (Strict Priority)
-    // If a role has an explicit list of allowed tabs/modules, that list defines their world.
-    const permissionEntry = normalizeRolePermissionEntry(rolePermissions?.[normalizedRole], normalizedRole);
-    const configuredTabs = Array.isArray(permissionEntry.allowedTabs) ? permissionEntry.allowedTabs : null;
-    const configuredActions = permissionEntry.allowedActions && typeof permissionEntry.allowedActions === 'object'
-        ? permissionEntry.allowedActions
-        : {};
-    if (configuredTabs !== null && configuredTabs.length > 0) {
+    // If a role is explicitly defined in the rolePermissions object, that configuration defines their world.
+    const isRoleConfigured = rolePermissions && Object.prototype.hasOwnProperty.call(rolePermissions, normalizedRole);
+
+    if (isRoleConfigured) {
+        const permissionEntry = normalizeRolePermissionEntry(rolePermissions[normalizedRole], normalizedRole);
+        const configuredTabs = Array.isArray(permissionEntry.allowedTabs) ? permissionEntry.allowedTabs : [];
+        const configuredActions = permissionEntry.allowedActions && typeof permissionEntry.allowedActions === 'object'
+            ? permissionEntry.allowedActions
+            : {};
+
         const isTabInConfig = configuredTabs.includes(moduleName);
 
         // If it's a VIEW request, return whether it's in the config
@@ -207,7 +210,25 @@ export const isActionAllowed = (action, moduleName, role, rolePermissions = {}) 
         const capabilityRole = ['admin', 'editor', 'pending'].includes(normalizedRole)
             ? normalizedRole
             : permissionEntry.baseRole;
-        return isDefaultRoleCapabilityAllowed(action, moduleName, capabilityRole);
+
+        // Honor the base role capabilities, overriding default module restrictions,
+        // because the user explicitly granted the module in 'configuredTabs'.
+        if (capabilityRole === 'superadmin') return true;
+        
+        if (capabilityRole === 'admin') {
+            // Admins can't perform full destructive database actions
+            if (moduleName === MODULES.DATABASE && action === ACTIONS.DATABASE_ACTIONS) return false;
+            return true;
+        }
+
+        if (capabilityRole === 'editor') {
+            // Editors cannot delete anything or perform low-level DB operations
+            if (action === ACTIONS.DELETE) return false;
+            if (action === ACTIONS.DATABASE_ACTIONS) return false;
+            return true;
+        }
+
+        return false;
     }
 
     // 5. Default Role Matrices (Fallback logic if no specific config exists)
