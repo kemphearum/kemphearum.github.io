@@ -139,6 +139,14 @@ If Khmer text appears as `?`:
 - Long Khmer and English labels are wrapped safely to prevent overflow in cards, dialogs, and database controls.
 - Database action cards (Backup/Restore/Archive) are optimized for touch-width layouts.
 
+## Mobile Navbar and Slide Menu Improvements
+
+- Mobile top controls stay visible and clickable when the slide menu is open.
+- Slide menu opens below the fixed top navbar and keeps stable positioning during page scroll.
+- Mobile navbar and slide menu now follow desktop top-bar background tokens for theme consistency.
+- Slide menu opacity is increased in light mode for better contrast and readability.
+- Shadow bleed from the off-canvas menu edge is removed.
+
 ## Architecture
 
 ```text

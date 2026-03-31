@@ -1,6 +1,7 @@
 @use '../styles/variables' as *;
 
 .navbar {
+    --mobile-nav-offset: #{$nav-height};
     @include glass;
     position: fixed;
     top: 0;
@@ -16,7 +17,7 @@
     border-right: none;
     border-radius: 0;
     border-bottom: 1px solid var(--divider);
-    background: var(--bg-surface-light);
+    background: var(--topnav-bg, var(--bg-surface-light));
 
     .container {
         width: 100%;
@@ -31,7 +32,8 @@
 }
 
 .scrolled {
-    background: var(--bg-surface-light) !important;
+    --mobile-nav-offset: 65px;
+    background: var(--topnav-bg, var(--bg-surface-light)) !important;
     box-shadow: 0 10px 32px rgba(0, 0, 0, calc(var(--shadow-alpha) * 0.5));
     height: 65px;
     backdrop-filter: blur(24px);
@@ -65,9 +67,27 @@
 }
 
 .navRight {
+    --nav-control-size: 36px;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-wrap: nowrap;
+
+    @media (max-width: 420px) {
+        --nav-control-size: 34px;
+    }
+}
+
+.desktopControls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mobileControls {
+    display: none;
+    align-items: center;
+    gap: 0.45rem;
 }
 
 .navLinks {
@@ -134,6 +154,10 @@
     }
 }
 
+.mobileIconBtn {
+    display: none;
+}
+
 // Slightly increase navbar label size for Khmer script readability.
 :global(html[lang="km"]) .navLinks li {
     button,
@@ -156,8 +180,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: var(--nav-control-size);
+    height: var(--nav-control-size);
     border-radius: 10px;
     border: 1px solid var(--glass-border);
     background: var(--card-bg);
@@ -182,6 +206,8 @@
     }
 
     svg {
+        width: 16px;
+        height: 16px;
         transition: transform 0.3s ease;
     }
 }
@@ -191,26 +217,36 @@
     display: none;
     cursor: pointer;
     flex-direction: column;
-    justify-content: space-between;
-    width: 28px;
-    height: 20px;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: var(--nav-control-size);
+    height: var(--nav-control-size);
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
     z-index: 2100;
     padding: 0;
-    background: transparent;
-    border: none;
+    flex-shrink: 0;
 
     span {
-        width: 100%;
-        height: 2.5px;
+        width: 15px;
+        height: 2px;
         background-color: $text-primary;
         transition: all 0.3s ease;
         border-radius: 2px;
         transform-origin: center;
     }
 
+    &:hover {
+        color: $primary-color;
+        border-color: rgba($primary-color, 0.3);
+        background: rgba($primary-color, 0.12);
+    }
+
     &:focus-visible {
         outline: 2px solid rgba($primary-color, 0.55);
-        outline-offset: 4px;
+        outline-offset: 2px;
         border-radius: 6px;
     }
 }
@@ -218,7 +254,7 @@
 .hamburgerOpen {
     span {
         &:nth-child(1) {
-            transform: rotate(45deg) translate(6px, 6px);
+            transform: rotate(45deg) translate(4px, 4px);
         }
 
         &:nth-child(2) {
@@ -227,7 +263,7 @@
         }
 
         &:nth-child(3) {
-            transform: rotate(-45deg) translate(6px, -6px);
+            transform: rotate(-45deg) translate(4px, -4px);
         }
     }
 }
@@ -241,10 +277,44 @@
 
 /* Responsive Mobile Styles */
 @media (max-width: 768px) {
+    .navRight {
+        position: relative;
+        z-index: 2200;
+    }
+
+    .navbar {
+        --mobile-nav-offset: #{$nav-height};
+        .container {
+            padding: 0 1rem;
+        }
+    }
+
+    .scrolled {
+        --mobile-nav-offset: #{$nav-height};
+        height: $nav-height;
+    }
+
+    .logo {
+        position: relative;
+        z-index: 2200;
+        max-width: clamp(110px, 36vw, 180px);
+
+        a {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
     .backdrop {
         display: block;
         position: fixed;
-        inset: 0;
+        top: var(--mobile-nav-offset, #{$nav-height});
+        right: 0;
+        bottom: 0;
+        left: 0;
         background: var(--backdrop-bg);
         z-index: 1900;
         animation: fadeIn 0.3s ease;
@@ -252,23 +322,25 @@
 
     .navLinks {
         position: fixed;
-        top: 0;
+        top: var(--mobile-nav-offset, #{$nav-height});
         right: 0;
         width: 300px;
-        height: 100vh;
-        background: var(--mobile-menu-bg);
-        backdrop-filter: blur(24px);
+        max-width: min(300px, 100vw);
+        height: calc(100dvh - var(--mobile-nav-offset, #{$nav-height}));
+        background: var(--mobile-menu-bg, var(--topnav-bg, var(--bg-surface-light)));
+        backdrop-filter: none;
         flex-direction: column;
         align-items: flex-start;
-        justify-content: center;
-        padding: 2rem;
+        justify-content: flex-start;
+        padding: 1.25rem 1.25rem 2rem;
         gap: 1.5rem;
         transform: translateX(100%);
         transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 2000;
         border-right: none;
         border-left: 1px solid var(--divider);
-        box-shadow: -18px 0 38px rgba(2, 8, 20, 0.25);
+        border-top: 1px solid var(--divider);
+        box-shadow: none;
 
         &.active {
             transform: translateX(0);
@@ -297,8 +369,65 @@
         }
     }
 
-    .hamburger {
+    .mobileIconBtn {
         display: flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--nav-control-size);
+        height: var(--nav-control-size);
+        border-radius: 10px;
+        border: 1px solid var(--glass-border);
+        background: var(--card-bg);
+        color: var(--text-secondary);
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+
+        svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        &:hover {
+            color: $primary-color;
+            border-color: rgba($primary-color, 0.3);
+            background: rgba($primary-color, 0.12);
+        }
+    }
+
+    .mobileMenuToggle {
+        &:focus,
+        &:focus-visible,
+        &:active {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+    }
+
+    .desktopControls {
+        display: none !important;
+    }
+
+    .mobileControls {
+        display: inline-flex;
+        position: relative;
+        z-index: 2200;
+    }
+
+    .menuOpen {
+        box-shadow: none !important;
+
+        .hamburger {
+            display: none;
+        }
+    }
+
+    .menuOpen .navLinks {
+        box-shadow: none;
+    }
+
+    .hamburger {
+        display: none;
     }
 }
 
