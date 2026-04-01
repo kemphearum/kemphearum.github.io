@@ -178,13 +178,17 @@ service cloud.firestore {
     }
 
     // Users: Highly restricted access
-    match /users/{userId=**} {
-      // Superadmin has full access
-      allow read, write: if isSuperAdmin();
-      
-      // Users can read their own profile (assuming UID-keyed)
+    match /users/{userId} {
+      // 1. IDENTITY RULE: Users can always read their own document (MUST be first, 0 external calls)
       allow read: if isSignedIn() && request.auth.uid == userId;
-
+      
+      // 2. BOOTSTRAP RULE: Bootstrap super admin has full access (0 external calls)
+      allow read, write: if isBootstrapSuperAdminEmail(request.auth.token.email);
+      
+      // 3. ADMIN READ: Use direct field access if possible, or skip to avoid recursive loops.
+      // We block generic 'isAdmin()' here to prevent the infinite recursion through 'getRole'.
+      // If a superadmin (non-bootstrap) needs to manage users, they use the bootstrap admin for now.
+      
       // Users can ONLY update safe fields (like displayName) on their own profile.
       // They CANNOT modify role, isActive, or email.
       // Bootstrap super admin email may self-promote role to superadmin once.
@@ -198,7 +202,7 @@ service cloud.firestore {
                     )
                     && (
                       !request.resource.data.diff(resource.data).affectedKeys()
-                        .hasAny(['role', 'isActive', 'email'])
+                        .hasAny(['role', 'isActive', 'email', 'createdAt'])
                        || (
                         isBootstrapSuperAdminEmail(request.auth.token.email)
                         && isOwnEmail(request.resource.data.email)
@@ -210,7 +214,10 @@ service cloud.firestore {
       // Secure creation: role is pending by default. Bootstrap super admin email
       // can create itself as superadmin on first sign-in.
       allow create: if isSignedIn() 
-                    && request.auth.uid == userId
+                    && (
+                        request.auth.uid == userId
+                        || isBootstrapSuperAdminEmail(request.auth.token.email)
+                    )
                     && (
                       request.resource.data.role == 'pending'
                       || (
@@ -241,14 +248,14 @@ service cloud.firestore {
     match /visits/{document=**} {
       allow create: if isVisitPayloadValid();
       allow read, delete: if isAdmin();
-      allow update: if isAdmin() || isVisitDurationUpdateValid();
+      allow update: if isStaff() || isVisitDurationUpdateValid();
     }
 
     // Global Activity Tracker
     match /dailyUsage/{date} {
       allow read: if isAdmin();
-      allow create: if isAdmin() && isDailyUsagePayloadValid();
-      allow update: if isAdmin()
+      allow create: if isStaff() && isDailyUsagePayloadValid();
+      allow update: if isStaff()
                     && isDailyUsagePayloadValid()
                     && request.resource.data.diff(resource.data).affectedKeys()
                         .hasOnly(['reads', 'writes', 'deletes', 'lastUpdated']);
@@ -256,14 +263,14 @@ service cloud.firestore {
       
       match /logs/{logId} {
         allow read, delete: if isAdmin();
-        allow create: if isAdmin() && isActivityLogPayloadValid();
+        allow create: if isStaff() && isActivityLogPayloadValid();
       }
     }
       
     // Logs Collection Group
     match /{path=**}/logs/{logId} {
       allow read, delete: if isAdmin();
-      allow create: if isAdmin() && isActivityLogPayloadValid();
+      allow create: if isStaff() && isActivityLogPayloadValid();
     }
   }
 }

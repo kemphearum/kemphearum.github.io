@@ -218,7 +218,7 @@
       "roleSuffix": "Role",
       "saveForRole": "Save {{role}} permissions",
       "newRoleLabel": "New role",
-      "newRolePlaceholder": "new_role",
+      "newRolePlaceholder": "New Role",
       "newRolePreview": "Role id: {{role}}",
       "newRoleHint": "Enter role name to create a normalized role id.",
       "addRole": "Add role",

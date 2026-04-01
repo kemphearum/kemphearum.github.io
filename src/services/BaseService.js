@@ -200,8 +200,8 @@ export default class BaseService {
             const querySnapshot = await getDocs(q);
             
             const docs = querySnapshot.docs;
-            const hasMore = docs.length > limit;
-            const fetchedDocs = hasMore ? docs.slice(0, limit) : docs;
+            const hasMore = docs.length > fetchLimit;
+            const fetchedDocs = hasMore ? docs.slice(0, fetchLimit) : docs;
 
             let data = fetchedDocs.map(doc => ({ id: doc.id, ...doc.data() }));
 

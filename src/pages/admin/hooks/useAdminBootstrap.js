@@ -39,7 +39,10 @@ export const useAdminBootstrap = ({
     }, [notificationsEnabledRef, settingsData.notificationsEnabled]);
 
     useEffect(() => {
-        if (!isAuthLoading && userRole && !isTabAllowed(activeTab, userRole, rolePermissions)) {
+        // Only redirect if auth has finished, we have a role, and permissions have been fetched.
+        // This prevents 'flash' redirects for custom roles before their Firestore config arrives.
+        const permissionsLoaded = rolePermissions && Object.keys(rolePermissions).length > 0;
+        if (!isAuthLoading && userRole && permissionsLoaded && !isTabAllowed(activeTab, userRole, rolePermissions)) {
             console.log(`Access denied to tab '${activeTab}' for role '${userRole}'. Redirecting to profile.`);
             setActiveTab('profile');
         }

@@ -57,7 +57,8 @@ const UsersTable = ({
           superadmin: 'linear-gradient(135deg, #10b981, #059669)', 
           admin: 'linear-gradient(135deg, #6366f1, #8b5cf6)', 
           editor: 'linear-gradient(135deg, #f59e0b, #d97706)', 
-          pending: 'linear-gradient(135deg, #ef4444, #dc2626)' 
+          pending: 'linear-gradient(135deg, #ef4444, #dc2626)',
+          default: 'linear-gradient(135deg, #94a3b8, #64748b)' 
         };
 
         const isUserDisabled = user.isActive === false || user.disabled === true;
@@ -66,7 +67,7 @@ const UsersTable = ({
           <div className="ui-user-identity">
             <div 
               className="ui-user-avatar" 
-              style={{ background: avatarColors[normalizedRole] || avatarColors.pending }}
+              style={{ background: avatarColors[normalizedRole] || avatarColors.default }}
             >
               {initials}
             </div>
@@ -108,7 +109,7 @@ const UsersTable = ({
 
         return (
           <div className="ui-user-roleCell">
-            <Badge variant={roleVariants[normalizedRole] || 'ghost'}>
+            <Badge variant={roleVariants[normalizedRole] || 'default'}>
               {roleLabels[normalizedRole] || formatRoleDisplayName(user.role)}
             </Badge>
             <span className="ui-user-roleCell__note">{tr('Role assignment', 'ការកំណត់តួនាទី')}</span>
