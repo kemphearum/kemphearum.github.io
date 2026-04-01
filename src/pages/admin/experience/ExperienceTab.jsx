@@ -330,7 +330,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
       const previousExperience = queryClient.getQueryData(['experience', debouncedSearch, pagination.cursor]);
       
       if (previousExperience) {
-        queryClient.setQueryData(['experience', searchQuery, pagination.cursor], {
+        queryClient.setQueryData(['experience', debouncedSearch, pagination.cursor], {
           ...previousExperience,
           data: previousExperience.data.map(exp => 
             exp.id === id ? { ...exp, visible: !currentVisible } : exp

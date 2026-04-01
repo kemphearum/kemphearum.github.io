@@ -6,13 +6,13 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    function getUserData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
     }
     
-    function getRole() {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
-        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role 
+    function getRole(uid) {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(uid)) 
+        ? get(/databases/$(database)/documents/users/$(uid)).data.role 
         : 'anonymous';
     }
 
@@ -56,21 +56,21 @@ service cloud.firestore {
     function isSuperAdmin() {
       return isSignedIn() && (
         isBootstrapSuperAdminEmail(request.auth.token.email)
-        || isSuperAdminRole(getRole())
+        || isSuperAdminRole(getRole(request.auth.uid))
       );
     }
     
     function isAdmin() {
-      return isSignedIn() && (isAdminRole(getRole()) || isSuperAdmin());
+      return isSignedIn() && (isAdminRole(getRole(request.auth.uid)) || isSuperAdmin());
     }
 
     function isStaff() {
-      let r = getRole();
+      let r = getRole(request.auth.uid);
       return isSignedIn() && r != 'anonymous' && r != 'pending' && r != null && r != '';
     }
     
     function isEditor() {
-      return isSignedIn() && (getRole() == 'editor' || getRole() == 'EDITOR' || getRole() == 'writer' || isAdmin());
+      return isSignedIn() && (getRole(request.auth.uid) == 'editor' || getRole(request.auth.uid) == 'EDITOR' || getRole(request.auth.uid) == 'writer' || isAdmin());
     }
 
     function isVisitPayloadValid() {

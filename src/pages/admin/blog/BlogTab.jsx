@@ -215,10 +215,10 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
       BlogService.toggleVisibility(userRole, id, currentVisible, trackWrite),
     onMutate: async ({ id, currentVisible }) => {
       await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previousPosts = queryClient.getQueryData(['posts', searchQuery, pagination.cursor, pagination.limit]);
+      const previousPosts = queryClient.getQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit]);
       
       if (previousPosts) {
-        queryClient.setQueryData(['posts', searchQuery, pagination.cursor, pagination.limit], {
+        queryClient.setQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit], {
           ...previousPosts,
           data: previousPosts.data.map(p => 
             p.id === id ? { ...p, visible: !currentVisible } : p
@@ -229,7 +229,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     },
     onError: (err, variables, context) => {
       if (context?.previousPosts) {
-        queryClient.setQueryData(['posts', searchQuery, pagination.cursor, pagination.limit], context.previousPosts);
+        queryClient.setQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit], context.previousPosts);
       }
       showToast(err?.message || 'Failed to update visibility', 'error');
     },
@@ -250,10 +250,10 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
       BlogService.toggleFeatured(userRole, id, currentFeatured, trackWrite),
     onMutate: async ({ id, currentFeatured }) => {
       await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previousPosts = queryClient.getQueryData(['posts', searchQuery, pagination.cursor, pagination.limit]);
+      const previousPosts = queryClient.getQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit]);
       
       if (previousPosts) {
-        queryClient.setQueryData(['posts', searchQuery, pagination.cursor, pagination.limit], {
+        queryClient.setQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit], {
           ...previousPosts,
           data: previousPosts.data.map(p => 
             p.id === id ? { ...p, featured: !currentFeatured } : p
@@ -264,7 +264,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     },
     onError: (err, variables, context) => {
       if (context?.previousPosts) {
-        queryClient.setQueryData(['posts', searchQuery, pagination.cursor, pagination.limit], context.previousPosts);
+        queryClient.setQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit], context.previousPosts);
       }
       showToast(err?.message || 'Failed to update featured status', 'error');
     },

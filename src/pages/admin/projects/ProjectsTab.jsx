@@ -448,10 +448,10 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       ProjectService.toggleVisibility(userRole, id, currentVisible, trackWrite),
     onMutate: async ({ id, currentVisible }) => {
       await queryClient.cancelQueries({ queryKey: ['projects'] });
-      const previousProjects = queryClient.getQueryData(['projects', searchQuery, pagination.cursor, pagination.limit]);
+      const previousProjects = queryClient.getQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit]);
       
       if (previousProjects) {
-        queryClient.setQueryData(['projects', searchQuery, pagination.cursor, pagination.limit], {
+        queryClient.setQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit], {
           ...previousProjects,
           data: previousProjects.data.map(p => 
             p.id === id ? { ...p, visible: !currentVisible } : p
@@ -462,7 +462,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     },
     onError: (err, variables, context) => {
       if (context?.previousProjects) {
-        queryClient.setQueryData(['projects', searchQuery, pagination.cursor, pagination.limit], context.previousProjects);
+        queryClient.setQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit], context.previousProjects);
       }
       showToast(err?.message || t('admin.common.messages.updateFailed'), 'error');
     },
@@ -479,10 +479,10 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       ProjectService.toggleFeatured(userRole, id, currentFeatured, trackWrite),
     onMutate: async ({ id, currentFeatured }) => {
       await queryClient.cancelQueries({ queryKey: ['projects'] });
-      const previousProjects = queryClient.getQueryData(['projects', searchQuery, pagination.cursor, pagination.limit]);
+      const previousProjects = queryClient.getQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit]);
       
       if (previousProjects) {
-        queryClient.setQueryData(['projects', searchQuery, pagination.cursor, pagination.limit], {
+        queryClient.setQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit], {
           ...previousProjects,
           data: previousProjects.data.map(p => 
             p.id === id ? { ...p, featured: !currentFeatured } : p
@@ -493,7 +493,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     },
     onError: (err, variables, context) => {
       if (context?.previousProjects) {
-        queryClient.setQueryData(['projects', searchQuery, pagination.cursor, pagination.limit], context.previousProjects);
+        queryClient.setQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit], context.previousProjects);
       }
       showToast(err?.message || t('admin.common.messages.updateFailed'), 'error');
     },
