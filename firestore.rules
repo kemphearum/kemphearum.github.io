@@ -54,23 +54,31 @@ service cloud.firestore {
     }
     
     function isSuperAdmin() {
-      return isSignedIn() && (
-        isBootstrapSuperAdminEmail(request.auth.token.email)
-        || isSuperAdminRole(getRole(request.auth.uid))
-      );
+      if (!isSignedIn()) return false;
+      let r = getRole(request.auth.uid).lower();
+      return isBootstrapSuperAdminEmail(request.auth.token.email)
+        || r == 'superadmin'
+        || r == 'owner';
     }
     
     function isAdmin() {
-      return isSignedIn() && (isAdminRole(getRole(request.auth.uid)) || isSuperAdmin());
+      if (!isSignedIn()) return false;
+      let r = getRole(request.auth.uid).lower();
+      return r == 'admin' 
+        || r == 'administrator' 
+        || isSuperAdmin();
     }
 
     function isStaff() {
-      let r = getRole(request.auth.uid);
-      return isSignedIn() && r != 'anonymous' && r != 'pending' && r != null && r != '';
+      if (!isSignedIn()) return false;
+      let r = getRole(request.auth.uid).lower();
+      return r != 'anonymous' && r != 'pending' && r != null && r != '';
     }
     
     function isEditor() {
-      return isSignedIn() && (getRole(request.auth.uid) == 'editor' || getRole(request.auth.uid) == 'EDITOR' || getRole(request.auth.uid) == 'writer' || isAdmin());
+      if (!isSignedIn()) return false;
+      let r = getRole(request.auth.uid).lower();
+      return r == 'editor' || r == 'writer' || isAdmin();
     }
 
     function isVisitPayloadValid() {

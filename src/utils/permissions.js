@@ -159,10 +159,7 @@ const isDefaultRoleCapabilityAllowed = (action, moduleName, normalizedRole) => {
         const adminModules = [MODULES.DATABASE, MODULES.EXPERIENCE, MODULES.MESSAGES, MODULES.GENERAL];
         if (adminModules.includes(moduleName)) return false;
 
-        // Editors cannot delete, feature, toggle visibility, or perform low-level DB operations
-        if (action === ACTIONS.DELETE) return false;
-        if (action === ACTIONS.FEATURE) return false;
-        if (action === ACTIONS.TOGGLE_VISIBILITY) return false;
+        // Editors are excluded from low-level DB operations
         if (action === ACTIONS.DATABASE_ACTIONS) return false;
 
         // Default modules allowed for editor
@@ -245,10 +242,7 @@ export const isActionAllowed = (action, moduleName, role, rolePermissions = {}) 
         }
 
         if (capabilityRole === 'editor') {
-            // Editors cannot delete, feature, toggle visibility, or perform low-level DB operations
-            if (action === ACTIONS.DELETE) return false;
-            if (action === ACTIONS.FEATURE) return false;
-            if (action === ACTIONS.TOGGLE_VISIBILITY) return false;
+            // Editors are excluded from low-level DB operations
             if (action === ACTIONS.DATABASE_ACTIONS) return false;
             return true;
         }
