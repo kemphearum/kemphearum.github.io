@@ -115,7 +115,7 @@ const DatabaseActions = ({
               <Trash2 size={18} /> {tr('Archive Old Records', 'បណ្ណសារកំណត់ត្រាចាស់')}
             </h5>
             <p className="ui-text-secondary ui-text-small ui-mb-medium">
-              {tr('Clear messages, audit logs, and analytics older than a specified period to maintain performance.', 'សម្អាតសារ កំណត់ហេតុសវនកម្ម និងទិន្នន័យវិភាគ ដែលចាស់ជាងរយៈពេលកំណត់ ដើម្បីរក្សាប្រសិទ្ធភាព។')}
+              {tr('Clear messages, audit logs, visits, and daily usage records older than a specified period to maintain performance.', 'សម្អាតសារ កំណត់ហេតុសវនកម្ម ចំនួនចូលមើល និងទិន្នន័យប្រើប្រាស់ប្រចាំថ្ងៃ ដែលចាស់ជាងរយៈពេលកំណត់ ដើម្បីរក្សាប្រសិទ្ធភាព។')}
             </p>
           </div>
           <div className="ui-flex-center-gap-medium">
@@ -123,6 +123,7 @@ const DatabaseActions = ({
               value={archiveDays}
               onChange={(e) => onArchiveDaysChange(Number(e.target.value))}
               options={[
+                { value: 7, label: tr('Older than 7 Days (1 Week)', 'Older than 7 Days (1 Week)') },
                 { value: 30, label: tr('Older than 30 Days', 'ចាស់ជាង 30 ថ្ងៃ') },
                 { value: 90, label: tr('Older than 90 Days', 'ចាស់ជាង 90 ថ្ងៃ') },
                 { value: 180, label: tr('Older than 6 Months', 'ចាស់ជាង 6 ខែ') },

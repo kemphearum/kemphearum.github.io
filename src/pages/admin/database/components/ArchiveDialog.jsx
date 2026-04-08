@@ -24,7 +24,7 @@ const ArchiveDialog = ({
         
         <Dialog.Body>
           <p className="ui-text-secondary ui-text-center ui-mb-large">
-            {tr('You are about to permanently delete all', 'អ្នកកំពុងលុបជាអចិន្ត្រៃយ៍')} <strong>{tr('Messages', 'សារ')}</strong>, <strong>{tr('Audit Logs', 'កំណត់ហេតុសវនកម្ម')}</strong>, {tr('and', 'និង')} <strong>{tr('Analytics', 'វិភាគ')}</strong> {tr('older than', 'ដែលចាស់ជាង')} <span className="ui-text-danger ui-font-bold">{archiveDays} {tr('days', 'ថ្ងៃ')}</span>.
+            {tr('You are about to permanently delete all', 'អ្នកកំពុងត្រៀមលុបចោលជាអចិន្ត្រៃយ៍')} <strong>{tr('Messages', 'សារ')}</strong>, <strong>{tr('Audit Logs', 'កំណត់ហេតុសវនកម្ម')}</strong>, <strong>{tr('Visits', 'ការចូលមើល')}</strong>, {tr('and', 'និង')} <strong>{tr('Daily Usage', 'ការប្រើប្រាស់ប្រចាំថ្ងៃ')}</strong> {tr('older than', 'ដែលចាស់ជាង')} <span className="ui-text-danger ui-font-bold">{archiveDays} {tr('days', 'ថ្ងៃ')}</span>.
           </p>
 
           <div className="ui-card ui-bg-subtle ui-p-medium ui-mb-large">
