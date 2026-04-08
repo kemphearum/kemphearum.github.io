@@ -1,7 +1,15 @@
 /* eslint-disable no-console */
-const admin = require("firebase-admin");
+const admin = require('firebase-admin');
 
-const BATCH_LIMIT = 450;
+const BATCH_LIMIT = Number(process.env.MIGRATE_BATCH_LIMIT || 250);
+const COMMIT_PAUSE_MS = Number(process.env.MIGRATE_COMMIT_PAUSE_MS || 150);
+const DEFAULT_MAX_ATTEMPTS = Number(process.env.MIGRATE_RETRY_MAX_ATTEMPTS || 7);
+const DEFAULT_BASE_DELAY_MS = Number(process.env.MIGRATE_RETRY_BASE_DELAY_MS || 1000);
+const DEFAULT_MAX_DELAY_MS = Number(process.env.MIGRATE_RETRY_MAX_DELAY_MS || 20000);
+
+const RETRYABLE_ERROR_CODES = new Set([4, 8, 10, 14, 'aborted', 'deadline-exceeded', 'resource-exhausted', 'unavailable']);
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function parseServiceAccount(rawValue, envName) {
   if (!rawValue) {
@@ -13,15 +21,15 @@ function parseServiceAccount(rawValue, envName) {
   try {
     const parsed = JSON.parse(normalized);
     if (parsed.private_key) {
-      parsed.private_key = parsed.private_key.replace(/\\n/g, "\n");
+      parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
     }
     return parsed;
   } catch {
     try {
-      const decoded = Buffer.from(normalized, "base64").toString("utf8");
+      const decoded = Buffer.from(normalized, 'base64').toString('utf8');
       const parsed = JSON.parse(decoded);
       if (parsed.private_key) {
-        parsed.private_key = parsed.private_key.replace(/\\n/g, "\n");
+        parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
       }
       return parsed;
     } catch {
@@ -33,16 +41,60 @@ function parseServiceAccount(rawValue, envName) {
 }
 
 function appNameFor(projectId, role) {
-  return `${projectId || "unknown-project"}-${role}`;
+  return `${projectId || 'unknown-project'}-${role}`;
+}
+
+function isRetryableError(error) {
+  const code = error?.code;
+  const message = String(error?.message || '').toLowerCase();
+
+  if (RETRYABLE_ERROR_CODES.has(code)) return true;
+  if (message.includes('deadline exceeded')) return true;
+  if (message.includes('resource_exhausted')) return true;
+  if (message.includes('quota exceeded')) return true;
+  if (message.includes('unavailable')) return true;
+  if (message.includes('aborted')) return true;
+
+  return false;
+}
+
+async function withRetry(task, label, options = {}) {
+  const maxAttempts = Number(options.maxAttempts || DEFAULT_MAX_ATTEMPTS);
+  const baseDelayMs = Number(options.baseDelayMs || DEFAULT_BASE_DELAY_MS);
+  const maxDelayMs = Number(options.maxDelayMs || DEFAULT_MAX_DELAY_MS);
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await task();
+    } catch (error) {
+      const retryable = isRetryableError(error);
+      const isLastAttempt = attempt >= maxAttempts;
+
+      if (!retryable || isLastAttempt) {
+        throw error;
+      }
+
+      const expDelay = Math.min(maxDelayMs, baseDelayMs * Math.pow(2, attempt - 1));
+      const jitter = Math.round(expDelay * 0.25 * Math.random());
+      const waitMs = expDelay + jitter;
+      console.warn(`     retry ${attempt}/${maxAttempts} for ${label} after ${waitMs}ms (${error.message})`);
+      await sleep(waitMs);
+    }
+  }
 }
 
 async function flushBatch(state) {
   if (state.pendingWrites === 0) {
     return;
   }
-  await state.batch.commit();
+
+  await withRetry(() => state.batch.commit(), 'commit batch');
   state.batch = state.db.batch();
   state.pendingWrites = 0;
+
+  if (COMMIT_PAUSE_MS > 0) {
+    await sleep(COMMIT_PAUSE_MS);
+  }
 }
 
 async function queueWrite(state, docRef, data) {
@@ -55,39 +107,39 @@ async function queueWrite(state, docRef, data) {
   }
 }
 
-async function copyCollection(sourceCollectionRef, targetDb, state) {
-  const sourceDocs = await sourceCollectionRef.listDocuments();
+async function copyCollection(sourceCollectionRef, state) {
+  const sourceDocs = await withRetry(() => sourceCollectionRef.listDocuments(), `list documents for ${sourceCollectionRef.path}`);
   if (sourceDocs.length === 0) {
     return;
   }
 
   for (const sourceDocRef of sourceDocs) {
-    const sourceDocSnapshot = await sourceDocRef.get();
+    const sourceDocSnapshot = await withRetry(() => sourceDocRef.get(), `read ${sourceDocRef.path}`);
     if (!sourceDocSnapshot.exists) {
       continue;
     }
 
-    const targetDocRef = targetDb.doc(sourceDocRef.path);
+    const targetDocRef = state.db.doc(sourceDocRef.path);
     await queueWrite(state, targetDocRef, sourceDocSnapshot.data());
 
-    const subcollections = await sourceDocRef.listCollections();
+    const subcollections = await withRetry(() => sourceDocRef.listCollections(), `list subcollections for ${sourceDocRef.path}`);
     for (const subcollection of subcollections) {
-      await copyCollection(subcollection, targetDb, state);
+      await copyCollection(subcollection, state);
     }
   }
 }
 
 async function run() {
-  const sourceSa = parseServiceAccount(process.env.SA_SOURCE, "SA_SOURCE");
-  const targetSa = parseServiceAccount(process.env.SA_TARGET, "SA_TARGET");
+  const sourceSa = parseServiceAccount(process.env.SA_SOURCE || process.env.SA_SOURCE_JSON, 'SA_SOURCE');
+  const targetSa = parseServiceAccount(process.env.SA_TARGET || process.env.SA_TARGET_JSON, 'SA_TARGET');
 
   const sourceApp = admin.initializeApp(
     { credential: admin.credential.cert(sourceSa) },
-    appNameFor(sourceSa.project_id, "source")
+    appNameFor(sourceSa.project_id, 'source')
   );
   const targetApp = admin.initializeApp(
     { credential: admin.credential.cert(targetSa) },
-    appNameFor(targetSa.project_id, "target")
+    appNameFor(targetSa.project_id, 'target')
   );
 
   const sourceDb = sourceApp.firestore();
@@ -100,14 +152,14 @@ async function run() {
     totalDocs: 0,
   };
 
-  const rootCollections = await sourceDb.listCollections();
+  const rootCollections = await withRetry(() => sourceDb.listCollections(), 'list root collections');
   console.log(
     `Starting sync from ${sourceSa.project_id} to ${targetSa.project_id}. Root collections: ${rootCollections.length}`
   );
 
   for (const collection of rootCollections) {
     console.log(`Syncing collection: ${collection.path}`);
-    await copyCollection(collection, targetDb, state);
+    await copyCollection(collection, state);
   }
 
   await flushBatch(state);
@@ -115,6 +167,6 @@ async function run() {
 }
 
 run().catch((error) => {
-  console.error("Sync failed:", error);
+  console.error('Sync failed:', error);
   process.exitCode = 1;
 });

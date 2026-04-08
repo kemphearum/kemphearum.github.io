@@ -2,8 +2,8 @@ name: Automated Database Sync (Backup)
 
 on:
   schedule:
-    # Runs at 00:00 and 12:00 UTC
-    - cron: '0 */12 * * *'
+    # Runs once per week at 00:00 UTC
+    - cron: '0 0 * * 1'
   workflow_dispatch:
     # Allows manual triggering
 
