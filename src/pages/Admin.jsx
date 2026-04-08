@@ -22,18 +22,55 @@ import {
     tabSubtitleKeys
 } from './admin/adminUtils';
 
+const LAZY_RELOAD_PREFIX = 'admin-lazy-reload:';
+
+const isChunkLoadError = (error) => {
+    const message = String(error?.message || error || '');
+    return (
+        message.includes('Failed to fetch dynamically imported module') ||
+        message.includes('Importing a module script failed') ||
+        message.includes('ChunkLoadError') ||
+        message.includes('Loading chunk')
+    );
+};
+
+const lazyWithRetry = (importer, chunkKey) => lazy(() => importer().then(
+    (module) => {
+        if (typeof window !== 'undefined') {
+            window.sessionStorage.removeItem(`${LAZY_RELOAD_PREFIX}${chunkKey}`);
+        }
+
+        return module;
+    }
+).catch((error) => {
+    if (typeof window !== 'undefined' && isChunkLoadError(error)) {
+        const storageKey = `${LAZY_RELOAD_PREFIX}${chunkKey}`;
+        const alreadyRetried = window.sessionStorage.getItem(storageKey) === 'true';
+
+        if (!alreadyRetried) {
+            window.sessionStorage.setItem(storageKey, 'true');
+            window.location.reload();
+            return new Promise(() => {});
+        }
+
+        window.sessionStorage.removeItem(storageKey);
+    }
+
+    throw error;
+}));
+
 // Tab components
-const GeneralTab = lazy(() => import('./admin/general/GeneralTab'));
-const ProfileTab = lazy(() => import('./admin/profile/ProfileTab'));
-const SettingsTab = lazy(() => import('./admin/settings/SettingsTab'));
-const MessagesTab = lazy(() => import('./admin/messages/MessagesTab'));
-const ExperienceTab = lazy(() => import('./admin/experience/ExperienceTab'));
-const UsersTab = lazy(() => import('./admin/users/UsersTab'));
-const ProjectsTab = lazy(() => import('./admin/projects/ProjectsTab'));
-const BlogTab = lazy(() => import('./admin/blog/BlogTab'));
-const DatabaseTab = lazy(() => import('./admin/database/DatabaseTab'));
-const AuditLogsTab = lazy(() => import('./admin/audit/AuditLogsTab'));
-const AnalyticsTab = lazy(() => import('./admin/analytics/AnalyticsTab'));
+const GeneralTab = lazyWithRetry(() => import('./admin/general/GeneralTab'), 'general');
+const ProfileTab = lazyWithRetry(() => import('./admin/profile/ProfileTab'), 'profile');
+const SettingsTab = lazyWithRetry(() => import('./admin/settings/SettingsTab'), 'settings');
+const MessagesTab = lazyWithRetry(() => import('./admin/messages/MessagesTab'), 'messages');
+const ExperienceTab = lazyWithRetry(() => import('./admin/experience/ExperienceTab'), 'experience');
+const UsersTab = lazyWithRetry(() => import('./admin/users/UsersTab'), 'users');
+const ProjectsTab = lazyWithRetry(() => import('./admin/projects/ProjectsTab'), 'projects');
+const BlogTab = lazyWithRetry(() => import('./admin/blog/BlogTab'), 'blog');
+const DatabaseTab = lazyWithRetry(() => import('./admin/database/DatabaseTab'), 'database');
+const AuditLogsTab = lazyWithRetry(() => import('./admin/audit/AuditLogsTab'), 'audit');
+const AnalyticsTab = lazyWithRetry(() => import('./admin/analytics/AnalyticsTab'), 'analytics');
 
 // ============================================================
 // Icons removed - now handled in modular components

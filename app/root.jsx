@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import {
   Links,
   Meta,
@@ -12,6 +13,7 @@ import {
 } from "react-router";
 import MaintenancePage from '@/sections/MaintenancePage';
 import ComponentErrorBoundary from '@/sections/ErrorBoundary';
+import ChunkRecovery from '@/sections/ChunkRecovery';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { ActivityProvider } from '../src/context/ActivityContext';
 import { LanguageProvider } from '../src/context/LanguageContext';
@@ -92,6 +94,16 @@ function SettingsApplier({ children, initialSettings }) {
   const { language } = useTranslation();
   useAnalytics();
   const defaultVisualSettings = SettingsService.constructor.DEFAULT_VISUAL_SETTINGS || {};
+  const {
+    glassOpacity: defaultGlassOpacity,
+    glassBlur: defaultGlassBlur,
+    glassColor: defaultGlassColor,
+    bgDensity: defaultBgDensity,
+    bgSpeed: defaultBgSpeed,
+    bgGlowOpacity: defaultBgGlowOpacity,
+    bgInteractive: defaultBgInteractive,
+    bgStyle: defaultBgStyle,
+  } = defaultVisualSettings;
 
   const resolveLocalizedString = useCallback((value, fallback = '') => {
     if (typeof value === 'string') return value;
@@ -189,9 +201,9 @@ function SettingsApplier({ children, initialSettings }) {
       root.style.setProperty('--font-size-base', sizeMap[sizeKey] || '16px');
 
       // Glassmorphism & Theme Variables
-      const glassOpacity = typpo.glassOpacity ?? defaultVisualSettings.glassOpacity ?? 0.82;
-      const glassBlur = typpo.glassBlur ?? defaultVisualSettings.glassBlur ?? 12;
-      const glassColor = typpo.glassColor || defaultVisualSettings.glassColor || '#0b1527';
+      const glassOpacity = typpo.glassOpacity ?? defaultGlassOpacity ?? 0.82;
+      const glassBlur = typpo.glassBlur ?? defaultGlassBlur ?? 12;
+      const glassColor = typpo.glassColor || defaultGlassColor || '#0b1527';
 
       const hexToRgb = (hex) => {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -202,14 +214,14 @@ function SettingsApplier({ children, initialSettings }) {
       root.style.setProperty('--glass-blur', `${glassBlur}px`);
       root.style.setProperty('--glass-surface-rgb', hexToRgb(glassColor));
     }
-  }, [globalConfig, language, metadata, resolveLocalizedString]);
+  }, [globalConfig, language, metadata, resolveLocalizedString, defaultGlassOpacity, defaultGlassBlur, defaultGlassColor]);
 
   const siteConfig = globalConfig?.site || globalConfig || {};
-  const bgDensity = siteConfig.bgDensity ?? defaultVisualSettings.bgDensity ?? 50;
-  const bgSpeed = siteConfig.bgSpeed ?? defaultVisualSettings.bgSpeed ?? 50;
-  const bgGlowOpacity = siteConfig.bgGlowOpacity ?? defaultVisualSettings.bgGlowOpacity ?? 50;
-  const bgInteractive = siteConfig.bgInteractive ?? defaultVisualSettings.bgInteractive ?? true;
-  const bgStyle = siteConfig.bgStyle || defaultVisualSettings.bgStyle || 'plexus';
+  const bgDensity = siteConfig.bgDensity ?? defaultBgDensity ?? 50;
+  const bgSpeed = siteConfig.bgSpeed ?? defaultBgSpeed ?? 50;
+  const bgGlowOpacity = siteConfig.bgGlowOpacity ?? defaultBgGlowOpacity ?? 50;
+  const bgInteractive = siteConfig.bgInteractive ?? defaultBgInteractive ?? true;
+  const bgStyle = siteConfig.bgStyle || defaultBgStyle || 'plexus';
 
   return (
     <>
@@ -284,6 +296,7 @@ export default function App() {
 
   return (
     <SettingsApplier initialSettings={loaderData}>
+      <ChunkRecovery />
       <Outlet />
     </SettingsApplier>
   );
