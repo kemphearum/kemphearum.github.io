@@ -1,0 +1,84 @@
+# Logs
+# Service Account credentials (NEVER commit these)
+sa-*.json
+
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+
+# Local Env Files
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage
+
+# Build
+dist
+dist-ssr
+build/
+.react-router/
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temporary and Build Logs
+build_log.txt
+check_actions.cjs
+.vercel
+.firebase/
+.env*.local
+
+# Local seed/workflow artifacts
+seed/
+seeds/
+workflow/
+workflows/
+workflow=walkthrough.md
+walkthrough.md
+scripts/seed-*.cjs
+scripts/seed-utils.cjs
+scripts/check-general-content.cjs
+scripts/count-all.cjs
+scripts/fetch-experience.cjs
+sa-source.json
+diff.txt
+.agents/
+
+# Local caches / temp
+*.cache
+.eslintcache
+.stylelintcache
+.sass-cache/
+tmp/
+temp/
+*.pid
+Thumbs.db
+
+# Firebase / local emulator logs
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Test reports
+playwright-report/
+test-results/
+
+# JetBrains
+*.iml

@@ -1,0 +1,270 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+    
+    function getRole(uid) {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(uid)) 
+        ? get(/databases/$(database)/documents/users/$(uid)).data.role 
+        : 'anonymous';
+    }
+
+    function isSuperAdminRole(role) {
+      return role == 'superadmin'
+        || role == 'SUPERADMIN'
+        || role == 'superAdmin'
+        || role == 'super_admin'
+        || role == 'super-admin'
+        || role == 'super admin'
+        || role == 'owner'
+        || role == 'OWNER'
+        || role == 'Owner';
+    }
+
+    function isBootstrapSuperAdminEmail(email) {
+      return email is string
+        && email.matches('(?i)^kem\\.phearum@gmail\\.com$');
+    }
+
+    function isOwnEmail(email) {
+      return email is string
+        && isSignedIn()
+        && (
+          email == request.auth.token.email
+          || (
+            isBootstrapSuperAdminEmail(email)
+            && isBootstrapSuperAdminEmail(request.auth.token.email)
+          )
+        );
+    }
+
+    function isAdminRole(role) {
+      return role == 'admin'
+        || role == 'ADMIN'
+        || role == 'administrator'
+        || role == 'ADMINISTRATOR'
+        || isSuperAdminRole(role);
+    }
+    
+    function isSuperAdmin() {
+      return isSignedIn() && (
+        isBootstrapSuperAdminEmail(request.auth.token.email)
+        || getRole(request.auth.uid).matches('(?i)^(superadmin|owner)$')
+      );
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        getRole(request.auth.uid).matches('(?i)^(admin|administrator)$') 
+        || isSuperAdmin()
+      );
+    }
+
+    function isStaff() {
+      return isSignedIn() && (
+        !getRole(request.auth.uid).matches('(?i)^(anonymous|pending)$')
+      );
+    }
+    
+    function isEditor() {
+      return isSignedIn() && (
+        getRole(request.auth.uid).matches('(?i)^(editor|writer)$') 
+        || isAdmin()
+      );
+    }
+
+    function isVisitPayloadValid() {
+      return request.resource.data.keys().hasOnly([
+        'sessionId', 'path', 'date', 'userAgent', 'device', 'browser', 'os',
+        'isReturning', 'country', 'countryCode', 'city', 'ip', 'referrer',
+        'duration', 'timestamp'
+      ])
+      && request.resource.data.sessionId is string
+      && request.resource.data.sessionId.size() > 0
+      && request.resource.data.sessionId.size() <= 128
+      && request.resource.data.path is string
+      && request.resource.data.path.size() > 0
+      && request.resource.data.path.size() <= 512
+      && request.resource.data.date is string
+      && request.resource.data.date.matches('^\\d{4}-\\d{2}-\\d{2}$')
+      && request.resource.data.userAgent is string
+      && request.resource.data.userAgent.size() <= 1024
+      && request.resource.data.device is string
+      && request.resource.data.device.size() <= 24
+      && request.resource.data.browser is string
+      && request.resource.data.browser.size() <= 80
+      && request.resource.data.os is string
+      && request.resource.data.os.size() <= 80
+      && request.resource.data.isReturning is bool
+      && request.resource.data.country is string
+      && request.resource.data.country.size() <= 100
+      && request.resource.data.countryCode is string
+      && request.resource.data.countryCode.size() <= 3
+      && request.resource.data.city is string
+      && request.resource.data.city.size() <= 120
+      && request.resource.data.ip is string
+      && request.resource.data.ip.size() <= 64
+      && request.resource.data.referrer is string
+      && request.resource.data.referrer.size() <= 1024
+      && (!request.resource.data.keys().hasAny(['duration'])
+        || (request.resource.data.duration is int
+            && request.resource.data.duration >= 0
+            && request.resource.data.duration <= 86400))
+      && request.resource.data.timestamp is timestamp;
+    }
+
+    function isVisitDurationUpdateValid() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['duration'])
+      && request.resource.data.duration is int
+      && request.resource.data.duration >= 0
+      && request.resource.data.duration <= 86400;
+    }
+
+    function isDailyUsagePayloadValid() {
+      return request.resource.data.keys().hasOnly(['reads', 'writes', 'deletes', 'lastUpdated'])
+      && request.resource.data.reads is int
+      && request.resource.data.writes is int
+      && request.resource.data.deletes is int
+      && request.resource.data.reads >= 0
+      && request.resource.data.writes >= 0
+      && request.resource.data.deletes >= 0
+      && request.resource.data.lastUpdated is timestamp;
+    }
+
+    function isActivityLogPayloadValid() {
+      return request.resource.data.keys().hasAll(['type', 'label', 'count', 'user', 'time'])
+      && request.resource.data.type is string
+      && request.resource.data.label is string
+      && request.resource.data.count is int
+      && request.resource.data.user is string
+      && request.resource.data.time is timestamp;
+    }
+
+    // Allow public read for content, projects, experience, and posts
+    match /content/{document=**} { 
+      allow read; 
+      allow write: if isStaff(); 
+    }
+    
+    match /projects/{document=**} { 
+      allow read; 
+      allow write: if isStaff(); 
+    }
+    
+    match /experience/{document=**} { 
+      allow read; 
+      allow write: if isStaff(); 
+    }
+    
+    // Application Settings (Logo, Page Title, Audit Log Config, etc.)
+    match /settings/{document=**} {
+      allow read;
+      allow write: if isSuperAdmin();
+    }
+
+    // Blog Posts Rules
+    match /posts/{document=**} { 
+      allow read; 
+      allow write: if isStaff(); 
+    }
+
+    // Messages: Public can write (send), only staff can read/manage
+    match /messages/{document=**} {
+      // Public writes are handled through Cloud Functions (Admin SDK bypasses rules).
+      // This blocks direct client spam against Firestore quota.
+      allow create: if isStaff();
+      allow read, update, delete: if isStaff();
+    }
+
+    // Users: Highly restricted access
+    match /users/{userId} {
+      // 1. IDENTITY RULE: Users can always read their own document (MUST be first, 0 external calls)
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      
+      // 2. BOOTSTRAP RULE: Bootstrap super admin has full access (0 external calls)
+      allow read, write: if isBootstrapSuperAdminEmail(request.auth.token.email);
+      
+      // 3. ADMIN READ: Use direct field access if possible, or skip to avoid recursive loops.
+      // We block generic 'isAdmin()' here to prevent the infinite recursion through 'getRole'.
+      // If a superadmin (non-bootstrap) needs to manage users, they use the bootstrap admin for now.
+      
+      // Users can ONLY update safe fields (like displayName) on their own profile.
+      // Migration: Allow self-setting role to staff levels (excludes high-privilege roles like Admin).
+      allow update: if isSignedIn() 
+                    && request.auth.uid == userId
+                    && (
+                      !request.resource.data.diff(resource.data).affectedKeys()
+                        .hasAny(['role', 'isActive', 'email', 'createdAt'])
+                       || (
+                        // Allow migration for any role except high-privilege admin roles.
+                        !request.resource.data.role.matches('(?i)^(admin|superadmin|owner|administrator)$')
+                       )
+                       || isBootstrapSuperAdminEmail(request.auth.token.email)
+                    );
+      
+      // Secure creation: role is pending by default. 
+      // Migration: Staff users can migrate their legacy roles to UID-keyed documents.
+      allow create: if isSignedIn() 
+                    && request.auth.uid == userId
+                    && (
+                      request.resource.data.role == 'pending'
+                      || isBootstrapSuperAdminEmail(request.auth.token.email)
+                      || (
+                        // Allow migration for any role except high-privilege admin roles.
+                        !request.resource.data.role.matches('(?i)^(admin|superadmin|owner|administrator)$')
+                      )
+                    );
+      
+      // Support for existing email-based queries (read and delete for own record)
+      allow read, delete: if isSignedIn() && (request.auth.uid == userId || isOwnEmail(resource.data.email));
+    }
+
+    // Role Permissions: Superadmin writes; all authenticated users can read
+    match /rolePermissions/{document=**} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+
+    // Login Audit Trail: Any authenticated user can append logs; only Admin can view
+    match /auditLogs/{document=**} {
+      allow create: if isSignedIn();
+      allow read, write: if isSuperAdmin();
+    }
+
+    // Analytics/Visits Tracking
+    match /visits/{document=**} {
+      allow create: if isVisitPayloadValid();
+      allow read: if isStaff();
+      allow delete: if isAdmin();
+      allow update: if isStaff() || isVisitDurationUpdateValid();
+    }
+
+    // Global Activity Tracker
+    match /dailyUsage/{date} {
+      allow read: if isStaff();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isSuperAdmin();
+      
+      match /logs/{logId} {
+        allow read: if isStaff();
+        allow delete: if isAdmin();
+        allow create: if isSignedIn();
+      }
+    }
+      
+    // Logs Collection Group
+    match /{path=**}/logs/{logId} {
+      allow read: if isStaff();
+      allow delete: if isAdmin();
+      allow create: if isSignedIn();
+    }
+  }
+}

@@ -1,0 +1,479 @@
+@use '../styles/variables' as *;
+
+.navbar {
+    --mobile-nav-offset: #{$nav-height};
+    @include glass;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: $nav-height;
+    z-index: 1000;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    border-bottom: 1px solid var(--divider);
+    background: var(--topnav-bg, var(--bg-surface-light));
+
+    .container {
+        width: 100%;
+        max-width: $container-width;
+        margin: 0 auto;
+        padding: 0 2rem;
+        height: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+.scrolled {
+    --mobile-nav-offset: 65px;
+    background: var(--topnav-bg, var(--bg-surface-light)) !important;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, calc(var(--shadow-alpha) * 0.5));
+    height: 65px;
+    backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--divider);
+}
+
+.logo {
+    z-index: 1002;
+    display: flex;
+    align-items: center;
+
+    a {
+        text-decoration: none;
+        color: inherit;
+        transition: opacity 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+
+        // Apply typography properties directly to the anchor to override global nav a styles
+        font-family: var(--font-logo) !important;
+        font-size: var(--font-size-logo) !important;
+        font-weight: var(--font-weight-logo) !important;
+        font-style: var(--font-style-logo) !important;
+        color: var(--text-primary);
+        letter-spacing: 0.5px;
+
+        &:hover {
+            opacity: 0.85;
+        }
+    }
+
+    .highlight {
+        color: $primary-color;
+    }
+}
+
+.navRight {
+    --nav-control-size: 36px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+
+    @media (max-width: 420px) {
+        --nav-control-size: 34px;
+    }
+}
+
+.desktopControls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.mobileControls {
+    display: none;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.navLinks {
+    display: flex;
+    list-style: none;
+    gap: 0.25rem;
+
+    li {
+
+        button,
+        a {
+            position: relative;
+            font-family: var(--font-nav) !important;
+            font-size: var(--font-size-nav) !important;
+            font-weight: var(--font-weight-nav) !important;
+            font-style: var(--font-style-nav) !important;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.3s ease;
+            text-transform: uppercase;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            letter-spacing: 0.5px;
+
+            /* Add normalization */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            font-family: inherit;
+            line-height: 1;
+            text-decoration: none;
+
+            &:hover {
+                color: $primary-color;
+                background: rgba($primary-color, 0.12);
+            }
+
+            &:focus-visible {
+                color: $primary-color;
+                background: rgba($primary-color, 0.1);
+                outline: 2px solid rgba($primary-color, 0.55);
+                outline-offset: 2px;
+            }
+
+            &::after {
+                content: '';
+                position: absolute;
+                bottom: 2px;
+                left: 50%;
+                width: 0;
+                height: 2px;
+                background: $primary-color;
+                transition: all 0.3s ease;
+                transform: translateX(-50%);
+                border-radius: 1px;
+            }
+
+            &:hover::after {
+                width: 60%;
+            }
+        }
+    }
+}
+
+.mobileIconBtn {
+    display: none;
+}
+
+// Slightly increase navbar label size for Khmer script readability.
+:global(html[lang="km"]) .navLinks li {
+    button,
+    a {
+        font-size: calc(var(--font-size-nav) * 1.12) !important;
+    }
+}
+
+.activeNav {
+    color: $primary-color !important;
+    background: rgba($primary-color, 0.08) !important;
+
+    &::after {
+        width: 60% !important;
+    }
+}
+
+// Theme Toggle
+.themeToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--nav-control-size);
+    height: var(--nav-control-size);
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 2100;
+    flex-shrink: 0;
+
+    &:hover {
+        color: $primary-color;
+        border-color: rgba($primary-color, 0.3);
+        background: rgba($primary-color, 0.12);
+        transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+        color: $primary-color;
+        border-color: rgba($primary-color, 0.55);
+        outline: 2px solid rgba($primary-color, 0.55);
+        outline-offset: 2px;
+    }
+
+    svg {
+        width: 16px;
+        height: 16px;
+        transition: transform 0.3s ease;
+    }
+}
+
+/* Hamburger Menu */
+.hamburger {
+    display: none;
+    cursor: pointer;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: var(--nav-control-size);
+    height: var(--nav-control-size);
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    z-index: 2100;
+    padding: 0;
+    flex-shrink: 0;
+
+    span {
+        width: 15px;
+        height: 2px;
+        background-color: $text-primary;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+        transform-origin: center;
+    }
+
+    &:hover {
+        color: $primary-color;
+        border-color: rgba($primary-color, 0.3);
+        background: rgba($primary-color, 0.12);
+    }
+
+    &:focus-visible {
+        outline: 2px solid rgba($primary-color, 0.55);
+        outline-offset: 2px;
+        border-radius: 6px;
+    }
+}
+
+.hamburgerOpen {
+    span {
+        &:nth-child(1) {
+            transform: rotate(45deg) translate(4px, 4px);
+        }
+
+        &:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+
+        &:nth-child(3) {
+            transform: rotate(-45deg) translate(4px, -4px);
+        }
+    }
+}
+
+/* Mobile backdrop */
+.backdrop {
+    display: none;
+    border: none;
+    padding: 0;
+}
+
+/* Responsive Mobile Styles */
+@media (max-width: 768px) {
+    .navRight {
+        position: relative;
+        z-index: 2200;
+        gap: 0.35rem;
+        flex-shrink: 0;
+    }
+
+    .navbar {
+        --mobile-nav-offset: #{$nav-height};
+        .container {
+            padding: 0 0.75rem;
+        }
+    }
+
+    .scrolled {
+        --mobile-nav-offset: #{$nav-height};
+        height: $nav-height;
+    }
+
+    .logo {
+        position: relative;
+        z-index: 2200;
+        flex: 1 1 auto;
+        min-width: 0;
+        max-width: clamp(140px, 50vw, 220px);
+        display: flex; /* Ensure centered */
+        align-items: center;
+
+        a {
+            display: inline-flex; /* Changed from inline-block */
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    .backdrop {
+        display: block;
+        position: fixed;
+        top: var(--mobile-nav-offset, #{$nav-height});
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: var(--backdrop-bg);
+        z-index: 1900;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .navLinks {
+        position: fixed;
+        top: var(--mobile-nav-offset, #{$nav-height});
+        right: 0;
+        width: 260px;
+        max-width: min(260px, 85vw);
+        height: calc(100dvh - var(--mobile-nav-offset, #{$nav-height}));
+        background: var(--mobile-menu-bg, var(--topnav-bg, var(--bg-surface-light)));
+        backdrop-filter: none;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: 1.25rem 1.25rem 2rem;
+        gap: 1.5rem;
+        transform: translateX(100%);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 2000;
+        border-right: none;
+        border-left: 1px solid var(--divider);
+        border-top: 1px solid var(--divider);
+        box-shadow: none;
+
+        &.active {
+            transform: translateX(0);
+        }
+
+        li {
+            width: 100%;
+
+            button,
+            a {
+                font-size: calc(var(--font-size-nav) * 1.15);
+                display: block;
+                width: 100%;
+                text-align: left;
+                padding: 0.8rem 1rem;
+                border-radius: 10px;
+
+                &::after {
+                    display: none;
+                }
+
+                &:hover {
+                    background: rgba($primary-color, 0.08);
+                }
+            }
+        }
+    }
+
+    .mobileIconBtn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--nav-control-size);
+        height: var(--nav-control-size);
+        border-radius: 10px;
+        border: 1px solid var(--glass-border);
+        background: var(--card-bg);
+        color: var(--text-secondary);
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+
+        svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        &:hover {
+            color: $primary-color;
+            border-color: rgba($primary-color, 0.3);
+            background: rgba($primary-color, 0.12);
+        }
+    }
+
+    .mobileMenuToggle {
+        &:focus,
+        &:focus-visible,
+        &:active {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+    }
+
+    .desktopControls {
+        display: none !important;
+    }
+
+    .mobileControls {
+        display: inline-flex;
+        position: relative;
+        z-index: 2200;
+        gap: 0.35rem;
+    }
+
+    .menuOpen {
+        box-shadow: none !important;
+
+        .hamburger {
+            display: none;
+        }
+    }
+
+    .menuOpen .navLinks {
+        box-shadow: none;
+    }
+
+    .hamburger {
+        display: none;
+    }
+
+    @media (max-width: 420px) {
+        .navbar {
+            .container {
+                padding: 0 0.6rem;
+            }
+        }
+
+        .navRight {
+            --nav-control-size: 30px;
+            gap: 0.28rem;
+        }
+
+        .mobileControls {
+            gap: 0.28rem;
+        }
+
+        .logo {
+            max-width: none;
+
+            a {
+                font-size: clamp(1.15rem, 5vw, 1.35rem) !important;
+                letter-spacing: 0.2px;
+            }
+        }
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}

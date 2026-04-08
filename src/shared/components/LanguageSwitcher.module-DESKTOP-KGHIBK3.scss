@@ -1,0 +1,109 @@
+@use '../../styles/variables' as *;
+
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pillContainer {
+    position: relative;
+    display: flex;
+    background: var(--card-bg);
+    border: 1px solid var(--divider);
+    border-radius: 30px;
+    padding: 3px;
+    width: 100px;
+    height: 36px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.activeIndicator {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    height: calc(100% - 6px);
+    background: #fff; // Should be white as per user's image
+    border-radius: 25px;
+    z-index: 1;
+}
+
+// Light theme adjustment for the indicator
+:global([data-theme='light']) {
+    .activeIndicator {
+        background: $primary-color; // Or another theme-appropriate color
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .active .buttonText {
+        color: #fff !important;
+    }
+}
+
+:global([data-theme='dark']) {
+    .activeIndicator {
+        background: #fff;
+    }
+    
+    .active .buttonText {
+        color: #000 !important;
+    }
+}
+
+.langButton {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    z-index: 2;
+    cursor: pointer;
+    outline: none;
+    transition: color 0.3s ease;
+}
+
+.buttonText {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+}
+
+.active {
+    .buttonText {
+        // Handled by dynamic color nesting above
+    }
+}
+
+// Hover effect for inactive button
+.langButton:not(.active):hover {
+    .buttonText {
+        color: var(--text-primary);
+    }
+}
+
+@media (max-width: 768px) {
+    .pillContainer {
+        width: 90px;
+        height: 32px;
+    }
+    
+    .buttonText {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .pillContainer {
+        width: 82px;
+        height: 32px;
+    }
+
+    .buttonText {
+        font-size: 0.72rem;
+    }
+}
