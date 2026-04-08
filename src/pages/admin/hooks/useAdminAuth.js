@@ -186,6 +186,7 @@ export const useAdminAuth = ({
                 deviceType: getDeviceType(),
                 sessionId: getSessionId(),
                 details: {
+                    category: 'auth',
                     flow: isRegistering ? 'register' : 'login',
                     method: 'email_password'
                 }

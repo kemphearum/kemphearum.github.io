@@ -139,13 +139,35 @@ class AuditLogService extends BaseService {
      * @param {string} [params.dateRange] - 'all', 'today', '7d', '30d'
      * @returns {Promise<{data: Array, lastDoc: any, hasMore: boolean}>}
      */
-    async fetchSecurityAuditTrail({ userRole, trackRead, lastDoc = null, limit = 10, search = '', dateRange = 'all' }) {
+    async fetchSecurityAuditTrail({ userRole, trackRead, lastDoc = null, limit = 10, search = '', dateRange = 'all', statusFilter = 'all' }) {
         if (!isSuperAdminRole(userRole)) throw new Error('Unauthorized');
         const safeLimit = Math.min(100, Math.max(5, Number(limit) || 10));
         const normalizedSearch = (search || '').trim();
+        const normalizedStatusFilter = String(statusFilter || 'all').toLowerCase();
         
         const baseRef = collection(db, this.collectionName);
         let baseQuery = query(baseRef);
+
+        if (normalizedStatusFilter === 'failed-logins') {
+            baseQuery = query(
+                baseQuery,
+                where('status', '==', 'failure'),
+                where('details.category', '==', 'auth'),
+                where('details.flow', '==', 'login')
+            );
+        } else if (normalizedStatusFilter === 'success-logins') {
+            baseQuery = query(
+                baseQuery,
+                where('status', '==', 'success'),
+                where('details.category', '==', 'auth'),
+                where('details.flow', '==', 'login')
+            );
+        } else if (normalizedStatusFilter === 'auth') {
+            baseQuery = query(
+                baseQuery,
+                where('details.category', '==', 'auth')
+            );
+        }
 
         if (dateRange !== 'all') {
             const now = new Date();

@@ -16,7 +16,7 @@ import ActivityAuditDialog from './components/ActivityAuditDialog';
 import QuotaResilienceBanner from '../components/QuotaResilienceBanner';
 import styles from './AuditLogsTab.module.scss';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { isSuperAdminRole, ACTIONS, MODULES } from '../../../utils/permissions';
+import { ACTIONS, MODULES } from '../../../utils/permissions';
 
 
 const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
@@ -31,6 +31,7 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
   const debouncedSecuritySearch = useDebounce(securitySearch, 500);
   const [activityDateRange, setActivityDateRange] = useState('today');
   const [securityDateRange, setSecurityDateRange] = useState('today');
+  const [securityStatusFilter, setSecurityStatusFilter] = useState('all');
   const [activityFilters, setActivityFilters] = useState({
     module: 'all',
     action: 'all'
@@ -44,7 +45,7 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
   const activityPagination = useCursorPagination(5, [debouncedActivitySearch, activityDateRange, activityFilters]);
   
   // Reusable Pagination Hook for Security Logs
-  const securityPagination = useCursorPagination(5, [debouncedSecuritySearch, securityDateRange]);
+  const securityPagination = useCursorPagination(5, [debouncedSecuritySearch, securityDateRange, securityStatusFilter]);
 
   // UI State for Dialogs
   const [selectedLog, setSelectedLog] = useState(null);
@@ -82,7 +83,7 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['auditLogs', 'security', userRole, securityDateRange, securityPagination.cursor, securityPagination.limit],
+    queryKey: ['auditLogs', 'security', userRole, securityDateRange, securityStatusFilter, securityPagination.cursor, securityPagination.limit],
     queryFn: async () => {
       const requestCursor = securityPagination.cursor;
       if (!canViewSecurityAudit) return { data: [], lastDoc: null, hasMore: false };
@@ -90,6 +91,7 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
         userRole,
         trackRead,
         dateRange: securityDateRange,
+        statusFilter: securityStatusFilter,
         lastDoc: requestCursor,
         limit: securityPagination.limit
       }));
@@ -252,6 +254,7 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
   const resetSecurityView = useCallback(() => {
     setSecuritySearch('');
     setSecurityDateRange('today');
+    setSecurityStatusFilter('all');
     securityPagination.reset();
   }, [securityPagination]);
 
@@ -365,6 +368,11 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
           onSearchChange={setSecuritySearch}
           dateRange={securityDateRange}
           onDateRangeChange={setSecurityDateRange}
+          statusFilter={securityStatusFilter}
+          onStatusFilterChange={(value) => {
+            setSecurityStatusFilter(value);
+            securityPagination.reset();
+          }}
           onExport={() => handleExport('security')}
           onReset={resetSecurityView}
           totalItems={filteredSecurityLogs.length}

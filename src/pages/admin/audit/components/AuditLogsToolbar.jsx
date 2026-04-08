@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Download, RotateCcw, Clock, Layers, MousePointer2 } from 'lucide-react';
+import { Search, Download, RotateCcw, Clock, Layers, MousePointer2, Shield } from 'lucide-react';
 import { Input } from '../../../../shared/components/ui';
 import FormSelect from '../../components/FormSelect';
 import styles from '../AuditLogsTab.module.scss';
@@ -12,6 +12,8 @@ const AuditLogsToolbar = ({
   onDateRangeChange,
   filters, 
   onFilterChange,
+  statusFilter = 'all',
+  onStatusFilterChange,
   onExport,
   onReset,
   totalItems,
@@ -29,6 +31,7 @@ const AuditLogsToolbar = ({
     || (dateRange && dateRange !== 'today')
     || (filters?.module && filters.module !== 'all')
     || (filters?.action && filters.action !== 'all')
+    || (statusFilter && statusFilter !== 'all')
   );
 
   return (
@@ -60,7 +63,23 @@ const AuditLogsToolbar = ({
             ]}
           />
         </div>
-        
+
+        {typeof onStatusFilterChange === 'function' && (
+          <div className={styles.filterItem}>
+            <Shield size={14} className={styles.filterIcon} />
+            <FormSelect
+              noWrapper
+              value={statusFilter}
+              onChange={(e) => onStatusFilterChange(e.target.value)}
+              options={[
+                { value: 'all', label: tr('All Security Events', 'ព្រឹត្តិការណ៍សុវត្ថិភាពទាំងអស់') },
+                { value: 'failed-logins', label: tr('Failed Logins', 'ការចូលប្រើបរាជ័យ') },
+                { value: 'success-logins', label: tr('Successful Logins', 'ការចូលប្រើជោគជ័យ') }
+              ]}
+            />
+          </div>
+        )}
+
         {filters && (
           <>
             <div className={styles.filterItem}>
