@@ -1,9 +1,8 @@
 name: Automated Database Sync (Backup)
 
 on:
-  schedule:
-    # Runs once per week at 00:00 UTC
-    - cron: '0 0 * * 1'
+  repository_dispatch:
+    types: [manual_database_sync]
   workflow_dispatch:
     # Allows manual triggering
 

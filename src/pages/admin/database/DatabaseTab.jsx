@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 
 // Services & Hooks
 import DatabaseService from '../../../services/DatabaseService';
@@ -13,6 +14,7 @@ import SectionHeader from '../components/SectionHeader';
 import { Button } from '@/shared/components/ui';
 import DatabaseStats from './components/DatabaseStats';
 import DatabaseActions from './components/DatabaseActions';
+import DatabaseSyncPanel from './components/DatabaseSyncPanel';
 import DatabaseAdvancedPanel from './components/DatabaseAdvancedPanel';
 import RestoreDialog from './components/RestoreDialog';
 import ArchiveDialog from './components/ArchiveDialog';
@@ -56,6 +58,10 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         showToast: false
     });
 
+    const { loading: syncLoading, execute: executeDatabaseSync } = useAsyncAction({
+        showToast: false
+    });
+
     const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
     const [archiveDays, setArchiveDays] = useState(30);
     const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
@@ -63,6 +69,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     const [restoreProgress, setRestoreProgress] = useState(null);
     const [quotaExceeded, setQuotaExceeded] = useState(false);
     const [healthFailures, setHealthFailures] = useState({});
+    const [syncStatus, setSyncStatus] = useState({ state: 'idle', message: '', requestedAt: null });
     const lastHealthErrorKeyRef = useRef('');
     
     const { trackRead, trackWrite, trackDelete } = useActivity();
@@ -153,6 +160,89 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     const canEditAudit = isActionAllowed(ACTIONS.EDIT, MODULES.DATABASE);
     const canDatabaseActions = isActionAllowed(ACTIONS.DATABASE_ACTIONS, MODULES.DATABASE);
     const canArchive = isActionAllowed(ACTIONS.DELETE, MODULES.DATABASE);
+    const canSyncDatabase = canDatabaseActions;
+
+    const handleTriggerDatabaseSync = useCallback(async (githubToken) => {
+        const token = String(githubToken || '').trim();
+        const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+
+        if (!token) {
+            showToast(tr('A GitHub token is required to run database sync.', 'ត្រូវការតូខិន GitHub ដើម្បីដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យ។'), 'error');
+            return;
+        }
+
+        const confirmed = window.confirm(
+            tr(
+                'Run the database sync now? This will dispatch the GitHub Actions workflow manually.',
+                'ដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យឥឡូវនេះទេ? វានឹងបញ្ជូន GitHub Actions workflow ដោយដៃ។'
+            )
+        );
+
+        if (!confirmed) return;
+
+        setSyncStatus({
+            state: 'loading',
+            message: tr('Dispatching database sync...', 'កំពុងបញ្ជូនសមកាលកម្មមូលដ្ឋានទិន្នន័យ...'),
+            requestedAt: null
+        });
+
+        const result = await executeDatabaseSync(async () => {
+            await axios.post(
+                'https://api.github.com/repos/kemphearum/kemphearum.github.io/dispatches',
+                {
+                    event_type: 'manual_database_sync',
+                    client_payload: {
+                        source: 'database-tab',
+                        requestedBy: userEmail || 'unknown'
+                    }
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/vnd.github+json',
+                        'X-GitHub-Api-Version': '2022-11-28'
+                    }
+                }
+            );
+
+            return true;
+        });
+
+        if (result.success) {
+            const trSuccess = (enText, kmText) => (language === 'km' ? kmText : enText);
+            setSyncStatus({
+                state: 'requested',
+                message: trSuccess('Database sync request sent to GitHub Actions.', 'សំណើសមកាលកម្មមូលដ្ឋានទិន្នន័យបានបញ្ជូនទៅ GitHub Actions ហើយ។'),
+                requestedAt: Date.now()
+            });
+            showToast(trSuccess('Database sync request sent.', 'សំណើសមកាលកម្មមូលដ្ឋានទិន្នន័យបានបញ្ជូនហើយ។'), 'success');
+            return;
+        }
+
+        const error = result.error;
+        let errorMessage = tr(
+            'Failed to dispatch database sync.',
+            'បរាជ័យក្នុងការបញ្ជូនសមកាលកម្មមូលដ្ឋានទិន្នន័យ។'
+        );
+
+        if (error?.response?.status === 401 || error?.response?.status === 403) {
+            errorMessage = tr(
+                'Invalid GitHub token. Please paste a token with repository access.',
+                'Token GitHub មិនត្រឹមត្រូវ។ សូមបិទភ្ជាប់ token ដែលមានសិទ្ធិ repository។'
+            );
+        } else if (error?.response?.data?.message) {
+            errorMessage = `${tr('GitHub error:', 'កំហុស GitHub៖')} ${error.response.data.message}`;
+        } else if (error?.message) {
+            errorMessage = error.message;
+        }
+
+        setSyncStatus({
+            state: 'error',
+            message: errorMessage,
+            requestedAt: null
+        });
+        showToast(errorMessage, 'error');
+    }, [executeDatabaseSync, language, showToast, userEmail]);
 
     const handleUpdateAuditSetting = async (key, value) => {
         if (!canEditAudit) {
@@ -382,6 +472,13 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 onArchiveClick={() => setShowArchiveConfirm(true)}
                 canBackup={canDatabaseActions}
                 canArchive={canArchive}
+            />
+
+            <DatabaseSyncPanel
+                loading={syncLoading}
+                syncStatus={syncStatus}
+                onSync={handleTriggerDatabaseSync}
+                canSync={canSyncDatabase}
             />
 
             <DatabaseAdvancedPanel showToast={showToast} />
