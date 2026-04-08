@@ -6,7 +6,7 @@ import { isQuotaExceededError } from './BaseService';
 class DatabaseService {
     static SOFT_DOC_LIMIT = 50000;
     static HEALTH_COLLECTIONS = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'visits', 'dailyUsage'];
-    static ARCHIVE_COLLECTIONS = ['messages', 'auditLogs', 'visits', 'dailyUsage'];
+    static ARCHIVE_COLLECTIONS = ['authLogs', 'systemLogs', 'activityFeed', 'draftContent', 'dailyUsage', 'messages', 'visits'];
     static MAX_BATCH_OPERATIONS = 450;
     static META_KEYS = new Set(['format', 'version', 'exportDate', 'archiveDate', 'cutoffDate', 'daysOld', 'date', 'timestamp']);
 
@@ -33,6 +33,12 @@ class DatabaseService {
         if (!match) return false;
         const parsed = new Date(`${match[1]}-${match[2]}-${match[3]}T23:59:59.999Z`);
         return Number.isFinite(parsed.getTime()) && parsed < cutoffDate;
+    }
+
+    static isValueBeforeCutoff(value, cutoffDate) {
+        if (!value || !cutoffDate) return false;
+        const candidate = value?.toDate ? value.toDate() : (value instanceof Date ? value : new Date(value));
+        return Number.isFinite(candidate?.getTime?.()) && candidate < cutoffDate;
     }
 
     static restoreFirestoreTypes(value) {
@@ -302,29 +308,33 @@ class DatabaseService {
             collections: {}
         };
         const refsToDelete = [];
+        const refPathSet = new Set();
         let fetchedCount = 0;
+
+        const addRefForDelete = (ref) => {
+            const path = ref?.path || '';
+            if (!path || refPathSet.has(path)) return false;
+            refPathSet.add(path);
+            refsToDelete.push(ref);
+            return true;
+        };
 
         const collectSnapshot = (collectionKey, snapshot) => {
             if (!snapshot || snapshot.empty) return;
             archivedData.collections[collectionKey] = archivedData.collections[collectionKey] || {};
             snapshot.forEach((docSnap) => {
                 archivedData.collections[collectionKey][docSnap.id] = docSnap.data();
-                refsToDelete.push(docSnap.ref);
+                addRefForDelete(docSnap.ref);
+                fetchedCount += 1;
             });
-            fetchedCount += snapshot.size;
         };
 
         const archiveJobs = [];
+
         if (normalizedTargets.messages) {
             archiveJobs.push(
                 getDocs(query(collection(db, 'messages'), where('createdAt', '<', cutoffTimestamp)))
                     .then((snapshot) => collectSnapshot('messages', snapshot))
-            );
-        }
-        if (normalizedTargets.auditLogs) {
-            archiveJobs.push(
-                getDocs(query(collection(db, 'auditLogs'), where('timestamp', '<', cutoffTimestamp)))
-                    .then((snapshot) => collectSnapshot('auditLogs', snapshot))
             );
         }
         if (normalizedTargets.visits) {
@@ -333,20 +343,91 @@ class DatabaseService {
                     .then((snapshot) => collectSnapshot('visits', snapshot))
             );
         }
-        if (normalizedTargets.dailyUsage) {
+        if (normalizedTargets.authLogs || normalizedTargets.systemLogs) {
+            archiveJobs.push((async () => {
+                const auditSnap = await getDocs(query(collection(db, 'auditLogs'), where('timestamp', '<', cutoffTimestamp)));
+                const authDocs = [];
+                const systemDocs = [];
+
+                auditSnap.docs.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const category = String(data?.details?.category || '').toLowerCase();
+                    const flow = String(data?.details?.flow || '').toLowerCase();
+                    const isAuthLog = category === 'auth' || flow === 'login';
+
+                    if (isAuthLog && normalizedTargets.authLogs) {
+                        authDocs.push(docSnap);
+                    } else if (!isAuthLog && normalizedTargets.systemLogs) {
+                        systemDocs.push(docSnap);
+                    }
+                });
+
+                if (authDocs.length > 0) {
+                    archivedData.collections.authLogs = archivedData.collections.authLogs || {};
+                    authDocs.forEach((docSnap) => {
+                        archivedData.collections.authLogs[docSnap.id] = docSnap.data();
+                        addRefForDelete(docSnap.ref);
+                        fetchedCount += 1;
+                    });
+                }
+
+                if (systemDocs.length > 0) {
+                    archivedData.collections.systemLogs = archivedData.collections.systemLogs || {};
+                    systemDocs.forEach((docSnap) => {
+                        archivedData.collections.systemLogs[docSnap.id] = docSnap.data();
+                        addRefForDelete(docSnap.ref);
+                        fetchedCount += 1;
+                    });
+                }
+            })());
+        }
+        if (normalizedTargets.activityFeed || normalizedTargets.dailyUsage) {
             archiveJobs.push((async () => {
                 // Archive aggregated analytics counters + detail logs by dailyUsage date key.
                 const dailyUsageSnap = await getDocs(collection(db, 'dailyUsage'));
                 for (const dayDoc of dailyUsageSnap.docs) {
                     if (!DatabaseService.isDateKeyBeforeCutoff(dayDoc.id, cutoffDate)) continue;
 
-                    archivedData.collections.dailyUsage = archivedData.collections.dailyUsage || {};
-                    archivedData.collections.dailyUsage[dayDoc.id] = dayDoc.data();
-                    refsToDelete.push(dayDoc.ref);
-                    fetchedCount += 1;
-
                     const logsSnap = await getDocs(collection(db, 'dailyUsage', dayDoc.id, 'logs'));
-                    collectSnapshot(`dailyUsage/${dayDoc.id}/logs`, logsSnap);
+                    if (normalizedTargets.dailyUsage) {
+                        archivedData.collections.dailyUsage = archivedData.collections.dailyUsage || {};
+                        archivedData.collections.dailyUsage[dayDoc.id] = dayDoc.data();
+                        addRefForDelete(dayDoc.ref);
+                        fetchedCount += 1;
+                        collectSnapshot(`dailyUsage/${dayDoc.id}/logs`, logsSnap);
+                    } else if (normalizedTargets.activityFeed) {
+                        collectSnapshot(`activityFeed/${dayDoc.id}/logs`, logsSnap);
+                    }
+                }
+            })());
+        }
+
+        if (normalizedTargets.draftContent) {
+            archiveJobs.push((async () => {
+                const draftSources = ['posts', 'projects'];
+                for (const sourceName of draftSources) {
+                    const draftSnap = await getDocs(query(collection(db, sourceName), where('visible', '==', false)));
+                    const eligibleDrafts = draftSnap.docs.filter((docSnap) => {
+                        const data = docSnap.data();
+                        const createdAt = data?.createdAt || data?.updatedAt || data?.publishedAt;
+                        return DatabaseService.isValueBeforeCutoff(createdAt, cutoffDate);
+                    });
+
+                    if (eligibleDrafts.length === 0) continue;
+
+                    archivedData.collections.draftContent = archivedData.collections.draftContent || {};
+                    archivedData.collections[`draftContent/${sourceName}`] = archivedData.collections[`draftContent/${sourceName}`] || {};
+
+                    for (const docSnap of eligibleDrafts) {
+                        archivedData.collections[`draftContent/${sourceName}`][docSnap.id] = docSnap.data();
+                        addRefForDelete(docSnap.ref);
+                        fetchedCount += 1;
+
+                        const historySnap = await getDocs(collection(db, sourceName, docSnap.id, 'history'));
+                        if (!historySnap.empty) {
+                            collectSnapshot(`draftContent/${sourceName}/${docSnap.id}/history`, historySnap);
+                        }
+                    }
                 }
             })());
         }

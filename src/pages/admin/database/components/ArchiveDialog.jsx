@@ -16,10 +16,13 @@ const ArchiveDialog = ({
   const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
   const selectedCount = Object.values(archiveTargets || {}).filter(Boolean).length;
   const archiveOptions = [
-    { key: 'messages', label: tr('Messages', 'សារ'), description: tr('Chat and inbox messages.', 'សារ និងសារក្នុងប្រអប់ទទួល។') },
-    { key: 'auditLogs', label: tr('Audit Logs', 'កំណត់ហេតុសវនកម្ម'), description: tr('Admin and authentication audit events.', 'ព្រឹត្តិការណ៍សវនកម្មរបស់អ្នកគ្រប់គ្រង និងការផ្ទៀងផ្ទាត់។') },
-    { key: 'visits', label: tr('Visits', 'ការចូលមើល'), description: tr('Page visit records and timestamps.', 'កំណត់ត្រាចូលមើលទំព័រ និងម៉ោង។') },
-    { key: 'dailyUsage', label: tr('Daily Usage', 'ការប្រើប្រាស់ប្រចាំថ្ងៃ'), description: tr('Daily counters and usage logs.', 'ចំនួនសរុបប្រចាំថ្ងៃ និងកំណត់ហេតុប្រើប្រាស់។') }
+    { key: 'authLogs', label: tr('Security / Auth Logs', 'កំណត់ហេតុសុវត្ថិភាព / ចូលប្រព័ន្ធ'), description: tr('Failed logins and authentication events.', 'ការចូលប្រើបរាជ័យ និងព្រឹត្តិការណ៍ផ្ទៀងផ្ទាត់។') },
+    { key: 'systemLogs', label: tr('System Logs', 'កំណត់ហេតុប្រព័ន្ធ'), description: tr('General admin and system audit entries.', 'កំណត់ត្រាសវនកម្មទូទៅរបស់អ្នកគ្រប់គ្រង និងប្រព័ន្ធ។') },
+    { key: 'activityFeed', label: tr('Activity Feed Records', 'កំណត់ត្រាសកម្មភាព'), description: tr('Detailed read/write/delete activity history.', 'ប្រវត្តិសកម្មភាព read/write/delete លម្អិត។') },
+    { key: 'draftContent', label: tr('Draft / Temporary Records', 'ទិន្នន័យសាកល្បង / ព្រាង'), description: tr('Hidden posts and projects older than the cutoff.', 'ប្រកាស និងគម្រោងដែលលាក់ និងចាស់ជាងកំណត់។') },
+    { key: 'dailyUsage', label: tr('Daily Analytics Breakdown', 'បំបែកស្ថិតិប្រចាំថ្ងៃ'), description: tr('Daily usage totals and related logs.', 'ចំនួនសរុបប្រចាំថ្ងៃ និងកំណត់ហេតុពាក់ព័ន្ធ។') },
+    { key: 'messages', label: tr('Messages', 'សារ'), description: tr('Inbox and contact form messages.', 'សារក្នុងប្រអប់ទទួល និងសារពីទម្រង់ទំនាក់ទំនង។') },
+    { key: 'visits', label: tr('Visits', 'ការចូលមើល'), description: tr('Page visit records and timestamps.', 'កំណត់ត្រាចូលមើលទំព័រ និងម៉ោង។') }
   ];
 
   const updateTarget = (key, checked) => {
@@ -30,12 +33,12 @@ const ArchiveDialog = ({
   };
 
   const setAllTargets = (checked) => {
-    onArchiveTargetsChange?.({
-      messages: checked,
-      auditLogs: checked,
-      visits: checked,
-      dailyUsage: checked
-    });
+    onArchiveTargetsChange?.(
+      archiveOptions.reduce((acc, option) => {
+        acc[option.key] = checked;
+        return acc;
+      }, {})
+    );
   };
 
   return (
@@ -49,7 +52,7 @@ const ArchiveDialog = ({
         
         <Dialog.Body>
           <p className="ui-text-secondary ui-text-center ui-mb-large">
-            {tr('You are about to permanently delete all', 'អ្នកកំពុងត្រៀមលុបចោលជាអចិន្ត្រៃយ៍')} <strong>{tr('Messages', 'សារ')}</strong>, <strong>{tr('Audit Logs', 'កំណត់ហេតុសវនកម្ម')}</strong>, <strong>{tr('Visits', 'ការចូលមើល')}</strong>, {tr('and', 'និង')} <strong>{tr('Daily Usage', 'ការប្រើប្រាស់ប្រចាំថ្ងៃ')}</strong> {tr('older than', 'ដែលចាស់ជាង')} <span className="ui-text-danger ui-font-bold">{archiveDays} {tr('days', 'ថ្ងៃ')}</span>.
+            {tr('You are about to permanently archive and delete the selected records older than', 'អ្នកកំពុងត្រៀមបណ្ណសារ និងលុបចោលកំណត់ត្រាដែលបានជ្រើស ដែលចាស់ជាង')} <span className="ui-text-danger ui-font-bold">{archiveDays} {tr('days', 'ថ្ងៃ')}</span>.
           </p>
 
           <div className="ui-card ui-bg-subtle ui-p-medium ui-mb-large">
