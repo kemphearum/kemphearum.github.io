@@ -3,6 +3,7 @@ const admin = require('firebase-admin');
 
 const BATCH_LIMIT = Number(process.env.MIGRATE_BATCH_LIMIT || 250);
 const COMMIT_PAUSE_MS = Number(process.env.MIGRATE_COMMIT_PAUSE_MS || 150);
+const PAGE_SIZE = Number(process.env.MIGRATE_PAGE_SIZE || 200);
 const DEFAULT_MAX_ATTEMPTS = Number(process.env.MIGRATE_RETRY_MAX_ATTEMPTS || 7);
 const DEFAULT_BASE_DELAY_MS = Number(process.env.MIGRATE_RETRY_BASE_DELAY_MS || 1000);
 const DEFAULT_MAX_DELAY_MS = Number(process.env.MIGRATE_RETRY_MAX_DELAY_MS || 20000);
@@ -108,24 +109,29 @@ async function queueWrite(state, docRef, data) {
 }
 
 async function copyCollection(sourceCollectionRef, state) {
-  const sourceDocs = await withRetry(() => sourceCollectionRef.listDocuments(), `list documents for ${sourceCollectionRef.path}`);
-  if (sourceDocs.length === 0) {
-    return;
-  }
+  let lastDoc = null;
 
-  for (const sourceDocRef of sourceDocs) {
-    const sourceDocSnapshot = await withRetry(() => sourceDocRef.get(), `read ${sourceDocRef.path}`);
-    if (!sourceDocSnapshot.exists) {
-      continue;
+  while (true) {
+    const query = lastDoc
+      ? sourceCollectionRef.orderBy(admin.firestore.FieldPath.documentId()).startAfter(lastDoc).limit(PAGE_SIZE)
+      : sourceCollectionRef.orderBy(admin.firestore.FieldPath.documentId()).limit(PAGE_SIZE);
+    const snapshot = await withRetry(() => query.get(), `read ${sourceCollectionRef.path}`);
+
+    if (snapshot.empty) {
+      return;
     }
 
-    const targetDocRef = state.db.doc(sourceDocRef.path);
-    await queueWrite(state, targetDocRef, sourceDocSnapshot.data());
+    for (const sourceDocSnapshot of snapshot.docs) {
+      const targetDocRef = state.db.doc(sourceDocSnapshot.ref.path);
+      await queueWrite(state, targetDocRef, sourceDocSnapshot.data());
 
-    const subcollections = await withRetry(() => sourceDocRef.listCollections(), `list subcollections for ${sourceDocRef.path}`);
-    for (const subcollection of subcollections) {
-      await copyCollection(subcollection, state);
+      const subcollections = await withRetry(() => sourceDocSnapshot.ref.listCollections(), `list subcollections for ${sourceDocSnapshot.ref.path}`);
+      for (const subcollection of subcollections) {
+        await copyCollection(subcollection, state);
+      }
     }
+
+    lastDoc = snapshot.docs[snapshot.docs.length - 1];
   }
 }
 
