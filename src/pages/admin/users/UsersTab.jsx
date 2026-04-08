@@ -14,7 +14,7 @@ import UsersFormDialog from './components/UsersFormDialog';
 import UserDetailDialog from './components/UserDetailDialog';
 import RolePermissionsPanel from './components/RolePermissionsPanel';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { ACTIONS, MODULES, formatRoleDisplayName, normalizeRole } from '../../../utils/permissions';
+import { ACTIONS, MODULES, formatRoleDisplayName, isSuperAdminRole, normalizeRole } from '../../../utils/permissions';
 
 
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
@@ -256,7 +256,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     }
 
     await executePermissions(async () => {
-      await UserService.saveRolePermissions(role, allowedTabs, trackWrite, baseRole, allowedActions);
+      await UserService.saveRolePermissions(role, allowedTabs, trackWrite, baseRole, allowedActions, userRole);
     }, {
       successMessage: `${tm('toasts.permissionsFor')} '${formatRoleDisplayName(role)}' ${tm('toasts.saved')}`
     });
@@ -268,7 +268,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     }
 
     await executePermissions(async () => {
-      await UserService.deleteRoleAndReassignUsers(role, 'pending', trackWrite);
+      await UserService.deleteRoleAndReassignUsers(role, 'pending', trackWrite, userRole);
     }, {
       successMessage: `Role '${formatRoleDisplayName(role)}' removed. Users were reassigned to pending.`
     });
@@ -277,6 +277,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   const canCreateUsers = isActionAllowed(ACTIONS.CREATE, MODULES.USERS);
   const canEditUsers = isActionAllowed(ACTIONS.EDIT, MODULES.USERS);
   const canDisableUsers = isActionAllowed(ACTIONS.DISABLE, MODULES.USERS);
+  const canManageRolePermissions = isSuperAdminRole(userRole);
 
   if (!isActionAllowed(ACTIONS.VIEW, MODULES.USERS)) {
     return (
@@ -328,12 +329,14 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
         paginationVariant="cursor"
       />
 
-      <RolePermissionsPanel 
-        rolePermissions={rolePermissions}
-        onSave={handleSavePermissions}
-        onRemoveRole={handleRemoveRole}
-        availableRoles={availableRoles}
-      />
+      {canManageRolePermissions && (
+        <RolePermissionsPanel 
+          rolePermissions={rolePermissions}
+          onSave={handleSavePermissions}
+          onRemoveRole={handleRemoveRole}
+          availableRoles={availableRoles}
+        />
+      )}
 
       {/* Dialogs */}
       <UsersFormDialog 

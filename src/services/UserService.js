@@ -214,7 +214,8 @@ class UserService extends BaseService {
      * @param {Object} [allowedActions]
      * @returns {Promise<void>}
      */
-    async saveRolePermissions(role, allowedTabs, trackWrite, baseRole, allowedActions = {}) {
+    async saveRolePermissions(role, allowedTabs, trackWrite, baseRole, allowedActions = {}, userRole = null) {
+        if (!isSuperAdminRole(userRole)) throw new Error('Unauthorized action');
         const normalizedRole = normalizeRole(role);
         if (!normalizedRole) throw new Error('Invalid role provided.');
         const normalizedBaseRole = normalizeRole(baseRole);
@@ -255,7 +256,8 @@ class UserService extends BaseService {
      * @param {function(number, string): void} [trackWrite]
      * @returns {Promise<{reassignedUsers:number, removedPermissionDocs:number}>}
      */
-    async deleteRoleAndReassignUsers(role, replacementRole = 'pending', trackWrite) {
+    async deleteRoleAndReassignUsers(role, replacementRole = 'pending', trackWrite, userRole = null) {
+        if (!isSuperAdminRole(userRole)) throw new Error('Unauthorized action');
         const normalizedRole = normalizeRole(role);
         const normalizedReplacement = normalizeRole(replacementRole) || 'pending';
         const protectedRoles = new Set(['superadmin', 'admin', 'editor', 'pending']);
