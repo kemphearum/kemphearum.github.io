@@ -184,7 +184,18 @@ export const useAdminAuth = ({
                 city: geoData.city,
                 userAgent: navigator.userAgent,
                 deviceType: getDeviceType(),
-                sessionId: getSessionId()
+                sessionId: getSessionId(),
+                details: {
+                    flow: isRegistering ? 'register' : 'login',
+                    method: 'email_password'
+                }
+            };
+            const recordAuthAudit = async (status, reason = null) => {
+                try {
+                    await AuditLogService.addAuditLog(logBase, status, reason, trackWrite);
+                } catch (auditError) {
+                    console.warn('[useAdminAuth] Failed to record auth audit log:', auditError);
+                }
             };
 
             try {
@@ -201,7 +212,7 @@ export const useAdminAuth = ({
                         trackWrite(1, 'Created user record');
                     }
 
-                    await AuditLogService.addAuditLog(logBase, 'success', 'User Registered', trackWrite);
+                    await recordAuthAudit('success', 'User Registered');
                 } else {
                     const credential = await AuthService.login(normalizedEmail, password);
                     authUser = credential.user;
@@ -222,10 +233,13 @@ export const useAdminAuth = ({
                         throw new Error(t('admin.auth.errors.disabledByAdmin'));
                     }
 
-                    await AuditLogService.addAuditLog(logBase, 'success', null, trackWrite);
+                    await recordAuthAudit('success');
                 }
             } catch (error) {
-                await AuditLogService.addAuditLog(logBase, 'failure', error.message, trackWrite);
+                await recordAuthAudit(
+                    'failure',
+                    formatAuthErrorMessage(error, t, language, error.message)
+                );
                 throw error;
             }
         }, {

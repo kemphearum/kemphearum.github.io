@@ -64,6 +64,12 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
 
     const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
     const [archiveDays, setArchiveDays] = useState(30);
+    const [archiveTargets, setArchiveTargets] = useState({
+        messages: true,
+        auditLogs: true,
+        visits: true,
+        dailyUsage: true
+    });
     const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
     const [restoreFile, setRestoreFile] = useState(null);
     const [restoreProgress, setRestoreProgress] = useState(null);
@@ -283,7 +289,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         showToast(tm('toasts.gatheringArchive'), "info");
 
         await executeArchive(async () => {
-            const { data, error } = await BaseService.safe(() => DatabaseService.archive(userRole, archiveDays, trackRead, trackDelete));
+            const { data, error } = await BaseService.safe(() => DatabaseService.archive(userRole, archiveDays, archiveTargets, trackRead, trackDelete));
             if (error) {
                 if (handleQuotaFailure(error)) {
                     throw new Error(quotaMessage);
@@ -503,6 +509,8 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 open={showArchiveConfirm}
                 onOpenChange={setShowArchiveConfirm}
                 archiveDays={archiveDays}
+                archiveTargets={archiveTargets}
+                onArchiveTargetsChange={setArchiveTargets}
                 onConfirm={handleArchiveData}
                 loading={archiveLoading}
             />

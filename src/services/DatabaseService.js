@@ -6,6 +6,7 @@ import { isQuotaExceededError } from './BaseService';
 class DatabaseService {
     static SOFT_DOC_LIMIT = 50000;
     static HEALTH_COLLECTIONS = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'visits', 'dailyUsage'];
+    static ARCHIVE_COLLECTIONS = ['messages', 'auditLogs', 'visits', 'dailyUsage'];
     static MAX_BATCH_OPERATIONS = 450;
     static META_KEYS = new Set(['format', 'version', 'exportDate', 'archiveDate', 'cutoffDate', 'daysOld', 'date', 'timestamp']);
 
@@ -272,12 +273,21 @@ class DatabaseService {
      * @param {function(number, string, Object): void} [trackDelete] 
      * @returns {Promise<{deleted: number}>}
      */
-    static async archive(userRole, daysOld, trackRead, trackDelete) {
+    static async archive(userRole, daysOld, archiveTargets = {}, trackRead, trackDelete) {
         // Validation handled in UI and Firestore rules
 
         const safeDaysOld = Number(daysOld);
         if (!Number.isFinite(safeDaysOld) || safeDaysOld <= 0) {
             throw new Error('Invalid archive range. Please choose a positive number of days.');
+        }
+
+        const normalizedTargets = DatabaseService.ARCHIVE_COLLECTIONS.reduce((acc, key) => {
+            acc[key] = archiveTargets?.[key] !== false;
+            return acc;
+        }, {});
+        const selectedTargets = DatabaseService.ARCHIVE_COLLECTIONS.filter((key) => normalizedTargets[key]);
+        if (selectedTargets.length === 0) {
+            throw new Error('Select at least one archive category before running the archive.');
         }
 
         const cutoffDate = new Date();
@@ -304,29 +314,44 @@ class DatabaseService {
             fetchedCount += snapshot.size;
         };
 
-        const [oldMessagesSnap, oldLogsSnap, oldVisitsSnap] = await Promise.all([
-            getDocs(query(collection(db, 'messages'), where('createdAt', '<', cutoffTimestamp))),
-            getDocs(query(collection(db, 'auditLogs'), where('timestamp', '<', cutoffTimestamp))),
-            getDocs(query(collection(db, 'visits'), where('timestamp', '<', cutoffTimestamp)))
-        ]);
-
-        collectSnapshot('messages', oldMessagesSnap);
-        collectSnapshot('auditLogs', oldLogsSnap);
-        collectSnapshot('visits', oldVisitsSnap);
-
-        // Archive aggregated analytics counters + detail logs by dailyUsage date key.
-        const dailyUsageSnap = await getDocs(collection(db, 'dailyUsage'));
-        for (const dayDoc of dailyUsageSnap.docs) {
-            if (!DatabaseService.isDateKeyBeforeCutoff(dayDoc.id, cutoffDate)) continue;
-
-            archivedData.collections.dailyUsage = archivedData.collections.dailyUsage || {};
-            archivedData.collections.dailyUsage[dayDoc.id] = dayDoc.data();
-            refsToDelete.push(dayDoc.ref);
-            fetchedCount += 1;
-
-            const logsSnap = await getDocs(collection(db, 'dailyUsage', dayDoc.id, 'logs'));
-            collectSnapshot(`dailyUsage/${dayDoc.id}/logs`, logsSnap);
+        const archiveJobs = [];
+        if (normalizedTargets.messages) {
+            archiveJobs.push(
+                getDocs(query(collection(db, 'messages'), where('createdAt', '<', cutoffTimestamp)))
+                    .then((snapshot) => collectSnapshot('messages', snapshot))
+            );
         }
+        if (normalizedTargets.auditLogs) {
+            archiveJobs.push(
+                getDocs(query(collection(db, 'auditLogs'), where('timestamp', '<', cutoffTimestamp)))
+                    .then((snapshot) => collectSnapshot('auditLogs', snapshot))
+            );
+        }
+        if (normalizedTargets.visits) {
+            archiveJobs.push(
+                getDocs(query(collection(db, 'visits'), where('timestamp', '<', cutoffTimestamp)))
+                    .then((snapshot) => collectSnapshot('visits', snapshot))
+            );
+        }
+        if (normalizedTargets.dailyUsage) {
+            archiveJobs.push((async () => {
+                // Archive aggregated analytics counters + detail logs by dailyUsage date key.
+                const dailyUsageSnap = await getDocs(collection(db, 'dailyUsage'));
+                for (const dayDoc of dailyUsageSnap.docs) {
+                    if (!DatabaseService.isDateKeyBeforeCutoff(dayDoc.id, cutoffDate)) continue;
+
+                    archivedData.collections.dailyUsage = archivedData.collections.dailyUsage || {};
+                    archivedData.collections.dailyUsage[dayDoc.id] = dayDoc.data();
+                    refsToDelete.push(dayDoc.ref);
+                    fetchedCount += 1;
+
+                    const logsSnap = await getDocs(collection(db, 'dailyUsage', dayDoc.id, 'logs'));
+                    collectSnapshot(`dailyUsage/${dayDoc.id}/logs`, logsSnap);
+                }
+            })());
+        }
+
+        await Promise.all(archiveJobs);
 
         if (trackRead) trackRead(fetchedCount, 'Fetched old records for archive');
 
