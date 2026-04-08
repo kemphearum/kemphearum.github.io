@@ -6,6 +6,29 @@ import {
 } from 'firebase/firestore';
 import { getLocalizedField } from '../utils/localization';
 
+export const isQuotaExceededError = (error) => {
+    const code = String(error?.code ?? '').toLowerCase();
+    const numericCode = Number(error?.code);
+    const message = String(error?.message ?? '').toLowerCase();
+
+    if ([4, 8, 10, 14].includes(numericCode)) return true;
+    if (code.includes('resource-exhausted')) return true;
+    if (code.includes('deadline-exceeded')) return true;
+    if (code.includes('aborted')) return true;
+    if (code.includes('quota')) return true;
+    if (message.includes('quota exceeded')) return true;
+    if (message.includes('resource_exhausted')) return true;
+    if (message.includes('resource exhausted')) return true;
+    if (message.includes('too many requests')) return true;
+    if (message.includes('429')) return true;
+    if (message.includes('before any response was received')) return true;
+    if (message.includes('total timeout')) return true;
+    if (message.includes('timed out')) return true;
+    if (message.includes('deadline exceeded')) return true;
+
+    return false;
+};
+
 /**
  * @typedef {Object} ServiceResult
  * @property {*} data - The returned payload, or null on error
@@ -113,7 +136,7 @@ export default class BaseService {
             const msg = err.message || 'An unexpected error occurred';
             
             // Map to standardized Quota Exceeded code
-            if (err.code === 'resource-exhausted' || msg.includes('429') || msg.toLowerCase().includes('quota exceeded')) {
+            if (isQuotaExceededError(err)) {
                 return { data: null, error: 'QUOTA_EXCEEDED' };
             }
 

@@ -35,6 +35,7 @@ const DEFAULT_AUDIT_SETTINGS = {
 const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userEmail }) => {
     const { language, t } = useTranslation();
     const tm = useCallback((key, params = {}) => t(`admin.database.${key}`, params), [t]);
+    const quotaMessage = t('admin.common.quotaBanner.message');
     const { loading: auditLoading, execute: executeAudit } = useAsyncAction({
         showToast,
         errorMessage: tm('toasts.auditUpdateFailed'),
@@ -66,6 +67,20 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     
     const { trackRead, trackWrite, trackDelete } = useActivity();
     const queryClient = useQueryClient();
+    const isQuotaError = useCallback((error) => (
+        error === 'QUOTA_EXCEEDED' || DatabaseService.isQuotaExceededError(error)
+    ), []);
+
+    const flagQuotaExceeded = useCallback(() => {
+        setQuotaExceeded(true);
+    }, []);
+
+    const handleQuotaFailure = useCallback((error) => {
+        if (!isQuotaError(error)) return false;
+        flagQuotaExceeded();
+        showToast(quotaMessage, 'warning');
+        return true;
+    }, [flagQuotaExceeded, isQuotaError, quotaMessage, showToast]);
 
     // Queries
     const healthKeys = useMemo(() => DatabaseService.HEALTH_COLLECTIONS, []);
@@ -86,9 +101,9 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                     const partialCounts = error?.partialCounts || {};
                     setHealthFailures(failures);
 
-                    const failureCodes = Object.values(failures).map(entry => entry?.code || '').join(' ').toLowerCase();
-                    if (failureCodes.includes('resource-exhausted') || failureCodes.includes('quota')) {
-                        setQuotaExceeded(true);
+                    if (error?.quotaExceeded || Object.values(failures).some((entry) => isQuotaError(entry))) {
+                        flagQuotaExceeded();
+                        showToast(quotaMessage, 'warning');
                     }
 
                     const failureKey = Object.keys(failures).sort().join('|');
@@ -97,14 +112,15 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                             tm('toasts.healthMetricsLoadFailedFor', { collections: Object.keys(failures).join(', ') }),
                             'error'
                         );
-                        lastHealthErrorKeyRef.current = failureKey;
+                    lastHealthErrorKeyRef.current = failureKey;
                     }
 
                     return { ...defaults, ...partialCounts, lastUpdated: new Date() };
                 }
 
-                if (error?.code === 'resource-exhausted' || `${error?.message || ''}`.toLowerCase().includes('quota')) {
-                    setQuotaExceeded(true);
+                if (isQuotaError(error)) {
+                    flagQuotaExceeded();
+                    showToast(quotaMessage, 'warning');
                 } else {
                     const fallbackKey = error?.code || error?.message || 'database-health-failure';
                     if (lastHealthErrorKeyRef.current !== fallbackKey) {
@@ -158,7 +174,13 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         }
 
         await executeBackup(async () => {
-            await DatabaseService.backup(userRole, trackRead);
+            const result = await BaseService.safe(() => DatabaseService.backup(userRole, trackRead));
+            if (result.error) {
+                if (handleQuotaFailure(result.error)) {
+                    throw new Error(quotaMessage);
+                }
+                throw new Error(result.error);
+            }
         });
     };
 
@@ -172,7 +194,12 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
 
         await executeArchive(async () => {
             const { data, error } = await BaseService.safe(() => DatabaseService.archive(userRole, archiveDays, trackRead, trackDelete));
-            if (error) throw new Error(error);
+            if (error) {
+                if (handleQuotaFailure(error)) {
+                    throw new Error(quotaMessage);
+                }
+                throw new Error(error);
+            }
             if (data.deleted > 0) {
                 refetchDbHealth();
             }
@@ -219,6 +246,12 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                     });
 
                     if (error) {
+                        if (handleQuotaFailure(error)) {
+                            setRestoreFile(null);
+                            setTimeout(() => setRestoreProgress(null), 3000);
+                            reject(new Error(quotaMessage));
+                            return;
+                        }
                         setRestoreFile(null);
                         setTimeout(() => setRestoreProgress(null), 3000);
                         reject(new Error(error));
@@ -280,7 +313,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
 
         setRestoreFile(file);
         setShowRestoreConfirm(true);
-    }, [showToast, language]);
+    }, [showToast, language, tm]);
 
     const actionLoadingState = useMemo(() => ({
         any: backupLoading || archiveLoading || restoreLoading,

@@ -1,7 +1,7 @@
 import { db } from '../firebase';
 import { collection, getDocs, query, where, doc, writeBatch, setDoc, Timestamp, getDoc, limit as firestoreLimit } from 'firebase/firestore';
 import SettingsService from './SettingsService';
-import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
+import { isQuotaExceededError } from './BaseService';
 
 class DatabaseService {
     static SOFT_DOC_LIMIT = 50000;
@@ -66,6 +66,10 @@ class DatabaseService {
         }
     }
 
+    static isQuotaExceededError(error) {
+        return isQuotaExceededError(error);
+    }
+
     static async countCollectionManual(collectionName) {
         const snapshot = await getDocs(collection(db, collectionName));
         return snapshot.size;
@@ -126,6 +130,7 @@ class DatabaseService {
             error.code = 'DATABASE_HEALTH_PARTIAL_FAILURE';
             error.partialCounts = counts;
             error.failures = failures;
+            error.quotaExceeded = Object.values(failures).some((failure) => DatabaseService.isQuotaExceededError(failure));
             throw error;
         }
 
