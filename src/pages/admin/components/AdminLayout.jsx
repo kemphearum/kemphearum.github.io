@@ -74,11 +74,11 @@ const AdminLayout = ({
             style={{ '--admin-header-height': `${headerHeight}px` }}
         >
             <AnimatedBackground 
-                variant={settingsData.bgStyle || 'aurora'}
-                density={settingsData.bgDensity ?? 30}
-                speed={settingsData.bgSpeed ?? 20}
-                glowOpacity={settingsData.bgGlowOpacity ?? 40}
-                interactive={settingsData.bgInteractive ?? true}
+                variant="aurora"
+                density={8}
+                speed={10}
+                glowOpacity={settingsData.adminBgGlowOpacity ?? 16}
+                interactive={false}
             />
             <Header 
                 onToggleSidebar={toggleSidebar} 

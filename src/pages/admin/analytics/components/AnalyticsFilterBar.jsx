@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Calendar, Download, RefreshCw, Clock3 } from 'lucide-react';
 import Button from '../../../../shared/components/ui/button/Button';
 import { useTranslation } from '../../../../hooks/useTranslation';
@@ -26,7 +26,7 @@ const AnalyticsFilterBar = ({
     totalRecords
 }) => {
     const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const tr = useCallback((enText, kmText) => (language === 'km' ? kmText : enText), [language]);
     const dateLocale = language === 'km' ? 'km-KH' : 'en-US';
     const isInvalidRange = Boolean(range.start && range.end && range.start > range.end);
 

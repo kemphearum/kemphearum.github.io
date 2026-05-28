@@ -36,6 +36,13 @@ import { useTranslation } from '../../../../hooks/useTranslation';
  * @param {Function} props.onViewDetails - Callback for "View Details" action
  * @param {string} props.emptyMessage - Message for empty state
  */
+const shouldAnimateCharts = () => {
+    if (typeof window === 'undefined') return false;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+    return !prefersReducedMotion && !isTouchDevice;
+};
+
 const AnalyticsChart = ({ 
     type = 'line', 
     data = [], 
@@ -54,6 +61,7 @@ const AnalyticsChart = ({
     const dateLocale = language === 'km' ? 'km-KH' : 'en-US';
     const normalizedEmptyMessage = emptyMessage || tr('No data available for selected range', 'មិនមានទិន្នន័យសម្រាប់រយៈពេលដែលបានជ្រើស។');
     const hasData = data && data.length > 0;
+    const enableAnimation = shouldAnimateCharts();
 
     const tooltipStyle = {
         background: 'var(--card-bg, #1a1a2e)',
@@ -101,7 +109,8 @@ const AnalyticsChart = ({
                             <Bar 
                                 dataKey={yKey} 
                                 radius={[6, 6, 0, 0]}
-                                animationDuration={1000}
+                                isAnimationActive={enableAnimation}
+                                animationDuration={enableAnimation ? 700 : 0}
                             >
                                 {data.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
@@ -124,7 +133,8 @@ const AnalyticsChart = ({
                                 paddingAngle={5}
                                 dataKey={yKey}
                                 nameKey={xKey}
-                                animationDuration={1000}
+                                isAnimationActive={enableAnimation}
+                                animationDuration={enableAnimation ? 700 : 0}
                             >
                                 {data.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
@@ -186,9 +196,10 @@ const AnalyticsChart = ({
                                     dataKey={key} 
                                     stroke={colors[index % colors.length]} 
                                     strokeWidth={3}
-                                    dot={{ r: 4, strokeWidth: 2, fill: 'var(--card-bg)' }}
-                                    activeDot={{ r: 6, strokeWidth: 0 }}
-                                    animationDuration={1500}
+                                    dot={data.length > 21 ? false : { r: 4, strokeWidth: 2, fill: 'var(--card-bg)' }}
+                                    activeDot={enableAnimation ? { r: 6, strokeWidth: 0 } : false}
+                                    isAnimationActive={enableAnimation}
+                                    animationDuration={enableAnimation ? 900 : 0}
                                 />
                             ))}
                             <Legend 

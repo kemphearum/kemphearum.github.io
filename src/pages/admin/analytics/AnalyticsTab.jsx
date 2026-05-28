@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { Suspense, lazy, useState, useCallback, useMemo } from 'react';
 import { 
     Eye as EyeIcon, 
     Users, 
@@ -21,13 +21,14 @@ import AnalyticsService from '../../../services/AnalyticsService';
 // UI Components
 import SectionHeader from '../components/SectionHeader';
 import StatCard from '../components/StatCard';
-import AnalyticsDetailModal from './components/AnalyticsDetailModal';
 import AnalyticsFilterBar from './components/AnalyticsFilterBar';
-import AnalyticsChart from './components/AnalyticsChart';
 import LoadingOverlay from '../../../shared/components/ui/loading-overlay/LoadingOverlay';
 import EmptyState from '../../../shared/components/ui/empty-state/EmptyState';
 import { useTranslation } from '../../../hooks/useTranslation';
-import { isAdminRole, ACTIONS, MODULES } from '../../../utils/permissions';
+import { ACTIONS, MODULES } from '../../../utils/permissions';
+
+const AnalyticsChart = lazy(() => import('./components/AnalyticsChart'));
+const AnalyticsDetailModal = lazy(() => import('./components/AnalyticsDetailModal'));
 
 
 const toDateKey = (value) => {
@@ -41,6 +42,16 @@ const formatShortDate = (value) => {
     if (!value) return '';
     return new Date(`${value}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
+
+const increment = (map, key, fallback) => {
+    const normalized = key || fallback;
+    map[normalized] = (map[normalized] || 0) + 1;
+};
+
+const toSortedData = (map, limit) => Object.entries(map)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, limit)
+    .map(([name, value]) => ({ name, value }));
 
 const AnalyticsTab = ({ userRole, showToast, isActionAllowed }) => {
 
@@ -225,71 +236,79 @@ const AnalyticsTab = ({ userRole, showToast, isActionAllowed }) => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
         showToast(tm('toasts.exported'), 'success');
     }, [visits, analyticsRange, showToast, tm]);
 
     // 4. DERIVED DATA & TRENDS
-    const dailyVisits = useMemo(() => {
-        const map = {};
-        visits.forEach(v => {
+    const analyticsSummary = useMemo(() => {
+        const dailyMap = {};
+        const countryMap = {};
+        const deviceMap = {};
+        const cityMap = {};
+        const referrerMap = {};
+        const browserMap = {};
+        const osMap = {};
+        const topPagesMap = {};
+        let newVisitors = 0;
+        let returningVisitors = 0;
+
+        visits.forEach((v) => {
             const date = toDateKey(v.timestamp) || v.date;
-            if (!date) return;
-            if (!map[date]) map[date] = { date, visits: 0, unique: 0, _ips: new Set() };
-            map[date].visits++;
-            if (v.ip && !map[date]._ips.has(v.ip)) { map[date]._ips.add(v.ip); map[date].unique++; }
+            if (date) {
+                if (!dailyMap[date]) dailyMap[date] = { date, visits: 0, unique: 0, _ips: new Set() };
+                dailyMap[date].visits++;
+                if (v.ip && !dailyMap[date]._ips.has(v.ip)) {
+                    dailyMap[date]._ips.add(v.ip);
+                    dailyMap[date].unique++;
+                }
+            }
+
+            increment(countryMap, v.country, tm('common.unknown'));
+            const device = v.device || 'desktop';
+            increment(deviceMap, device.charAt(0).toUpperCase() + device.slice(1), 'Desktop');
+            increment(cityMap, v.city, tm('common.unknown'));
+            increment(referrerMap, v.referrer, tm('common.direct'));
+            increment(browserMap, v.browser, tm('common.unknown'));
+            increment(osMap, v.os, tm('common.unknown'));
+            increment(topPagesMap, v.path, '/');
+
+            if (v.isReturning) returningVisitors++;
+            else newVisitors++;
         });
-        return Object.values(map)
-            .sort((a, b) => a.date.localeCompare(b.date))
-            .map((entry) => ({ date: entry.date, visits: entry.visits, unique: entry.unique }));
-    }, [visits]);
 
-    const countryData = useMemo(() => {
-        const map = {};
-        visits.forEach(v => { const c = v.country || tm('common.unknown'); map[c] = (map[c] || 0) + 1; });
-        return Object.entries(map).sort(([, a], [, b]) => b - a).slice(0, 8).map(([name, value]) => ({ name, value }));
+        return {
+            dailyVisits: Object.values(dailyMap)
+                .sort((a, b) => a.date.localeCompare(b.date))
+                .map((entry) => ({ date: entry.date, visits: entry.visits, unique: entry.unique })),
+            countryData: toSortedData(countryMap, 8),
+            deviceData: toSortedData(deviceMap),
+            cityData: toSortedData(cityMap, 10),
+            referrerData: toSortedData(referrerMap, 8),
+            browserData: toSortedData(browserMap),
+            osData: toSortedData(osMap),
+            retentionData: [
+                { name: tm('common.new'), value: newVisitors },
+                { name: tm('common.returning'), value: returningVisitors }
+            ],
+            topPages: Object.entries(topPagesMap)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 10)
+                .map(([path, count]) => ({ path, count }))
+        };
     }, [visits, tm]);
 
-    const deviceData = useMemo(() => {
-        const map = {};
-        visits.forEach(v => { const d = v.device || 'desktop'; const label = d.charAt(0).toUpperCase() + d.slice(1); map[label] = (map[label] || 0) + 1; });
-        return Object.entries(map).sort(([, a], [, b]) => b - a).map(([name, value]) => ({ name, value }));
-    }, [visits]);
-
-    const cityData = useMemo(() => {
-        const map = {};
-        visits.forEach(v => { const c = v.city || tm('common.unknown'); map[c] = (map[c] || 0) + 1; });
-        return Object.entries(map).sort(([, a], [, b]) => b - a).slice(0, 10).map(([name, value]) => ({ name, value }));
-    }, [visits, tm]);
-
-    const referrerData = useMemo(() => {
-        const map = {};
-        visits.forEach(v => { const r = v.referrer || tm('common.direct'); map[r] = (map[r] || 0) + 1; });
-        return Object.entries(map).sort(([, a], [, b]) => b - a).slice(0, 8).map(([name, value]) => ({ name, value }));
-    }, [visits, tm]);
-
-    const browserData = useMemo(() => {
-        const map = {};
-        visits.forEach(v => { const b = v.browser || tm('common.unknown'); map[b] = (map[b] || 0) + 1; });
-        return Object.entries(map).sort(([, a], [, b]) => b - a).map(([name, value]) => ({ name, value }));
-    }, [visits, tm]);
-
-    const osData = useMemo(() => {
-        const map = {};
-        visits.forEach(v => { const o = v.os || tm('common.unknown'); map[o] = (map[o] || 0) + 1; });
-        return Object.entries(map).sort(([, a], [, b]) => b - a).map(([name, value]) => ({ name, value }));
-    }, [visits, tm]);
-
-    const retentionData = useMemo(() => {
-        let n = 0, r = 0;
-        visits.forEach(v => { if (v.isReturning) r++; else n++; });
-        return [{ name: tm('common.new'), value: n }, { name: tm('common.returning'), value: r }];
-    }, [visits, tm]);
-
-    const topPages = useMemo(() => {
-        const map = {};
-        visits.forEach(v => { const p = v.path || '/'; map[p] = (map[p] || 0) + 1; });
-        return Object.entries(map).sort(([, a], [, b]) => b - a).slice(0, 10).map(([path, count]) => ({ path, count }));
-    }, [visits]);
+    const {
+        dailyVisits,
+        countryData,
+        deviceData,
+        cityData,
+        referrerData,
+        browserData,
+        osData,
+        retentionData,
+        topPages
+    } = analyticsSummary;
 
     const workspaceSummary = useMemo(() => {
         const start = analyticsRange.start;
@@ -492,126 +511,132 @@ const AnalyticsTab = ({ userRole, showToast, isActionAllowed }) => {
                         />
                     </div>
 
-                    <AnalyticsChart
-                        title={tm('charts.visitsOverTime')}
-                        icon={TrendingUp}
-                        type="line"
-                        data={dailyVisits}
-                        xKey="date"
-                        yKey={['visits', 'unique']}
-                        colors={['#64ffda', '#7c4dff']}
-                        height={320}
-                        onViewDetails={() => handleAnalyticsDetail('visits')}
-                        isLoading={analyticsFetching}
-                    />
-
-                    <div className="admin-analytics-row admin-grid-2">
+                    <Suspense fallback={<LoadingOverlay active message={tm('header.loading')} />}>
                         <AnalyticsChart
-                            title={tm('charts.visitorsByCountry')}
-                            icon={Globe}
-                            type="pie"
-                            data={countryData}
-                            xKey="name"
-                            yKey="value"
-                            height={250}
-                            onViewDetails={() => handleAnalyticsDetail('countries')}
-                        />
-                        <AnalyticsChart
-                            title={tm('charts.deviceBreakdown')}
-                            icon={Monitor}
-                            type="pie"
-                            data={deviceData}
-                            xKey="name"
-                            yKey="value"
-                            height={250}
-                            onViewDetails={() => handleAnalyticsDetail('devices')}
-                        />
-                    </div>
-
-                    <div className="admin-analytics-row admin-grid-2">
-                        <AnalyticsChart
-                            title={tm('charts.topCities')}
-                            icon={MapPin}
-                            type="bar"
-                            data={cityData.slice(0, 6)}
-                            xKey="name"
-                            yKey="value"
-                            height={250}
-                            onViewDetails={() => handleAnalyticsDetail('cities')}
-                        />
-                        <AnalyticsChart
-                            title={tm('charts.trafficSources')}
-                            icon={Share2}
-                            type="pie"
-                            data={referrerData}
-                            xKey="name"
-                            yKey="value"
-                            height={250}
-                            onViewDetails={() => handleAnalyticsDetail('referrers')}
-                        />
-                    </div>
-
-                    <div className="admin-analytics-row admin-grid-auto">
-                        <AnalyticsChart
-                            title={tm('charts.topBrowsers')}
-                            icon={FileText}
-                            type="pie"
-                            data={browserData}
-                            xKey="name"
-                            yKey="value"
-                            height={250}
-                            onViewDetails={() => handleAnalyticsDetail('browsers')}
-                        />
-                        <AnalyticsChart
-                            title={tm('charts.operatingSystems')}
-                            icon={Monitor}
-                            type="pie"
-                            data={osData}
-                            xKey="name"
-                            yKey="value"
-                            height={250}
-                            onViewDetails={() => handleAnalyticsDetail('os')}
-                        />
-                         <AnalyticsChart
-                            title={tm('charts.visitorRetention')}
-                            icon={Users}
-                            type="pie"
-                            data={retentionData}
-                            xKey="name"
-                            yKey="value"
-                            height={250}
-                            onViewDetails={() => handleAnalyticsDetail('retention')}
+                            title={tm('charts.visitsOverTime')}
+                            icon={TrendingUp}
+                            type="line"
+                            data={dailyVisits}
+                            xKey="date"
+                            yKey={['visits', 'unique']}
                             colors={['#64ffda', '#7c4dff']}
+                            height={320}
+                            onViewDetails={() => handleAnalyticsDetail('visits')}
+                            isLoading={analyticsFetching}
                         />
-                    </div>
 
-                    <div className="admin-analytics-row">
-                        <AnalyticsChart
-                            title={tm('charts.topVisitedPages')}
-                            icon={FileText}
-                            type="bar"
-                            data={topPages}
-                            xKey="path"
-                            yKey="count"
-                            height={Math.max(200, topPages.length * 40)}
-                            onViewDetails={() => handleAnalyticsDetail('pages')}
-                        />
-                    </div>
+                        <div className="admin-analytics-row admin-grid-2">
+                            <AnalyticsChart
+                                title={tm('charts.visitorsByCountry')}
+                                icon={Globe}
+                                type="pie"
+                                data={countryData}
+                                xKey="name"
+                                yKey="value"
+                                height={250}
+                                onViewDetails={() => handleAnalyticsDetail('countries')}
+                            />
+                            <AnalyticsChart
+                                title={tm('charts.deviceBreakdown')}
+                                icon={Monitor}
+                                type="pie"
+                                data={deviceData}
+                                xKey="name"
+                                yKey="value"
+                                height={250}
+                                onViewDetails={() => handleAnalyticsDetail('devices')}
+                            />
+                        </div>
+
+                        <div className="admin-analytics-row admin-grid-2">
+                            <AnalyticsChart
+                                title={tm('charts.topCities')}
+                                icon={MapPin}
+                                type="bar"
+                                data={cityData.slice(0, 6)}
+                                xKey="name"
+                                yKey="value"
+                                height={250}
+                                onViewDetails={() => handleAnalyticsDetail('cities')}
+                            />
+                            <AnalyticsChart
+                                title={tm('charts.trafficSources')}
+                                icon={Share2}
+                                type="pie"
+                                data={referrerData}
+                                xKey="name"
+                                yKey="value"
+                                height={250}
+                                onViewDetails={() => handleAnalyticsDetail('referrers')}
+                            />
+                        </div>
+
+                        <div className="admin-analytics-row admin-grid-auto">
+                            <AnalyticsChart
+                                title={tm('charts.topBrowsers')}
+                                icon={FileText}
+                                type="pie"
+                                data={browserData}
+                                xKey="name"
+                                yKey="value"
+                                height={250}
+                                onViewDetails={() => handleAnalyticsDetail('browsers')}
+                            />
+                            <AnalyticsChart
+                                title={tm('charts.operatingSystems')}
+                                icon={Monitor}
+                                type="pie"
+                                data={osData}
+                                xKey="name"
+                                yKey="value"
+                                height={250}
+                                onViewDetails={() => handleAnalyticsDetail('os')}
+                            />
+                            <AnalyticsChart
+                                title={tm('charts.visitorRetention')}
+                                icon={Users}
+                                type="pie"
+                                data={retentionData}
+                                xKey="name"
+                                yKey="value"
+                                height={250}
+                                onViewDetails={() => handleAnalyticsDetail('retention')}
+                                colors={['#64ffda', '#7c4dff']}
+                            />
+                        </div>
+
+                        <div className="admin-analytics-row">
+                            <AnalyticsChart
+                                title={tm('charts.topVisitedPages')}
+                                icon={FileText}
+                                type="bar"
+                                data={topPages}
+                                xKey="path"
+                                yKey="count"
+                                height={Math.max(200, topPages.length * 40)}
+                                onViewDetails={() => handleAnalyticsDetail('pages')}
+                            />
+                        </div>
+                    </Suspense>
                 </>
             )}
 
-            <AnalyticsDetailModal
-                analyticsDetail={analyticsDetail}
-                setAnalyticsDetail={setAnalyticsDetail}
-                analyticsLogsLoading={analyticsLogsLoading}
-                analyticsLogs={analyticsLogs}
-                analyticsLogsTotal={analyticsLogsTotal}
-                quotaExceeded={quotaExceeded}
-                page={detailPage}
-                onPageChange={setDetailPage}
-                pageSize={detailLimit}
-                enablePagination={shouldFetchDetailLogs}
-            />
+            {analyticsDetail && (
+                <Suspense fallback={null}>
+                    <AnalyticsDetailModal
+                        analyticsDetail={analyticsDetail}
+                        setAnalyticsDetail={setAnalyticsDetail}
+                        analyticsLogsLoading={analyticsLogsLoading}
+                        analyticsLogs={analyticsLogs}
+                        analyticsLogsTotal={analyticsLogsTotal}
+                        quotaExceeded={quotaExceeded}
+                        page={detailPage}
+                        onPageChange={setDetailPage}
+                        pageSize={detailLimit}
+                        enablePagination={shouldFetchDetailLogs}
+                    />
+                </Suspense>
+            )}
         </div>
     );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { List } from 'lucide-react';
 import styles from './TableOfContents.module.scss';
 import { useTranslation } from '../hooks/useTranslation';
@@ -6,17 +6,15 @@ import { useTranslation } from '../hooks/useTranslation';
 const TableOfContents = ({ content }) => {
     const { language } = useTranslation();
     const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
-    const [headings, setHeadings] = useState([]);
     const [activeId, setActiveId] = useState('');
 
-    useEffect(() => {
+    const headings = useMemo(() => {
         if (!content) {
-            setHeadings([]);
-            return;
+            return [];
         }
 
         const seenIds = new Map();
-        const matches = content
+        return content
             .split(/\r?\n/)
             .reduce((acc, line, index) => {
                 const headingMatch = line.match(/^(##|###)\s+(.+?)\s*#*\s*$/);
@@ -46,8 +44,6 @@ const TableOfContents = ({ content }) => {
                 acc.push({ id, text, level });
                 return acc;
             }, []);
-
-        setHeadings(matches);
     }, [content]);
 
     useEffect(() => {

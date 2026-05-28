@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Upload, X, ImageIcon, Image as ImageIcon2, FolderPlus, Trash2, Eye, XCircle, CheckCircle2, Maximize2 } from 'lucide-react';
 import { Dialog } from '@/shared/components/ui';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -20,30 +20,22 @@ const FormDropzone = ({
 }) => {
     const { t } = useTranslation();
     const dropzonePlaceholder = placeholder || t('admin.common.dropzone.uploadImage');
-    const [previewUrl, setPreviewUrl] = useState(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [internalClear, setInternalClear] = useState(false);
+    const [clearedImageUrl, setClearedImageUrl] = useState(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [error, setError] = useState(null);
     const fileInputRef = useRef(null);
 
-    useEffect(() => {
-        if (!file) {
-            setPreviewUrl(null);
-            return;
-        }
-
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        setInternalClear(false); // Reset clear state when a new file is provided externally
-
-        return () => URL.revokeObjectURL(url);
+    const previewUrl = useMemo(() => {
+        if (!file) return null;
+        return URL.createObjectURL(file);
     }, [file]);
 
-    // Also reset clear state if the currentImageUrl changes from outside (e.g. switching between posts)
     useEffect(() => {
-        setInternalClear(false);
-    }, [currentImageUrl]);
+        return () => {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+        };
+    }, [previewUrl]);
 
     const validateFile = (file) => {
         if (!file) return null;
@@ -71,7 +63,7 @@ const FormDropzone = ({
             return;
         }
         setError(null);
-        setInternalClear(false);
+        setClearedImageUrl(null);
         onFileChange(selectedFile);
     };
 
@@ -84,7 +76,7 @@ const FormDropzone = ({
         
         // If there was a current image, we internally clear it for immediate UI feedback
         if (currentImageUrl || previewUrl) {
-            setInternalClear(true);
+            setClearedImageUrl(currentImageUrl || previewUrl);
             if (onClearExisting) onClearExisting();
         }
 
@@ -139,11 +131,18 @@ const FormDropzone = ({
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    const hasData = (previewUrl || currentImageUrl) && !internalClear;
-    const isNewImage = !!previewUrl && !internalClear;
+    const visibleExistingImage = currentImageUrl && currentImageUrl !== clearedImageUrl ? currentImageUrl : '';
+    const hasData = Boolean(previewUrl || visibleExistingImage);
+    const isNewImage = Boolean(previewUrl);
 
     return (
         <div className="ui-fileInputGroup">
+            {(label || hint) && (
+                <div className="ui-fieldMeta">
+                    {label && <span className="ui-fieldLabel">{label}</span>}
+                    {hint && <span className="ui-fieldHint">{hint}</span>}
+                </div>
+            )}
             <div className="ui-dropzoneRoot">
                 <input
                     type="file"
@@ -165,7 +164,7 @@ const FormDropzone = ({
                     >
                         <div className="ui-premiumImageCard" style={circular ? { borderRadius: '50%', height: '100%', overflow: 'visible' } : {}}>
                             <img 
-                                src={previewUrl || currentImageUrl} 
+                                src={previewUrl || visibleExistingImage} 
                                 alt={t('admin.common.dropzone.currentImage')}
                                 className="ui-unifiedPreviewImg" 
                                 style={circular ? { borderRadius: '50%' } : {}}
@@ -302,7 +301,7 @@ const FormDropzone = ({
                         }}
                     >
                         <img 
-                            src={previewUrl || currentImageUrl} 
+                            src={previewUrl || visibleExistingImage} 
                             alt={t('admin.common.dropzone.previewAlt')}
                             style={{
                                 maxWidth: '100%',

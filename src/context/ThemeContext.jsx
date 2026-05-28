@@ -21,27 +21,23 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-    // Start with a consistent theme for the initial hydration pass
     const [theme, setTheme] = useState('dark');
-    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        // Only recover preference after the component has mounted on the client
-        const saved = localStorage.getItem('portfolio-theme');
-        if (saved) {
-            setTheme(saved);
-        } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-            setTheme('light');
-        }
-        setMounted(true);
+        const recoverTheme = () => {
+            const saved = localStorage.getItem('portfolio-theme');
+            setTheme(saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+        };
+
+        const frame = requestAnimationFrame(recoverTheme);
+        return () => cancelAnimationFrame(frame);
     }, []);
 
     useEffect(() => {
-        if (!mounted) return;
         document.documentElement.setAttribute('data-theme', theme);
         document.documentElement.style.colorScheme = theme;
         localStorage.setItem('portfolio-theme', theme);
-    }, [theme, mounted]);
+    }, [theme]);
 
     const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
