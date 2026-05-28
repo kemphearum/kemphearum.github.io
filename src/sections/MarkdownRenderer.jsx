@@ -1,11 +1,61 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeSlug from 'rehype-slug';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy } from 'lucide-react';
 import styles from './MarkdownRenderer.module.scss';
 import { useTranslation } from '../hooks/useTranslation';
+
+const SyntaxHighlighter = lazy(async () => {
+    const [
+        { default: PrismLight },
+        { default: bash },
+        { default: css },
+        { default: javascript },
+        { default: json },
+        { default: jsx },
+        { default: markdown },
+        { default: markup },
+        { default: python },
+        { default: scss },
+        { default: tsx },
+        { default: typescript },
+        { vscDarkPlus }
+    ] = await Promise.all([
+        import('react-syntax-highlighter/dist/esm/prism-light'),
+        import('react-syntax-highlighter/dist/esm/languages/prism/bash'),
+        import('react-syntax-highlighter/dist/esm/languages/prism/css'),
+        import('react-syntax-highlighter/dist/esm/languages/prism/javascript'),
+        import('react-syntax-highlighter/dist/esm/languages/prism/json'),
+        import('react-syntax-highlighter/dist/esm/languages/prism/jsx'),
+        import('react-syntax-highlighter/dist/esm/languages/prism/markdown'),
+        import('react-syntax-highlighter/dist/esm/languages/prism/markup'),
+        import('react-syntax-highlighter/dist/esm/languages/prism/python'),
+        import('react-syntax-highlighter/dist/esm/languages/prism/scss'),
+        import('react-syntax-highlighter/dist/esm/languages/prism/tsx'),
+        import('react-syntax-highlighter/dist/esm/languages/prism/typescript'),
+        import('react-syntax-highlighter/dist/esm/styles/prism')
+    ]);
+
+    PrismLight.registerLanguage('bash', bash);
+    PrismLight.registerLanguage('css', css);
+    PrismLight.registerLanguage('javascript', javascript);
+    PrismLight.registerLanguage('json', json);
+    PrismLight.registerLanguage('jsx', jsx);
+    PrismLight.registerLanguage('markdown', markdown);
+    PrismLight.registerLanguage('markup', markup);
+    PrismLight.registerLanguage('python', python);
+    PrismLight.registerLanguage('scss', scss);
+    PrismLight.registerLanguage('tsx', tsx);
+    PrismLight.registerLanguage('typescript', typescript);
+    PrismLight.alias('javascript', ['js']);
+    PrismLight.alias('typescript', ['ts']);
+    PrismLight.alias('markup', ['html', 'xml']);
+    PrismLight.alias('bash', ['sh', 'shell']);
+
+    return {
+        default: (props) => <PrismLight {...props} style={vscDarkPlus} />
+    };
+});
 
 const CodeBlock = ({ inline, className, children, ...props }) => {
     const { language } = useTranslation();
@@ -13,11 +63,19 @@ const CodeBlock = ({ inline, className, children, ...props }) => {
     const match = /language-(\w+)/.exec(className || '');
     const codeString = String(children).replace(/\n$/, '');
     const [copied, setCopied] = useState(false);
+    const resetCopiedRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (resetCopiedRef.current) clearTimeout(resetCopiedRef.current);
+        };
+    }, []);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(codeString);
         setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+        if (resetCopiedRef.current) clearTimeout(resetCopiedRef.current);
+        resetCopiedRef.current = setTimeout(() => setCopied(false), 2000);
     };
 
     return !inline && match ? (
@@ -34,14 +92,15 @@ const CodeBlock = ({ inline, className, children, ...props }) => {
                     <span>{copied ? tr('Copied!', 'បានចម្លង!') : tr('Copy', 'ចម្លង')}</span>
                 </button>
             </div>
-            <SyntaxHighlighter
-                {...props}
-                children={codeString}
-                style={vscDarkPlus}
-                language={match[1]}
-                PreTag="div"
-                className={styles.codeBlock}
-            />
+            <Suspense fallback={<pre className={styles.codeBlock}><code>{codeString}</code></pre>}>
+                <SyntaxHighlighter
+                    {...props}
+                    children={codeString}
+                    language={match[1]}
+                    PreTag="div"
+                    className={styles.codeBlock}
+                />
+            </Suspense>
         </div>
     ) : (
         <code {...props} className={`${className} ${styles.inlineCode}`}>

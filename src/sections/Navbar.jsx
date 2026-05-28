@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './Navbar.module.scss';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
@@ -15,6 +15,8 @@ const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [activeSection, setActiveSection] = useState('home');
+    const scrolledFrameRef = useRef(null);
+    const activeSectionFrameRef = useRef(null);
     const location = useLocation();
     const navigate = useNavigate();
     const { language, t } = useTranslation();
@@ -47,11 +49,25 @@ const Navbar = () => {
     const logoText = getLocalizedField(settings.logoText, language);
 
     useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 50);
+        const updateScrolled = () => {
+            scrolledFrameRef.current = null;
+            const nextScrolled = window.scrollY > 50;
+            setScrolled((current) => (current === nextScrolled ? current : nextScrolled));
         };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+
+        const handleScroll = () => {
+            if (scrolledFrameRef.current !== null) return;
+            scrolledFrameRef.current = window.requestAnimationFrame(updateScrolled);
+        };
+
+        updateScrolled();
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            if (scrolledFrameRef.current !== null) {
+                window.cancelAnimationFrame(scrolledFrameRef.current);
+            }
+        };
     }, []);
 
     useEffect(() => {
@@ -74,12 +90,23 @@ const Navbar = () => {
             setActiveSection((prev) => (prev === next ? prev : next));
         };
 
+        const scheduleActiveSectionDetection = () => {
+            if (activeSectionFrameRef.current !== null) return;
+            activeSectionFrameRef.current = window.requestAnimationFrame(() => {
+                activeSectionFrameRef.current = null;
+                detectActiveSection();
+            });
+        };
+
         detectActiveSection();
-        window.addEventListener('scroll', detectActiveSection, { passive: true });
-        window.addEventListener('resize', detectActiveSection);
+        window.addEventListener('scroll', scheduleActiveSectionDetection, { passive: true });
+        window.addEventListener('resize', scheduleActiveSectionDetection);
         return () => {
-            window.removeEventListener('scroll', detectActiveSection);
-            window.removeEventListener('resize', detectActiveSection);
+            window.removeEventListener('scroll', scheduleActiveSectionDetection);
+            window.removeEventListener('resize', scheduleActiveSectionDetection);
+            if (activeSectionFrameRef.current !== null) {
+                window.cancelAnimationFrame(activeSectionFrameRef.current);
+            }
         };
     }, [isHome]);
 

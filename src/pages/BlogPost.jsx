@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useLoaderData } from 'react-router';
 import BlogService from '../services/BlogService';
 import { useActivity } from '../hooks/useActivity';
@@ -63,6 +63,9 @@ const BlogPost = () => {
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const [instaCopied, setInstaCopied] = useState(false);
+    const scrollFrameRef = useRef(null);
+    const copiedResetRef = useRef(null);
+    const instaCopiedResetRef = useRef(null);
     const { trackRead } = useActivity();
 
     const { data: post, isLoading: loading, isError } = useQuery({
@@ -89,17 +92,41 @@ const BlogPost = () => {
     } : null;
 
     // Scroll tracking
-    const handleScroll = useCallback(() => {
+    const updateScrollState = useCallback(() => {
+        scrollFrameRef.current = null;
         const scrollTop = window.scrollY;
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-        setReadProgress(docHeight > 0 ? (scrollTop / docHeight) * 100 : 0);
-        setShowScrollTop(scrollTop > 400);
+        const nextProgress = docHeight > 0 ? Math.round(((scrollTop / docHeight) * 100) * 10) / 10 : 0;
+        const nextShowScrollTop = scrollTop > 400;
+
+        setReadProgress((current) => (current === nextProgress ? current : nextProgress));
+        setShowScrollTop((current) => (current === nextShowScrollTop ? current : nextShowScrollTop));
     }, []);
 
+    const handleScroll = useCallback(() => {
+        if (scrollFrameRef.current !== null) return;
+        scrollFrameRef.current = window.requestAnimationFrame(updateScrollState);
+    }, [updateScrollState]);
+
     useEffect(() => {
+        handleScroll();
         window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [handleScroll]);
+        window.addEventListener('resize', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', handleScroll);
+            if (scrollFrameRef.current !== null) {
+                window.cancelAnimationFrame(scrollFrameRef.current);
+            }
+        };
+    }, [handleScroll, updateScrollState]);
+
+    useEffect(() => {
+        return () => {
+            if (copiedResetRef.current) clearTimeout(copiedResetRef.current);
+            if (instaCopiedResetRef.current) clearTimeout(instaCopiedResetRef.current);
+        };
+    }, []);
 
     // Lightbox Scroll Lock
     useEffect(() => {
@@ -124,7 +151,8 @@ const BlogPost = () => {
     const handleCopyLink = () => {
         navigator.clipboard.writeText(currentUrl).then(() => {
             setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            if (copiedResetRef.current) clearTimeout(copiedResetRef.current);
+            copiedResetRef.current = setTimeout(() => setCopied(false), 2000);
         });
     };
     const shareToFacebook = () => {
@@ -140,7 +168,8 @@ const BlogPost = () => {
             } else {
                 await navigator.clipboard.writeText(currentUrl);
                 setInstaCopied(true);
-                setTimeout(() => setInstaCopied(false), 2500);
+                if (instaCopiedResetRef.current) clearTimeout(instaCopiedResetRef.current);
+                instaCopiedResetRef.current = setTimeout(() => setInstaCopied(false), 2500);
             }
         } catch (err) {
             console.error('Error sharing:', err);
