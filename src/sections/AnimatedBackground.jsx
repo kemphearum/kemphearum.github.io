@@ -1,6 +1,26 @@
 import React, { useEffect, useRef } from 'react';
 import styles from './AnimatedBackground.module.scss';
 
+const getMotionProfile = () => {
+    if (typeof window === 'undefined') {
+        return {
+            prefersReducedMotion: false,
+            isTouchDevice: false,
+            isMobileViewport: false
+        };
+    }
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+    const isMobileViewport = window.matchMedia('(max-width: 768px)').matches;
+
+    return {
+        prefersReducedMotion,
+        isTouchDevice,
+        isMobileViewport
+    };
+};
+
 const AnimatedBackground = ({
     density = 50, // 1 to 100 where 100 is max particles
     speed = 50,   // 1 to 100 where 100 is fastest
@@ -14,17 +34,27 @@ const AnimatedBackground = ({
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas && variant !== 'aurora') return;
+
+        const { prefersReducedMotion, isTouchDevice, isMobileViewport } = getMotionProfile();
+        const shouldAnimateCanvas = variant !== 'aurora' && !prefersReducedMotion;
+        const shouldTrackPointer = interactive && !isTouchDevice && !prefersReducedMotion;
         
         const ctx = canvas ? canvas.getContext('2d') : null;
         let animationFrameId;
         let particles = [];
+        let lastFrameTime = 0;
+        let isPageVisible = true;
+        const targetFps = isMobileViewport ? 24 : 60;
+        const frameInterval = 1000 / targetFps;
 
         // Map settings to actual values
         const baseAreaPerParticle = variant === 'geometry' ? 20000 : 10000;
         const densityFactor = Math.max(0.1, (101 - density) / 50);
-        const mappedArea = baseAreaPerParticle * densityFactor;
+        const mobileDensityFactor = isMobileViewport ? 1.85 : 1;
+        const mappedArea = baseAreaPerParticle * densityFactor * mobileDensityFactor;
+        const maxParticles = isMobileViewport ? 45 : 140;
 
-        const maxVelocity = (speed / 50) * 0.5;
+        const maxVelocity = isMobileViewport ? (speed / 50) * 0.28 : (speed / 50) * 0.5;
 
         const resize = () => {
             if (!canvas) return;
@@ -100,10 +130,11 @@ const AnimatedBackground = ({
                 if (this.y > canvas.height + this.size) this.y = -this.size;
                 else if (this.y < -this.size) this.y = canvas.height + this.size;
 
-                if (interactive && mouseRef.current.x !== null) {
+                if (shouldTrackPointer && mouseRef.current.x !== null) {
                     let dx = mouseRef.current.x - this.x;
                     let dy = mouseRef.current.y - this.y;
                     let distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance === 0) return;
                     let forceDirectionX = dx / distance;
                     let forceDirectionY = dy / distance;
                     let maxDistance = mouseRef.current.radius;
@@ -123,7 +154,7 @@ const AnimatedBackground = ({
             particles = [];
             if (variant === 'aurora') return; // pure CSS background, no canvas particles needed
 
-            const numberOfParticles = (canvas.width * canvas.height) / mappedArea;
+            const numberOfParticles = Math.min(maxParticles, (canvas.width * canvas.height) / mappedArea);
             for (let i = 0; i < numberOfParticles; i++) {
                 particles.push(new Particle());
             }
@@ -143,7 +174,7 @@ const AnimatedBackground = ({
 
             for (let a = 0; a < particles.length; a++) {
                 // Connect particles to the mouse
-                if (interactive && mouseRef.current.x !== null) {
+                if (shouldTrackPointer && mouseRef.current.x !== null) {
                     let dxMouse = particles[a].x - mouseRef.current.x;
                     let dyMouse = particles[a].y - mouseRef.current.y;
                     let distanceMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
@@ -178,7 +209,19 @@ const AnimatedBackground = ({
             }
         };
 
-        const animate = () => {
+        const animate = (timestamp = 0) => {
+            if (!shouldAnimateCanvas || !isPageVisible) {
+                animationFrameId = requestAnimationFrame(animate);
+                return;
+            }
+
+            if (timestamp - lastFrameTime < frameInterval) {
+                animationFrameId = requestAnimationFrame(animate);
+                return;
+            }
+
+            lastFrameTime = timestamp;
+
             if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (variant !== 'aurora' && ctx) {
@@ -207,10 +250,16 @@ const AnimatedBackground = ({
             mouseRef.current.y = null;
         };
 
-        if (interactive) {
+        if (shouldTrackPointer) {
             window.addEventListener('mousemove', onMouseMove);
             window.addEventListener('mouseout', onMouseOut);
         }
+
+        const handleVisibilityChange = () => {
+            isPageVisible = document.visibilityState === 'visible';
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
 
         // Watch for theme changes to trigger a redraw with new opacities
         const observer = new MutationObserver((mutations) => {
@@ -224,16 +273,19 @@ const AnimatedBackground = ({
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
         resize();
-        animate();
+        if (shouldAnimateCanvas) {
+            animate();
+        }
 
         return () => {
             window.removeEventListener('resize', resize);
-            if (interactive) {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            if (shouldTrackPointer) {
                 window.removeEventListener('mousemove', onMouseMove);
                 window.removeEventListener('mouseout', onMouseOut);
             }
             observer.disconnect();
-            cancelAnimationFrame(animationFrameId);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
     }, [density, speed, interactive, variant]);
 

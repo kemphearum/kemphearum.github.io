@@ -71,6 +71,36 @@
     }
 }
 
+@media (max-width: 768px), (pointer: coarse) {
+    .canvas {
+        opacity: 0.35;
+    }
+
+    .glowLayer {
+        filter: blur(44px);
+    }
+
+    .glowPrimary,
+    .glowSecondary {
+        animation-duration: 60s;
+    }
+
+    .noise {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .canvas {
+        display: none;
+    }
+
+    .glowPrimary,
+    .glowSecondary {
+        animation: none;
+    }
+}
+
 // Light mode adjustments
 :root[data-theme='light'] {
     .backgroundWrapper {
