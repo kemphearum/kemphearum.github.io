@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 // Services & Hooks
 import DatabaseService from '../../../services/DatabaseService';
@@ -23,6 +23,7 @@ import RestoreProgress from './components/RestoreProgress';
 import QuotaResilienceBanner from '../components/QuotaResilienceBanner';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { ACTIONS, MODULES } from '../../../utils/permissions';
+import app from '../../../firebase';
 
 // Styles
 
@@ -171,18 +172,28 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     const canArchive = isActionAllowed(ACTIONS.DELETE, MODULES.DATABASE);
     const canSyncDatabase = canDatabaseActions;
 
-    const handleTriggerDatabaseSync = useCallback(async (githubToken) => {
-        const token = String(githubToken || '').trim();
-        const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const invalidateRestoredData = useCallback(() => {
+        [
+            ['content'],
+            ['settings'],
+            ['database'],
+            ['analytics'],
+            ['auditLogs'],
+            ['users'],
+            ['projects'],
+            ['blog'],
+            ['posts'],
+            ['experience'],
+            ['messages']
+        ].forEach((queryKey) => queryClient.invalidateQueries({ queryKey }));
+    }, [queryClient]);
 
-        if (!token) {
-            showToast(tr('A GitHub token is required to run database sync.', 'ត្រូវការតូខិន GitHub ដើម្បីដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យ។'), 'error');
-            return;
-        }
+    const handleTriggerDatabaseSync = useCallback(async () => {
+        const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
 
         const confirmed = window.confirm(
             tr(
-                'Run the database sync now? This will dispatch the GitHub Actions workflow manually.',
+                'Run the database sync now? This will dispatch the GitHub Actions workflow through the backend.',
                 'ដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យឥឡូវនេះទេ? វានឹងបញ្ជូន GitHub Actions workflow ដោយដៃ។'
             )
         );
@@ -196,24 +207,8 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         });
 
         const result = await executeDatabaseSync(async () => {
-            await axios.post(
-                'https://api.github.com/repos/kemphearum/kemphearum.github.io/dispatches',
-                {
-                    event_type: 'manual_database_sync',
-                    client_payload: {
-                        source: 'database-tab',
-                        requestedBy: userEmail || 'unknown'
-                    }
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: 'application/vnd.github+json',
-                        'X-GitHub-Api-Version': '2022-11-28'
-                    }
-                }
-            );
-
+            const triggerDatabaseSync = httpsCallable(getFunctions(app), 'triggerDatabaseSync');
+            await triggerDatabaseSync({ requestedBy: userEmail || 'unknown' });
             return true;
         });
 
@@ -234,14 +229,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
             'បរាជ័យក្នុងការបញ្ជូនសមកាលកម្មមូលដ្ឋានទិន្នន័យ។'
         );
 
-        if (error?.response?.status === 401 || error?.response?.status === 403) {
-            errorMessage = tr(
-                'Invalid GitHub token. Please paste a token with repository access.',
-                'Token GitHub មិនត្រឹមត្រូវ។ សូមបិទភ្ជាប់ token ដែលមានសិទ្ធិ repository។'
-            );
-        } else if (error?.response?.data?.message) {
-            errorMessage = `${tr('GitHub error:', 'កំហុស GitHub៖')} ${error.response.data.message}`;
-        } else if (error?.message) {
+        if (error?.message) {
             errorMessage = error.message;
         }
 
@@ -323,6 +311,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         }
 
         setShowRestoreConfirm(false);
+        setRestoreProgress({ completed: 0, total: 1, percentage: 0 });
         showToast(tm('toasts.restoringBackup'), 'info');
 
         await executeRestore(async () => {
@@ -357,7 +346,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                         return;
                     }
 
-                    queryClient.invalidateQueries();
+                    invalidateRestoredData();
                     refetchDbHealth();
                     setRestoreFile(null);
                     setTimeout(() => setRestoreProgress(null), 3000);

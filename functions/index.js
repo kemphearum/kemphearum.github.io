@@ -60,6 +60,76 @@ exports.toggleUserStatus = functions.https.onCall(async (data, context) => {
     }
 });
 
+exports.triggerDatabaseSync = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError(
+            'unauthenticated',
+            'You must be logged in to run database sync.'
+        );
+    }
+
+    const requesterEmail = normalizeEmail(context.auth.token.email);
+    if (!SUPERADMIN_EMAILS.has(requesterEmail)) {
+        throw new functions.https.HttpsError(
+            'permission-denied',
+            'Only the Super Admin can run database sync.'
+        );
+    }
+
+    const token = process.env.GITHUB_DISPATCH_TOKEN ||
+        functions.config()?.github?.dispatch_token;
+
+    if (!token) {
+        throw new functions.https.HttpsError(
+            'failed-precondition',
+            'GitHub dispatch token is not configured on the backend.'
+        );
+    }
+
+    const requestedBy = normalizeEmail(data?.requestedBy) || requesterEmail;
+
+    try {
+        const response = await fetch(
+            'https://api.github.com/repos/kemphearum/kemphearum.github.io/dispatches',
+            {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application/vnd.github+json',
+                    'X-GitHub-Api-Version': '2022-11-28',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'portfolio-admin-function'
+                },
+                body: JSON.stringify({
+                    event_type: 'manual_database_sync',
+                    client_payload: {
+                        source: 'database-tab',
+                        requestedBy
+                    }
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const message = await response.text();
+            console.error('GitHub dispatch failed:', response.status, message);
+            throw new functions.https.HttpsError(
+                response.status === 401 || response.status === 403 ? 'permission-denied' : 'internal',
+                'GitHub rejected the database sync request.'
+            );
+        }
+
+        return { success: true };
+    } catch (error) {
+        if (error instanceof functions.https.HttpsError) throw error;
+        console.error('triggerDatabaseSync error:', error);
+        throw new functions.https.HttpsError(
+            'internal',
+            'Failed to dispatch database sync.'
+        );
+    }
+});
+
 const BOT_USER_AGENTS = [
     'telegrambot', 'facebookexternalhit', 'twitterbot', 'linkedinbot',
     'slackbot', 'whatsapp', 'pinterest', 'googlebot', 'discordbot',

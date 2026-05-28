@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Activity, Shield, RefreshCw } from 'lucide-react';
 import { EmptyState } from '@/shared/components/ui';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
@@ -22,6 +22,7 @@ import { ACTIONS, MODULES } from '../../../utils/permissions';
 const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const tm = useCallback((key, params = {}) => t(`admin.audit.${key}`, params), [t]);
   const { trackRead, currentDateKey, dailyUsage } = useActivity();
   const [quotaExceeded, setQuotaExceeded] = useState(false);
@@ -54,7 +55,7 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
 
 
   // 1. Fetch Aggregated Stats
-  const { data: stats = {}, refetch: refetchStats } = useQuery({
+  const { data: stats = {} } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
@@ -79,11 +80,11 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
   });
 
   // 2. Fetch Security Audit Logs
-  const { data: securityLogsResult = { data: [], lastDoc: null, hasMore: false }, isLoading: securityLoading, isFetching: securityFetching, refetch: refetchSecurity } = useQuery({
+  const { data: securityLogsResult = { data: [], lastDoc: null, hasMore: false }, isLoading: securityLoading, isFetching: securityFetching } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['auditLogs', 'security', userRole, securityDateRange, securityStatusFilter, securityPagination.cursor, securityPagination.limit],
+    queryKey: ['auditLogs', 'security', userRole, securityDateRange, securityStatusFilter, normalizedSecuritySearch, securityPagination.cursor, securityPagination.limit],
     queryFn: async () => {
       const requestCursor = securityPagination.cursor;
       if (!canViewSecurityAudit) return { data: [], lastDoc: null, hasMore: false };
@@ -92,6 +93,7 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
         trackRead,
         dateRange: securityDateRange,
         statusFilter: securityStatusFilter,
+        search: normalizedSecuritySearch,
         lastDoc: requestCursor,
         limit: securityPagination.limit
       }));
@@ -110,11 +112,11 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
   const securityLogs = securityLogsResult.data;
 
   // 3. Fetch Detailed Activity Logs (Writes & Deletes for main table)
-  const { data: activityLogsResult = { data: [], lastDoc: null, hasMore: false }, isLoading: activityLoading, isFetching: activityFetching, refetch: refetchActivity } = useQuery({
+  const { data: activityLogsResult = { data: [], lastDoc: null, hasMore: false }, isLoading: activityLoading, isFetching: activityFetching } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
-    queryKey: ['auditLogs', 'activity', activityDateRange, activityPagination.cursor, activityPagination.limit, activityFilters],
+    queryKey: ['auditLogs', 'activity', activityDateRange, normalizedActivitySearch, activityPagination.cursor, activityPagination.limit, activityFilters],
     queryFn: async () => {
       const requestCursor = activityPagination.cursor;
       const result = await BaseService.safe(() => AuditLogService.fetchActivityDetails({
@@ -123,6 +125,7 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
         currentDateKey,
         lastDoc: requestCursor,
         limit: activityPagination.limit,
+        search: normalizedActivitySearch,
         filters: activityFilters
       }));
 
@@ -163,35 +166,8 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const detailLogs = detailLogsResult.data;
 
-  const matchesSearch = (value, searchTerm) =>
-    String(value || '').toLowerCase().includes(searchTerm);
-
-  const filteredActivityLogs = useMemo(() => {
-    if (!normalizedActivitySearch) return activityLogs;
-
-    return activityLogs.filter((log) => (
-      matchesSearch(log.label, normalizedActivitySearch)
-      || matchesSearch(log.user, normalizedActivitySearch)
-      || matchesSearch(log.details?.entityName, normalizedActivitySearch)
-      || matchesSearch(log.details?.path, normalizedActivitySearch)
-      || matchesSearch(log.details?.module, normalizedActivitySearch)
-      || matchesSearch(log.details?.action, normalizedActivitySearch)
-    ));
-  }, [activityLogs, normalizedActivitySearch]);
-
-  const filteredSecurityLogs = useMemo(() => {
-    if (!normalizedSecuritySearch) return securityLogs;
-
-    return securityLogs.filter((log) => (
-      matchesSearch(log.user, normalizedSecuritySearch)
-      || matchesSearch(log.email, normalizedSecuritySearch)
-      || matchesSearch(log.ipAddress, normalizedSecuritySearch)
-      || matchesSearch(log.device, normalizedSecuritySearch)
-      || matchesSearch(log.userAgent, normalizedSecuritySearch)
-      || matchesSearch(log.country, normalizedSecuritySearch)
-      || matchesSearch(log.city, normalizedSecuritySearch)
-    ));
-  }, [securityLogs, normalizedSecuritySearch]);
+  const filteredActivityLogs = activityLogs;
+  const filteredSecurityLogs = securityLogs;
 
   const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
@@ -230,18 +206,17 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
       ].join(',');
     });
 
-    const csvContent = "data:text/csv;charset=utf-8,"
-      + `${header.join(',')}\n`
-      + rows.join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = `${header.join(',')}\n${rows.join("\n")}`;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
+    link.setAttribute("href", url);
     link.setAttribute("download", `${type}_audit_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-      showToast(tm('toasts.exported'));
+    URL.revokeObjectURL(url);
+    showToast(tm('toasts.exported'));
   };
 
   const resetActivityView = useCallback(() => {
@@ -261,11 +236,9 @@ const AuditLogsTab = ({ userRole, showToast, isActionAllowed }) => {
   const handleRefresh = useCallback(() => {
     activityPagination.reset();
     securityPagination.reset();
-    refetchStats();
-    refetchSecurity();
-    refetchActivity();
+    queryClient.invalidateQueries({ queryKey: ['auditLogs'] });
     showToast(tm('toasts.refreshed'));
-  }, [refetchStats, refetchSecurity, refetchActivity, showToast, activityPagination, securityPagination, tm]);
+  }, [queryClient, showToast, activityPagination, securityPagination, tm]);
 
   if (!canViewSecurityAudit) {
     return (

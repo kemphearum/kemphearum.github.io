@@ -30,8 +30,13 @@ export const useAdminContent = ({
     });
     const [sidebarPersistent, setSidebarPersistent] = useState(() => {
         if (typeof window === 'undefined') return true;
-        const stored = localStorage.getItem('adminSidebarPersistent');
-        return stored !== null ? JSON.parse(stored) : true;
+        try {
+            const stored = localStorage.getItem('adminSidebarPersistent');
+            return stored !== null ? JSON.parse(stored) : true;
+        } catch {
+            localStorage.removeItem('adminSidebarPersistent');
+            return true;
+        }
     });
 
     const fetchSectionData = useCallback(async (section) => {
@@ -136,4 +141,3 @@ export const useAdminContent = ({
 };
 
 export default useAdminContent;
-

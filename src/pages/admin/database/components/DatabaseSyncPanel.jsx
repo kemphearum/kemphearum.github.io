@@ -1,31 +1,19 @@
-import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
-import { AlertCircle, Eye, EyeOff, Github, RefreshCw, KeyRound, Clock } from 'lucide-react';
-import { Button, Input } from '@/shared/components/ui';
+import React, { useCallback, useMemo } from 'react';
+import { AlertCircle, Clock, Github, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Button } from '@/shared/components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
 
-const GITHUB_TOKEN_STORAGE_KEY = 'github_dispatch_token';
 const GITHUB_OWNER = 'kemphearum';
 const GITHUB_REPO = 'kemphearum.github.io';
 
-const DatabaseSyncPanel = ({ loading = false, syncStatus = { state: 'idle', message: '', requestedAt: null }, onSync, canSync = true }) => {
+const DatabaseSyncPanel = ({
+    loading = false,
+    syncStatus = { state: 'idle', message: '', requestedAt: null },
+    onSync,
+    canSync = true
+}) => {
     const { language } = useTranslation();
     const tr = useCallback((enText, kmText) => (language === 'km' ? kmText : enText), [language]);
-    const inputId = useId();
-    const [githubToken, setGithubToken] = useState(() => {
-        if (typeof window === 'undefined') return '';
-        return localStorage.getItem(GITHUB_TOKEN_STORAGE_KEY) || '';
-    });
-    const [showToken, setShowToken] = useState(false);
-
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        const normalized = githubToken.trim();
-        if (normalized) {
-            localStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, normalized);
-        } else {
-            localStorage.removeItem(GITHUB_TOKEN_STORAGE_KEY);
-        }
-    }, [githubToken]);
 
     const syncStateLabel = useMemo(() => {
         if (syncStatus.state === 'loading') return tr('Dispatching sync...', 'កំពុងបញ្ជូនសមកាលកម្ម...');
@@ -36,10 +24,9 @@ const DatabaseSyncPanel = ({ loading = false, syncStatus = { state: 'idle', mess
 
     const handleSyncClick = () => {
         if (!canSync || loading) return;
-        onSync?.(githubToken);
+        onSync?.();
     };
 
-    const hasToken = githubToken.trim().length > 0;
     const statusTone = syncStatus.state === 'error'
         ? 'ui-text-danger'
         : syncStatus.state === 'requested'
@@ -71,35 +58,14 @@ const DatabaseSyncPanel = ({ loading = false, syncStatus = { state: 'idle', mess
                         )}
                     </p>
 
-                    <div className="ui-flex-column ui-gap-small">
-                        <label className="ui-text-small ui-text-secondary" htmlFor={inputId}>
-                            {tr('GitHub dispatch token', 'Token សម្រាប់បញ្ជូន GitHub')}
-                        </label>
-                        <div style={{ position: 'relative' }}>
-                            <Input
-                                id={inputId}
-                                type={showToken ? 'text' : 'password'}
-                                value={githubToken}
-                                onChange={(event) => setGithubToken(event.target.value)}
-                                placeholder={tr('Paste a personal access token with repo access', 'បិទភ្ជាប់ personal access token ដែលមានសិទ្ធិ repo')}
-                                autoComplete="off"
-                                spellCheck={false}
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowToken((current) => !current)}
-                                className="ui-btn ui-btn-ghost ui-btn-icon-only"
-                                style={{
-                                    position: 'absolute',
-                                    right: '0.35rem',
-                                    top: '50%',
-                                    transform: 'translateY(-50%)'
-                                }}
-                                title={showToken ? tr('Hide token', 'លាក់ token') : tr('Show token', 'បង្ហាញ token')}
-                            >
-                                {showToken ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                        </div>
+                    <div className="ui-flex-center-gap-small ui-text-small ui-text-muted">
+                        <ShieldCheck size={16} className="ui-text-success" />
+                        <span>
+                            {tr(
+                                'GitHub access is handled by a Firebase Function. No personal token is stored in this browser.',
+                                'ការចូលប្រើ GitHub ត្រូវបានគ្រប់គ្រងដោយ Firebase Function។ មិនរក្សាទុក token ផ្ទាល់ខ្លួនក្នុង browser នេះទេ។'
+                            )}
+                        </span>
                     </div>
 
                     <div className="ui-flex-center-gap-medium ui-mt-medium">
@@ -108,18 +74,16 @@ const DatabaseSyncPanel = ({ loading = false, syncStatus = { state: 'idle', mess
                             variant="primary"
                             onClick={handleSyncClick}
                             isLoading={loading}
-                            disabled={!canSync || loading || !hasToken}
+                            disabled={!canSync || loading}
                             icon={RefreshCw}
-                            title={hasToken
-                                ? tr('Run database sync now', 'ដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យឥឡូវនេះ')
-                                : tr('Token required', 'ត្រូវការតូខិន')}
+                            title={tr('Run database sync now', 'ដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យឥឡូវនេះ')}
                         >
                             {tr('Run Database Sync', 'ដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យ')}
                         </Button>
                         <div className="ui-text-small ui-text-muted">
                             <div className="ui-flex-center-gap-small">
-                                <KeyRound size={14} />
-                                <span>{tr('Uses the same local token as Settings > Sync.', 'ប្រើ token ក្នុង local storage ដូច Settings > Sync។')}</span>
+                                <ShieldCheck size={14} />
+                                <span>{tr('Requires super admin access.', 'ត្រូវការសិទ្ធិ super admin។')}</span>
                             </div>
                         </div>
                     </div>
@@ -134,12 +98,6 @@ const DatabaseSyncPanel = ({ loading = false, syncStatus = { state: 'idle', mess
                                 {new Date(syncStatus.requestedAt).toLocaleString()}
                             </div>
                         ) : null}
-                        {!hasToken && (
-                            <div className="ui-text-muted ui-mt-small">
-                                <AlertCircle size={14} style={{ marginRight: 6, verticalAlign: 'text-bottom' }} />
-                                {tr('Paste a token to enable sync dispatch.', 'បិទភ្ជាប់ token ដើម្បីបើកការបញ្ជូន sync។')}
-                            </div>
-                        )}
                         {!canSync && (
                             <div className="ui-text-muted ui-mt-small">
                                 <AlertCircle size={14} style={{ marginRight: 6, verticalAlign: 'text-bottom' }} />

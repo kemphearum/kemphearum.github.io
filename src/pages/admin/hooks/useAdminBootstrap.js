@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { isAdminRole, isSuperAdminRole } from '../../../utils/permissions';
 import SettingsService from '../../../services/SettingsService';
 
@@ -19,6 +19,14 @@ export const useAdminBootstrap = ({
     fetchSectionData,
     queryClient
 }) => {
+    const fetchedSectionsRef = useRef(new Set());
+
+    const fetchSectionOnce = useCallback((section) => {
+        if (fetchedSectionsRef.current.has(section)) return;
+        fetchedSectionsRef.current.add(section);
+        fetchSectionData(section);
+    }, [fetchSectionData]);
+
     useEffect(() => {
         const interval = setInterval(() => {
             setLastSyncTime(new Date());
@@ -56,10 +64,35 @@ export const useAdminBootstrap = ({
             if (isAdminRole(userRole)) {
                 fetchMessages();
             }
-
-            ['home', 'about', 'contact', 'settings'].forEach(fetchSectionData);
         }
-    }, [fetchMessages, fetchRolePermissions, fetchSectionData, user, userRole]);
+    }, [fetchMessages, fetchRolePermissions, user, userRole]);
+
+    useEffect(() => {
+        if (!user || !userRole) return;
+
+        const activeSections = activeTab === 'general'
+            ? ['home', 'about', 'contact']
+            : activeTab === 'settings'
+                ? ['settings']
+                : [];
+
+        activeSections.forEach(fetchSectionOnce);
+    }, [activeTab, fetchSectionOnce, user, userRole]);
+
+    useEffect(() => {
+        if (!user || !userRole) return undefined;
+
+        const sections = ['settings', 'home', 'about', 'contact'];
+        const prefetch = () => sections.forEach(fetchSectionOnce);
+
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+            const idleId = window.requestIdleCallback(prefetch, { timeout: 5000 });
+            return () => window.cancelIdleCallback(idleId);
+        }
+
+        const timeoutId = setTimeout(prefetch, 2500);
+        return () => clearTimeout(timeoutId);
+    }, [fetchSectionOnce, user, userRole]);
 
     useEffect(() => {
         if (!isSuperAdminRole(userRole)) return;

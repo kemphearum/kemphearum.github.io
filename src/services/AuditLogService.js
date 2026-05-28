@@ -12,6 +12,38 @@ class AuditLogService extends BaseService {
         super('auditLogs');
     }
 
+    matchesActivitySearch(log, search) {
+        if (!search) return true;
+        const haystack = [
+            log.label,
+            log.user,
+            log.details?.entityName,
+            log.details?.path,
+            log.details?.module,
+            log.details?.action,
+            log.type
+        ].map((value) => String(value || '').toLowerCase());
+
+        return haystack.some((value) => value.includes(search));
+    }
+
+    matchesSecuritySearch(log, search) {
+        if (!search) return true;
+        const haystack = [
+            log.user,
+            log.email,
+            log.ipAddress,
+            log.device,
+            log.userAgent,
+            log.country,
+            log.city,
+            log.reason,
+            log.status
+        ].map((value) => String(value || '').toLowerCase());
+
+        return haystack.some((value) => value.includes(search));
+    }
+
     /**
      * Records a new audit log (usually for logins or registrations)
      * @param {Object} logData - includes email, ipAddress, etc.
@@ -70,7 +102,7 @@ class AuditLogService extends BaseService {
     async fetchActivityDetails({ activityDateRange, operationType, currentDateKey, lastDoc = null, limit = 50, search = '', filters = {} }) {
         const normalizedRange = activityDateRange || 'today';
         const safeLimit = Math.min(100, Math.max(5, Number(limit) || 50));
-        const normalizedSearch = (search || '').trim();
+        const normalizedSearch = (search || '').trim().toLowerCase();
 
         let baseQuery;
         if (normalizedRange === 'today') {
@@ -100,16 +132,50 @@ class AuditLogService extends BaseService {
             baseQuery = query(baseQuery, where('details.action', '==', filters.action));
         }
 
-        if (normalizedSearch) {
-            baseQuery = query(
-                baseQuery, 
-                where('label', '>=', normalizedSearch),
-                where('label', '<=', normalizedSearch + '\uf8ff')
-            );
-        }
-
-        const constraints = [orderBy('time', 'desc'), firestoreLimit(safeLimit + 1)];
+        const constraints = [orderBy('time', 'desc'), firestoreLimit(normalizedSearch ? 50 : safeLimit + 1)];
         if (lastDoc) constraints.push(startAfter(lastDoc));
+
+        if (normalizedSearch) {
+            const matches = [];
+            let scanCursor = lastDoc;
+            let lastScannedDoc = lastDoc;
+            let hasMoreSource = true;
+            let scannedCount = 0;
+            const maxSearchScan = 500;
+
+            while (matches.length < safeLimit + 1 && hasMoreSource && scannedCount < maxSearchScan) {
+                const searchConstraints = [orderBy('time', 'desc'), firestoreLimit(50)];
+                if (scanCursor) searchConstraints.push(startAfter(scanCursor));
+
+                const snap = await getDocs(query(baseQuery, ...searchConstraints));
+                const docs = snap.docs;
+                scannedCount += docs.length;
+                hasMoreSource = docs.length === 50;
+
+                if (!docs.length) break;
+                lastScannedDoc = docs[docs.length - 1];
+                scanCursor = lastScannedDoc;
+
+                docs.forEach((doc) => {
+                    const data = { id: doc.id, ...doc.data() };
+                    if (this.matchesActivitySearch(data, normalizedSearch)) {
+                        matches.push({ doc, data });
+                    }
+                });
+            }
+
+            const hasMore = matches.length > safeLimit || hasMoreSource;
+            const resultMatches = matches.slice(0, safeLimit);
+            const nextCursor = resultMatches.length
+                ? resultMatches[resultMatches.length - 1].doc
+                : lastScannedDoc;
+
+            return {
+                data: resultMatches.map((entry) => entry.data),
+                lastDoc: nextCursor,
+                hasMore
+            };
+        }
 
         const q = query(baseQuery, ...constraints);
         const snap = await getDocs(q);
@@ -142,7 +208,7 @@ class AuditLogService extends BaseService {
     async fetchSecurityAuditTrail({ userRole, trackRead, lastDoc = null, limit = 10, search = '', dateRange = 'all', statusFilter = 'all' }) {
         if (!isSuperAdminRole(userRole)) throw new Error('Unauthorized');
         const safeLimit = Math.min(100, Math.max(5, Number(limit) || 10));
-        const normalizedSearch = (search || '').trim();
+        const normalizedSearch = (search || '').trim().toLowerCase();
         const normalizedStatusFilter = String(statusFilter || 'all').toLowerCase();
         
         const baseRef = collection(db, this.collectionName);
@@ -178,16 +244,51 @@ class AuditLogService extends BaseService {
             baseQuery = query(baseQuery, where('timestamp', '>=', cutoff));
         }
 
-        if (normalizedSearch) {
-            baseQuery = query(
-                baseQuery,
-                where('email', '>=', normalizedSearch),
-                where('email', '<=', normalizedSearch + '\uf8ff')
-            );
-        }
-
-        const queryConstraints = [orderBy('timestamp', 'desc'), firestoreLimit(safeLimit + 1)];
+        const queryConstraints = [orderBy('timestamp', 'desc'), firestoreLimit(normalizedSearch ? 50 : safeLimit + 1)];
         if (lastDoc) queryConstraints.push(startAfter(lastDoc));
+
+        if (normalizedSearch) {
+            const matches = [];
+            let scanCursor = lastDoc;
+            let lastScannedDoc = lastDoc;
+            let hasMoreSource = true;
+            let scannedCount = 0;
+            const maxSearchScan = 500;
+
+            while (matches.length < safeLimit + 1 && hasMoreSource && scannedCount < maxSearchScan) {
+                const searchConstraints = [orderBy('timestamp', 'desc'), firestoreLimit(50)];
+                if (scanCursor) searchConstraints.push(startAfter(scanCursor));
+
+                const snap = await getDocs(query(baseQuery, ...searchConstraints));
+                const docs = snap.docs;
+                scannedCount += docs.length;
+                hasMoreSource = docs.length === 50;
+
+                if (!docs.length) break;
+                lastScannedDoc = docs[docs.length - 1];
+                scanCursor = lastScannedDoc;
+
+                docs.forEach((doc) => {
+                    const data = { id: doc.id, ...doc.data() };
+                    if (this.matchesSecuritySearch(data, normalizedSearch)) {
+                        matches.push({ doc, data });
+                    }
+                });
+            }
+
+            if (trackRead) trackRead(scannedCount, 'Searched audit logs list', { count: scannedCount });
+
+            const resultMatches = matches.slice(0, safeLimit);
+            const nextCursor = resultMatches.length
+                ? resultMatches[resultMatches.length - 1].doc
+                : lastScannedDoc;
+
+            return {
+                data: resultMatches.map((entry) => entry.data),
+                lastDoc: nextCursor,
+                hasMore: matches.length > safeLimit || hasMoreSource
+            };
+        }
 
         const q = query(baseQuery, ...queryConstraints);
         const querySnapshot = await getDocs(q);
