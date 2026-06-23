@@ -1,11 +1,11 @@
 import BaseService from './BaseService';
-import app, { db } from '../firebase';
+import { db } from '../firebase';
 import {
     collection, getDocs, query, orderBy, limit as firestoreLimit,
     collectionGroup, addDoc, serverTimestamp, where,
     startAfter
 } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { apiUrl } from '../utils/apiBase';
 import { isSuperAdminRole } from '../utils/permissions';
 
 class AuditLogService extends BaseService {
@@ -75,18 +75,26 @@ class AuditLogService extends BaseService {
      * @returns {Promise<void>}
      */
     async recordAuthEvent(logData, status = 'failure', reason = null) {
-        const callable = httpsCallable(getFunctions(app), 'logAuthEvent');
-        await callable({
-            email: logData.email,
-            status,
-            reason: reason || null,
-            country: logData.country,
-            city: logData.city,
-            userAgent: logData.userAgent,
-            deviceType: logData.deviceType,
-            sessionId: logData.sessionId,
-            details: logData.details || {}
+        // Same-origin (Vercel) uses a relative path; off-Vercel mirrors hit the
+        // primary origin. text/plain avoids a CORS preflight on cross-origin.
+        const response = await fetch(apiUrl('auth-log'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+            body: JSON.stringify({
+                email: logData.email,
+                status,
+                reason: reason || null,
+                country: logData.country,
+                city: logData.city,
+                userAgent: logData.userAgent,
+                deviceType: logData.deviceType,
+                sessionId: logData.sessionId,
+                details: logData.details || {}
+            })
         });
+        if (!response.ok) {
+            throw new Error(`auth-log endpoint returned ${response.status}`);
+        }
     }
 
     /**

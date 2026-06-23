@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 
 // Services & Hooks
 import DatabaseService from '../../../services/DatabaseService';
@@ -23,7 +22,8 @@ import RestoreProgress from './components/RestoreProgress';
 import QuotaResilienceBanner from '../components/QuotaResilienceBanner';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { ACTIONS, MODULES } from '../../../utils/permissions';
-import app from '../../../firebase';
+import { auth } from '../../../firebase';
+import { apiUrl } from '../../../utils/apiBase';
 
 // Styles
 
@@ -207,8 +207,25 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         });
 
         const result = await executeDatabaseSync(async () => {
-            const triggerDatabaseSync = httpsCallable(getFunctions(app), 'triggerDatabaseSync');
-            await triggerDatabaseSync({ requestedBy: userEmail || 'unknown' });
+            // Free-tier backend: the Vercel /api/db-sync route verifies the
+            // Firebase ID token + superadmin email server-side, then dispatches
+            // the GitHub Actions workflow (token stays server-side).
+            const idToken = await auth.currentUser?.getIdToken();
+            if (!idToken) throw new Error('Not authenticated.');
+
+            const response = await fetch(apiUrl('db-sync'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${idToken}`
+                },
+                body: JSON.stringify({ requestedBy: userEmail || 'unknown' })
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.error || `Database sync failed (${response.status}).`);
+            }
             return true;
         });
 

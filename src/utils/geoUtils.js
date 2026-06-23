@@ -3,6 +3,8 @@
  * Prevents console spam by blocking failing providers and handling concurrent calls.
  */
 
+import { apiUrl } from './apiBase';
+
 const DEFAULT_GEO = { country_name: 'Unknown', city: 'Unknown', ip: 'Unknown', country_code: 'UN' };
 const COOLDOWN_KEY = 'analytics_geo_failed_cooldown';
 const BLOCKLIST_PREFIX = 'analytics_geo_blocked_';
@@ -29,12 +31,12 @@ export const fetchGeoData = async () => {
             // 3. Fallback Chain
             const providers = [
                 {
-                    // Primary: server-side proxy that keeps the paid ipify key out of
-                    // the client bundle (security review F-04). Returns normalized geo.
+                    // Primary: server-side proxy (/api/geo) that keeps the paid ipify
+                    // key out of the client bundle (security review F-04). Runs on the
+                    // Vercel free tier. Returns normalized geo.
                     name: 'geo_proxy',
                     fn: async () => {
-                        const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || 'phearum-info';
-                        const res = await fetch(`https://us-central1-${projectId}.cloudfunctions.net/geoLookup`);
+                        const res = await fetch(apiUrl('geo'));
                         if (!res.ok) throw new Error(`${res.status}`);
                         const d = await res.json();
                         return {
