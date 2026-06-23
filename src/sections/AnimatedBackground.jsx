@@ -41,11 +41,15 @@ const AnimatedBackground = ({
         
         const ctx = canvas ? canvas.getContext('2d') : null;
         let animationFrameId;
+        let frameTimer;
         let particles = [];
-        let lastFrameTime = 0;
-        let isPageVisible = true;
-        const targetFps = isMobileViewport ? 24 : 60;
+        let isRunning = false;
+        const targetFps = isMobileViewport ? 20 : 60;
         const frameInterval = 1000 / targetFps;
+        // Plexus connection distance (squared form used in the hot loop to avoid
+        // a sqrt per particle pair). Shorter on mobile = fewer line draws.
+        const CONNECT_DISTANCE = isMobileViewport ? 120 : 150;
+        const CONNECT_DISTANCE_SQ = CONNECT_DISTANCE * CONNECT_DISTANCE;
 
         // Map settings to actual values
         const baseAreaPerParticle = variant === 'geometry' ? 20000 : 10000;
@@ -133,19 +137,15 @@ const AnimatedBackground = ({
                 if (shouldTrackPointer && mouseRef.current.x !== null) {
                     let dx = mouseRef.current.x - this.x;
                     let dy = mouseRef.current.y - this.y;
-                    let distance = Math.sqrt(dx * dx + dy * dy);
-                    if (distance === 0) return;
-                    let forceDirectionX = dx / distance;
-                    let forceDirectionY = dy / distance;
-                    let maxDistance = mouseRef.current.radius;
-                    let force = (maxDistance - distance) / maxDistance;
-                    let directionX = forceDirectionX * force * this.density;
-                    let directionY = forceDirectionY * force * this.density;
-
-                    if (distance < mouseRef.current.radius) {
-                        this.x -= directionX;
-                        this.y -= directionY;
-                    }
+                    let distanceSq = dx * dx + dy * dy;
+                    let radius = mouseRef.current.radius;
+                    // Gate on squared distance first — skip the sqrt entirely for
+                    // particles outside the interaction radius.
+                    if (distanceSq === 0 || distanceSq >= radius * radius) return;
+                    let distance = Math.sqrt(distanceSq);
+                    let force = (radius - distance) / radius;
+                    this.x -= (dx / distance) * force * this.density;
+                    this.y -= (dy / distance) * force * this.density;
                 }
             }
         }
@@ -177,10 +177,12 @@ const AnimatedBackground = ({
                 if (shouldTrackPointer && mouseRef.current.x !== null) {
                     let dxMouse = particles[a].x - mouseRef.current.x;
                     let dyMouse = particles[a].y - mouseRef.current.y;
-                    let distanceMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+                    let distanceMouseSq = dxMouse * dxMouse + dyMouse * dyMouse;
+                    let radius = mouseRef.current.radius;
 
-                    if (distanceMouse < mouseRef.current.radius) {
-                        opacityValue = 1 - (distanceMouse / mouseRef.current.radius);
+                    if (distanceMouseSq < radius * radius) {
+                        let distanceMouse = Math.sqrt(distanceMouseSq);
+                        opacityValue = 1 - (distanceMouse / radius);
                         ctx.strokeStyle = `rgba(${connectColor}, ${opacityValue * mouseLineOpacityMultiplier})`;
                         ctx.lineWidth = isLightMode ? 1.5 : 1.2;
                         ctx.beginPath();
@@ -190,14 +192,17 @@ const AnimatedBackground = ({
                     }
                 }
 
-                // Connect particles to each other
-                for (let b = a; b < particles.length; b++) {
+                // Connect particles to each other. Start at a+1 to skip the
+                // self-pair, and compare squared distance so sqrt only runs for
+                // pairs that are actually close enough to draw.
+                for (let b = a + 1; b < particles.length; b++) {
                     let dx = particles[a].x - particles[b].x;
                     let dy = particles[a].y - particles[b].y;
-                    let distance = Math.sqrt(dx * dx + dy * dy);
+                    let distanceSq = dx * dx + dy * dy;
 
-                    if (distance < 150) {
-                        opacityValue = 1 - (distance / 150);
+                    if (distanceSq < CONNECT_DISTANCE_SQ) {
+                        let distance = Math.sqrt(distanceSq);
+                        opacityValue = 1 - (distance / CONNECT_DISTANCE);
                         ctx.strokeStyle = `rgba(${connectColor}, ${opacityValue * particleLineOpacityMultiplier})`;
                         ctx.lineWidth = isLightMode ? 1.2 : 1;
                         ctx.beginPath();
@@ -209,19 +214,7 @@ const AnimatedBackground = ({
             }
         };
 
-        const animate = (timestamp = 0) => {
-            if (!shouldAnimateCanvas || !isPageVisible) {
-                animationFrameId = requestAnimationFrame(animate);
-                return;
-            }
-
-            if (timestamp - lastFrameTime < frameInterval) {
-                animationFrameId = requestAnimationFrame(animate);
-                return;
-            }
-
-            lastFrameTime = timestamp;
-
+        const renderFrame = () => {
             if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (variant !== 'aurora' && ctx) {
@@ -234,8 +227,32 @@ const AnimatedBackground = ({
                     connectPlexus();
                 }
             }
+        };
 
+        const animate = () => {
+            if (!isRunning) return;
+            renderFrame();
+            // Throttle wake-ups to the target FPS via setTimeout instead of
+            // letting rAF fire at the display refresh rate (120Hz on ProMotion
+            // iPhones). For a decorative background this sharply cuts CPU/GPU
+            // wake-ups, battery drain, and heat with no perceptible difference.
+            frameTimer = setTimeout(() => {
+                if (isRunning) animationFrameId = requestAnimationFrame(animate);
+            }, frameInterval);
+        };
+
+        const startLoop = () => {
+            if (isRunning || !shouldAnimateCanvas) return;
+            isRunning = true;
             animationFrameId = requestAnimationFrame(animate);
+        };
+
+        const stopLoop = () => {
+            isRunning = false;
+            if (frameTimer) clearTimeout(frameTimer);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            frameTimer = null;
+            animationFrameId = null;
         };
 
         window.addEventListener('resize', resize);
@@ -256,7 +273,10 @@ const AnimatedBackground = ({
         }
 
         const handleVisibilityChange = () => {
-            isPageVisible = document.visibilityState === 'visible';
+            // Fully halt the loop when the tab/app is hidden (no background
+            // timer/rAF churn) and resume cleanly when it becomes visible.
+            if (document.visibilityState === 'visible') startLoop();
+            else stopLoop();
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -273,9 +293,7 @@ const AnimatedBackground = ({
         observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
         resize();
-        if (shouldAnimateCanvas) {
-            animate();
-        }
+        startLoop();
 
         return () => {
             window.removeEventListener('resize', resize);
@@ -285,7 +303,7 @@ const AnimatedBackground = ({
                 window.removeEventListener('mouseout', onMouseOut);
             }
             observer.disconnect();
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            stopLoop();
         };
     }, [density, speed, interactive, variant]);
 
