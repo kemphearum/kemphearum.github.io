@@ -16,6 +16,12 @@ service cloud.firestore {
         : 'anonymous';
     }
 
+    // Lowercased role of the current user. Self-guarding (returns 'anonymous'
+    // when unauthenticated) so callers never dereference a null request.auth.
+    function roleName() {
+      return isSignedIn() ? getRole(request.auth.uid).lower() : 'anonymous';
+    }
+
     function isSuperAdminRole(role) {
       return role == 'superadmin'
         || role == 'SUPERADMIN'
@@ -54,31 +60,30 @@ service cloud.firestore {
     }
 
     function isSuperAdmin() {
-      if (!isSignedIn()) return false;
-      let r = getRole(request.auth.uid).lower();
-      return isBootstrapSuperAdminEmail(request.auth.token.email)
-        || r == 'superadmin'
-        || r == 'owner';
+      return isSignedIn() && (
+        isBootstrapSuperAdminEmail(request.auth.token.email)
+        || roleName() == 'superadmin'
+        || roleName() == 'owner'
+      );
     }
 
     function isAdmin() {
-      if (!isSignedIn()) return false;
-      let r = getRole(request.auth.uid).lower();
-      return r == 'admin'
-        || r == 'administrator'
+      return roleName() == 'admin'
+        || roleName() == 'administrator'
         || isSuperAdmin();
     }
 
     function isStaff() {
-      if (!isSignedIn()) return false;
-      let r = getRole(request.auth.uid).lower();
-      return r != 'anonymous' && r != 'pending' && r != null && r != '';
+      return isSignedIn()
+        && roleName() != 'anonymous'
+        && roleName() != 'pending'
+        && roleName() != '';
     }
 
     function isEditor() {
-      if (!isSignedIn()) return false;
-      let r = getRole(request.auth.uid).lower();
-      return r == 'editor' || r == 'writer' || isAdmin();
+      return roleName() == 'editor'
+        || roleName() == 'writer'
+        || isAdmin();
     }
 
     // ============================================================
@@ -90,10 +95,6 @@ service cloud.firestore {
     // their role-keyed rolePermissions document; built-in roles fall back
     // to tier defaults so they keep working even without a permission doc.
     // ============================================================
-    function roleName() {
-      return getRole(request.auth.uid).lower();
-    }
-
     function hasPermDocFor(role) {
       return exists(/databases/$(database)/documents/rolePermissions/$(role));
     }
@@ -110,51 +111,59 @@ service cloud.firestore {
         || (base == 'editor' && (moduleName == 'blog' || moduleName == 'projects'));
     }
 
+    // Does a custom role's permission doc grant write capability on a module?
+    function permWritesModule(perm, moduleName) {
+      return moduleName in perm.get('allowedTabs', [])
+        && (
+          baseTierCanContent(perm.get('baseRole', 'pending'), moduleName)
+          || perm.get('allowedActions', {}).get(moduleName, [])
+              .hasAny(['create', 'edit', 'delete', 'feature', 'toggle_visibility'])
+        );
+    }
+
     // Module-level write capability. Used for content collections whose
     // recursive {document=**} match also covers the `history` subcollection,
     // so we gate at the module level (any write action) rather than per-op.
     function canWriteModule(moduleName) {
-      if (!isSignedIn()) return false;
-      if (isAdmin()) return true;
-      let role = roleName();
-      // Built-in editor/writer tier: blog & projects only.
-      if ((role == 'editor' || role == 'writer')
-          && (moduleName == 'blog' || moduleName == 'projects')) {
-        return true;
-      }
-      // Custom roles require an explicit role-keyed permission document.
-      if (!hasPermDocFor(role)) return false;
-      let perm = permDocFor(role);
-      let tabs = perm.get('allowedTabs', []);
-      if (!(moduleName in tabs)) return false;
-      let base = perm.get('baseRole', 'pending');
-      if (baseTierCanContent(base, moduleName)) return true;
-      let actions = perm.get('allowedActions', {}).get(moduleName, []);
-      return 'create' in actions
-        || 'edit' in actions
-        || 'delete' in actions
-        || 'feature' in actions
-        || 'toggle_visibility' in actions;
+      return isSignedIn() && (
+        isAdmin()
+        || (
+          (roleName() == 'editor' || roleName() == 'writer')
+          && (moduleName == 'blog' || moduleName == 'projects')
+        )
+        || (
+          hasPermDocFor(roleName())
+          && permWritesModule(permDocFor(roleName()), moduleName)
+        )
+      );
     }
 
     function canViewMessages() {
-      if (!isSignedIn()) return false;
-      if (isAdmin()) return true;
-      let role = roleName();
-      if (!hasPermDocFor(role)) return false;
-      return 'messages' in permDocFor(role).get('allowedTabs', []);
+      return isSignedIn() && (
+        isAdmin()
+        || (
+          hasPermDocFor(roleName())
+          && 'messages' in permDocFor(roleName()).get('allowedTabs', [])
+        )
+      );
+    }
+
+    function permManagesMessages(perm) {
+      return 'messages' in perm.get('allowedTabs', [])
+        && (
+          perm.get('baseRole', 'pending') == 'admin'
+          || 'delete' in perm.get('allowedActions', {}).get('messages', [])
+        );
     }
 
     function canManageMessages() {
-      if (!isSignedIn()) return false;
-      if (isAdmin()) return true;
-      let role = roleName();
-      if (!hasPermDocFor(role)) return false;
-      let perm = permDocFor(role);
-      if (!('messages' in perm.get('allowedTabs', []))) return false;
-      let base = perm.get('baseRole', 'pending');
-      if (base == 'admin') return true;
-      return 'delete' in perm.get('allowedActions', {}).get('messages', []);
+      return isSignedIn() && (
+        isAdmin()
+        || (
+          hasPermDocFor(roleName())
+          && permManagesMessages(permDocFor(roleName()))
+        )
+      );
     }
 
     function isVisitPayloadValid() {
@@ -233,6 +242,7 @@ service cloud.firestore {
         'deviceType', 'sessionId', 'details', 'status', 'reason', 'timestamp'
       ])
       && request.resource.data.email is string
+      && request.auth.token.email is string
       && request.resource.data.email.lower() == request.auth.token.email.lower()
       && (request.resource.data.status == 'success' || request.resource.data.status == 'failure');
     }
