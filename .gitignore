@@ -61,6 +61,10 @@ sa-source.json
 diff.txt
 .agents/
 
+# Local knowledge-graph / analysis tool output (graphify, understand-anything)
+graphify-out/
+.understand-anything/
+
 # Local caches / temp
 *.cache
 .eslintcache

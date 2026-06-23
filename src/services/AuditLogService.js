@@ -1,10 +1,11 @@
 import BaseService from './BaseService';
-import { db } from '../firebase';
-import { 
-    collection, getDocs, query, orderBy, limit as firestoreLimit, 
+import app, { db } from '../firebase';
+import {
+    collection, getDocs, query, orderBy, limit as firestoreLimit,
     collectionGroup, addDoc, serverTimestamp, where,
-    startAfter 
+    startAfter
 } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { isSuperAdminRole } from '../utils/permissions';
 
 class AuditLogService extends BaseService {
@@ -61,6 +62,31 @@ class AuditLogService extends BaseService {
         });
         if (trackWrite) trackWrite(1, `Recorded ${status} auth audit trail`);
         return docRef.id;
+    }
+
+    /**
+     * Record an auth event through the backend Cloud Function. Required for
+     * FAILED logins: the client is not authenticated at that point, so a
+     * direct Firestore write is denied by the security rules. The function
+     * writes via the Admin SDK (rules-bypassing) and rate-limits per IP.
+     * @param {Object} logData
+     * @param {string} status - 'success' | 'failure'
+     * @param {string|null} reason
+     * @returns {Promise<void>}
+     */
+    async recordAuthEvent(logData, status = 'failure', reason = null) {
+        const callable = httpsCallable(getFunctions(app), 'logAuthEvent');
+        await callable({
+            email: logData.email,
+            status,
+            reason: reason || null,
+            country: logData.country,
+            city: logData.city,
+            userAgent: logData.userAgent,
+            deviceType: logData.deviceType,
+            sessionId: logData.sessionId,
+            details: logData.details || {}
+        });
     }
 
     /**

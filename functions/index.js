@@ -1,6 +1,12 @@
-const functions = require("firebase-functions");
+const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
+const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 admin.initializeApp();
+
+// Secrets (set with: firebase functions:secrets:set <NAME>)
+const GITHUB_DISPATCH_TOKEN = defineSecret("GITHUB_DISPATCH_TOKEN");
+const IPIFY_API_KEY = defineSecret("IPIFY_API_KEY");
 
 const DEFAULT_SUPERADMIN_EMAILS = ['kem.phearum@gmail.com'];
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
@@ -8,85 +14,64 @@ const SUPERADMIN_EMAILS = new Set(
     DEFAULT_SUPERADMIN_EMAILS.map(normalizeEmail)
 );
 
-// Existing toggleUserStatus function...
-exports.toggleUserStatus = functions.https.onCall(async (data, context) => {
-    // ... existing implementation ...
-    if (!context.auth) {
-        throw new functions.https.HttpsError(
-            'unauthenticated',
-            'You must be logged in to perform this action.'
-        );
+const DEFAULT_GEO = { country_name: 'Unknown', city: 'Unknown', ip: 'Unknown', country_code: 'UN' };
+
+// ---------------------------------------------------------------------------
+// Admin: enable/disable a Firebase Auth account (superadmin only).
+// Migrated to the v2 callable API: the handler receives a single `request`
+// (request.auth, request.data) — the old v1 (data, context) signature crashed
+// on firebase-functions v7 because `context` is undefined.
+// ---------------------------------------------------------------------------
+exports.toggleUserStatus = onCall(async (request) => {
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'You must be logged in to perform this action.');
     }
 
-    const requesterEmail = normalizeEmail(context.auth.token.email);
+    const requesterEmail = normalizeEmail(request.auth.token.email);
     if (!SUPERADMIN_EMAILS.has(requesterEmail)) {
-        throw new functions.https.HttpsError(
-            'permission-denied',
-            'Only the Super Admin can enable or disable user accounts.'
-        );
+        throw new HttpsError('permission-denied', 'Only the Super Admin can enable or disable user accounts.');
     }
 
-    const { targetEmail, disableFlag } = data;
-
+    const { targetEmail, disableFlag } = request.data || {};
     if (!targetEmail) {
-        throw new functions.https.HttpsError(
-            'invalid-argument',
-            'The target email must be provided.'
-        );
+        throw new HttpsError('invalid-argument', 'The target email must be provided.');
     }
 
     try {
         const userRecord = await admin.auth().getUserByEmail(targetEmail);
-        await admin.auth().updateUser(userRecord.uid, {
-            disabled: disableFlag
-        });
-
+        await admin.auth().updateUser(userRecord.uid, { disabled: Boolean(disableFlag) });
         return {
             success: true,
             message: `User ${targetEmail} has been successfully ${disableFlag ? 'disabled' : 'enabled'}.`
         };
     } catch (error) {
-        console.error("Error toggling user status:", error);
+        logger.error("Error toggling user status:", error);
         if (error.code === 'auth/user-not-found') {
-            throw new functions.https.HttpsError(
-                'not-found',
-                `No user found with email ${targetEmail}.`
-            );
+            throw new HttpsError('not-found', `No user found with email ${targetEmail}.`);
         }
-        throw new functions.https.HttpsError(
-            'internal',
-            'An internal error occurred while updating the user.'
-        );
+        throw new HttpsError('internal', 'An internal error occurred while updating the user.');
     }
 });
 
-exports.triggerDatabaseSync = functions.https.onCall(async (data, context) => {
-    if (!context.auth) {
-        throw new functions.https.HttpsError(
-            'unauthenticated',
-            'You must be logged in to run database sync.'
-        );
+// ---------------------------------------------------------------------------
+// Admin: dispatch the GitHub Actions database-sync workflow (superadmin only).
+// ---------------------------------------------------------------------------
+exports.triggerDatabaseSync = onCall({ secrets: [GITHUB_DISPATCH_TOKEN] }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'You must be logged in to run database sync.');
     }
 
-    const requesterEmail = normalizeEmail(context.auth.token.email);
+    const requesterEmail = normalizeEmail(request.auth.token.email);
     if (!SUPERADMIN_EMAILS.has(requesterEmail)) {
-        throw new functions.https.HttpsError(
-            'permission-denied',
-            'Only the Super Admin can run database sync.'
-        );
+        throw new HttpsError('permission-denied', 'Only the Super Admin can run database sync.');
     }
 
-    const token = process.env.GITHUB_DISPATCH_TOKEN ||
-        functions.config()?.github?.dispatch_token;
-
+    const token = GITHUB_DISPATCH_TOKEN.value() || process.env.GITHUB_DISPATCH_TOKEN;
     if (!token) {
-        throw new functions.https.HttpsError(
-            'failed-precondition',
-            'GitHub dispatch token is not configured on the backend.'
-        );
+        throw new HttpsError('failed-precondition', 'GitHub dispatch token is not configured on the backend.');
     }
 
-    const requestedBy = normalizeEmail(data?.requestedBy) || requesterEmail;
+    const requestedBy = normalizeEmail(request.data && request.data.requestedBy) || requesterEmail;
 
     try {
         const response = await fetch(
@@ -102,18 +87,15 @@ exports.triggerDatabaseSync = functions.https.onCall(async (data, context) => {
                 },
                 body: JSON.stringify({
                     event_type: 'manual_database_sync',
-                    client_payload: {
-                        source: 'database-tab',
-                        requestedBy
-                    }
+                    client_payload: { source: 'database-tab', requestedBy }
                 })
             }
         );
 
         if (!response.ok) {
             const message = await response.text();
-            console.error('GitHub dispatch failed:', response.status, message);
-            throw new functions.https.HttpsError(
+            logger.error('GitHub dispatch failed:', response.status, message);
+            throw new HttpsError(
                 response.status === 401 || response.status === 403 ? 'permission-denied' : 'internal',
                 'GitHub rejected the database sync request.'
             );
@@ -121,12 +103,9 @@ exports.triggerDatabaseSync = functions.https.onCall(async (data, context) => {
 
         return { success: true };
     } catch (error) {
-        if (error instanceof functions.https.HttpsError) throw error;
-        console.error('triggerDatabaseSync error:', error);
-        throw new functions.https.HttpsError(
-            'internal',
-            'Failed to dispatch database sync.'
-        );
+        if (error instanceof HttpsError) throw error;
+        logger.error('triggerDatabaseSync error:', error);
+        throw new HttpsError('internal', 'Failed to dispatch database sync.');
     }
 });
 
@@ -191,24 +170,24 @@ function getLocalizedText(value, fallback = '') {
     return fallback;
 }
 
-function setCorsHeaders(req, res) {
-    const allowedOrigins = new Set([
-        'https://kemphearum.github.io',
-        'https://www.kemphearum.github.io',
-        'https://phearum-info.web.app',
-        'https://phearum-info.firebaseapp.com',
-        'https://kem-phearum.web.app',
-        'https://kem-phearum.firebaseapp.com',
-        'https://phearum-info.vercel.app',
-        'http://localhost:5173'
-    ]);
+const CORS_ALLOWED_ORIGINS = new Set([
+    'https://kemphearum.github.io',
+    'https://www.kemphearum.github.io',
+    'https://phearum-info.web.app',
+    'https://phearum-info.firebaseapp.com',
+    'https://kem-phearum.web.app',
+    'https://kem-phearum.firebaseapp.com',
+    'https://phearum-info.vercel.app',
+    'http://localhost:5173'
+]);
 
+function setCorsHeaders(req, res) {
     const origin = String(req.headers.origin || '');
-    if (allowedOrigins.has(origin)) {
+    if (CORS_ALLOWED_ORIGINS.has(origin)) {
         res.set('Access-Control-Allow-Origin', origin);
     }
     res.set('Vary', 'Origin');
-    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.set('Access-Control-Allow-Headers', 'Content-Type');
 }
 
@@ -223,11 +202,17 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-async function enforceContactRateLimit(identifier) {
+function clientIp(req) {
+    const forwarded = String(req.headers['x-forwarded-for'] || '');
+    return normalizeText(forwarded.split(',')[0] || req.ip || 'unknown', 100);
+}
+
+// Generic fixed-window rate limiter backed by Firestore.
+async function enforceRateLimit(collectionName, identifier, { perMinute, perDay }) {
     const now = Date.now();
     const minuteMs = 60 * 1000;
     const dayMs = 24 * 60 * 60 * 1000;
-    const rateRef = admin.firestore().collection('contactRateLimits').doc(identifier);
+    const rateRef = admin.firestore().collection(collectionName).doc(identifier);
 
     await admin.firestore().runTransaction(async (tx) => {
         const snap = await tx.get(rateRef);
@@ -243,12 +228,11 @@ async function enforceContactRateLimit(identifier) {
         const nextMinuteCount = inMinuteWindow ? minuteCount + 1 : 1;
         const nextDayCount = inDayWindow ? dayCount + 1 : 1;
 
-        // Hard limits for free-tier quota protection
-        if (nextMinuteCount > 1) {
-            throw new functions.https.HttpsError('resource-exhausted', 'Too many requests. Please wait a minute.');
+        if (perMinute && nextMinuteCount > perMinute) {
+            throw new HttpsError('resource-exhausted', 'Too many requests. Please wait a minute.');
         }
-        if (nextDayCount > 5) {
-            throw new functions.https.HttpsError('resource-exhausted', 'Daily request limit reached. Please try tomorrow.');
+        if (perDay && nextDayCount > perDay) {
+            throw new HttpsError('resource-exhausted', 'Daily request limit reached. Please try tomorrow.');
         }
 
         tx.set(rateRef, {
@@ -261,13 +245,12 @@ async function enforceContactRateLimit(identifier) {
     });
 }
 
-exports.submitContact = functions.https.onRequest(async (req, res) => {
+exports.submitContact = onRequest(async (req, res) => {
     setCorsHeaders(req, res);
 
     if (req.method === 'OPTIONS') {
         return res.status(204).send('');
     }
-
     if (req.method !== 'POST') {
         return res.status(405).json({ success: false, error: 'Method not allowed' });
     }
@@ -276,7 +259,6 @@ exports.submitContact = functions.https.onRequest(async (req, res) => {
         const payload = req.body && typeof req.body === 'object' ? req.body : {};
         const honeypot = normalizeText(payload.website || '', 200);
         if (honeypot) {
-            // Silently accept bot submissions without writing.
             return res.status(200).json({ success: true });
         }
 
@@ -294,10 +276,9 @@ exports.submitContact = functions.https.onRequest(async (req, res) => {
             return res.status(400).json({ success: false, error: 'Message is too short.' });
         }
 
-        const forwarded = String(req.headers['x-forwarded-for'] || '');
-        const ip = normalizeText(forwarded.split(',')[0] || req.ip || 'unknown', 100);
+        const ip = clientIp(req);
         const identifier = `${ip}:${email}`.toLowerCase();
-        await enforceContactRateLimit(identifier);
+        await enforceRateLimit('contactRateLimits', identifier, { perMinute: 1, perDay: 5 });
 
         await admin.firestore().collection('messages').add({
             name,
@@ -311,16 +292,100 @@ exports.submitContact = functions.https.onRequest(async (req, res) => {
 
         return res.status(200).json({ success: true });
     } catch (error) {
-        const code = error?.code || '';
-        if (code === 'resource-exhausted') {
+        if (error && error.code === 'resource-exhausted') {
             return res.status(429).json({ success: false, error: error.message || 'Too many requests.' });
         }
-        console.error('submitContact error:', error);
+        logger.error('submitContact error:', error);
         return res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
 
-exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
+// ---------------------------------------------------------------------------
+// Auth audit logging (security review F-03/F-07).
+// Failed logins are not authenticated, so the client cannot write auditLogs
+// (rules require isSignedIn()). This callable records them server-side via the
+// Admin SDK (which bypasses rules), rate-limited per IP to curb forged spam.
+// Authenticated callers must log their own email.
+// ---------------------------------------------------------------------------
+exports.logAuthEvent = onCall(async (request) => {
+    const data = request.data || {};
+    const status = data.status === 'failure' ? 'failure' : 'success';
+    const email = normalizeEmail(data.email);
+
+    if (!email || !isValidEmail(email)) {
+        throw new HttpsError('invalid-argument', 'A valid email is required.');
+    }
+    // An authenticated caller may only log events for their own identity.
+    if (request.auth && normalizeEmail(request.auth.token.email) !== email) {
+        throw new HttpsError('permission-denied', 'Email does not match the authenticated user.');
+    }
+
+    const ip = normalizeText(
+        (request.rawRequest && request.rawRequest.headers['x-forwarded-for'] || '').split(',')[0]
+        || (request.rawRequest && request.rawRequest.ip) || 'unknown',
+        100
+    );
+    // 10/min, 100/day per IP — generous for real logins, hostile to spam.
+    await enforceRateLimit('authLogRateLimits', ip || 'unknown', { perMinute: 10, perDay: 100 });
+
+    await admin.firestore().collection('auditLogs').add({
+        email,
+        status,
+        reason: typeof data.reason === 'string' ? data.reason.slice(0, 500) : null,
+        ipAddress: ip,
+        country: normalizeText(data.country, 100),
+        city: normalizeText(data.city, 120),
+        userAgent: normalizeText(data.userAgent, 1024),
+        deviceType: normalizeText(data.deviceType, 40),
+        sessionId: normalizeText(data.sessionId, 128),
+        details: data.details && typeof data.details === 'object' ? data.details : {},
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        source: 'auth-function'
+    });
+
+    return { success: true };
+});
+
+// ---------------------------------------------------------------------------
+// Geo lookup proxy (security review F-04).
+// Keeps the paid ipify key server-side instead of inlining it in the client
+// bundle. Resolves the visitor's IP from the forwarded header.
+// ---------------------------------------------------------------------------
+exports.geoLookup = onRequest({ secrets: [IPIFY_API_KEY] }, async (req, res) => {
+    setCorsHeaders(req, res);
+    if (req.method === 'OPTIONS') {
+        return res.status(204).send('');
+    }
+
+    const ip = clientIp(req);
+    const fallback = { ...DEFAULT_GEO, ip: ip && ip !== 'unknown' ? ip : 'Unknown' };
+
+    try {
+        const key = IPIFY_API_KEY.value() || process.env.IPIFY_API_KEY;
+        if (!key) {
+            return res.status(200).json(fallback);
+        }
+        const url = `https://geo.ipify.org/api/v2/country,city?apiKey=${key}`
+            + (ip && ip !== 'unknown' ? `&ipAddress=${encodeURIComponent(ip)}` : '');
+        const response = await fetch(url);
+        if (!response.ok) {
+            return res.status(200).json(fallback);
+        }
+        const d = await response.json();
+        res.set('Cache-Control', 'private, max-age=300');
+        return res.status(200).json({
+            country_name: (d.location && d.location.country) || 'Unknown',
+            city: (d.location && d.location.city) || 'Unknown',
+            ip: d.ip || fallback.ip,
+            country_code: (d.location && d.location.country) || 'UN'
+        });
+    } catch (error) {
+        logger.error('geoLookup error:', error);
+        return res.status(200).json(fallback);
+    }
+});
+
+exports.dynamicSEO = onRequest(async (req, res) => {
     try {
         const userAgent = (req.headers['user-agent'] || '').toLowerCase();
         const isBot = BOT_USER_AGENTS.some(bot => userAgent.includes(bot));
@@ -328,7 +393,7 @@ exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
         const host = getSafeHost(req);
         const protocol = host === 'localhost' ? 'http' : 'https';
         const fullUrl = sanitizePublicUrl(`${protocol}://${host}${req.originalUrl || req.path || '/'}`, `https://${DEFAULT_PUBLIC_HOST}/`);
-        
+
         let html = '';
         try {
             const fetchRes = await fetch(`${protocol}://${host}/index.html`);
@@ -336,7 +401,7 @@ exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
                 html = await fetchRes.text();
             }
         } catch (e) {
-            console.error("Failed to fetch index.html", e);
+            logger.error("Failed to fetch index.html", e);
         }
 
         if (!html) {
@@ -360,11 +425,11 @@ exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
 
             const collectionName = type === 'blog' ? 'posts' : 'projects';
             const defaultImage = sanitizePublicUrl(`${protocol}://${host}/og-image.jpg`, `https://${DEFAULT_PUBLIC_HOST}/og-image.jpg`);
-            
+
             let title = 'Kem Phearum - Portfolio & Blog';
             let description = 'A modern, responsive personal portfolio and Markdown blog built by Kem Phearum.';
             let imageUrl = defaultImage;
-            
+
             const snapshot = await admin.firestore().collection(collectionName).where('slug', '==', slug).limit(1).get();
             if (!snapshot.empty) {
                 const data = snapshot.docs[0].data();
@@ -404,15 +469,15 @@ exports.dynamicSEO = functions.https.onRequest(async (req, res) => {
             html = html.replace(/<meta property="og:[^>]*>/gi, '');
             html = html.replace(/<meta name="twitter:[^>]*>/gi, '');
             html = html.replace(/<meta name="description"[^>]*>/gi, '');
-            
+
             html = html.replace(/<head[^>]*>/i, `$&${metaTags}`);
         }
 
         res.set('Cache-Control', 'public, max-age=300, s-maxage=600');
         res.status(200).send(html);
-        
+
     } catch (error) {
-        console.error("Error in dynamicSEO:", error);
+        logger.error("Error in dynamicSEO:", error);
         res.status(500).send("Internal Server Error");
     }
 });

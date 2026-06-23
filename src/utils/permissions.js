@@ -145,6 +145,18 @@ export const normalizeRolePermissionEntry = (entry, role) => {
     };
 };
 
+// Actions an `editor` (and editor-based custom roles) may perform on the
+// content modules they can access. Editors author content but cannot delete,
+// feature, toggle visibility, or run database operations — those stay with
+// admins. Used by BOTH the default matrix and the base-role inheritance branch
+// so the two paths agree.
+const EDITOR_ALLOWED_ACTIONS = new Set([
+    ACTIONS.VIEW,
+    ACTIONS.CREATE,
+    ACTIONS.EDIT,
+    ACTIONS.VIEW_HISTORY
+]);
+
 const isDefaultRoleCapabilityAllowed = (action, moduleName, normalizedRole) => {
     if (normalizedRole === 'admin') {
         const restrictedAdminModules = [MODULES.USERS, MODULES.AUDIT, MODULES.SETTINGS];
@@ -162,8 +174,9 @@ const isDefaultRoleCapabilityAllowed = (action, moduleName, normalizedRole) => {
         // Editors are excluded from low-level DB operations
         if (action === ACTIONS.DATABASE_ACTIONS) return false;
 
-        // Default modules allowed for editor
-        return [MODULES.BLOG, MODULES.PROJECTS].includes(moduleName);
+        // Default modules allowed for editor — content authoring actions only.
+        if (![MODULES.BLOG, MODULES.PROJECTS].includes(moduleName)) return false;
+        return EDITOR_ALLOWED_ACTIONS.has(action);
     }
 
     if (normalizedRole === 'pending') {
@@ -242,9 +255,9 @@ export const isActionAllowed = (action, moduleName, role, rolePermissions = {}) 
         }
 
         if (capabilityRole === 'editor') {
-            // Editors are excluded from low-level DB operations
-            if (action === ACTIONS.DATABASE_ACTIONS) return false;
-            return true;
+            // Inherit the same content-authoring action set as a base editor
+            // (no delete/feature/visibility/database actions).
+            return EDITOR_ALLOWED_ACTIONS.has(action);
         }
 
         return false;

@@ -2,6 +2,7 @@ import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getAnalytics } from "firebase/analytics";
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 const getEnv = (key) => {
   if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
@@ -29,6 +30,26 @@ if (!hasCoreConfig) {
 }
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+// App Check (security review F-02): attests requests come from the real app,
+// blocking scripted abuse of public endpoints (e.g. visits flooding). No-op
+// until VITE_RECAPTCHA_SITE_KEY is set, so existing deploys are unaffected.
+// To enable: register a reCAPTCHA v3 key in the Firebase console (App Check),
+// set VITE_RECAPTCHA_SITE_KEY, then turn on enforcement for Firestore/Functions.
+if (typeof window !== 'undefined') {
+  const appCheckSiteKey = getEnv('VITE_RECAPTCHA_SITE_KEY');
+  if (appCheckSiteKey) {
+    try {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(appCheckSiteKey),
+        isTokenAutoRefreshEnabled: true
+      });
+    } catch (err) {
+      console.warn("App Check init skipped:", err?.message || err);
+    }
+  }
+}
+
 const db = getFirestore(app);
 const auth = getAuth(app);
 

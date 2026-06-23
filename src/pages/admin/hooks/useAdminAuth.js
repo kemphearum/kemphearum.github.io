@@ -193,7 +193,14 @@ export const useAdminAuth = ({
             };
             const recordAuthAudit = async (status, reason = null) => {
                 try {
-                    await AuditLogService.addAuditLog(logBase, status, reason, trackWrite);
+                    if (status === 'failure') {
+                        // Failed logins are unauthenticated, so the client cannot write
+                        // auditLogs directly (rules require a session). Route through the
+                        // backend function so brute-force attempts are actually captured.
+                        await AuditLogService.recordAuthEvent(logBase, status, reason);
+                    } else {
+                        await AuditLogService.addAuditLog(logBase, status, reason, trackWrite);
+                    }
                 } catch (auditError) {
                     console.warn('[useAdminAuth] Failed to record auth audit log:', auditError);
                 }

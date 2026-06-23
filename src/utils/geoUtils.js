@@ -29,20 +29,19 @@ export const fetchGeoData = async () => {
             // 3. Fallback Chain
             const providers = [
                 {
-                    name: 'ipify_premium',
+                    // Primary: server-side proxy that keeps the paid ipify key out of
+                    // the client bundle (security review F-04). Returns normalized geo.
+                    name: 'geo_proxy',
                     fn: async () => {
-                        const apiKey = import.meta.env.VITE_IPIFY_API_KEY;
-                        // If key is missing, treat as permanent error to avoid network noise
-                        if (!apiKey) throw new Error('CONFIG_MISSING');
-                        
-                        const res = await fetch(`https://geo.ipify.org/api/v2/country,city?apiKey=${apiKey}`);
+                        const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || 'phearum-info';
+                        const res = await fetch(`https://us-central1-${projectId}.cloudfunctions.net/geoLookup`);
                         if (!res.ok) throw new Error(`${res.status}`);
                         const d = await res.json();
                         return {
-                            country_name: d.location?.country || 'Unknown',
-                            city: d.location?.city || 'Unknown',
+                            country_name: d.country_name || 'Unknown',
+                            city: d.city || 'Unknown',
                             ip: d.ip || 'Unknown',
-                            country_code: d.location?.country || 'UN'
+                            country_code: d.country_code || 'UN'
                         };
                     }
                 },

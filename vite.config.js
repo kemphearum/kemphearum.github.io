@@ -25,6 +25,9 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/setupTests.js',
+    // Firestore rules tests require the emulator + @firebase/rules-unit-testing
+    // and are run separately (firebase emulators:exec), not in the unit run.
+    exclude: ['**/node_modules/**', '**/firestore.rules.test.mjs'],
   },
   server: {
     port: 5173,
