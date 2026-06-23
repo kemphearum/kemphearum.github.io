@@ -5,14 +5,14 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-    
+
     function getUserData(uid) {
       return get(/databases/$(database)/documents/users/$(uid)).data;
     }
-    
+
     function getRole(uid) {
-      return isSignedIn() && exists(/databases/$(database)/documents/users/$(uid)) 
-        ? get(/databases/$(database)/documents/users/$(uid)).data.role 
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(uid))
+        ? get(/databases/$(database)/documents/users/$(uid)).data.role
         : 'anonymous';
     }
 
@@ -52,7 +52,7 @@ service cloud.firestore {
         || role == 'ADMINISTRATOR'
         || isSuperAdminRole(role);
     }
-    
+
     function isSuperAdmin() {
       if (!isSignedIn()) return false;
       let r = getRole(request.auth.uid).lower();
@@ -60,12 +60,12 @@ service cloud.firestore {
         || r == 'superadmin'
         || r == 'owner';
     }
-    
+
     function isAdmin() {
       if (!isSignedIn()) return false;
       let r = getRole(request.auth.uid).lower();
-      return r == 'admin' 
-        || r == 'administrator' 
+      return r == 'admin'
+        || r == 'administrator'
         || isSuperAdmin();
     }
 
@@ -74,11 +74,87 @@ service cloud.firestore {
       let r = getRole(request.auth.uid).lower();
       return r != 'anonymous' && r != 'pending' && r != null && r != '';
     }
-    
+
     function isEditor() {
       if (!isSignedIn()) return false;
       let r = getRole(request.auth.uid).lower();
       return r == 'editor' || r == 'writer' || isAdmin();
+    }
+
+    // ============================================================
+    // Server-side RBAC enforcement (mirrors src/utils/permissions.js)
+    // ------------------------------------------------------------
+    // The admin UI computes granular permissions client-side from the
+    // `rolePermissions` collection. Those checks are advisory only — the
+    // rules below are the authority. Custom roles are resolved by reading
+    // their role-keyed rolePermissions document; built-in roles fall back
+    // to tier defaults so they keep working even without a permission doc.
+    // ============================================================
+    function roleName() {
+      return getRole(request.auth.uid).lower();
+    }
+
+    function hasPermDocFor(role) {
+      return exists(/databases/$(database)/documents/rolePermissions/$(role));
+    }
+
+    function permDocFor(role) {
+      return get(/databases/$(database)/documents/rolePermissions/$(role)).data;
+    }
+
+    // A baseRole tier grants ALL actions on the modules it covers, matching
+    // the inheritance branch in isActionAllowed(): admin -> all content
+    // modules; editor -> blog & projects only.
+    function baseTierCanContent(base, moduleName) {
+      return base == 'admin'
+        || (base == 'editor' && (moduleName == 'blog' || moduleName == 'projects'));
+    }
+
+    // Module-level write capability. Used for content collections whose
+    // recursive {document=**} match also covers the `history` subcollection,
+    // so we gate at the module level (any write action) rather than per-op.
+    function canWriteModule(moduleName) {
+      if (!isSignedIn()) return false;
+      if (isAdmin()) return true;
+      let role = roleName();
+      // Built-in editor/writer tier: blog & projects only.
+      if ((role == 'editor' || role == 'writer')
+          && (moduleName == 'blog' || moduleName == 'projects')) {
+        return true;
+      }
+      // Custom roles require an explicit role-keyed permission document.
+      if (!hasPermDocFor(role)) return false;
+      let perm = permDocFor(role);
+      let tabs = perm.get('allowedTabs', []);
+      if (!(moduleName in tabs)) return false;
+      let base = perm.get('baseRole', 'pending');
+      if (baseTierCanContent(base, moduleName)) return true;
+      let actions = perm.get('allowedActions', {}).get(moduleName, []);
+      return 'create' in actions
+        || 'edit' in actions
+        || 'delete' in actions
+        || 'feature' in actions
+        || 'toggle_visibility' in actions;
+    }
+
+    function canViewMessages() {
+      if (!isSignedIn()) return false;
+      if (isAdmin()) return true;
+      let role = roleName();
+      if (!hasPermDocFor(role)) return false;
+      return 'messages' in permDocFor(role).get('allowedTabs', []);
+    }
+
+    function canManageMessages() {
+      if (!isSignedIn()) return false;
+      if (isAdmin()) return true;
+      let role = roleName();
+      if (!hasPermDocFor(role)) return false;
+      let perm = permDocFor(role);
+      if (!('messages' in perm.get('allowedTabs', []))) return false;
+      let base = perm.get('baseRole', 'pending');
+      if (base == 'admin') return true;
+      return 'delete' in perm.get('allowedActions', {}).get('messages', []);
     }
 
     function isVisitPayloadValid() {
@@ -149,22 +225,36 @@ service cloud.firestore {
       && request.resource.data.time is timestamp;
     }
 
-    // Allow public read for content, projects, experience, and posts
-    match /content/{document=**} { 
-      allow read; 
-      allow write: if isStaff(); 
+    // Audit log integrity: append-only, schema-pinned, and the recorded
+    // email must match the authenticated principal (no spoofing other users).
+    function isAuditLogPayloadValid() {
+      return request.resource.data.keys().hasOnly([
+        'email', 'ipAddress', 'country', 'city', 'userAgent',
+        'deviceType', 'sessionId', 'details', 'status', 'reason', 'timestamp'
+      ])
+      && request.resource.data.email is string
+      && request.resource.data.email.lower() == request.auth.token.email.lower()
+      && (request.resource.data.status == 'success' || request.resource.data.status == 'failure');
     }
-    
-    match /projects/{document=**} { 
-      allow read; 
-      allow write: if isStaff(); 
+
+    // Allow public read for content, projects, experience, and posts.
+    // Writes are gated by server-side RBAC (canWriteModule) instead of the
+    // coarse isStaff() check, so restricted custom roles cannot write.
+    match /content/{document=**} {
+      allow read;
+      allow write: if canWriteModule('general');
     }
-    
-    match /experience/{document=**} { 
-      allow read; 
-      allow write: if isStaff(); 
+
+    match /projects/{document=**} {
+      allow read;
+      allow write: if canWriteModule('projects');
     }
-    
+
+    match /experience/{document=**} {
+      allow read;
+      allow write: if canWriteModule('experience');
+    }
+
     // Application Settings (Logo, Page Title, Audit Log Config, etc.)
     match /settings/{document=**} {
       allow read;
@@ -172,35 +262,37 @@ service cloud.firestore {
     }
 
     // Blog Posts Rules
-    match /posts/{document=**} { 
-      allow read; 
-      allow write: if isStaff(); 
+    match /posts/{document=**} {
+      allow read;
+      allow write: if canWriteModule('blog');
     }
 
-    // Messages: Public can write (send), only staff can read/manage
+    // Messages: contact submissions are written via Cloud Functions (Admin
+    // SDK bypasses rules). Direct client access is restricted to roles that
+    // are actually granted the messages module — not every signed-in staffer.
     match /messages/{document=**} {
-      // Public writes are handled through Cloud Functions (Admin SDK bypasses rules).
-      // This blocks direct client spam against Firestore quota.
-      allow create: if isStaff();
-      allow read, update, delete: if isStaff();
+      allow create: if isAdmin();
+      allow read:   if canViewMessages();
+      allow update: if canManageMessages();
+      allow delete: if canManageMessages();
     }
 
     // Users: Highly restricted access
     match /users/{userId} {
       // 1. IDENTITY RULE: Users can always read their own document (MUST be first, 0 external calls)
       allow read: if isSignedIn() && request.auth.uid == userId;
-      
+
       // 2. BOOTSTRAP RULE: Bootstrap super admin has full access (0 external calls)
       allow read, write: if isBootstrapSuperAdminEmail(request.auth.token.email);
-      
+
       // 3. ADMIN READ: Use direct field access if possible, or skip to avoid recursive loops.
       // We block generic 'isAdmin()' here to prevent the infinite recursion through 'getRole'.
       // If a superadmin (non-bootstrap) needs to manage users, they use the bootstrap admin for now.
-      
+
       // Users can ONLY update safe fields (like displayName) on their own profile.
       // They CANNOT modify role, isActive, or email.
       // Bootstrap super admin email may self-promote role to superadmin once.
-      allow update: if isSignedIn() 
+      allow update: if isSignedIn()
                     && (
                       request.auth.uid == userId
                       || (
@@ -218,10 +310,10 @@ service cloud.firestore {
                         && request.resource.data.isActive == true
                       )
                     );
-      
+
       // Secure creation: role is pending by default. Bootstrap super admin email
       // can create itself as superadmin on first sign-in.
-      allow create: if isSignedIn() 
+      allow create: if isSignedIn()
                     && (
                         request.auth.uid == userId
                         || isBootstrapSuperAdminEmail(request.auth.token.email)
@@ -235,24 +327,31 @@ service cloud.firestore {
                     )
                     && request.resource.data.isActive == true
                     && isOwnEmail(request.resource.data.email);
-      
+
       // Support for existing email-based queries (read and delete for own record)
       allow read, delete: if isSignedIn() && isOwnEmail(resource.data.email);
     }
 
-    // Role Permissions: Superadmin writes; all authenticated users can read
+    // Role Permissions: Superadmin writes; staff can read (drives the admin UI).
+    // Pending/anonymous users have no need to enumerate the privilege model.
     match /rolePermissions/{document=**} {
-      allow read: if isSignedIn();
+      allow read: if isStaff();
       allow write: if isSuperAdmin();
     }
 
-    // Login Audit Trail: Any authenticated user can append logs; only Admin can view
+    // Login Audit Trail: authenticated users may append schema-validated logs
+    // for their OWN email only. Logs are immutable; superadmins read/prune them.
     match /auditLogs/{document=**} {
-      allow create: if isSignedIn();
-      allow read, write: if isSuperAdmin();
+      allow create: if isSignedIn() && isAuditLogPayloadValid();
+      allow read, delete: if isSuperAdmin();
+      allow update: if false;
     }
 
     // Analytics/Visits Tracking
+    // NOTE: create is intentionally unauthenticated (anonymous visitors) and
+    // shape-validated only. This cannot be rate-limited in rules — enable
+    // Firebase App Check and/or move ingestion behind a rate-limited Cloud
+    // Function to protect quota (see security review F-02).
     match /visits/{document=**} {
       allow create: if isVisitPayloadValid();
       allow read, delete: if isAdmin();
@@ -268,13 +367,13 @@ service cloud.firestore {
                     && request.resource.data.diff(resource.data).affectedKeys()
                         .hasOnly(['reads', 'writes', 'deletes', 'lastUpdated']);
       allow delete: if isSuperAdmin();
-      
+
       match /logs/{logId} {
         allow read, delete: if isAdmin();
         allow create: if isStaff() && isActivityLogPayloadValid();
       }
     }
-      
+
     // Logs Collection Group
     match /{path=**}/logs/{logId} {
       allow read, delete: if isAdmin();

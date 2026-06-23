@@ -1,6 +1,6 @@
 import BaseService from './BaseService';
 import { db, auth } from '../firebase';
-import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, query, updateDoc, where, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, query, where, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { isActionAllowed, ACTIONS, MODULES, isSuperAdminRole, normalizeRole, normalizeRolePermissionEntry } from '../utils/permissions';
 import { normalizeUser, validateUser } from '../domain/user/userDomain';
@@ -233,20 +233,24 @@ class UserService extends BaseService {
             allowedActions: normalizedEntry.allowedActions
         };
 
-        const q = query(collection(db, "rolePermissions"), where("role", "==", normalizedRole));
-        const snap = await getDocs(q);
+        // Role-keyed document id. Firestore Security Rules can only get() a
+        // document by a known path, so the doc id MUST equal the role name for
+        // server-side RBAC enforcement (firestore.rules canWriteModule) to work.
+        const targetRef = doc(db, "rolePermissions", normalizedRole);
+        await setDoc(targetRef, payload, { merge: true });
 
-        if (snap.empty) {
-            await addDoc(collection(db, "rolePermissions"), payload);
-            if (trackWrite) trackWrite(1, `Created ${normalizedRole} permissions`);
-        } else {
-            await updateDoc(snap.docs[0].ref, {
-                allowedTabs: normalizedEntry.allowedTabs,
-                baseRole: safeBaseRole,
-                allowedActions: normalizedEntry.allowedActions
-            });
-            if (trackWrite) trackWrite(1, `Updated ${normalizedRole} permissions`);
-        }
+        // Migrate/clean up any legacy auto-ID documents for this role left over
+        // from the pre role-keyed scheme, so the rules read a single source.
+        const legacySnap = await getDocs(
+            query(collection(db, "rolePermissions"), where("role", "==", normalizedRole))
+        );
+        await Promise.all(
+            legacySnap.docs
+                .filter((legacyDoc) => legacyDoc.id !== normalizedRole)
+                .map((legacyDoc) => deleteDoc(legacyDoc.ref))
+        );
+
+        if (trackWrite) trackWrite(1, `Saved ${normalizedRole} permissions`);
     }
 
     /**
