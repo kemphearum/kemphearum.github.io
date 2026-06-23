@@ -150,23 +150,92 @@ If Khmer text appears as `?`:
 ## Architecture
 
 ```text
+app/
+  routes/                React Router routes, incl. serverless API routes:
+                           api.contact.jsx  -> POST /api/contact
+                           api.geo.jsx       -> GET  /api/geo
+                           api.authLog.jsx   -> POST /api/auth-log
+                           api.dbSync.jsx    -> POST /api/db-sync
+  routes.ts              route table
 src/
   sections/              public UI sections
   shared/components/     reusable UI components
   pages/admin/           modular admin tabs and modules
-  services/              Firestore service layer
+  services/              Firestore service layer (client)
+  server/                server-only logic for the API routes (Admin SDK)
   hooks/                 reusable hooks
   i18n/                  translation dictionaries
   context/               app-wide providers
-  utils/                 shared utilities
+  utils/                 shared utilities (incl. apiBase.js, permissions.js)
+functions/               optional Firebase Cloud Functions (Blaze only; unused
+                         on the free plan — see Backend below)
 ```
+
+## Backend (Free-tier serverless)
+
+The project is designed to run entirely on **free tiers**. Firebase is used for
+**Auth + Firestore only** (Spark plan); since Cloud Functions require the Blaze
+plan, all server-side logic runs as **Vercel serverless functions** implemented
+as React Router resource routes (`app/routes/api.*`), with shared logic in
+`src/server/`.
+
+| Route | Purpose | Auth |
+| --- | --- | --- |
+| `POST /api/contact` | Contact form -> Firestore `messages` (honeypot + per-IP rate limit) | public |
+| `GET /api/geo` | Geolocation proxy; keeps the paid ipify key server-side | public |
+| `POST /api/auth-log` | Records login attempts (esp. failures) to `auditLogs` via Admin SDK, rate-limited per IP | public/optional token |
+| `POST /api/db-sync` | Dispatches the GitHub Actions DB-sync workflow | Firebase ID token, superadmin only |
+
+`functions/index.js` keeps an equivalent Cloud Functions implementation for
+teams that prefer Blaze, but it is not used by the free-tier deployment.
+
+## Security
+
+- **Server-enforced RBAC** — `firestore.rules` is the authority for writes (the
+  client permission UI is advisory). Content writes are gated per-module via
+  `canWriteModule()`, which mirrors `src/utils/permissions.js`; custom roles are
+  resolved from role-keyed `rolePermissions` documents, built-in roles fall back
+  to tier defaults (fail-safe).
+- **Audit log integrity** — `auditLogs` are append-only and schema-pinned; the
+  recorded email must match the authenticated principal. Failed logins (no
+  session) are written server-side via `/api/auth-log`.
+- **No secrets in the client bundle** — the paid geolocation key lives only in
+  the server `IPIFY_API_KEY` env var (proxied through `/api/geo`).
+- **App Check (optional)** — set `VITE_RECAPTCHA_SITE_KEY` to enable reCAPTCHA v3
+  attestation, then turn on enforcement for Firestore/Functions in the console.
+- **Security headers / CSP** — configured in `firebase.json` for the Firebase
+  Hosting origin.
+
+## Environment Variables
+
+Client (build-time, inlined into the bundle — must be non-secret):
+
+```
+VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID,
+VITE_FIREBASE_STORAGE_BUCKET, VITE_FIREBASE_MESSAGING_SENDER_ID,
+VITE_FIREBASE_APP_ID, VITE_FIREBASE_MEASUREMENT_ID
+VITE_RECAPTCHA_SITE_KEY        # optional, enables App Check
+VITE_PRIMARY_CONTACT_ORIGIN    # optional, overrides the default Vercel API origin
+```
+
+Server (set in the **Vercel** project as Sensitive — never committed):
+
+```
+FIREBASE_SERVICE_ACCOUNT_JSON  # Admin SDK service account (JSON string)
+GITHUB_DISPATCH_TOKEN          # GitHub PAT (Contents: read/write) for /api/db-sync
+IPIFY_API_KEY                  # ipify geolocation key for /api/geo
+```
+
+> Geolocation keys are no longer client-side. `.env`/`.env.local` are git-ignored;
+> only `.env.example` (placeholders) is committed.
 
 ## Tech Stack
 
 - React 19
-- React Router v7
+- React Router v7 (SSR on Vercel)
 - Vite 7
-- Firebase (Firestore + Auth)
+- Firebase (Firestore + Auth, Spark/free plan)
+- Vercel serverless functions (free tier) for backend API routes
 - TanStack Query v5
 - SCSS + CSS Modules
 - Vitest
@@ -206,46 +275,37 @@ npm test
 - `npm run build` - production build (client + server output)
 - `npm run preview` - preview production build
 - `npm run lint` - lint project
-
-### Development
-```bash
-npm run dev
-```
-
-### Build
-```bash
-npm run build
-```
-
-### Preview
-```bash
-npm run preview
-```
-
-### Test
-```bash
-npm test
-```
-
-## Scripts
-
-- `npm run dev` - start local dev server
-- `npm run build` - production build (client + server output)
-- `npm run preview` - preview production build
-- `npm run lint` - lint project
 - `npm test` - run unit tests
 - `npm run deploy:firebase:hosting` - deploy static hosting only
 - `npm run deploy:firebase:rules` - deploy Firestore security rules only
 - `npm run deploy:firebase:backend` - deploy Functions + Firestore rules together
 
-## Deployment Safety Notes
+## Deployment
 
-For production contact form handling, deploy backend before or with frontend:
+The app deploys to **Vercel** (primary, serves the SSR app + `/api/*` routes)
+and is mirrored to GitHub Pages and Firebase Hosting (static).
 
-1. `npm run deploy:firebase:backend`
-2. `npm run deploy:firebase:hosting`
+### Vercel (backend + app)
+- Pushing to `main` (or `npx vercel --prod`) builds and deploys the app and the
+  serverless API routes.
+- Set the **server env vars** (above) in the Vercel project as *Sensitive*
+  before relying on `/api/db-sync`, `/api/geo`, or `/api/auth-log`. Env vars only
+  apply to deploys made **after** they are added — redeploy after changing them.
 
-If hosting deploys first while Functions/Rules are not live yet, contact submissions can fail until backend deployment completes.
+### Firestore rules (deploy separately)
+Security rules are **not** deployed by the hosting pipeline. After changing
+`firestore.rules`:
+
+```bash
+npm run deploy:firebase:rules
+```
+
+When changing custom-role permissions, re-save each custom role once in the
+admin UI so its `rolePermissions` document is keyed by role name (required by
+the server-side RBAC rules).
+
+> Note: `npm run deploy:firebase:backend` deploys Firebase Functions, which
+> require the Blaze plan and are unused on the free-tier setup.
 
 ## License
 
