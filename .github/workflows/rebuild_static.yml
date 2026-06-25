@@ -48,6 +48,17 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
 
+      - name: Clean up existing github-pages artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          artifacts=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)
+          artifact_ids=$(echo "$artifacts" | jq -r '.artifacts[] | select(.name == "github-pages") | .id')
+          for id in $artifact_ids; do
+            echo "Deleting duplicate artifact $id..."
+            gh api --method DELETE repos/${{ github.repository }}/actions/artifacts/$id || true
+          done
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
