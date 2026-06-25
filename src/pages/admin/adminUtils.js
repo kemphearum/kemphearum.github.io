@@ -72,6 +72,14 @@ export const formatAuthErrorMessage = (error, t, language = 'en', fallback) => {
             return t('admin.auth.errors.weakPassword');
         case 'auth/email-already-in-use':
             return t('admin.auth.errors.emailInUse');
+        case 'auth/popup-blocked':
+            return t('admin.auth.errors.popupBlocked');
+        case 'auth/account-exists-with-different-credential':
+            return t('admin.auth.errors.accountExistsDifferentCredential');
+        case 'auth/invalid-action-code':
+            return t('admin.auth.errors.magicLinkInvalid');
+        case 'auth/expired-action-code':
+            return t('admin.auth.errors.magicLinkExpired');
         default:
             break;
     }

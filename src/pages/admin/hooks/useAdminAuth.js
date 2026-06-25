@@ -35,6 +35,7 @@ export const useAdminAuth = ({
     const [showPassword, setShowPassword] = useState(false);
     const [capsLockOn, setCapsLockOn] = useState(false);
     const [authError, setAuthError] = useState('');
+    const [magicLinkSent, setMagicLinkSent] = useState(false);
     const [rememberEmail, setRememberEmail] = useState(() => {
         if (typeof window === 'undefined') return false;
         return Boolean(localStorage.getItem(AUTH_REMEMBER_EMAIL_KEY));
@@ -51,6 +52,7 @@ export const useAdminAuth = ({
         setShowPassword(false);
         setCapsLockOn(false);
         setPassword('');
+        setMagicLinkSent(false);
     }, [isRegistering]);
 
     useEffect(() => {
@@ -155,6 +157,144 @@ export const useAdminAuth = ({
         return () => unsubscribe();
     }, [language, showToast, t]);
 
+    const recordAuthAudit = useCallback(async ({ email: auditEmail, method, flow, status, reason = null }) => {
+        const geoData = await fetchGeoData().catch(() => ({ ip: 'Unknown', country_name: 'Unknown', city: 'Unknown' }));
+        const logBase = {
+            email: auditEmail,
+            ipAddress: geoData.ip,
+            country: geoData.country_name,
+            city: geoData.city,
+            userAgent: navigator.userAgent,
+            deviceType: getDeviceType(),
+            sessionId: getSessionId(),
+            details: { category: 'auth', flow, method }
+        };
+        try {
+            // Route by session state, not status: an unauthenticated event (failed
+            // login, blocked popup, magic-link request) cannot write auditLogs
+            // directly because the rules require a session, so it goes through the
+            // backend function. Authenticated events write client-side.
+            if (AuthService.getCurrentUser()) {
+                await AuditLogService.addAuditLog(logBase, status, reason, trackWrite);
+            } else {
+                // The backend requires a valid email; skip when there isn't one
+                // (e.g. a blocked OAuth popup before any account was identified).
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(auditEmail || '')) return;
+                await AuditLogService.recordAuthEvent(logBase, status, reason);
+            }
+        } catch (auditError) {
+            console.warn('[useAdminAuth] Failed to record auth audit log:', auditError);
+        }
+    }, [trackWrite]);
+
+    const handleProviderLogin = useCallback(async (provider) => {
+        setAuthError('');
+        const method = provider === 'apple' ? 'apple' : 'google';
+
+        const result = await execute(async () => {
+            try {
+                const credential = provider === 'apple'
+                    ? await AuthService.loginWithApple()
+                    : await AuthService.loginWithGoogle();
+                // onAuthChange handles user-doc provisioning for any provider.
+                await recordAuthAudit({
+                    email: String(credential.user?.email || '').toLowerCase(),
+                    method,
+                    flow: 'login',
+                    status: 'success'
+                });
+            } catch (error) {
+                if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
+                    // User dismissed the popup — not an error worth surfacing.
+                    return;
+                }
+                await recordAuthAudit({
+                    email: String(error?.customData?.email || email || '').trim().toLowerCase(),
+                    method,
+                    flow: 'login',
+                    status: 'failure',
+                    reason: formatAuthErrorMessage(error, t, language, error.message)
+                });
+                throw error;
+            }
+        });
+
+        if (!result?.success) {
+            const code = result?.error?.code;
+            if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+                return;
+            }
+            setAuthError(formatAuthErrorMessage(result?.error, t, language));
+        }
+    }, [email, execute, language, recordAuthAudit, t]);
+
+    const handleGoogleLogin = useCallback(() => handleProviderLogin('google'), [handleProviderLogin]);
+    const handleAppleLogin = useCallback(() => handleProviderLogin('apple'), [handleProviderLogin]);
+
+    const handleSendMagicLink = useCallback(async () => {
+        setAuthError('');
+        const normalizedEmail = email.trim().toLowerCase();
+        if (!normalizedEmail) {
+            setAuthError(t('admin.auth.errors.emailRequired'));
+            return;
+        }
+
+        const result = await execute(async () => {
+            await AuthService.sendMagicLink(normalizedEmail);
+            await recordAuthAudit({
+                email: normalizedEmail,
+                method: 'email_link',
+                flow: 'magic_link_request',
+                status: 'success',
+                reason: 'Sign-in link sent'
+            });
+        });
+
+        if (!result?.success) {
+            setAuthError(formatAuthErrorMessage(result?.error, t, language));
+            return;
+        }
+
+        setMagicLinkSent(true);
+    }, [email, execute, language, recordAuthAudit, t]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const href = window.location.href;
+        if (!AuthService.isMagicLink(href)) return;
+
+        const stored = AuthService.getStoredMagicLinkEmail();
+        const linkEmail = stored || window.prompt(t('admin.auth.magicLinkEmailPrompt')) || '';
+        if (!linkEmail) {
+            setAuthError(t('admin.auth.errors.magicLinkInvalid'));
+            return;
+        }
+
+        (async () => {
+            try {
+                const credential = await AuthService.completeMagicLink(linkEmail, href);
+                window.history.replaceState({}, document.title, '/admin');
+                await recordAuthAudit({
+                    email: String(credential.user?.email || linkEmail).toLowerCase(),
+                    method: 'email_link',
+                    flow: 'login',
+                    status: 'success'
+                });
+            } catch (error) {
+                await recordAuthAudit({
+                    email: linkEmail.toLowerCase(),
+                    method: 'email_link',
+                    flow: 'login',
+                    status: 'failure',
+                    reason: formatAuthErrorMessage(error, t, language, error.message)
+                });
+                setAuthError(formatAuthErrorMessage(error, t, language));
+            }
+        })();
+        // Run once on mount to complete a returning magic link.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const handleLogin = useCallback(async (event) => {
         event.preventDefault();
         setAuthError('');
@@ -173,39 +313,16 @@ export const useAdminAuth = ({
             return;
         }
 
-        const geoPromise = fetchGeoData().catch(() => ({ ip: 'Unknown', country_name: 'Unknown', city: 'Unknown' }));
+        const flow = isRegistering ? 'register' : 'login';
+        const auditPassword = (status, reason = null) => recordAuthAudit({
+            email: normalizedEmail,
+            method: 'email_password',
+            flow,
+            status,
+            reason
+        });
 
         const result = await execute(async () => {
-            const geoData = await geoPromise;
-            const logBase = {
-                email: normalizedEmail,
-                ipAddress: geoData.ip,
-                country: geoData.country_name,
-                city: geoData.city,
-                userAgent: navigator.userAgent,
-                deviceType: getDeviceType(),
-                sessionId: getSessionId(),
-                details: {
-                    category: 'auth',
-                    flow: isRegistering ? 'register' : 'login',
-                    method: 'email_password'
-                }
-            };
-            const recordAuthAudit = async (status, reason = null) => {
-                try {
-                    if (status === 'failure') {
-                        // Failed logins are unauthenticated, so the client cannot write
-                        // auditLogs directly (rules require a session). Route through the
-                        // backend function so brute-force attempts are actually captured.
-                        await AuditLogService.recordAuthEvent(logBase, status, reason);
-                    } else {
-                        await AuditLogService.addAuditLog(logBase, status, reason, trackWrite);
-                    }
-                } catch (auditError) {
-                    console.warn('[useAdminAuth] Failed to record auth audit log:', auditError);
-                }
-            };
-
             try {
                 let authUser;
                 if (isRegistering) {
@@ -220,7 +337,7 @@ export const useAdminAuth = ({
                         trackWrite(1, 'Created user record');
                     }
 
-                    await recordAuthAudit('success', 'User Registered');
+                    await auditPassword('success', 'User Registered');
                 } else {
                     const credential = await AuthService.login(normalizedEmail, password);
                     authUser = credential.user;
@@ -241,23 +358,21 @@ export const useAdminAuth = ({
                         throw new Error(t('admin.auth.errors.disabledByAdmin'));
                     }
 
-                    await recordAuthAudit('success');
+                    await auditPassword('success');
                 }
             } catch (error) {
-                await recordAuthAudit(
-                    'failure',
-                    formatAuthErrorMessage(error, t, language, error.message)
-                );
+                await auditPassword('failure', formatAuthErrorMessage(error, t, language, error.message));
                 throw error;
             }
-        }, {
-            showToast,
-            successMessage: isRegistering ? t('admin.auth.accountCreated') : undefined
         });
 
         if (!result?.success) {
             setAuthError(formatAuthErrorMessage(result?.error, t, language));
             return;
+        }
+
+        if (isRegistering) {
+            showToast(t('admin.auth.accountCreated'), 'success');
         }
 
         if (!isRegistering) {
@@ -272,7 +387,7 @@ export const useAdminAuth = ({
         setPassword('');
         setShowPassword(false);
         setCapsLockOn(false);
-    }, [email, execute, isRegistering, language, password, rememberEmail, showToast, t, trackRead, trackWrite]);
+    }, [email, execute, isRegistering, language, password, rememberEmail, recordAuthAudit, showToast, t, trackRead, trackWrite]);
 
     const handlePasswordKeyState = useCallback((event) => {
         setCapsLockOn(Boolean(event.getModifierState?.('CapsLock')));
@@ -299,7 +414,12 @@ export const useAdminAuth = ({
         setAuthError,
         rememberEmail,
         setRememberEmail,
+        magicLinkSent,
+        setMagicLinkSent,
         handleLogin,
+        handleGoogleLogin,
+        handleAppleLogin,
+        handleSendMagicLink,
         handlePasswordKeyState
     };
 };

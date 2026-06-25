@@ -197,6 +197,13 @@
       "needAccountRegister": "Need an account? Register",
       "backToSite": "Back to Site",
       "accountCreated": "Account created! You are now logged in.",
+      "orDivider": "or",
+      "continueWithGoogle": "Continue with Google",
+      "continueWithApple": "Continue with Apple",
+      "sendMagicLink": "Email me a sign-in link",
+      "magicLinkSending": "Sending link...",
+      "magicLinkSent": "Check your email for a sign-in link.",
+      "magicLinkEmailPrompt": "Please confirm your email to complete sign-in:",
       "errors": {
         "default": "Unable to authenticate. Please try again.",
         "disabledByAdmin": "Your account has been disabled by an administrator.",
@@ -207,7 +214,11 @@
         "weakPassword": "Password must be at least 6 characters.",
         "emailInUse": "This email is already registered.",
         "emailRequired": "Please enter your email address.",
-        "passwordRequired": "Please enter your password."
+        "passwordRequired": "Please enter your password.",
+        "popupBlocked": "Sign-in popup was blocked. Please allow popups and try again.",
+        "accountExistsDifferentCredential": "An account already exists with this email using a different sign-in method.",
+        "magicLinkInvalid": "This sign-in link is invalid. Please request a new one.",
+        "magicLinkExpired": "This sign-in link has expired. Please request a new one."
       }
     },
     "rolePermissions": {
@@ -1461,6 +1472,19 @@
       "messages": {
         "noChanges": "No profile changes to save.",
         "saved": "Profile saved!"
+      },
+      "password": {
+        "title": "Email & Password Sign-in",
+        "intro": "Set or change the password for email and password sign-in. For security, this requires verifying your identity first.",
+        "currentPassword": "Current Password",
+        "currentPasswordPlaceholder": "Leave blank if you sign in with Google",
+        "currentPasswordHint": "Enter your current password to change it. If you sign in with Google and have not set a password yet, leave this blank and we will verify with Google.",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm Password",
+        "action": "Save Password",
+        "saved": "Password updated. You can now sign in with your email and password.",
+        "mismatch": "Passwords do not match.",
+        "currentWrong": "Your current password is incorrect. Leave it blank to verify with Google instead."
       }
     },
     "analytics": {
