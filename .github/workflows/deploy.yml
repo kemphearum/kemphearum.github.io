@@ -120,21 +120,23 @@ jobs:
           name: build-output
           path: ./build/client
 
+      - name: Authenticate to Primary Firebase
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
+
       - name: Deploy to Primary Firebase Hosting
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
-        run: |
-          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
-          npx --yes firebase-tools@15.22.0 deploy --only hosting --project phearum-info --non-interactive
+        run: npx --yes firebase-tools@15.22.0 deploy --only hosting --project phearum-info --non-interactive
+
+      - name: Authenticate to Backup Firebase
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BACKUP }}
+          create_credentials_file: true
+          export_environment_variables: true
 
       - name: Deploy to Backup Firebase Hosting
         continue-on-error: true
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
-        run: |
-          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_BACKUP }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
-          npx --yes firebase-tools@15.22.0 deploy --only hosting --project kem-phearum --non-interactive
-
-      - name: Remove Firebase credentials
-        if: always()
-        run: rm -f "${{ runner.temp }}/firebase-service-account.json"
+        run: npx --yes firebase-tools@15.22.0 deploy --only hosting --project kem-phearum --non-interactive
