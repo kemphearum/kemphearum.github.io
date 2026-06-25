@@ -66,7 +66,6 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
     const [archiveDays, setArchiveDays] = useState(30);
     const [archiveTargets, setArchiveTargets] = useState({
-        messages: true,
         authLogs: true,
         systemLogs: true,
         activityFeed: true,

@@ -115,7 +115,7 @@ const DatabaseActions = ({
               <Trash2 size={18} /> {tr('Archive Old Records', 'បណ្ណសារកំណត់ត្រាចាស់')}
             </h5>
             <p className="ui-text-secondary ui-text-small ui-mb-medium">
-              {tr('Clear messages, audit logs, visits, and daily usage records older than a specified period to maintain performance.', 'សម្អាតសារ កំណត់ហេតុសវនកម្ម ចំនួនចូលមើល និងទិន្នន័យប្រើប្រាស់ប្រចាំថ្ងៃ ដែលចាស់ជាងរយៈពេលកំណត់ ដើម្បីរក្សាប្រសិទ្ធភាព។')}
+              {tr('Clear audit logs, visits, and daily usage records older than a specified period to maintain performance.', 'សម្អាតកំណត់ហេតុសវនកម្ម ចំនួនចូលមើល និងទិន្នន័យប្រើប្រាស់ប្រចាំថ្ងៃ ដែលចាស់ជាងរយៈពេលកំណត់ ដើម្បីរក្សាប្រសិទ្ធភាព។')}
             </p>
           </div>
           <div className="ui-flex-center-gap-medium">

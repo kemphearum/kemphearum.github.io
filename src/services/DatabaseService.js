@@ -6,7 +6,7 @@ import { isQuotaExceededError } from './BaseService';
 class DatabaseService {
     static SOFT_DOC_LIMIT = 50000;
     static HEALTH_COLLECTIONS = ['posts', 'projects', 'experience', 'content', 'messages', 'auditLogs', 'users', 'rolePermissions', 'settings', 'visits', 'dailyUsage'];
-    static ARCHIVE_COLLECTIONS = ['authLogs', 'systemLogs', 'activityFeed', 'draftContent', 'dailyUsage', 'messages', 'visits'];
+    static ARCHIVE_COLLECTIONS = ['authLogs', 'systemLogs', 'activityFeed', 'draftContent', 'dailyUsage', 'visits'];
     static MAX_BATCH_OPERATIONS = 450;
     static META_KEYS = new Set(['format', 'version', 'exportDate', 'archiveDate', 'cutoffDate', 'daysOld', 'date', 'timestamp']);
 
@@ -331,12 +331,6 @@ class DatabaseService {
 
         const archiveJobs = [];
 
-        if (normalizedTargets.messages) {
-            archiveJobs.push(
-                getDocs(query(collection(db, 'messages'), where('createdAt', '<', cutoffTimestamp)))
-                    .then((snapshot) => collectSnapshot('messages', snapshot))
-            );
-        }
         if (normalizedTargets.visits) {
             archiveJobs.push(
                 getDocs(query(collection(db, 'visits'), where('timestamp', '<', cutoffTimestamp)))

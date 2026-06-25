@@ -21,7 +21,6 @@ const ArchiveDialog = ({
     { key: 'activityFeed', label: tr('Activity Feed Records', 'កំណត់ត្រាសកម្មភាព'), description: tr('Detailed read/write/delete activity history.', 'ប្រវត្តិសកម្មភាព read/write/delete លម្អិត។') },
     { key: 'draftContent', label: tr('Draft / Temporary Records', 'ទិន្នន័យសាកល្បង / ព្រាង'), description: tr('Hidden posts and projects older than the cutoff.', 'ប្រកាស និងគម្រោងដែលលាក់ និងចាស់ជាងកំណត់។') },
     { key: 'dailyUsage', label: tr('Daily Analytics Breakdown', 'បំបែកស្ថិតិប្រចាំថ្ងៃ'), description: tr('Daily usage totals and related logs.', 'ចំនួនសរុបប្រចាំថ្ងៃ និងកំណត់ហេតុពាក់ព័ន្ធ។') },
-    { key: 'messages', label: tr('Messages', 'សារ'), description: tr('Inbox and contact form messages.', 'សារក្នុងប្រអប់ទទួល និងសារពីទម្រង់ទំនាក់ទំនង។') },
     { key: 'visits', label: tr('Visits', 'ការចូលមើល'), description: tr('Page visit records and timestamps.', 'កំណត់ត្រាចូលមើលទំព័រ និងម៉ោង។') }
   ];
 
