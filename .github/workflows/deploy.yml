@@ -21,14 +21,11 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  actions: read
+  actions: write
 
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
-
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
 
 jobs:
   build:
@@ -72,7 +69,7 @@ jobs:
           cp build/client/index.html build/client/404.html
       - name: Clean up existing github-pages artifacts
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           artifacts=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)
           artifact_ids=$(echo "$artifacts" | jq -r '.artifacts[] | select(.name == "github-pages") | .id')
@@ -112,6 +109,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Download build-output
         uses: actions/download-artifact@v4
         with:
@@ -119,18 +121,20 @@ jobs:
           path: ./build/client
 
       - name: Deploy to Primary Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          channelId: live
-          projectId: "phearum-info"
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
+          npx --yes firebase-tools@15.22.0 deploy --only hosting --project phearum-info --non-interactive
 
       - name: Deploy to Backup Firebase Hosting
         continue-on-error: true
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BACKUP }}
-          channelId: live
-          projectId: "kem-phearum"
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_BACKUP }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
+          npx --yes firebase-tools@15.22.0 deploy --only hosting --project kem-phearum --non-interactive
+
+      - name: Remove Firebase credentials
+        if: always()
+        run: rm -f "${{ runner.temp }}/firebase-service-account.json"

@@ -13,10 +13,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  actions: read
-
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: "true"
+  actions: write
 
 jobs:
   build_and_deploy:
@@ -50,7 +47,7 @@ jobs:
 
       - name: Clean up existing github-pages artifacts
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           artifacts=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts)
           artifact_ids=$(echo "$artifacts" | jq -r '.artifacts[] | select(.name == "github-pages") | .id')
@@ -68,17 +65,20 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Deploy to Primary Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
-          channelId: live
-          projectId: "phearum-info"
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
+          npx --yes firebase-tools@15.22.0 deploy --only hosting --project phearum-info --non-interactive
 
       - name: Deploy to Backup Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: "${{ secrets.GITHUB_TOKEN }}"
-          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_BACKUP }}"
-          channelId: live
-          projectId: "kem-phearum"
+        continue-on-error: true
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+        run: |
+          printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_BACKUP }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
+          npx --yes firebase-tools@15.22.0 deploy --only hosting --project kem-phearum --non-interactive
+
+      - name: Remove Firebase credentials
+        if: always()
+        run: rm -f "${{ runner.temp }}/firebase-service-account.json"

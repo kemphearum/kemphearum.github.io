@@ -1,5 +1,5 @@
 import { getLocalizedField } from '../../utils/localization';
-import { ACTIONS, isActionAllowed, normalizeRole } from '../../utils/permissions';
+import { ACTIONS, isActionAllowed } from '../../utils/permissions';
 
 export const tabLabelKeys = {
     general: 'admin.tabs.general',
