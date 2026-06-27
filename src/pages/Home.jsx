@@ -8,6 +8,8 @@ import FeaturedBlogs from '@/sections/FeaturedBlogs';
 import Contact from '@/sections/Contact';
 import Footer from '@/sections/Footer';
 import Experience from '@/sections/Experience';
+import Skills from '@/sections/Skills';
+import Certificates from '@/sections/Certificates';
 import SettingsService from '../../src/services/SettingsService';
 import { normalizeSectionTarget } from '../utils/sectionNavigation';
 import { getLocalizedField } from '../utils/localization';
@@ -81,7 +83,7 @@ export default function Home() {
   // Track scroll position to save the active section
   useEffect(() => {
     let timeout;
-    const sections = ['home', 'about', 'experience', 'projects', 'blog', 'contact'];
+    const sections = ['home', 'about', 'experience', 'skills', 'projects', 'certificates', 'blog', 'contact'];
 
     const handleScroll = () => {
       clearTimeout(timeout);
@@ -139,7 +141,9 @@ export default function Home() {
         <Hero />
         <About />
         <Experience />
+        <Skills />
         <FeaturedProjects />
+        <Certificates />
         <FeaturedBlogs />
         <Contact />
       </main>

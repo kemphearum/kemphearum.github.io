@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
 import { useDebounce } from '../hooks/useDebounce';
+import { filterPublished } from '../domain/shared/contentStatus';
 
 const Projects = ({ isStandalone = false }) => {
     const { language, t } = useTranslation();
@@ -57,8 +58,8 @@ const Projects = ({ isStandalone = false }) => {
         setCurrentPage(1);
     };
 
-    // Only show visible projects (strictly check for true)
-    const visibleProjects = projects.filter(p => p.visible === true);
+    // Only show effectively-published projects (respects scheduled / expired status)
+    const visibleProjects = filterPublished(projects);
 
     // Extract unique tech-stack tags for filtering (trimmed and deduped)
     const allTags = visibleProjects.reduce((acc, proj) => {

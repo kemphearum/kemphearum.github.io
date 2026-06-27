@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router';
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
+import { filterPublished } from '../domain/shared/contentStatus';
 
 const FeaturedBlogs = () => {
     const { language, t } = useTranslation();
@@ -25,8 +26,8 @@ const FeaturedBlogs = () => {
         content: getLocalizedField(post.content, language)
     }));
 
-    // Filter: Visible posts
-    const visiblePosts = posts.filter((p) => p.visible !== false);
+    // Effectively-published posts (respects scheduled / expired status)
+    const visiblePosts = filterPublished(posts);
 
     // Priority: Items marked as 'featured'
     let featuredList = visiblePosts.filter((p) => p.featured === true);

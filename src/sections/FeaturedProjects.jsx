@@ -7,6 +7,7 @@ import styles from './Projects.module.scss';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router';
 import { useTranslation } from '../hooks/useTranslation';
+import { filterPublished } from '../domain/shared/contentStatus';
 
 const FeaturedProjects = () => {
     const { t } = useTranslation();
@@ -20,11 +21,11 @@ const FeaturedProjects = () => {
 
     const projects = projectsData || [];
 
-    // Priority: Items marked as 'featured'
-    let featuredList = projects.filter((p) => p.visible !== false && p.featured === true);
+    // Effectively-published projects (respects scheduled / expired status)
+    const visibleProjects = filterPublished(projects);
 
-    // Filter: Visible projects for the "View All" count
-    const visibleProjects = projects.filter((p) => p.visible !== false);
+    // Priority: Items marked as 'featured'
+    let featuredList = visibleProjects.filter((p) => p.featured === true);
 
     // Fallback: If no hand-picked featured projects, show the 3 newest visible ones
     if (featuredList.length === 0) {

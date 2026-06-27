@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { getLocalizedField } from '../utils/localization';
 import SettingsService from '../services/SettingsService';
+import { isEffectivelyPublished } from '../domain/shared/contentStatus';
 
 const getMetaLanguage = () => {
     if (typeof window === 'undefined') return 'en';
@@ -106,7 +107,7 @@ const Blog = () => {
     }, [settings?.blogFilters, language, allTags]);
 
     const visiblePosts = posts.filter(post => {
-        if (!post.visible) return false;
+        if (!isEffectivelyPublished(post)) return false;
 
         const matchesSearch =
             post.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||

@@ -1,0 +1,109 @@
+@use '../styles/variables' as *;
+
+.section {
+    padding: 4rem 0;
+    position: relative;
+}
+
+.standalone {
+    padding-top: 7rem;
+}
+
+.container {
+    @include container;
+}
+
+.subtitle {
+    text-align: center;
+    max-width: 640px;
+    margin: 0.5rem auto 2.5rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    @include glass;
+    border-radius: $border-radius;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: $transition;
+
+    &:hover {
+        transform: translateY(-4px);
+    }
+}
+
+.cardIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($primary-color, 0.12);
+    color: $primary-color;
+    margin-bottom: 0.4rem;
+}
+
+.cardTitle {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--heading-color, var(--text-primary));
+}
+
+.cardMeta {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.credential {
+    margin: 0.25rem 0 0;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    word-break: break-word;
+}
+
+.verify {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $primary-color;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.skeletonCard {
+    height: 200px;
+    border-radius: $border-radius;
+    background: var(--glass-surface, rgba(127, 127, 127, 0.08));
+    animation: certPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes certPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card:hover { transform: none; }
+    .skeletonCard { animation: none; }
+}
