@@ -189,6 +189,7 @@ const Navbar = () => {
             return location.pathname === '/blog' || location.pathname.startsWith('/blog/');
         }
         if (item.key === 'projects') {
+            if (isHome) return activeSection === 'projects';
             return location.pathname === '/projects' || location.pathname.startsWith('/projects/');
         }
         if (location.pathname !== '/') {
