@@ -72,7 +72,7 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
         const allowedSet = new Set(getTabsForBaseRole(baseRole));
         acc[baseRole] = existingRoleEntry.allowedTabs.filter((tab) => allowedSet.has(tab));
       } else if (baseRole === 'editor') {
-        acc[baseRole] = ['projects', 'blog'];
+        acc[baseRole] = ['projects', 'blog', 'skills', 'certificates'];
       } else if (baseRole === 'pending') {
         acc[baseRole] = [];
       } else {

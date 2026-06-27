@@ -181,7 +181,7 @@ const isDefaultRoleCapabilityAllowed = (action, moduleName, normalizedRole) => {
         if (action === ACTIONS.DATABASE_ACTIONS) return false;
 
         // Default modules allowed for editor — content authoring actions only.
-        if (![MODULES.BLOG, MODULES.PROJECTS].includes(moduleName)) return false;
+        if (![MODULES.BLOG, MODULES.PROJECTS, MODULES.SKILLS, MODULES.CERTIFICATES].includes(moduleName)) return false;
         return EDITOR_ALLOWED_ACTIONS.has(action);
     }
 
