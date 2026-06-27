@@ -6,6 +6,7 @@ import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableH
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { getLocalizedField } from '../../../../utils/localization';
 import HighlightText from '@/shared/components/ui/HighlightText';
+import StatusBadge from '../../components/StatusBadge';
 
 /**
  * BlogTable Component
@@ -109,9 +110,7 @@ const BlogTable = ({
       render: (row) => (
         <div className="ui-blog-statusCell">
           <div className="ui-blog-statusCell__badges">
-            <Badge variant={row.visible !== false ? 'success' : 'warning'}>
-              {row.visible !== false ? t('admin.blog.table.live') : t('admin.blog.table.draft')}
-            </Badge>
+            <StatusBadge row={row} />
             {row.featured && (
               <Badge variant="primary">{t('admin.blog.table.featured')}</Badge>
             )}

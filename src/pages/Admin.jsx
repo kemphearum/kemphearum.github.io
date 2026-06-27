@@ -21,6 +21,10 @@ import {
     tabLabelKeys,
     tabSubtitleKeys
 } from './admin/adminUtils';
+import { listContentTypes, getContentType, isContentType } from '../registry/contentTypeRegistry';
+import { useCommandPalette } from '../hooks/useCommandPalette';
+import CommandPalette from './admin/search/CommandPalette';
+import { useNotifications } from '../context/NotificationContextValue';
 
 const LAZY_RELOAD_PREFIX = 'admin-lazy-reload:';
 
@@ -59,18 +63,22 @@ const lazyWithRetry = (importer, chunkKey) => lazy(() => importer().then(
     throw error;
 }));
 
-// Tab components
+// Special (non-content) tab components
+const DashboardTab = lazyWithRetry(() => import('./admin/dashboard/DashboardTab'), 'dashboard');
 const GeneralTab = lazyWithRetry(() => import('./admin/general/GeneralTab'), 'general');
 const ProfileTab = lazyWithRetry(() => import('./admin/profile/ProfileTab'), 'profile');
 const SettingsTab = lazyWithRetry(() => import('./admin/settings/SettingsTab'), 'settings');
 const MessagesTab = lazyWithRetry(() => import('./admin/messages/MessagesTab'), 'messages');
-const ExperienceTab = lazyWithRetry(() => import('./admin/experience/ExperienceTab'), 'experience');
 const UsersTab = lazyWithRetry(() => import('./admin/users/UsersTab'), 'users');
-const ProjectsTab = lazyWithRetry(() => import('./admin/projects/ProjectsTab'), 'projects');
-const BlogTab = lazyWithRetry(() => import('./admin/blog/BlogTab'), 'blog');
 const DatabaseTab = lazyWithRetry(() => import('./admin/database/DatabaseTab'), 'database');
 const AuditLogsTab = lazyWithRetry(() => import('./admin/audit/AuditLogsTab'), 'audit');
 const AnalyticsTab = lazyWithRetry(() => import('./admin/analytics/AnalyticsTab'), 'analytics');
+
+// Content-type tabs are derived from the registry: adding a content type there
+// makes it route here automatically (all content tabs take the same props).
+const CONTENT_TABS = Object.fromEntries(
+    listContentTypes().map((type) => [type.key, lazyWithRetry(type.load, type.key)])
+);
 
 // ============================================================
 // Icons removed - now handled in modular components
@@ -90,11 +98,13 @@ const Admin = () => {
 
     // ====== 2. Core State ======
     const [lastSyncTime, setLastSyncTime] = useState(new Date());
+    const { open: isPaletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
+    const { record: recordNotification } = useNotifications();
 
     // UI & Tabs
     const [activeTab, setActiveTab] = useState(() => {
-        if (typeof window === 'undefined') return 'profile';
-        return localStorage.getItem('adminActiveTab') || 'profile';
+        if (typeof window === 'undefined') return 'dashboard';
+        return localStorage.getItem('adminActiveTab') || 'dashboard';
     });
 
     // Content & Permissions
@@ -103,13 +113,11 @@ const Admin = () => {
 
     // ====== 3. Callbacks & Memoized Values (Logic Definitions) ======
     const showToast = useCallback((message, type = 'success') => {
-        if (notificationsEnabledRef.current) {
-            setToast({
-                message: normalizeRenderableText(message, language, t('admin.auth.errors.default')),
-                type
-            });
-        }
-    }, [language, t]);
+        if (!notificationsEnabledRef.current) return;
+        const normalized = normalizeRenderableText(message, language, t('admin.auth.errors.default'));
+        setToast({ message: normalized, type });
+        recordNotification(normalized, type);
+    }, [language, t, recordNotification]);
     const {
         user,
         isAuthLoading,
@@ -206,7 +214,15 @@ const Admin = () => {
     const renderActiveTab = () => {
         const commonProps = { userRole, showToast, userId, userDisplayName, userEmail: user?.email, isActionAllowed: checkActionAllowed };
 
+        // Content-type tabs share the same props and are resolved from the registry.
+        if (isContentType(activeTab)) {
+            const ContentTab = CONTENT_TABS[activeTab];
+            return <ContentTab {...commonProps} />;
+        }
+
         switch (activeTab) {
+            case 'dashboard':
+                return <DashboardTab {...commonProps} setActiveTab={setActiveTab} />;
             case 'general':
                 return <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} loading={loading} saveSectionData={saveSectionData} />;
             case 'profile':
@@ -215,12 +231,6 @@ const Admin = () => {
                 return <SettingsTab {...commonProps} settingsData={settingsData} setSettingsData={setSettingsData} loading={loading} saveSectionData={saveSectionData} sidebarPersistent={sidebarPersistent} setSidebarPersistent={setSidebarPersistent} />;
             case 'messages':
                 return <MessagesTab {...commonProps} onMessagesChange={fetchMessages} />;
-            case 'experience':
-                return <ExperienceTab {...commonProps} />;
-            case 'projects':
-                return <ProjectsTab {...commonProps} />;
-            case 'blog':
-                return <BlogTab {...commonProps} />;
             case 'users':
                 return <UsersTab {...commonProps} user={user} />;
             case 'database':
@@ -230,7 +240,7 @@ const Admin = () => {
             case 'analytics':
                 return <AnalyticsTab {...commonProps} />;
             default:
-                return <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} loading={loading} saveSectionData={saveSectionData} />;
+                return <DashboardTab {...commonProps} setActiveTab={setActiveTab} />;
         }
     };
 
@@ -423,11 +433,18 @@ const Admin = () => {
             isTabAllowed={isTabAllowed}
             unreadMessagesCount={unreadMessagesCount}
             lastSyncTime={lastSyncTime}
-            title={t(tabLabelKeys[activeTab] || 'admin.dashboard.title')}
-            subtitle={t(tabSubtitleKeys[activeTab] || 'admin.subtitles.default')}
+            title={t(getContentType(activeTab)?.labelKey || tabLabelKeys[activeTab] || 'admin.dashboard.title')}
+            subtitle={t(getContentType(activeTab)?.subtitleKey || tabSubtitleKeys[activeTab] || 'admin.subtitles.default')}
             settingsData={settingsData}
         >
             {toast && <AdminToast message={toast.message} type={toast.type} onClose={() => setToast(null)} language={language} />}
+            <CommandPalette
+                open={isPaletteOpen}
+                onClose={() => setPaletteOpen(false)}
+                onNavigate={handleTabClick}
+                isActionAllowed={checkActionAllowed}
+                canViewTab={(key) => isTabAllowed(key, userRole, rolePermissions)}
+            />
             <Suspense fallback={<div style={{display: 'flex', justifyContent: 'center', padding: '4rem'}}><Spinner size="xl" /></div>}>
                 {renderActiveTab()}
             </Suspense>

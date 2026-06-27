@@ -36,6 +36,15 @@ $nav-height: 80px;
 $container-width: 1200px;
 $border-radius: 12px;
 
+// Spacing scale (4px base) — use for consistent gaps/padding across the admin UI
+$space-1: 0.25rem; // 4px
+$space-2: 0.5rem; // 8px
+$space-3: 0.75rem; // 12px
+$space-4: 1rem; // 16px
+$space-5: 1.5rem; // 24px
+$space-6: 2rem; // 32px
+$space-8: 3rem; // 48px
+
 // Shadows
 $shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
 $shadow-md: 0 8px 15px rgba(0, 0, 0, 0.2);
@@ -44,6 +53,23 @@ $neon-glow: var(--neon-glow);
 
 // Transitions
 $transition: all 0.2s ease-in-out;
+
+// Motion scale — named durations + easings for consistent animation
+$motion-fast: 0.15s;
+$motion-base: 0.2s;
+$motion-slow: 0.4s;
+$ease-standard: ease-in-out;
+$ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+$transition-fast: all $motion-fast $ease-standard;
+$transition-slow: all $motion-slow $ease-emphasized;
+
+// Z-index scale — single source of truth for stacking order
+$z-base: 1;
+$z-sticky: 100; // sticky navbar
+$z-dropdown: 200; // popovers, notification panel
+$z-overlay: 900; // page overlays / backdrops
+$z-modal: 1000; // dialogs, command palette
+$z-toast: 1100; // toasts (above modals)
 
 @mixin wow-hover {
   transition: $transition;

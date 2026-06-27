@@ -1,5 +1,6 @@
 import { slugify } from '../shared/slugify';
 import { buildLocalizedFieldFromInput, getLocalizedField } from '../../utils/localization';
+import { normalizeStatusFields } from '../shared/contentStatus';
 
 /**
  * Normalizes project data for Firestore.
@@ -25,7 +26,7 @@ export const normalizeProject = (data) => {
         liveUrl: (data.liveUrl || '').trim(),
         slug: slugify((data.slug || title.en || 'untitled').trim()),
         content,
-        visible: data.visible !== false,
+        ...normalizeStatusFields(data),
         featured: !!data.featured,
         ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl })
     };

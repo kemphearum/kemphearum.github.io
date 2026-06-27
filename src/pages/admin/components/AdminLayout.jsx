@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import AnimatedBackground from '@/sections/AnimatedBackground';
+import { useTranslation } from '../../../hooks/useTranslation';
 import styles from './AdminLayout.module.scss';
 
 const AdminLayout = ({ 
@@ -22,6 +23,7 @@ const AdminLayout = ({
     lastSyncTime,
     settingsData = {}
 }) => {
+    const { t } = useTranslation();
     // Dual states for sidebar toggle
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -117,6 +119,15 @@ const AdminLayout = ({
             <main className={`${styles.mainContent} ${isCollapsed ? styles['mainContent--collapsed'] : ''}`}>
                 <div className={styles.contentHeader}>
                     <div>
+                        {currentRoute !== 'dashboard' && (
+                            <nav className={styles.breadcrumb} aria-label="Breadcrumb">
+                                <button type="button" onClick={() => onNavigate('dashboard')}>
+                                    {t('admin.tabs.dashboard')}
+                                </button>
+                                <span aria-hidden="true">/</span>
+                                <span aria-current="page">{title}</span>
+                            </nav>
+                        )}
                         <h1>{title}</h1>
                         {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
                     </div>

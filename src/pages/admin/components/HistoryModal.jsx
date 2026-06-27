@@ -1,13 +1,34 @@
 import React, { useState, useMemo } from 'react';
-import { Clock, History, AlertCircle, ChevronDown, ChevronRight, PlusCircle, MinusCircle, Edit3 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Clock, History, AlertCircle, ChevronDown, ChevronRight, PlusCircle, MinusCircle, Edit3, RotateCcw } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { diffWordsWithSpace } from 'diff';
 import { Button, Dialog, Spinner } from '@/shared/components/ui';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { useActivity } from '../../../hooks/useActivity';
 
-const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
+const HistoryModal = ({ isOpen, onClose, recordId, service, title, canRestore = false, showToast }) => {
     const [expandedLogId, setExpandedLogId] = useState(null);
+    const [restoreTarget, setRestoreTarget] = useState(null);
+    const [restoring, setRestoring] = useState(false);
     const { t } = useTranslation();
+    const queryClient = useQueryClient();
+    const { trackWrite } = useActivity();
+
+    const confirmRestore = async () => {
+        if (!restoreTarget || !service?.restoreVersion) return;
+        setRestoring(true);
+        try {
+            await service.restoreVersion(recordId, restoreTarget.id, trackWrite);
+            queryClient.invalidateQueries({ queryKey: ['history', service?.collectionName, recordId] });
+            queryClient.invalidateQueries({ queryKey: [service?.collectionName] });
+            showToast?.(t('admin.common.history.restoreSuccess'), 'success');
+            setRestoreTarget(null);
+        } catch (err) {
+            showToast?.(err?.message || t('admin.common.history.restoreError'), 'error');
+        } finally {
+            setRestoring(false);
+        }
+    };
     const getActionLabel = (action) => {
         switch (action) {
             case 'created':
@@ -157,6 +178,30 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
                 </Dialog.Header>
 
                 <Dialog.Body style={{ padding: '1.5rem', maxHeight: '70vh', overflowY: 'auto' }}>
+                    {restoreTarget && (
+                        <div style={{ marginBottom: '1.25rem', padding: '1.1rem 1.25rem', border: '1px solid rgba(108, 99, 255, 0.3)', borderRadius: '10px', background: 'var(--card-bg)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, marginBottom: '0.4rem' }}>
+                                <RotateCcw size={16} /> {t('admin.common.history.restoreConfirmTitle')}
+                            </div>
+                            <p style={{ margin: '0 0 0.75rem', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                                {t('admin.common.history.restoreConfirmMessage')}
+                            </p>
+                            <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                                {t('admin.common.history.restorePreview')}
+                            </div>
+                            <pre style={{ margin: '0 0 1rem', maxHeight: '180px', overflow: 'auto', background: 'var(--input-bg)', borderRadius: '6px', padding: '0.75rem', fontSize: '0.75rem', color: 'var(--text-primary)' }}>
+                                {JSON.stringify(restoreTarget.newData, null, 2)}
+                            </pre>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem' }}>
+                                <Button variant="ghost" type="button" onClick={() => setRestoreTarget(null)} disabled={restoring}>
+                                    {t('admin.common.history.close')}
+                                </Button>
+                                <Button type="button" className="ui-primary" isLoading={restoring} onClick={confirmRestore}>
+                                    {t('admin.common.history.restoreConfirm')}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                     {isLoading ? (
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px' }}>
                             <Spinner size="lg" />
@@ -209,8 +254,20 @@ const HistoryModal = ({ isOpen, onClose, recordId, service, title }) => {
                                                             {entry.timestamp?.seconds ? new Date(entry.timestamp.seconds * 1000).toLocaleString() : t('admin.common.history.justNow')}
                                                         </div>
                                                     </div>
-                                                    <div style={{ color: 'var(--text-secondary)', opacity: 0.8 }}>
-                                                        {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        {canRestore && entry.action !== 'deleted' && entry.newData && service?.restoreVersion && (
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={(event) => { event.stopPropagation(); setRestoreTarget(entry); }}
+                                                                title={t('admin.common.history.restore')}
+                                                            >
+                                                                <RotateCcw size={15} style={{ marginRight: '0.3rem' }} /> {t('admin.common.history.restore')}
+                                                            </Button>
+                                                        )}
+                                                        <span style={{ color: 'var(--text-secondary)', opacity: 0.8 }}>
+                                                            {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                                        </span>
                                                     </div>
                                                 </div>
 

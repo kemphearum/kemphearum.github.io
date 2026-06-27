@@ -1,38 +1,25 @@
 import React, { useMemo, useState } from 'react';
 import { Eye, EyeOff, Star, StarOff, Trash2, LayoutTemplate, Globe2, Sparkles, Link2 } from 'lucide-react';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { useActivity } from '../../../hooks/useActivity';
-import { useAsyncAction } from '../../../hooks/useAsyncAction';
-import { useDebounce } from '../../../hooks/useDebounce';
 import ProjectService from '../../../services/ProjectService';
-import BaseService from '../../../services/BaseService';
+import BulkActionsBar from '../components/BulkActionsBar';
 import ProjectsToolbar from './components/ProjectsToolbar';
 import ProjectsTable from './components/ProjectsTable';
 import ProjectsFormDialog from './components/ProjectsFormDialog';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
 import HistoryModal from '../components/HistoryModal';
 import ImportConfirmDialog from '../components/ImportConfirmDialog';
-import { Button } from '@/shared/components/ui';
-import { useCursorPagination } from '../../../hooks/useCursorPagination';
-import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
+import { jsonToCsv } from '../../../utils/csvUtils';
+import { parseBoolean, readImportFile, parseImportItems, downloadJson, downloadCsv, runImport } from '../adminCrudIO';
 import { slugify } from '../../../domain/shared/slugify';
 import ImageProcessingService from '../../../services/ImageProcessingService';
+import { useAdminCrud } from '../hooks/useAdminCrud';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { getLanguageValue, getLocalizedField } from '../../../utils/localization';
-
 import { ACTIONS, MODULES } from '../../../utils/permissions';
 
 const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const { language, t } = useTranslation();
-  const [editingItem, setEditingItem] = useState(null);
-  const [deletingItem, setDeletingItem] = useState(null);
-  const [historyItem, setHistoryItem] = useState(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearch = useDebounce(searchQuery, 500);
-  const [selectedProjects, setSelectedProjects] = useState([]);
-  const [bulkConfirm, setBulkConfirm] = useState({ isOpen: false, type: '', ids: [] });
+  const [bulkConfirm, setBulkConfirm] = useState({ isOpen: false, ids: [] });
   const [importDialog, setImportDialog] = useState({
     isOpen: false,
     file: null,
@@ -44,72 +31,93 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     skippedCount: 0
   });
   const [importLoading, setImportLoading] = useState(false);
-  
-  // Cursor pagination hook
-  const pagination = useCursorPagination(5, [debouncedSearch]);
-  const queryClient = useQueryClient();
 
-  const { loading: formLoading, execute: executeForm } = useAsyncAction({
+  const crud = useAdminCrud({
+    resourceKey: 'projects',
+    module: MODULES.PROJECTS,
+    isActionAllowed,
     showToast,
-    successMessage: editingItem ? t('admin.projects.messages.updated') : t('admin.projects.messages.created'),
-    invalidateKeys: [['projects']],
-    onSuccess: () => setIsFormOpen(false)
-  });
-
-  const { loading: deleteLoading, execute: executeDelete } = useAsyncAction({
-    showToast,
-    successMessage: t('admin.projects.messages.deleted'),
-    invalidateKeys: [['projects']],
-    onSuccess: () => setDeletingItem(null)
-  });
-  const { trackRead, trackWrite, trackDelete } = useActivity();
-
-  // Fetch data
-  const { data: projectsResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    queryKey: ['projects', debouncedSearch, pagination.cursor, pagination.limit],
-    queryFn: async () => {
-      const requestCursor = pagination.cursor;
-      const result = await BaseService.safe(() => ProjectService.fetchPaginated({
-        lastDoc: requestCursor,
-        limit: pagination.limit,
-        search: debouncedSearch,
-        searchFields: ['title.en', 'title.km', 'description.en', 'description.km', 'techStack', 'slug'],
-        sortBy: "createdAt",
-        sortDirection: "desc",
-        includeTotal: true,
-        trackRead
-      }));
-
-      if (result.error) {
-        showToast(result.error, 'error');
-        return { data: [], lastDoc: null, hasMore: false, totalCount: null };
+    t,
+    fetchPaginated: ({ lastDoc, limit, search, trackRead }) => ProjectService.fetchPaginated({
+      lastDoc,
+      limit,
+      search,
+      searchFields: ['title.en', 'title.km', 'description.en', 'description.km', 'techStack', 'slug'],
+      sortBy: 'createdAt',
+      sortDirection: 'desc',
+      includeTotal: true,
+      trackRead
+    }),
+    fetchStats: () => ProjectService.fetchStats(),
+    statsDefault: { total: 0, published: 0, featured: 0, linked: 0 },
+    toggleVisibility: {
+      mutationFn: (id, current, trackWrite) => ProjectService.toggleVisibility(userRole, id, current, trackWrite),
+      on: t('admin.projects.messages.shown'),
+      off: t('admin.projects.messages.hidden')
+    },
+    toggleFeatured: {
+      mutationFn: (id, current, trackWrite) => ProjectService.toggleFeatured(userRole, id, current, trackWrite),
+      on: t('admin.projects.messages.featured'),
+      off: t('admin.projects.messages.unfeatured')
+    },
+    bulk: {
+      delete: (ids, trackDelete) => ProjectService.batchDeleteProjects(userRole, ids, trackDelete),
+      setVisibility: (ids, visible, trackWrite) => ProjectService.batchUpdateProjectsVisibility(userRole, ids, visible, trackWrite),
+      setFeatured: (ids, featured, trackWrite) => ProjectService.batchUpdateProjectsFeatured(userRole, ids, featured, trackWrite),
+      messages: {
+        deleted: (count) => t('admin.projects.messages.deletedMany', { count }),
+        visibility: (count, visible) => (visible
+          ? t('admin.projects.messages.shownMany', { count })
+          : t('admin.projects.messages.hiddenMany', { count })),
+        featured: (count, featured) => (featured
+          ? t('admin.projects.messages.featuredMany', { count })
+          : t('admin.projects.messages.unfeaturedMany', { count }))
       }
-
-      pagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
-      return result.data;
+    },
+    messages: {
+      created: t('admin.projects.messages.created'),
+      updated: t('admin.projects.messages.updated'),
+      deleted: t('admin.projects.messages.deleted')
     }
   });
 
-  const { data: projectStats = { total: 0, published: 0, featured: 0, linked: 0 } } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    queryKey: ['projects', 'stats'],
-    queryFn: async () => {
-      const result = await BaseService.safe(() => ProjectService.fetchStats());
-      if (result.error) {
-        showToast(result.error, 'error');
-        return { total: 0, published: 0, featured: 0, linked: 0 };
-      }
-      return result.data;
-    }
-  });
+  const {
+    items: projects,
+    listResult: projectsResult,
+    stats: projectStats,
+    isLoading,
+    isSearching,
+    searchQuery,
+    handleSearch,
+    pagination,
+    selection,
+    selectedIds,
+    editingItem,
+    setEditingItem,
+    deletingItem,
+    setDeletingItem,
+    historyItem,
+    setHistoryItem,
+    isFormOpen,
+    setIsFormOpen,
+    isHistoryOpen,
+    setIsHistoryOpen,
+    ensurePermission,
+    handleToggleVisibility,
+    handleToggleFeatured,
+    bulkDeleteMutation,
+    bulkVisibilityMutation,
+    bulkFeaturedMutation,
+    bulkPending,
+    formLoading,
+    deleteLoading,
+    saveItem,
+    executeDelete,
+    trackWrite,
+    trackDelete,
+    queryClient
+  } = crud;
 
-  const projects = projectsResult.data;
-  const isSearching = searchQuery !== debouncedSearch;
   const tableProjects = useMemo(() => projects.map((project) => ({
     ...project,
     __raw: project,
@@ -117,6 +125,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     description: getLocalizedField(project.description, language),
     content: getLocalizedField(project.content, language)
   })), [projects, language]);
+
   const workspaceStats = [
     {
       label: t('admin.projects.stats.total.label'),
@@ -153,23 +162,13 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   const canViewHistory = isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.PROJECTS);
 
   const handleAdd = () => {
-    if (!isActionAllowed(ACTIONS.CREATE, MODULES.PROJECTS)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
+    if (!ensurePermission(ACTIONS.CREATE)) return;
     setEditingItem(null);
     setIsFormOpen(true);
   };
 
-  const handleSearch = (val) => {
-    setSearchQuery(val);
-    setSelectedProjects([]);
-    pagination.reset();
-  };
-
   const handleEdit = (item) => {
-    if (!isActionAllowed(ACTIONS.EDIT, MODULES.PROJECTS)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
+    if (!ensurePermission(ACTIONS.EDIT)) return;
     const source = item.__raw || item;
     setEditingItem({
       ...source,
@@ -179,47 +178,35 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleDelete = (item) => {
-    if (!isActionAllowed(ACTIONS.DELETE, MODULES.PROJECTS)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
+    if (!ensurePermission(ACTIONS.DELETE)) return;
     setDeletingItem(item.__raw || item);
   };
 
   const handleViewHistory = (item) => {
-    if (!isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.PROJECTS)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
+    if (!ensurePermission(ACTIONS.VIEW_HISTORY)) return;
     setHistoryItem(item.__raw || item);
     setIsHistoryOpen(true);
   };
-  
-  // Selection Handlers
-  const handleToggleSelectProject = (id) => {
-    setSelectedProjects(prev =>
-        prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]
-    );
+
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    setBulkConfirm({ isOpen: true, ids: selectedIds });
   };
 
-  const handleSelectAllProjects = () => {
-    const paginatedIds = projects.map(p => p.id);
-    const allSelected = paginatedIds.length > 0 && paginatedIds.every(id => selectedProjects.includes(id));
-    
-    if (allSelected) {
-      setSelectedProjects(prev => prev.filter(id => !paginatedIds.includes(id)));
-    } else {
-      setSelectedProjects(prev => {
-        const newSelections = paginatedIds.filter(id => !prev.includes(id));
-        return [...prev, ...newSelections];
-      });
-    }
+  const handleBulkVisibility = (visible) => {
+    if (selectedIds.length === 0) return;
+    bulkVisibilityMutation.mutate({ ids: selectedIds, visible });
+  };
+
+  const handleBulkFeatured = (featured) => {
+    if (selectedIds.length === 0) return;
+    bulkFeaturedMutation.mutate({ ids: selectedIds, featured });
   };
 
   const handleSave = async (formData) => {
-    if (!isActionAllowed(editingItem ? ACTIONS.EDIT : ACTIONS.CREATE, MODULES.PROJECTS)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
-    
-    await executeForm(async () => {
+    if (!ensurePermission(editingItem ? ACTIONS.EDIT : ACTIONS.CREATE)) return;
+
+    await saveItem(async () => {
       let imageUrl = formData.imageUrl || '';
       if (formData.image instanceof File) {
         imageUrl = await ImageProcessingService.compress(formData.image);
@@ -229,8 +216,10 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
       const action = editingItem ? 'updated' : 'created';
       await ProjectService.saveProject(userRole, {
         ...rest,
-        id: editingItem?.id || null
-      }, imageUrl, (count, label) => 
+        id: editingItem?.id || null,
+        publishedAt: editingItem?.publishedAt,
+        archivedAt: editingItem?.archivedAt
+      }, imageUrl, (count, label) =>
         trackWrite(count, label, {
           action,
           module: 'projects',
@@ -239,48 +228,6 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         })
       );
     });
-  };
-
-  const parseBoolean = (value, fallback = false) => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') {
-      const normalized = value.trim().toLowerCase();
-      if (['true', '1', 'yes', 'y'].includes(normalized)) return true;
-      if (['false', '0', 'no', 'n'].includes(normalized)) return false;
-    }
-    return fallback;
-  };
-
-  const readImportFile = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => resolve(event.target?.result || '');
-    reader.onerror = () => reject(new Error('Failed to read import file.'));
-    reader.readAsText(file);
-  });
-
-  const parseImportItems = (fileName, content) => {
-    let parsed = [];
-
-    if (fileName.toLowerCase().endsWith('.csv')) {
-      parsed = csvToJson(content);
-    } else {
-      parsed = JSON.parse(content);
-    }
-
-    if (!Array.isArray(parsed)) parsed = [parsed];
-    return parsed;
-  };
-
-  const downloadJson = (data, filename) => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   const handleImportProjects = async (file) => {
@@ -314,53 +261,34 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
 
     setImportLoading(true);
     try {
-      let created = 0;
-      let updated = 0;
-      let skipped = 0;
-      let failed = 0;
-
-      for (const item of importDialog.items) {
-        try {
+      const { created, updated, skipped, failed } = await runImport({
+        items: importDialog.items,
+        buildPayload: (item) => {
           const titleEn = (item?.titleEn || getLanguageValue(item?.title, 'en', true) || '').trim();
-          if (!titleEn) {
-            skipped += 1;
-            continue;
-          }
+          if (!titleEn) return null;
           const normalizedSlug = item.slug ? slugify(item.slug) : slugify(titleEn);
           const techStack = Array.isArray(item.techStack)
             ? item.techStack.join(', ')
             : (item.techStack || '');
-          const titleKm = (item?.titleKm || getLanguageValue(item?.title, 'km', false) || '').trim();
-          const descriptionEn = (item?.descriptionEn || getLanguageValue(item?.description, 'en', true) || '').trim();
-          const descriptionKm = (item?.descriptionKm || getLanguageValue(item?.description, 'km', false) || '').trim();
-          const contentEn = (item?.contentEn || getLanguageValue(item?.content, 'en', true) || '').trim();
-          const contentKm = (item?.contentKm || getLanguageValue(item?.content, 'km', false) || '').trim();
-
-          const existing = await ProjectService.fetchProjectBySlug(normalizedSlug, null, true);
-          const payload = {
-            id: existing?.id || null,
+          return {
             titleEn,
-            titleKm,
-            descriptionEn,
-            descriptionKm,
+            titleKm: (item?.titleKm || getLanguageValue(item?.title, 'km', false) || '').trim(),
+            descriptionEn: (item?.descriptionEn || getLanguageValue(item?.description, 'en', true) || '').trim(),
+            descriptionKm: (item?.descriptionKm || getLanguageValue(item?.description, 'km', false) || '').trim(),
             techStack,
             githubUrl: item.githubUrl || '',
             liveUrl: item.liveUrl || '',
             slug: normalizedSlug,
-            contentEn,
-            contentKm,
+            contentEn: (item?.contentEn || getLanguageValue(item?.content, 'en', true) || '').trim(),
+            contentKm: (item?.contentKm || getLanguageValue(item?.content, 'km', false) || '').trim(),
             featured: parseBoolean(item.featured, false),
             visible: parseBoolean(item.visible, true),
             imageUrl: item.imageUrl || ''
           };
-
-          await ProjectService.saveProject(userRole, payload, undefined, trackWrite);
-          if (existing?.id) updated += 1;
-          else created += 1;
-        } catch {
-          failed += 1;
-        }
-      }
+        },
+        fetchExistingBySlug: (slug) => ProjectService.fetchProjectBySlug(slug, null, true),
+        save: (payload) => ProjectService.saveProject(userRole, payload, undefined, trackWrite)
+      });
 
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setImportDialog({
@@ -385,11 +313,11 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleExportSelectedProjects = () => {
-    if (selectedProjects.length === 0) {
+    if (selectedIds.length === 0) {
       return showToast(t('admin.projects.messages.selectToExport'), 'warning');
     }
 
-    const selected = projects.filter(project => selectedProjects.includes(project.id));
+    const selected = projects.filter(project => selectedIds.includes(project.id));
     if (selected.length === 0) {
       return showToast(t('admin.projects.messages.selectedNotInPage'), 'warning');
     }
@@ -431,164 +359,15 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     }];
 
     const csvData = jsonToCsv(template, ["titleEn", "titleKm", "descriptionEn", "descriptionKm", "techStack", "githubUrl", "liveUrl", "slug", "contentEn", "contentKm", "featured", "visible"]);
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'projects_template.csv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // Mutations with Optimistic Updates
-  const visibilityMutation = useMutation({
-    mutationFn: ({ id, currentVisible }) => 
-      ProjectService.toggleVisibility(userRole, id, currentVisible, trackWrite),
-    onMutate: async ({ id, currentVisible }) => {
-      await queryClient.cancelQueries({ queryKey: ['projects'] });
-      const previousProjects = queryClient.getQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit]);
-      
-      if (previousProjects) {
-        queryClient.setQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit], {
-          ...previousProjects,
-          data: previousProjects.data.map(p => 
-            p.id === id ? { ...p, visible: !currentVisible } : p
-          )
-        });
-      }
-      return { previousProjects };
-    },
-    onError: (err, variables, context) => {
-      if (context?.previousProjects) {
-        queryClient.setQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit], context.previousProjects);
-      }
-      showToast(err?.message || t('admin.common.messages.updateFailed'), 'error');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-    },
-    onSuccess: (_, variables) => {
-      showToast(!variables.currentVisible ? t('admin.projects.messages.shown') : t('admin.projects.messages.hidden'));
-    }
-  });
-
-  const featuredMutation = useMutation({
-    mutationFn: ({ id, currentFeatured }) => 
-      ProjectService.toggleFeatured(userRole, id, currentFeatured, trackWrite),
-    onMutate: async ({ id, currentFeatured }) => {
-      await queryClient.cancelQueries({ queryKey: ['projects'] });
-      const previousProjects = queryClient.getQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit]);
-      
-      if (previousProjects) {
-        queryClient.setQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit], {
-          ...previousProjects,
-          data: previousProjects.data.map(p => 
-            p.id === id ? { ...p, featured: !currentFeatured } : p
-          )
-        });
-      }
-      return { previousProjects };
-    },
-    onError: (err, variables, context) => {
-      if (context?.previousProjects) {
-        queryClient.setQueryData(['projects', debouncedSearch, pagination.cursor, pagination.limit], context.previousProjects);
-      }
-      showToast(err?.message || t('admin.common.messages.updateFailed'), 'error');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-    },
-    onSuccess: (_, variables) => {
-      showToast(
-        !variables.currentFeatured
-          ? t('admin.projects.messages.featured')
-          : t('admin.projects.messages.unfeatured')
-      );
-    }
-  });
-
-  const toggleVisibility = (id, currentVisible) => {
-    if (!isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.PROJECTS)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
-    visibilityMutation.mutate({ id, currentVisible });
-  };
-
-  const toggleFeatured = (id, currentFeatured) => {
-    if (!isActionAllowed(ACTIONS.FEATURE, MODULES.PROJECTS)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
-    featuredMutation.mutate({ id, currentFeatured });
-  };
-
-  // Bulk Actions Mutations
-  const bulkDeleteMutation = useMutation({
-    mutationFn: (ids) => ProjectService.batchDeleteProjects(userRole, ids, trackDelete),
-    onSuccess: (_, ids) => {
-      showToast(t('admin.projects.messages.deletedMany', { count: ids.length }));
-      setSelectedProjects([]);
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-    },
-    onError: (err) => showToast(err?.message || t('admin.common.messages.deleteFailed'), 'error')
-  });
-
-  const bulkVisibilityMutation = useMutation({
-    mutationFn: ({ ids, visible }) => ProjectService.batchUpdateProjectsVisibility(userRole, ids, visible, trackWrite),
-    onSuccess: (_, { ids, visible }) => {
-      showToast(
-        visible
-          ? t('admin.projects.messages.shownMany', { count: ids.length })
-          : t('admin.projects.messages.hiddenMany', { count: ids.length })
-      );
-      setSelectedProjects([]);
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-    },
-    onError: (err) => showToast(err?.message || t('admin.common.messages.updateFailed'), 'error')
-  });
-
-  const bulkFeaturedMutation = useMutation({
-    mutationFn: ({ ids, featured }) => ProjectService.batchUpdateProjectsFeatured(userRole, ids, featured, trackWrite),
-    onSuccess: (_, { ids, featured }) => {
-      showToast(
-        featured
-          ? t('admin.projects.messages.featuredMany', { count: ids.length })
-          : t('admin.projects.messages.unfeaturedMany', { count: ids.length })
-      );
-      setSelectedProjects([]);
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-    },
-    onError: (err) => showToast(err?.message || 'Failed to update projects', 'error')
-  });
-
-  const handleBulkDelete = () => {
-    if (selectedProjects.length === 0) return;
-    setBulkConfirm({
-        isOpen: true,
-        type: 'delete',
-        ids: selectedProjects
-    });
-  };
-
-  const handleBulkVisibility = (visible) => {
-    if (selectedProjects.length === 0) return;
-    bulkVisibilityMutation.mutate({ ids: selectedProjects, visible });
-  };
-
-  const handleBulkFeatured = (featured) => {
-    if (selectedProjects.length === 0) return;
-    bulkFeaturedMutation.mutate({ ids: selectedProjects, featured });
+    downloadCsv(csvData, 'projects_template.csv');
   };
 
   const confirmDelete = async () => {
     if (!deletingItem) return;
-    if (!isActionAllowed(ACTIONS.DELETE, MODULES.PROJECTS)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
+    if (!ensurePermission(ACTIONS.DELETE)) return;
 
     await executeDelete(async () => {
-      await ProjectService.deleteProject(userRole, deletingItem.id, (count, label) => 
+      await ProjectService.deleteProject(userRole, deletingItem.id, (count, label) =>
         trackDelete(count, label, {
           action: 'deleted',
           module: 'projects',
@@ -599,17 +378,16 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
     });
   };
 
-
   return (
     <div className={'admin-tab-container'}>
-      <ProjectsToolbar 
+      <ProjectsToolbar
         onAdd={handleAdd}
         searchQuery={searchQuery}
         onSearchChange={handleSearch}
         isSearching={isSearching}
         canCreate={canCreate}
         canBulkManage={canCreate || canEdit}
-        selectedCount={selectedProjects.length}
+        selectedCount={selectedIds.length}
         stats={workspaceStats}
         onImportFile={handleImportProjects}
         onExportSelected={handleExportSelectedProjects}
@@ -617,46 +395,27 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         onDownloadTemplateJSON={handleDownloadProjectJsonTemplate}
       />
 
-      {selectedProjects.length > 0 && (
-        <div className="ui-bulk-actions-bar">
-          <div className="ui-bulk-actions-summary">
-            <div className="ui-bulk-actions-count">
-              {selectedProjects.length}
-            </div>
-            <span className="ui-bulk-actions-text">
-              {t('admin.projects.bulk.selected')}
-            </span>
-          </div>
+      <BulkActionsBar
+        count={selectedIds.length}
+        label={t('admin.projects.bulk.selected')}
+        actions={[
+          { icon: Eye, label: t('admin.projects.bulk.show'), title: t('admin.projects.bulk.showSelected'), onClick: () => handleBulkVisibility(true), disabled: !canToggleVisibility },
+          { icon: EyeOff, label: t('admin.projects.bulk.hide'), title: t('admin.projects.bulk.hideSelected'), onClick: () => handleBulkVisibility(false), disabled: !canToggleVisibility },
+          { divider: true },
+          { icon: Star, label: t('admin.projects.bulk.feature'), title: t('admin.projects.bulk.featureSelected'), onClick: () => handleBulkFeatured(true), disabled: !canFeature },
+          { icon: StarOff, label: t('admin.projects.bulk.unfeature'), title: t('admin.projects.bulk.unfeatureSelected'), onClick: () => handleBulkFeatured(false), disabled: !canFeature },
+          { divider: true },
+          { icon: Trash2, label: t('admin.common.delete'), title: t('admin.projects.bulk.deleteSelected'), onClick: handleBulkDelete, variant: 'danger' }
+        ]}
+      />
 
-          <div className="ui-bulk-actions-controls">
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title={t('admin.projects.bulk.showSelected')} disabled={!canToggleVisibility}>
-              <Eye size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.show')}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title={t('admin.projects.bulk.hideSelected')} disabled={!canToggleVisibility}>
-              <EyeOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.hide')}
-            </Button>
-            <div className="ui-bulk-divider" />
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title={t('admin.projects.bulk.featureSelected')} disabled={!canFeature}>
-              <Star size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.feature')}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title={t('admin.projects.bulk.unfeatureSelected')} disabled={!canFeature}>
-              <StarOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.projects.bulk.unfeature')}
-            </Button>
-            <div className="ui-bulk-divider" />
-            <Button variant="danger" size="sm" onClick={handleBulkDelete} title={t('admin.projects.bulk.deleteSelected')}>
-              <Trash2 size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.common.delete')}
-            </Button>
-          </div>
-        </div>
-      )}
-      
       <ProjectsTable
         projects={tableProjects}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onViewHistory={handleViewHistory}
-        onToggleVisibility={toggleVisibility}
-        onToggleFeatured={toggleFeatured}
+        onToggleVisibility={handleToggleVisibility}
+        onToggleFeatured={handleToggleFeatured}
         onCreate={handleAdd}
         canCreate={canCreate}
         canEdit={canEdit}
@@ -664,7 +423,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         canFeature={canFeature}
         canToggleVisibility={canToggleVisibility}
         canViewHistory={canViewHistory}
-        loading={isLoading || bulkDeleteMutation.isPending || bulkVisibilityMutation.isPending || bulkFeaturedMutation.isPending}
+        loading={isLoading || bulkPending}
         page={pagination.page}
         pageSize={pagination.limit}
         totalItems={projectsResult.totalCount}
@@ -678,14 +437,10 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
           }
         }}
         searchQuery={searchQuery}
-        selection={{
-          selectedIds: selectedProjects,
-          onSelect: handleToggleSelectProject,
-          onSelectAll: handleSelectAllProjects
-        }}
+        selection={selection}
       />
 
-      <ProjectsFormDialog 
+      <ProjectsFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
         mode={editingItem ? 'edit' : 'create'}
@@ -694,7 +449,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         loading={formLoading}
       />
 
-      <DeleteConfirmDialog 
+      <DeleteConfirmDialog
         open={!!deletingItem}
         onOpenChange={(open) => !open && setDeletingItem(null)}
         onConfirm={confirmDelete}
@@ -705,7 +460,7 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         })}
       />
 
-      <DeleteConfirmDialog 
+      <DeleteConfirmDialog
         open={bulkConfirm.isOpen}
         onOpenChange={(open) => !open && setBulkConfirm({ ...bulkConfirm, isOpen: false })}
         onConfirm={() => {
@@ -753,6 +508,8 @@ const ProjectsTab = ({ userRole, showToast, isActionAllowed }) => {
         recordId={historyItem?.id}
         service={ProjectService}
         title={getLocalizedField(historyItem?.title, language)}
+        canRestore={canEdit}
+        showToast={showToast}
       />
     </div>
   );

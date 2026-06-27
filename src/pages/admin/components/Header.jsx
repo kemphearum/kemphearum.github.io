@@ -4,6 +4,7 @@ import { LogOut, Sun, Moon, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import LanguageSwitcher from '../../../shared/components/LanguageSwitcher';
 import { useTranslation } from '../../../hooks/useTranslation';
+import NotificationCenter from './NotificationCenter';
 
 const Header = ({ 
     onToggleSidebar, 
@@ -64,7 +65,11 @@ const Header = ({
     return (
         <header ref={headerRef} className={styles.header}>
             <div className={styles.left}>
-                <button className={styles.menuToggle} onClick={onToggleSidebar}>
+                <button
+                    className={styles.menuToggle}
+                    onClick={onToggleSidebar}
+                    aria-label={t('admin.header.toggleSidebar')}
+                >
                     <span /><span /><span />
                 </button>
                 <span className={styles.brand}>{t('admin.common.header.adminBrand')}<span>.</span></span>
@@ -81,6 +86,8 @@ const Header = ({
                 </button>
 
                 <div className={styles.topActions}>
+                    <NotificationCenter />
+
                     <button
                         onClick={toggleTheme}
                         className={styles.actionBtn}

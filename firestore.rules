@@ -265,6 +265,16 @@ service cloud.firestore {
       allow write: if canWriteModule('experience');
     }
 
+    match /skills/{document=**} {
+      allow read;
+      allow write: if canWriteModule('skills');
+    }
+
+    match /certificates/{document=**} {
+      allow read;
+      allow write: if canWriteModule('certificates');
+    }
+
     // Application Settings (Logo, Page Title, Audit Log Config, etc.)
     match /settings/{document=**} {
       allow read;

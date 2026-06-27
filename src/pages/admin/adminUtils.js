@@ -2,6 +2,7 @@ import { getLocalizedField } from '../../utils/localization';
 import { ACTIONS, isActionAllowed } from '../../utils/permissions';
 
 export const tabLabelKeys = {
+    dashboard: 'admin.tabs.dashboard',
     general: 'admin.tabs.general',
     experience: 'admin.tabs.experience',
     projects: 'admin.tabs.projects',
@@ -16,6 +17,7 @@ export const tabLabelKeys = {
 };
 
 export const tabSubtitleKeys = {
+    dashboard: 'admin.subtitles.dashboard',
     general: 'admin.subtitles.general',
     profile: 'admin.subtitles.profile',
     settings: 'admin.subtitles.settings'

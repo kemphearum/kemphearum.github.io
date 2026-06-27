@@ -4,6 +4,7 @@ import EmptyState from '../empty-state/EmptyState';
 import Spinner from '../spinner/Spinner';
 import Skeleton from '../skeleton/Skeleton';
 import { downloadCSV } from '../../../../utils/csvUtils';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 /**
  * DataTable Component (Final Premium Version)
@@ -42,6 +43,7 @@ const DataTable = ({
   showExport = false,
   exportFileName = 'export.csv'
 }) => {
+  const { t } = useTranslation();
   const [sortConfig, setSortConfig] = useState(initialSort);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -191,12 +193,12 @@ const DataTable = ({
         <div className="ui-table-mobile-cards">
           <div className="ui-table-toolbar">
               {showExport && paginatedData.length > 0 && (
-                  <button 
-                      className="ui-table-export-btn" 
+                  <button
+                      className="ui-table-export-btn"
                       onClick={handleExport}
-                      title="Export to CSV"
+                      title={t('admin.common.table.exportCsv')}
                   >
-                      <Download size={14} /> Export CSV
+                      <Download size={14} /> {t('admin.common.table.exportCsv')}
                   </button>
               )}
           </div>
@@ -216,8 +218,8 @@ const DataTable = ({
             ))
           ) : (paginatedData.length === 0 && !loading) ? (
             <EmptyState 
-              title={emptyState?.title || "No data available"}
-              description={emptyState?.description || "There are no records to display at the moment."}
+              title={emptyState?.title || t('admin.common.table.empty')}
+              description={emptyState?.description || t('admin.common.table.emptyDescription')}
               icon={emptyState?.icon}
               action={emptyState?.action}
             />
@@ -232,12 +234,13 @@ const DataTable = ({
                 >
                   {selection && (
                     <div className="ui-table-card-row" onClick={(e) => e.stopPropagation()}>
-                      <span className="ui-table-card-label">Select</span>
-                      <input 
-                        type="checkbox" 
+                      <span className="ui-table-card-label">{t('admin.common.table.selectRow')}</span>
+                      <input
+                        type="checkbox"
                         checked={isSelected}
                         onChange={() => selection.onSelect(row[keyField])}
                         className="ui-checkbox"
+                        aria-label={t('admin.common.table.selectRow')}
                       />
                     </div>
                   )}
@@ -275,12 +278,12 @@ const DataTable = ({
               <tr className="ui-table-toolbar-row">
                 <th colSpan={columns.length + (selection ? 1 : 0)}>
                     <div className="ui-table-toolbar">
-                        <button 
-                            className="ui-table-export-btn" 
+                        <button
+                            className="ui-table-export-btn"
                             onClick={handleExport}
-                            title="Export current page to CSV"
+                            title={t('admin.common.table.exportCsv')}
                         >
-                            <Download size={14} /> Export to CSV
+                            <Download size={14} /> {t('admin.common.table.exportCsv')}
                         </button>
                     </div>
                 </th>
@@ -289,27 +292,45 @@ const DataTable = ({
             <tr>
             {selection && (
               <th className="ui-table-selection-header" style={{ width: '40px' }}>
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   checked={isAllSelected}
                   onChange={selection.onSelectAll}
                   className="ui-checkbox"
+                  aria-label={t('admin.common.table.selectAll')}
                 />
               </th>
             )}
-            {columns.map((col, idx) => (
-              <th 
-                key={col.key || idx} 
-                className={`${col.className || ''} ${col.sortable ? 'ui-table-sortable' : ''}`}
-                onClick={() => col.sortable && handleSort(col.key)}
-                style={col.width ? { width: col.width } : {}}
-              >
-                <div className="ui-table-header-content">
-                  {col.header}
-                  {getSortIcon(col)}
-                </div>
-              </th>
-            ))}
+            {columns.map((col, idx) => {
+              const isSorted = sortConfig.key === col.key && sortConfig.direction !== 'none';
+              const ariaSort = col.sortable
+                ? (isSorted ? (sortConfig.direction === 'asc' ? 'ascending' : 'descending') : 'none')
+                : undefined;
+              return (
+                <th
+                  key={col.key || idx}
+                  className={`${col.className || ''} ${col.sortable ? 'ui-table-sortable' : ''}`}
+                  style={col.width ? { width: col.width } : {}}
+                  aria-sort={ariaSort}
+                >
+                  {col.sortable ? (
+                    <button
+                      type="button"
+                      className="ui-table-header-content ui-table-sortBtn"
+                      onClick={() => handleSort(col.key)}
+                      title={t('admin.common.table.sortBy', { column: typeof col.header === 'string' ? col.header : '' })}
+                    >
+                      {col.header}
+                      {getSortIcon(col)}
+                    </button>
+                  ) : (
+                    <div className="ui-table-header-content">
+                      {col.header}
+                    </div>
+                  )}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -328,8 +349,8 @@ const DataTable = ({
             <tr>
               <td colSpan={columns.length + (selection ? 1 : 0)} className="ui-table-empty-cell">
                 <EmptyState 
-                  title={emptyState?.title || "No data available"}
-                  description={emptyState?.description || "There are no records to display at the moment."}
+                  title={emptyState?.title || t('admin.common.table.empty')}
+                  description={emptyState?.description || t('admin.common.table.emptyDescription')}
                   icon={emptyState?.icon}
                   action={emptyState?.action}
                 />
@@ -346,11 +367,12 @@ const DataTable = ({
                 >
                   {selection && (
                     <td className="ui-table-selection-cell" onClick={(e) => e.stopPropagation()}>
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         checked={isSelected}
                         onChange={() => selection.onSelect(row[keyField])}
                         className="ui-checkbox"
+                        aria-label={t('admin.common.table.selectRow')}
                       />
                     </td>
                   )}
@@ -386,7 +408,7 @@ const DataTable = ({
         <div className="ui-paginationWrapper">
           <div className="ui-paginationLeft">
             <div className="ui-perPageControl">
-              <span className="ui-perPageLabel">Show</span>
+              <span className="ui-perPageLabel">{t('admin.common.table.show')}</span>
               <select 
                 className="ui-perPageSelect"
                 value={pageSize}
@@ -401,19 +423,19 @@ const DataTable = ({
             {!isCursorMode && (
               <span className="ui-pageInfo">
                 <span className="ui-pageInfo__primary">
-                  <strong>{rangeStart}</strong>-<strong>{Math.min(page * pageSize, totalItems)}</strong> of <strong>{totalItems}</strong>
+                  <strong>{rangeStart}</strong>-<strong>{Math.min(page * pageSize, totalItems)}</strong> {t('admin.common.table.of')} <strong>{totalItems}</strong>
                 </span>
               </span>
             )}
             {isCursorMode && (
               <span className="ui-pageInfo">
                 <span className="ui-pageInfo__primary">
-                  Page <strong>{page}</strong>
-                  {hasKnownTotalPages && <> of <strong>{totalPages}</strong></>}
+                  {t('admin.common.table.page')} <strong>{page}</strong>
+                  {hasKnownTotalPages && <> {t('admin.common.table.of')} <strong>{totalPages}</strong></>}
                 </span>
                 {totalItemsProp !== null && totalItems > 0 && (
                   <span className="ui-pageInfo__secondary">
-                    Total: <strong>{totalItems}</strong>
+                    {t('admin.common.table.total')}: <strong>{totalItems}</strong>
                   </span>
                 )}
               </span>
@@ -429,7 +451,7 @@ const DataTable = ({
               }}
               disabled={previousDisabled}
             >
-              <ChevronLeft size={16} /> Prev
+              <ChevronLeft size={16} /> {t('admin.common.table.prev')}
             </button>
             
             {(!isCursorMode && paginationVariant === 'numbers') && (
@@ -462,7 +484,7 @@ const DataTable = ({
               }}
               disabled={nextDisabled}
             >
-              Next <ChevronRight size={16} />
+              {t('admin.common.table.next')} <ChevronRight size={16} />
             </button>
           </div>
         </div>

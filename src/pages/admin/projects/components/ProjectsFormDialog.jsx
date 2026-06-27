@@ -9,6 +9,7 @@ import FormDropzone from '../../components/FormDropzone';
 import FormMarkdownEditor from '../../components/FormMarkdownEditor';
 import { getLanguageValue } from '../../../../utils/localization';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { getStoredStatus, STATUS_VALUES } from '../../../../domain/shared/contentStatus';
 
 const ProjectImageField = () => {
     const { control, setValue, watch } = useFormContext();
@@ -38,7 +39,8 @@ const ProjectImageField = () => {
     );
 };
 
-const ProjectLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
+const ProjectLocalizedFields = () => {
+    const [activeLanguage, setActiveLanguage] = useState('en');
     const { t } = useTranslation();
     const titleName = activeLanguage === 'en' ? 'titleEn' : 'titleKm';
     const descriptionName = activeLanguage === 'en' ? 'descriptionEn' : 'descriptionKm';
@@ -55,6 +57,7 @@ const ProjectLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
             </Tabs>
 
             <FormField
+                key={titleName}
                 label={`${t('admin.projects.form.fields.projectTitle')} (${languageLabel})`}
                 name={titleName}
                 validation={activeLanguage === 'en' ? { required: t('admin.projects.form.fields.titleRequired') } : {}}
@@ -64,6 +67,7 @@ const ProjectLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
             </FormField>
 
             <FormField
+                key={descriptionName}
                 label={`${t('admin.projects.form.fields.shortDescription')} (${languageLabel})`}
                 name={descriptionName}
                 validation={activeLanguage === 'en' ? { required: t('admin.projects.form.fields.descriptionRequired') } : {}}
@@ -72,8 +76,13 @@ const ProjectLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
                 <FormInput isTextArea rows="4" placeholder={activeLanguage === 'en' ? t('admin.projects.form.fields.descriptionPlaceholderEn') : t('admin.projects.form.fields.descriptionPlaceholderKm')} />
             </FormField>
 
-            <FormField label={`${t('admin.projects.form.fields.projectContent')} (${languageLabel})`} name={contentName}>
+            <FormField
+                key={contentName}
+                label={`${t('admin.projects.form.fields.projectContent')} (${languageLabel})`}
+                name={contentName}
+            >
                 <FormMarkdownEditor
+                    id={`project-content-${activeLanguage}`}
                     rows={14}
                     fullWidth={false}
                     placeholder={activeLanguage === 'en' ? t('admin.projects.form.fields.contentPlaceholderEn') : t('admin.projects.form.fields.contentPlaceholderKm')}
@@ -84,7 +93,6 @@ const ProjectLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
 };
 
 const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loading }) => {
-    const [activeLanguage, setActiveLanguage] = useState('en');
     const { t } = useTranslation();
 
     const defaultValues = {
@@ -100,7 +108,9 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
         slug: initialData?.slug || '',
         imageUrl: initialData?.imageUrl || '',
         image: null,
-        visible: initialData?.visible ?? true,
+        status: getStoredStatus(initialData || {}),
+        publishAt: initialData?.publishAt || '',
+        expireAt: initialData?.expireAt || '',
         featured: initialData?.featured ?? false
     };
 
@@ -131,10 +141,7 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                                         <p>{t('admin.projects.form.sections.projectBasics.description')}</p>
                                     </div>
 
-                                    <ProjectLocalizedFields
-                                        activeLanguage={activeLanguage}
-                                        setActiveLanguage={setActiveLanguage}
-                                    />
+                                    <ProjectLocalizedFields />
 
                                     <FormField
                                         label={t('admin.projects.form.fields.techStack')}
@@ -186,18 +193,31 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                                     </div>
 
                                     <FormField
-                                        label={t('admin.projects.form.fields.visibility')}
-                                        name="visible"
-                                        validation={{
-                                            setValueAs: (value) => value === true || value === 'true'
-                                        }}
+                                        label={t('admin.common.schedule.status')}
+                                        name="status"
                                     >
                                         <FormSelect
-                                            options={[
-                                                { label: t('admin.projects.form.fields.optionPublished'), value: true },
-                                                { label: t('admin.projects.form.fields.optionHidden'), value: false }
-                                            ]}
+                                            options={STATUS_VALUES.map((value) => ({
+                                                label: t(`admin.common.status.${value}`),
+                                                value
+                                            }))}
                                         />
+                                    </FormField>
+
+                                    <FormField
+                                        label={t('admin.common.schedule.publishAt')}
+                                        name="publishAt"
+                                        hint={t('admin.common.schedule.publishAtHint')}
+                                    >
+                                        <FormInput type="datetime-local" />
+                                    </FormField>
+
+                                    <FormField
+                                        label={t('admin.common.schedule.expireAt')}
+                                        name="expireAt"
+                                        hint={t('admin.common.schedule.expireAtHint')}
+                                    >
+                                        <FormInput type="datetime-local" />
                                     </FormField>
                                     <FormField
                                         label={t('admin.projects.form.fields.featured')}

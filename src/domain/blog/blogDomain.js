@@ -1,5 +1,6 @@
 import { slugify } from '../shared/slugify';
 import { buildLocalizedFieldFromInput, getLocalizedField } from '../../utils/localization';
+import { normalizeStatusFields } from '../shared/contentStatus';
 
 /**
  * Normalizes blog post data for Firestore.
@@ -21,7 +22,7 @@ export const normalizePost = (data) => {
         excerpt,
         content,
         tags,
-        visible: data.visible !== false,
+        ...normalizeStatusFields(data),
         featured: !!data.featured,
         ...(data.coverImage !== undefined && { coverImage: data.coverImage })
     };

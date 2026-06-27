@@ -6,6 +6,7 @@ import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableH
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { getLocalizedField } from '../../../../utils/localization';
 import HighlightText from '@/shared/components/ui/HighlightText';
+import StatusBadge from '../../components/StatusBadge';
 
 /**
  * ProjectsTable Component
@@ -110,9 +111,7 @@ const ProjectsTable = ({
       render: (row) => (
         <div className="ui-blog-statusCell">
           <div className="ui-blog-statusCell__badges">
-            <Badge variant={row.visible !== false ? 'success' : 'warning'}>
-              {row.visible !== false ? t('admin.projects.table.status.live') : t('admin.projects.table.status.hidden')}
-            </Badge>
+            <StatusBadge row={row} />
             {row.featured && <Badge variant="primary">{t('admin.projects.table.status.featured')}</Badge>}
           </div>
           <span className="ui-blog-statusCell__note">

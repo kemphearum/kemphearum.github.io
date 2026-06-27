@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import BaseService from './BaseService';
-import { 
-    getDocs, getDoc, collection, doc, query, orderBy, addDoc, updateDoc, deleteDoc
+import {
+    getDocs, getDoc, doc, addDoc, updateDoc, deleteDoc
 } from 'firebase/firestore';
 
 // Mock dependencies
@@ -173,6 +173,35 @@ describe('BaseService instance methods', () => {
 
             expect(result).toBe(true);
             expect(deleteDoc).toHaveBeenCalled();
+        });
+    });
+
+    describe('restoreVersion()', () => {
+        it('re-applies the snapshot from a history entry via update', async () => {
+            const snapshot = { title: { en: 'V1' }, visible: true };
+            doc.mockReturnValue('ref');
+            getDoc
+                .mockResolvedValueOnce({ exists: () => true, data: () => ({ newData: snapshot }) })
+                .mockResolvedValueOnce({ exists: () => true, data: () => ({ id: 'p1', title: { en: 'current' } }) });
+            updateDoc.mockResolvedValue();
+            addDoc.mockResolvedValue({ id: 'h2' });
+            const trackWrite = vi.fn();
+
+            const result = await service.restoreVersion('p1', 'h1', trackWrite);
+
+            expect(result).toBe(true);
+            expect(updateDoc).toHaveBeenCalledWith('ref', snapshot);
+            expect(trackWrite).toHaveBeenCalled();
+        });
+
+        it('throws when the history entry has no snapshot', async () => {
+            getDoc.mockResolvedValueOnce({ exists: () => true, data: () => ({}) });
+            await expect(service.restoreVersion('p1', 'h1')).rejects.toThrow();
+        });
+
+        it('throws when the history entry is missing', async () => {
+            getDoc.mockResolvedValueOnce({ exists: () => false });
+            await expect(service.restoreVersion('p1', 'hX')).rejects.toThrow();
         });
     });
 });

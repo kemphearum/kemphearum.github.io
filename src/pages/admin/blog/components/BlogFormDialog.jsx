@@ -9,6 +9,7 @@ import FormMarkdownEditor from '../../components/FormMarkdownEditor';
 import FormDropzone from '../../components/FormDropzone';
 import { getLanguageValue } from '../../../../utils/localization';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { getStoredStatus, STATUS_VALUES } from '../../../../domain/shared/contentStatus';
 
 const BlogCoverImageField = ({ currentImageUrl }) => {
     const { control, setValue, watch } = useFormContext();
@@ -104,7 +105,9 @@ const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loadi
         image: null,
         slug: initialData?.slug || '',
         featured: initialData?.featured ?? false,
-        visible: initialData?.visible ?? true
+        status: getStoredStatus(initialData || {}),
+        publishAt: initialData?.publishAt || '',
+        expireAt: initialData?.expireAt || ''
     };
 
     return (
@@ -149,18 +152,31 @@ const BlogFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loadi
                                     </div>
 
                                     <FormField
-                                        label={t('admin.blog.form.publishStatus')}
-                                        name="visible"
-                                        validation={{
-                                            setValueAs: (value) => value === true || value === 'true'
-                                        }}
+                                        label={t('admin.common.schedule.status')}
+                                        name="status"
                                     >
                                         <FormSelect
-                                            options={[
-                                                { label: t('admin.blog.form.optionPublished'), value: true },
-                                                { label: t('admin.blog.form.optionDraft'), value: false }
-                                            ]}
+                                            options={STATUS_VALUES.map((value) => ({
+                                                label: t(`admin.common.status.${value}`),
+                                                value
+                                            }))}
                                         />
+                                    </FormField>
+
+                                    <FormField
+                                        label={t('admin.common.schedule.publishAt')}
+                                        name="publishAt"
+                                        hint={t('admin.common.schedule.publishAtHint')}
+                                    >
+                                        <FormInput type="datetime-local" />
+                                    </FormField>
+
+                                    <FormField
+                                        label={t('admin.common.schedule.expireAt')}
+                                        name="expireAt"
+                                        hint={t('admin.common.schedule.expireAtHint')}
+                                    >
+                                        <FormInput type="datetime-local" />
                                     </FormField>
 
                                     <FormField

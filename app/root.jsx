@@ -17,6 +17,7 @@ import ChunkRecovery from '@/sections/ChunkRecovery';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { ActivityProvider } from '../src/context/ActivityContext';
 import { LanguageProvider } from '../src/context/LanguageContext';
+import { NotificationProvider } from '../src/context/NotificationContext';
 import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { queryClient } from '../src/queryClient';
 import React, { useCallback, useEffect } from 'react';
@@ -54,10 +55,12 @@ export function Layout({ children }) {
               <LanguageProvider>
                 <ThemeProvider>
                   <ActivityProvider>
-                    <ComponentErrorBoundary>
-                    {children}
-                    {typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname) && <Analytics />}
-                    </ComponentErrorBoundary>
+                    <NotificationProvider>
+                      <ComponentErrorBoundary>
+                      {children}
+                      {typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname) && <Analytics />}
+                      </ComponentErrorBoundary>
+                    </NotificationProvider>
                   </ActivityProvider>
                 </ThemeProvider>
               </LanguageProvider>

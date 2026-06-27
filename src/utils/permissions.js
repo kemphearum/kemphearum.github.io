@@ -11,9 +11,12 @@ export const ACTIONS = {
 };
 
 export const MODULES = {
+    DASHBOARD: 'dashboard',
     BLOG: 'blog',
     PROJECTS: 'projects',
     EXPERIENCE: 'experience',
+    SKILLS: 'skills',
+    CERTIFICATES: 'certificates',
     USERS: 'users',
     DATABASE: 'database',
     ANALYTICS: 'analytics',
@@ -28,9 +31,12 @@ export const MODULES = {
 };
 
 export const MODULE_ACTIONS = {
+    [MODULES.DASHBOARD]: [],
     [MODULES.BLOG]: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.FEATURE, ACTIONS.TOGGLE_VISIBILITY, ACTIONS.VIEW_HISTORY],
     [MODULES.PROJECTS]: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.FEATURE, ACTIONS.TOGGLE_VISIBILITY, ACTIONS.VIEW_HISTORY],
     [MODULES.EXPERIENCE]: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.FEATURE, ACTIONS.TOGGLE_VISIBILITY, ACTIONS.VIEW_HISTORY],
+    [MODULES.SKILLS]: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.FEATURE, ACTIONS.TOGGLE_VISIBILITY, ACTIONS.VIEW_HISTORY],
+    [MODULES.CERTIFICATES]: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.FEATURE, ACTIONS.TOGGLE_VISIBILITY, ACTIONS.VIEW_HISTORY],
     [MODULES.USERS]: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.VIEW_HISTORY],
     [MODULES.DATABASE]: [ACTIONS.DATABASE_ACTIONS],
     [MODULES.ANALYTICS]: [],
@@ -209,8 +215,9 @@ export const isActionAllowed = (action, moduleName, role, rolePermissions = {}) 
         return false;
     }
 
-    // 3. Always allow profile access for any authenticated role
+    // 3. Always allow profile + dashboard access for any authenticated role
     if (moduleName === MODULES.PROFILE) return true;
+    if (moduleName === MODULES.DASHBOARD) return true;
 
     // 4. Handle dynamic configuration (Strict Priority)
     // If a role is explicitly defined in the rolePermissions object, that configuration defines their world.

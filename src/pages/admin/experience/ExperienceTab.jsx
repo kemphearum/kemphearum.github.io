@@ -1,16 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { useActivity } from '../../../hooks/useActivity';
-import { useAsyncAction } from '../../../hooks/useAsyncAction';
-import { useDebounce } from '../../../hooks/useDebounce';
+import React, { useMemo } from 'react';
 import ExperienceService from '../../../services/ExperienceService';
-import BaseService from '../../../services/BaseService';
 import ExperienceToolbar from './components/ExperienceToolbar';
 import ExperienceTable from './components/ExperienceTable';
 import ExperienceFormDialog from './components/ExperienceFormDialog';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
 import { BriefcaseBusiness, Eye, Building2, Clock3 } from 'lucide-react';
-import { useCursorPagination } from '../../../hooks/useCursorPagination';
+import { useAdminCrud } from '../hooks/useAdminCrud';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { getLocalizedField } from '../../../utils/localization';
 import { ACTIONS, MODULES } from '../../../utils/permissions';
@@ -69,77 +64,63 @@ const isCurrentRole = (item) => {
 
 const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const { language, t } = useTranslation();
-  const [editingItem, setEditingItem] = useState(null);
-  const [deletingItem, setDeletingItem] = useState(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearch = useDebounce(searchQuery, 500);
-  
-  // Cursor pagination hook
-  const pagination = useCursorPagination(5, [debouncedSearch]);
-  const queryClient = useQueryClient();
 
-  const { loading: formLoading, execute: executeForm } = useAsyncAction({
+  const crud = useAdminCrud({
+    resourceKey: 'experience',
+    module: MODULES.EXPERIENCE,
+    isActionAllowed,
     showToast,
-    successMessage: editingItem ? t('admin.experience.messages.updated') : t('admin.experience.messages.created'),
-    invalidateKeys: [['experience']],
-    onSuccess: () => setIsFormOpen(false)
-  });
-
-  const { loading: deleteLoading, execute: executeDelete } = useAsyncAction({
-    showToast,
-    successMessage: t('admin.experience.messages.deleted'),
-    invalidateKeys: [['experience']],
-    onSuccess: () => setDeletingItem(null)
-  });
-  const { trackRead, trackWrite, trackDelete } = useActivity();
-
-  // Fetch data
-  const { data: experiencesResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    queryKey: ['experience', debouncedSearch, pagination.cursor, pagination.limit],
-    queryFn: async () => {
-      const requestCursor = pagination.cursor;
-      const result = await BaseService.safe(() => ExperienceService.fetchPaginated({
-        lastDoc: requestCursor,
-        limit: pagination.limit || 10,
-        search: debouncedSearch,
-        searchField: 'company.en',
-        sortBy: "createdAt",
-        sortDirection: "desc",
-        includeTotal: true,
-        trackRead
-      }));
-
-      if (result.error) {
-        showToast(result.error, 'error');
-        return { data: [], lastDoc: null, hasMore: false, totalCount: null };
-      }
-
-      pagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
-      return result.data;
+    t,
+    fetchPaginated: ({ lastDoc, limit, search, trackRead }) => ExperienceService.fetchPaginated({
+      lastDoc,
+      limit,
+      search,
+      searchField: 'company.en',
+      sortBy: 'createdAt',
+      sortDirection: 'desc',
+      includeTotal: true,
+      trackRead
+    }),
+    fetchStats: (lang) => ExperienceService.fetchStats(lang),
+    statsDefault: { total: 0, visible: 0, companies: 0, currentRoles: 0 },
+    statsParam: language,
+    statsKeyExtra: [language],
+    toggleVisibility: {
+      mutationFn: (id, current, trackWrite) => ExperienceService.toggleVisibility(userRole, id, current, trackWrite),
+      on: t('admin.experience.messages.shownOnHomepage'),
+      off: t('admin.experience.messages.hiddenOnHomepage')
+    },
+    messages: {
+      created: t('admin.experience.messages.created'),
+      updated: t('admin.experience.messages.updated'),
+      deleted: t('admin.experience.messages.deleted')
     }
   });
 
-  const { data: experienceStats = { total: 0, visible: 0, companies: 0, currentRoles: 0 } } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    queryKey: ['experience', 'stats', language],
-    queryFn: async () => {
-      const result = await BaseService.safe(() => ExperienceService.fetchStats(language));
-      if (result.error) {
-        showToast(result.error, 'error');
-        return { total: 0, visible: 0, companies: 0, currentRoles: 0 };
-      }
-      return result.data;
-    }
-  });
-
-  const experiences = experiencesResult.data;
-  const isSearching = searchQuery !== debouncedSearch;
+  const {
+    items: experiences,
+    listResult: experiencesResult,
+    stats: experienceStats,
+    isLoading,
+    isSearching,
+    searchQuery,
+    handleSearch,
+    pagination,
+    editingItem,
+    setEditingItem,
+    deletingItem,
+    setDeletingItem,
+    isFormOpen,
+    setIsFormOpen,
+    ensurePermission,
+    handleToggleVisibility,
+    formLoading,
+    deleteLoading,
+    saveItem,
+    executeDelete,
+    trackWrite,
+    trackDelete
+  } = crud;
 
   const experiencesByTimeline = useMemo(() => {
     return [...experiences].sort((a, b) => {
@@ -240,22 +221,13 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   const canToggleVisibility = isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.EXPERIENCE);
 
   const handleAdd = () => {
-    if (!canCreate) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
+    if (!ensurePermission(ACTIONS.CREATE)) return;
     setEditingItem(null);
     setIsFormOpen(true);
   };
 
-  const handleSearch = (val) => {
-    setSearchQuery(val);
-    pagination.reset();
-  };
-
   const handleEdit = (exp) => {
-    if (!isActionAllowed(ACTIONS.EDIT, MODULES.EXPERIENCE)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
+    if (!ensurePermission(ACTIONS.EDIT)) return;
     const source = exp.__raw || exp;
     const startVal = source.startMonthYear || source.startDate || source.period;
     const endVal = source.endMonthYear || source.endDate || source.period;
@@ -271,18 +243,14 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleDelete = (item) => {
-    if (!isActionAllowed(ACTIONS.DELETE, MODULES.EXPERIENCE)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
+    if (!ensurePermission(ACTIONS.DELETE)) return;
     setDeletingItem(item.__raw || item);
   };
 
   const handleSave = async (formData) => {
-    if (!isActionAllowed(editingItem ? ACTIONS.EDIT : ACTIONS.CREATE, MODULES.EXPERIENCE)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
-    
-    await executeForm(async () => {
+    if (!ensurePermission(editingItem ? ACTIONS.EDIT : ACTIONS.CREATE)) return;
+
+    await saveItem(async () => {
       const action = editingItem ? 'updated' : 'created';
       const dataToSave = {
         ...formData,
@@ -292,7 +260,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         id: editingItem?.id || null
       };
 
-      await ExperienceService.saveExperience(userRole, dataToSave, (count, label) => 
+      await ExperienceService.saveExperience(userRole, dataToSave, (count, label) =>
         trackWrite(count, label, {
           action,
           module: 'experience',
@@ -305,12 +273,10 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const confirmDelete = async () => {
     if (!deletingItem) return;
-    if (!isActionAllowed(ACTIONS.DELETE, MODULES.EXPERIENCE)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
+    if (!ensurePermission(ACTIONS.DELETE)) return;
 
     await executeDelete(async () => {
-      await ExperienceService.deleteExperience(userRole, deletingItem.id, (count, label) => 
+      await ExperienceService.deleteExperience(userRole, deletingItem.id, (count, label) =>
         trackDelete(count, label, {
           action: 'deleted',
           module: 'experience',
@@ -320,50 +286,6 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
       );
     });
   };
-
-  // Mutations with Optimistic Updates
-  const visibilityMutation = useMutation({
-    mutationFn: ({ id, currentVisible }) => 
-      ExperienceService.toggleVisibility(userRole, id, currentVisible, trackWrite),
-    onMutate: async ({ id, currentVisible }) => {
-      await queryClient.cancelQueries({ queryKey: ['experience'] });
-      const previousExperience = queryClient.getQueryData(['experience', debouncedSearch, pagination.cursor]);
-      
-      if (previousExperience) {
-        queryClient.setQueryData(['experience', debouncedSearch, pagination.cursor], {
-          ...previousExperience,
-          data: previousExperience.data.map(exp => 
-            exp.id === id ? { ...exp, visible: !currentVisible } : exp
-          )
-        });
-      }
-      return { previousExperience };
-    },
-    onError: (err, variables, context) => {
-      if (context?.previousExperience) {
-        queryClient.setQueryData(['experience', debouncedSearch, pagination.cursor], context.previousExperience);
-      }
-      showToast(err?.message || 'Failed to update visibility', 'error');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['experience'] });
-    },
-    onSuccess: (_, variables) => {
-      showToast(
-        !variables.currentVisible
-          ? t('admin.experience.messages.shownOnHomepage')
-          : t('admin.experience.messages.hiddenOnHomepage')
-      );
-    }
-  });
-
-  const toggleVisibility = (id, currentVisible) => {
-    if (!isActionAllowed(ACTIONS.TOGGLE_VISIBILITY, MODULES.EXPERIENCE)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
-    visibilityMutation.mutate({ id, currentVisible });
-  };
-
 
   return (
     <div className={'admin-tab-container'}>
@@ -380,7 +302,7 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
         experiences={tableExperiences}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        onToggleVisibility={toggleVisibility}
+        onToggleVisibility={handleToggleVisibility}
         onCreate={handleAdd}
         canCreate={canCreate}
         canEdit={canEdit}

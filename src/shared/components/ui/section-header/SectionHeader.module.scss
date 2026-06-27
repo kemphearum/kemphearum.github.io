@@ -1,0 +1,38 @@
+.header {
+    margin-bottom: 2.5rem;
+}
+
+.align--center {
+    text-align: center;
+
+    .subtitle {
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+.align--left {
+    text-align: left;
+}
+
+.eyebrow {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary-color, #2f6df6);
+}
+
+.title {
+    margin: 0;
+}
+
+.subtitle {
+    max-width: 640px;
+    margin: 0.5rem 0 0;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+}

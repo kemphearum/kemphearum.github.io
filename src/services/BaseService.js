@@ -319,6 +319,27 @@ export default class BaseService {
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
 
+    /**
+     * Restore a previous version by re-applying its stored snapshot as a normal
+     * update. Non-destructive: the restore itself becomes a new history entry and
+     * is recorded in the audit log via `trackWrite`.
+     * @param {string} id - document id
+     * @param {string} historyEntryId - id of the history entry to restore
+     * @param {Function|null} trackWrite
+     * @returns {Promise<boolean>}
+     */
+    async restoreVersion(id, historyEntryId, trackWrite = null) {
+        const entryRef = doc(db, this.collectionName, id, 'history', historyEntryId);
+        const snap = await getDoc(entryRef);
+        if (!snap.exists()) throw new Error('History entry not found.');
+        const snapshot = snap.data()?.newData;
+        if (!snapshot || typeof snapshot !== 'object') {
+            throw new Error('This version has no restorable snapshot.');
+        }
+        await this.update(id, snapshot, trackWrite);
+        return true;
+    }
+
     async _saveHistory(docId, action, newData, previousData = null) {
         try {
             const historyRef = collection(db, this.collectionName, docId, 'history');

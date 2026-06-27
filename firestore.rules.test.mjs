@@ -83,6 +83,20 @@ test('F-01: superadmin can write everything', async () => {
   await assertSucceeds(setDoc(doc(db, 'experience', 'e4'), { title: 'x' }));
 });
 
+test('F-01: built-in editor CANNOT write skills or certificates', async () => {
+  await seed('u3sc', 'editor');
+  const db = authed('u3sc');
+  await assertFails(setDoc(doc(db, 'skills', 's1'), { name: 'x' }));
+  await assertFails(setDoc(doc(db, 'certificates', 'c1'), { name: 'x' }));
+});
+
+test('F-01: superadmin can write skills and certificates', async () => {
+  await seed('u4sc', 'superadmin');
+  const db = authed('u4sc');
+  await assertSucceeds(setDoc(doc(db, 'skills', 's2'), { name: 'x' }));
+  await assertSucceeds(setDoc(doc(db, 'certificates', 'c2'), { name: 'x' }));
+});
+
 test('F-01/F-08: non-messages role CANNOT read messages; admin CAN', async () => {
   await seed('u5', 'editor');
   await assertFails(getDoc(doc(authed('u5'), 'messages', 'seed-msg')));

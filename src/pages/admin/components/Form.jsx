@@ -1,5 +1,6 @@
 import React from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
+import { useUnsavedChangesWarning } from '../../../hooks/useUnsavedChangesWarning';
 
 /**
  * Form Component
@@ -19,6 +20,8 @@ const Form = ({
   const methods = useForm({
     defaultValues
   });
+
+  useUnsavedChangesWarning(methods.formState.isDirty);
 
   return (
     <FormProvider {...methods}>

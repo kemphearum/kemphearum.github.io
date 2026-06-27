@@ -1,37 +1,24 @@
 import React, { useMemo, useState } from 'react';
 import { Eye, EyeOff, Star, StarOff, Trash2, FileText, Globe2, Sparkles, PenSquare } from 'lucide-react';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import BlogService from '../../../services/BlogService';
-import BaseService from '../../../services/BaseService';
-import { useActivity } from '../../../hooks/useActivity';
-import { useAsyncAction } from '../../../hooks/useAsyncAction';
-import { useDebounce } from '../../../hooks/useDebounce';
-import { Button } from '@/shared/components/ui';
+import BulkActionsBar from '../components/BulkActionsBar';
 import BlogToolbar from './components/BlogToolbar';
 import BlogFormDialog from './components/BlogFormDialog';
 import BlogTable from './components/BlogTable';
 import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
 import HistoryModal from '../components/HistoryModal';
 import ImportConfirmDialog from '../components/ImportConfirmDialog';
-import { useCursorPagination } from '../../../hooks/useCursorPagination';
-import { jsonToCsv, csvToJson } from '../../../utils/csvUtils';
+import { jsonToCsv } from '../../../utils/csvUtils';
+import { parseBoolean, readImportFile, parseImportItems, downloadJson, downloadCsv, runImport } from '../adminCrudIO';
 import { slugify } from '../../../domain/shared/slugify';
 import ImageProcessingService from '../../../services/ImageProcessingService';
+import { useAdminCrud } from '../hooks/useAdminCrud';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { getLanguageValue, getLocalizedField } from '../../../utils/localization';
-
 import { ACTIONS, MODULES } from '../../../utils/permissions';
 
 const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const { language, t } = useTranslation();
-  // State
-  const [searchQuery, setSearchQuery] = useState('');
-  const debouncedSearch = useDebounce(searchQuery, 500);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [selectedPosts, setSelectedPosts] = useState([]);
   const [bulkConfirm, setBulkConfirm] = useState({ isOpen: false, ids: [] });
   const [importDialog, setImportDialog] = useState({
     isOpen: false,
@@ -44,79 +31,94 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     skippedCount: 0
   });
   const [importLoading, setImportLoading] = useState(false);
-  const queryClient = useQueryClient();
-  
-  // Cursor pagination hook
-  const pagination = useCursorPagination(5, [debouncedSearch]);
 
-  const { loading: formLoading, execute: executeForm } = useAsyncAction({
+  const crud = useAdminCrud({
+    resourceKey: 'posts',
+    module: MODULES.BLOG,
+    isActionAllowed,
     showToast,
-    successMessage: selectedPost ? t('admin.blog.messages.updated') : t('admin.blog.messages.created'),
-    invalidateKeys: [['posts']],
-    onSuccess: () => setIsFormOpen(false)
-  });
-
-  const { loading: deleteLoading, execute: executeDelete } = useAsyncAction({
-    showToast,
-    successMessage: t('admin.blog.messages.deleted'),
-    invalidateKeys: [['posts']],
-    onSuccess: () => setIsDeleteOpen(false)
-  });
-  const { trackRead, trackWrite, trackDelete } = useActivity();
-
-  // Reset page on search
-  const handleSearch = (val) => {
-    setSearchQuery(val);
-    setSelectedPosts([]);
-    pagination.reset();
-  };
-
-  // Queries
-  const { data: postsResult = { data: [], lastDoc: null, hasMore: false, totalCount: null }, isLoading, isFetching } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    queryKey: ['posts', debouncedSearch, pagination.cursor, pagination.limit],
-    queryFn: async () => {
-      const requestCursor = pagination.cursor;
-      const result = await BaseService.safe(() => BlogService.fetchPaginated({
-        lastDoc: requestCursor,
-        limit: pagination.limit,
-        search: debouncedSearch,
-        searchFields: ['title.en', 'title.km', 'excerpt.en', 'excerpt.km', 'tags', 'slug'],
-        sortBy: "createdAt",
-        sortDirection: "desc",
-        includeTotal: true,
-        trackRead
-      }));
-
-      if (result.error) {
-        showToast(result.error, 'error');
-        return { data: [], lastDoc: null, hasMore: false, totalCount: null };
+    t,
+    fetchPaginated: ({ lastDoc, limit, search, trackRead }) => BlogService.fetchPaginated({
+      lastDoc,
+      limit,
+      search,
+      searchFields: ['title.en', 'title.km', 'excerpt.en', 'excerpt.km', 'tags', 'slug'],
+      sortBy: 'createdAt',
+      sortDirection: 'desc',
+      includeTotal: true,
+      trackRead
+    }),
+    fetchStats: () => BlogService.fetchStats(),
+    statsDefault: { total: 0, published: 0, featured: 0, drafts: 0 },
+    toggleVisibility: {
+      mutationFn: (id, current, trackWrite) => BlogService.toggleVisibility(userRole, id, current, trackWrite),
+      on: t('admin.blog.messages.published'),
+      off: t('admin.blog.messages.hidden')
+    },
+    toggleFeatured: {
+      mutationFn: (id, current, trackWrite) => BlogService.toggleFeatured(userRole, id, current, trackWrite),
+      on: t('admin.blog.messages.featured'),
+      off: t('admin.blog.messages.unfeatured')
+    },
+    bulk: {
+      delete: (ids, trackDelete) => BlogService.batchDeletePosts(userRole, ids, trackDelete),
+      setVisibility: (ids, visible, trackWrite) => BlogService.batchUpdatePostsVisibility(userRole, ids, visible, trackWrite),
+      setFeatured: (ids, featured, trackWrite) => BlogService.batchUpdatePostsFeatured(userRole, ids, featured, trackWrite),
+      messages: {
+        deleted: (count) => t('admin.blog.messages.deletedMany', { count }),
+        visibility: (count, visible) => (visible
+          ? t('admin.blog.messages.publishedMany', { count })
+          : t('admin.blog.messages.hiddenMany', { count })),
+        featured: (count, featured) => (featured
+          ? t('admin.blog.messages.featuredMany', { count })
+          : t('admin.blog.messages.unfeaturedMany', { count }))
       }
-
-      pagination.updateAfterFetch(requestCursor, result.data.lastDoc, result.data.hasMore);
-      return result.data;
+    },
+    messages: {
+      created: t('admin.blog.messages.created'),
+      updated: t('admin.blog.messages.updated'),
+      deleted: t('admin.blog.messages.deleted')
     }
   });
 
-  const { data: blogStats = { total: 0, published: 0, featured: 0, drafts: 0 } } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    queryKey: ['posts', 'stats'],
-    queryFn: async () => {
-      const result = await BaseService.safe(() => BlogService.fetchStats());
-      if (result.error) {
-        showToast(result.error, 'error');
-        return { total: 0, published: 0, featured: 0, drafts: 0 };
-      }
-      return result.data;
-    }
-  });
+  const {
+    items: posts,
+    listResult: postsResult,
+    stats: blogStats,
+    isLoading,
+    isFetching,
+    isSearching,
+    searchQuery,
+    handleSearch,
+    pagination,
+    selection,
+    selectedIds,
+    editingItem,
+    setEditingItem,
+    deletingItem,
+    setDeletingItem,
+    historyItem,
+    setHistoryItem,
+    isFormOpen,
+    setIsFormOpen,
+    isHistoryOpen,
+    setIsHistoryOpen,
+    ensurePermission,
+    handleToggleVisibility,
+    handleToggleFeatured,
+    bulkDeleteMutation,
+    bulkVisibilityMutation,
+    bulkFeaturedMutation,
+    bulkPending,
+    formLoading,
+    deleteLoading,
+    saveItem,
+    executeDelete,
+    trackWrite,
+    trackDelete,
+    queryClient
+  } = crud;
 
-  const posts = postsResult.data;
-  const isSearching = searchQuery !== debouncedSearch;
   const tablePosts = useMemo(() => posts.map((post) => ({
     ...post,
     __raw: post,
@@ -124,6 +126,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     excerpt: getLocalizedField(post.excerpt, language),
     content: getLocalizedField(post.content, language)
   })), [posts, language]);
+
   const workspaceStats = [
     {
       label: t('admin.blog.stats.total.label'),
@@ -151,7 +154,6 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     }
   ];
 
-  // Handlers
   // Permission Booleans
   const canCreate = isActionAllowed(ACTIONS.CREATE, MODULES.BLOG);
   const canEdit = isActionAllowed(ACTIONS.EDIT, MODULES.BLOG);
@@ -161,19 +163,15 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   const canViewHistory = isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.BLOG);
 
   const handleCreate = () => {
-    if (!canCreate) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
-    setSelectedPost(null);
+    if (!ensurePermission(ACTIONS.CREATE)) return;
+    setEditingItem(null);
     setIsFormOpen(true);
   };
 
   const handleEdit = (post) => {
-    if (!isActionAllowed(ACTIONS.EDIT, MODULES.BLOG)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
+    if (!ensurePermission(ACTIONS.EDIT)) return;
     const source = post.__raw || post;
-    setSelectedPost({
+    setEditingItem({
       ...source,
       tags: Array.isArray(source.tags) ? source.tags.join(', ') : (source.tags || '')
     });
@@ -181,242 +179,57 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleDelete = (post) => {
-    if (!isActionAllowed(ACTIONS.DELETE, MODULES.BLOG)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
-    setSelectedPost(post.__raw || post);
-    setIsDeleteOpen(true);
-  };
-
-  // Selection Handlers
-  const handleToggleSelectPost = (id) => {
-    setSelectedPosts(prev =>
-        prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]
-    );
-  };
-
-  const handleSelectAllPosts = () => {
-    const paginatedIds = posts.map(p => p.id);
-    const allSelected = paginatedIds.length > 0 && paginatedIds.every(id => selectedPosts.includes(id));
-    
-    if (allSelected) {
-      setSelectedPosts(prev => prev.filter(id => !paginatedIds.includes(id)));
-    } else {
-      setSelectedPosts(prev => {
-        const newSelections = paginatedIds.filter(id => !prev.includes(id));
-        return [...prev, ...newSelections];
-      });
-    }
-  };
-  
-  // Mutations with Optimistic Updates
-  const visibilityMutation = useMutation({
-    mutationFn: ({ id, currentVisible }) => 
-      BlogService.toggleVisibility(userRole, id, currentVisible, trackWrite),
-    onMutate: async ({ id, currentVisible }) => {
-      await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previousPosts = queryClient.getQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit]);
-      
-      if (previousPosts) {
-        queryClient.setQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit], {
-          ...previousPosts,
-          data: previousPosts.data.map(p => 
-            p.id === id ? { ...p, visible: !currentVisible } : p
-          )
-        });
-      }
-      return { previousPosts };
-    },
-    onError: (err, variables, context) => {
-      if (context?.previousPosts) {
-        queryClient.setQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit], context.previousPosts);
-      }
-      showToast(err?.message || 'Failed to update visibility', 'error');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-    },
-    onSuccess: (_, variables) => {
-      showToast(
-        !variables.currentVisible
-          ? t('admin.blog.messages.published')
-          : t('admin.blog.messages.hidden')
-      );
-    }
-  });
-
-  const featuredMutation = useMutation({
-    mutationFn: ({ id, currentFeatured }) => 
-      BlogService.toggleFeatured(userRole, id, currentFeatured, trackWrite),
-    onMutate: async ({ id, currentFeatured }) => {
-      await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previousPosts = queryClient.getQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit]);
-      
-      if (previousPosts) {
-        queryClient.setQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit], {
-          ...previousPosts,
-          data: previousPosts.data.map(p => 
-            p.id === id ? { ...p, featured: !currentFeatured } : p
-          )
-        });
-      }
-      return { previousPosts };
-    },
-    onError: (err, variables, context) => {
-      if (context?.previousPosts) {
-        queryClient.setQueryData(['posts', debouncedSearch, pagination.cursor, pagination.limit], context.previousPosts);
-      }
-      showToast(err?.message || 'Failed to update featured status', 'error');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-    },
-    onSuccess: (_, variables) => {
-      showToast(
-        !variables.currentFeatured
-          ? t('admin.blog.messages.featured')
-          : t('admin.blog.messages.unfeatured')
-      );
-    }
-  });
-
-  const handleToggleVisibility = (id, currentVisible) => {
-    if (!canToggleVisibility) return showToast(t('admin.common.noPermissionAction'), "error");
-    visibilityMutation.mutate({ id, currentVisible });
-  };
-
-  const handleToggleFeatured = (id, currentFeatured) => {
-    if (!canFeature) return showToast(t('admin.common.noPermissionAction'), "error");
-    featuredMutation.mutate({ id, currentFeatured });
-  };
-
-  // Bulk Actions Mutations
-  const bulkDeleteMutation = useMutation({
-    mutationFn: (ids) => BlogService.batchDeletePosts(userRole, ids, trackDelete),
-    onSuccess: (_, ids) => {
-      showToast(t('admin.blog.messages.deletedMany', { count: ids.length }));
-      setSelectedPosts([]);
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-    },
-    onError: (err) => showToast(err?.message || 'Failed to delete posts', 'error')
-  });
-
-  const bulkVisibilityMutation = useMutation({
-    mutationFn: ({ ids, visible }) => BlogService.batchUpdatePostsVisibility(userRole, ids, visible, trackWrite),
-    onSuccess: (_, { ids, visible }) => {
-      showToast(
-        visible
-          ? t('admin.blog.messages.publishedMany', { count: ids.length })
-          : t('admin.blog.messages.hiddenMany', { count: ids.length })
-      );
-      setSelectedPosts([]);
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-    },
-    onError: (err) => showToast(err?.message || 'Failed to update posts', 'error')
-  });
-
-  const bulkFeaturedMutation = useMutation({
-    mutationFn: ({ ids, featured }) => BlogService.batchUpdatePostsFeatured(userRole, ids, featured, trackWrite),
-    onSuccess: (_, { ids, featured }) => {
-      showToast(
-        featured
-          ? t('admin.blog.messages.featuredMany', { count: ids.length })
-          : t('admin.blog.messages.unfeaturedMany', { count: ids.length })
-      );
-      setSelectedPosts([]);
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-    },
-    onError: (err) => showToast(err?.message || 'Failed to update posts', 'error')
-  });
-
-  const handleBulkDelete = () => {
-    if (selectedPosts.length === 0) return;
-    setBulkConfirm({
-        isOpen: true,
-        ids: selectedPosts
-    });
-  };
-
-  const handleBulkVisibility = (visible) => {
-    if (selectedPosts.length === 0) return;
-    bulkVisibilityMutation.mutate({ ids: selectedPosts, visible });
-  };
-
-  const handleBulkFeatured = (featured) => {
-    if (selectedPosts.length === 0) return;
-    bulkFeaturedMutation.mutate({ ids: selectedPosts, featured });
+    if (!ensurePermission(ACTIONS.DELETE)) return;
+    setDeletingItem(post.__raw || post);
   };
 
   const handleViewHistory = (post) => {
-    if (!canViewHistory) return showToast(t('admin.common.noPermissionAction'), "error");
-    setSelectedPost(post.__raw || post);
+    if (!ensurePermission(ACTIONS.VIEW_HISTORY)) return;
+    setHistoryItem(post.__raw || post);
     setIsHistoryOpen(true);
   };
 
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    setBulkConfirm({ isOpen: true, ids: selectedIds });
+  };
+
+  const handleBulkVisibility = (visible) => {
+    if (selectedIds.length === 0) return;
+    bulkVisibilityMutation.mutate({ ids: selectedIds, visible });
+  };
+
+  const handleBulkFeatured = (featured) => {
+    if (selectedIds.length === 0) return;
+    bulkFeaturedMutation.mutate({ ids: selectedIds, featured });
+  };
+
   const handleFormSubmit = async (formData) => {
-    if (!isActionAllowed(selectedPost ? ACTIONS.EDIT : ACTIONS.CREATE, MODULES.BLOG)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
-    
-    await executeForm(async () => {
+    if (!ensurePermission(editingItem ? ACTIONS.EDIT : ACTIONS.CREATE)) return;
+
+    await saveItem(async () => {
       let coverImage = formData.coverImage || '';
       if (formData.image instanceof File) {
         coverImage = await ImageProcessingService.compress(formData.image);
       }
 
       const { image: _image, ...rest } = formData;
-      const action = selectedPost ? 'updated' : 'created';
-      await BlogService.savePost(userRole, { ...rest, coverImage, id: selectedPost?.id }, (count, label) => 
+      const action = editingItem ? 'updated' : 'created';
+      await BlogService.savePost(userRole, {
+        ...rest,
+        coverImage,
+        id: editingItem?.id,
+        publishedAt: editingItem?.publishedAt,
+        archivedAt: editingItem?.archivedAt
+      }, (count, label) =>
         trackWrite(count, label, {
           action,
           module: 'blog',
-          entityId: selectedPost?.id || 'new',
+          entityId: editingItem?.id || 'new',
           entityName: formData.titleEn
         })
       );
     });
-  };
-
-  const parseBoolean = (value, fallback = false) => {
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'string') {
-      const normalized = value.trim().toLowerCase();
-      if (['true', '1', 'yes', 'y'].includes(normalized)) return true;
-      if (['false', '0', 'no', 'n'].includes(normalized)) return false;
-    }
-    return fallback;
-  };
-
-  const readImportFile = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => resolve(event.target?.result || '');
-    reader.onerror = () => reject(new Error('Failed to read import file.'));
-    reader.readAsText(file);
-  });
-
-  const parseImportItems = (fileName, content) => {
-    let parsed = [];
-
-    if (fileName.toLowerCase().endsWith('.csv')) {
-      parsed = csvToJson(content);
-    } else {
-      parsed = JSON.parse(content);
-    }
-
-    if (!Array.isArray(parsed)) parsed = [parsed];
-    return parsed;
-  };
-
-  const downloadJson = (data, filename) => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   const handleImportPosts = async (file) => {
@@ -450,51 +263,32 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
 
     setImportLoading(true);
     try {
-      let created = 0;
-      let updated = 0;
-      let skipped = 0;
-      let failed = 0;
-
-      for (const item of importDialog.items) {
-        try {
+      const { created, updated, skipped, failed } = await runImport({
+        items: importDialog.items,
+        buildPayload: (item) => {
           const titleEn = (item?.titleEn || getLanguageValue(item?.title, 'en', true) || '').trim();
-          if (!titleEn) {
-            skipped += 1;
-            continue;
-          }
+          if (!titleEn) return null;
           const normalizedSlug = item.slug ? slugify(item.slug) : slugify(titleEn);
           const tags = Array.isArray(item.tags)
             ? item.tags.join(', ')
             : (item.tags || '');
-          const titleKm = (item?.titleKm || getLanguageValue(item?.title, 'km', false) || '').trim();
-          const excerptEn = (item?.excerptEn || getLanguageValue(item?.excerpt, 'en', true) || '').trim();
-          const excerptKm = (item?.excerptKm || getLanguageValue(item?.excerpt, 'km', false) || '').trim();
-          const contentEn = (item?.contentEn || getLanguageValue(item?.content, 'en', true) || '').trim();
-          const contentKm = (item?.contentKm || getLanguageValue(item?.content, 'km', false) || '').trim();
-
-          const existing = await BlogService.fetchPostBySlug(normalizedSlug, null, true);
-          const payload = {
-            id: existing?.id || null,
+          return {
             titleEn,
-            titleKm,
+            titleKm: (item?.titleKm || getLanguageValue(item?.title, 'km', false) || '').trim(),
             slug: normalizedSlug,
-            excerptEn,
-            excerptKm,
-            contentEn,
-            contentKm,
+            excerptEn: (item?.excerptEn || getLanguageValue(item?.excerpt, 'en', true) || '').trim(),
+            excerptKm: (item?.excerptKm || getLanguageValue(item?.excerpt, 'km', false) || '').trim(),
+            contentEn: (item?.contentEn || getLanguageValue(item?.content, 'en', true) || '').trim(),
+            contentKm: (item?.contentKm || getLanguageValue(item?.content, 'km', false) || '').trim(),
             tags,
             coverImage: item.coverImage || '',
             featured: parseBoolean(item.featured, false),
             visible: parseBoolean(item.visible, true)
           };
-
-          await BlogService.savePost(userRole, payload, trackWrite);
-          if (existing?.id) updated += 1;
-          else created += 1;
-        } catch {
-          failed += 1;
-        }
-      }
+        },
+        fetchExistingBySlug: (slug) => BlogService.fetchPostBySlug(slug, null, true),
+        save: (payload) => BlogService.savePost(userRole, payload, trackWrite)
+      });
 
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       setImportDialog({
@@ -519,11 +313,11 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
   };
 
   const handleExportSelectedPosts = () => {
-    if (selectedPosts.length === 0) {
+    if (selectedIds.length === 0) {
       return showToast(t('admin.blog.messages.selectToExport'), 'warning');
     }
 
-    const selected = posts.filter(post => selectedPosts.includes(post.id));
+    const selected = posts.filter(post => selectedIds.includes(post.id));
     if (selected.length === 0) {
       return showToast(t('admin.blog.messages.selectedNotInPage'), 'warning');
     }
@@ -561,35 +355,24 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
     }];
 
     const csvData = jsonToCsv(template, ['titleEn', 'titleKm', 'slug', 'excerptEn', 'excerptKm', 'contentEn', 'contentKm', 'tags', 'featured', 'visible']);
-    const blob = new Blob([csvData], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'blog_template.csv';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadCsv(csvData, 'blog_template.csv');
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedPost?.id) return;
-    if (!isActionAllowed(ACTIONS.DELETE, MODULES.BLOG)) {
-      return showToast(t('admin.common.noPermissionAction'), "error");
-    }
+    if (!deletingItem?.id) return;
+    if (!ensurePermission(ACTIONS.DELETE)) return;
 
     await executeDelete(async () => {
-      await BlogService.deletePost(userRole, selectedPost.id, (count, label) => 
+      await BlogService.deletePost(userRole, deletingItem.id, (count, label) =>
         trackDelete(count, label, {
           action: 'deleted',
           module: 'blog',
-          entityId: selectedPost.id,
-          entityName: getLocalizedField(selectedPost.title, 'en')
+          entityId: deletingItem.id,
+          entityName: getLocalizedField(deletingItem.title, 'en')
         })
       );
     });
   };
-
 
   return (
     <div className="admin-tab-container">
@@ -600,7 +383,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         isSearching={isSearching || isFetching}
         canCreate={canCreate}
         canBulkManage={canCreate || canEdit}
-        selectedCount={selectedPosts.length}
+        selectedCount={selectedIds.length}
         stats={workspaceStats}
         onImportFile={handleImportPosts}
         onExportSelected={handleExportSelectedPosts}
@@ -608,38 +391,19 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         onDownloadTemplateJSON={handleDownloadBlogJsonTemplate}
       />
 
-      {selectedPosts.length > 0 && (
-        <div className="ui-bulk-actions-bar">
-          <div className="ui-bulk-actions-summary">
-            <div className="ui-bulk-actions-count">
-              {selectedPosts.length}
-            </div>
-            <span className="ui-bulk-actions-text">
-              {t('admin.blog.bulk.selected')}
-            </span>
-          </div>
-
-          <div className="ui-bulk-actions-controls">
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(true)} title={t('admin.blog.bulk.publishSelected')} disabled={!canToggleVisibility}>
-              <Eye size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.publish')}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkVisibility(false)} title={t('admin.blog.bulk.hideSelected')} disabled={!canToggleVisibility}>
-              <EyeOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.hide')}
-            </Button>
-            <div className="ui-bulk-divider" />
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(true)} title={t('admin.blog.bulk.featureSelected')} disabled={!canFeature}>
-              <Star size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.feature')}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleBulkFeatured(false)} title={t('admin.blog.bulk.unfeatureSelected')} disabled={!canFeature}>
-              <StarOff size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.blog.bulk.unfeature')}
-            </Button>
-            <div className="ui-bulk-divider" />
-            <Button variant="danger" size="sm" onClick={handleBulkDelete} title={t('admin.blog.bulk.deleteSelected')}>
-              <Trash2 size={16} style={{ marginRight: '0.4rem' }} /> {t('admin.common.delete')}
-            </Button>
-          </div>
-        </div>
-      )}
+      <BulkActionsBar
+        count={selectedIds.length}
+        label={t('admin.blog.bulk.selected')}
+        actions={[
+          { icon: Eye, label: t('admin.blog.bulk.publish'), title: t('admin.blog.bulk.publishSelected'), onClick: () => handleBulkVisibility(true), disabled: !canToggleVisibility },
+          { icon: EyeOff, label: t('admin.blog.bulk.hide'), title: t('admin.blog.bulk.hideSelected'), onClick: () => handleBulkVisibility(false), disabled: !canToggleVisibility },
+          { divider: true },
+          { icon: Star, label: t('admin.blog.bulk.feature'), title: t('admin.blog.bulk.featureSelected'), onClick: () => handleBulkFeatured(true), disabled: !canFeature },
+          { icon: StarOff, label: t('admin.blog.bulk.unfeature'), title: t('admin.blog.bulk.unfeatureSelected'), onClick: () => handleBulkFeatured(false), disabled: !canFeature },
+          { divider: true },
+          { icon: Trash2, label: t('admin.common.delete'), title: t('admin.blog.bulk.deleteSelected'), onClick: handleBulkDelete, variant: 'danger' }
+        ]}
+      />
 
       <BlogTable
         posts={tablePosts}
@@ -655,7 +419,7 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
         canFeature={canFeature}
         canToggleVisibility={canToggleVisibility}
         canViewHistory={canViewHistory}
-        loading={isLoading || bulkDeleteMutation.isPending || bulkVisibilityMutation.isPending || bulkFeaturedMutation.isPending}
+        loading={isLoading || bulkPending}
         page={pagination.page}
         pageSize={pagination.limit}
         totalItems={postsResult.totalCount}
@@ -669,36 +433,32 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
           }
         }}
         searchQuery={searchQuery}
-        selection={{
-          selectedIds: selectedPosts,
-          onSelect: handleToggleSelectPost,
-          onSelectAll: handleSelectAllPosts
-        }}
+        selection={selection}
       />
 
       {/* Dialogs */}
       <BlogFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        mode={selectedPost ? 'edit' : 'create'}
-        initialData={selectedPost}
+        mode={editingItem ? 'edit' : 'create'}
+        initialData={editingItem}
         onSubmit={handleFormSubmit}
         loading={formLoading}
       />
 
-      <DeleteConfirmDialog 
-        open={isDeleteOpen} 
-        onOpenChange={setIsDeleteOpen}
+      <DeleteConfirmDialog
+        open={!!deletingItem}
+        onOpenChange={(open) => !open && setDeletingItem(null)}
         onConfirm={handleConfirmDelete}
         loading={deleteLoading}
         title={t('admin.blog.dialogs.deleteTitle')}
         message={t('admin.blog.dialogs.deleteMessage', {
-          title: getLocalizedField(selectedPost?.title, language)
+          title: getLocalizedField(deletingItem?.title, language)
         })}
       />
 
-      <DeleteConfirmDialog 
-        open={bulkConfirm.isOpen} 
+      <DeleteConfirmDialog
+        open={bulkConfirm.isOpen}
         onOpenChange={(open) => !open && setBulkConfirm({ ...bulkConfirm, isOpen: false })}
         onConfirm={() => {
             bulkDeleteMutation.mutate(bulkConfirm.ids);
@@ -742,9 +502,11 @@ const BlogTab = ({ userRole, showToast, isActionAllowed }) => {
       <HistoryModal
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
-        recordId={selectedPost?.id}
+        recordId={historyItem?.id}
         service={BlogService}
-        title={getLocalizedField(selectedPost?.title, language)}
+        title={getLocalizedField(historyItem?.title, language)}
+        canRestore={canEdit}
+        showToast={showToast}
       />
     </div>
   );

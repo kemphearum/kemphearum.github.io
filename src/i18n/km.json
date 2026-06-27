@@ -16,7 +16,9 @@
     "contact": "ទំនាក់ទំនង",
     "primary": "ម៉ឺនុយសំខាន់",
     "open": "បើកម៉ឺនុយ",
-    "close": "បិទម៉ឺនុយ"
+    "close": "បិទម៉ឺនុយ",
+    "skills": "ជំនាញ",
+    "certificates": "វិញ្ញាបនបត្រ"
   },
   "hero": {
     "defaultCta": "ទាញយក CV",
@@ -196,7 +198,14 @@
           "updated": "បានកែប្រែ",
           "deleted": "បានលុប"
         },
-        "close": "បិទ"
+        "close": "បិទ",
+        "restore": "ស្ដារ",
+        "restoreConfirmTitle": "ស្ដារកំណែនេះឬ?",
+        "restoreConfirmMessage": "វានឹងអនុវត្តកំណែដែលបានជ្រើសជាការកែប្រែថ្មី។ តម្លៃបច្ចុប្បន្ននឹងត្រូវសរសេរជាន់ ប៉ុន្តែនៅរក្សាក្នុងប្រវត្តិ។",
+        "restorePreview": "មើលកំណែនេះជាមុន",
+        "restoreSuccess": "បានស្ដារកំណែ។",
+        "restoreError": "បរាជ័យក្នុងការស្ដារកំណែ។",
+        "restoreConfirm": "ស្ដារកំណែ"
       },
       "quotaBanner": {
         "title": "ដល់កម្រិតធនធានប្រចាំថ្ងៃ",
@@ -210,10 +219,72 @@
       },
       "header": {
         "adminBrand": "គ្រប់គ្រង"
+      },
+      "table": {
+        "exportCsv": "នាំចេញ CSV",
+        "show": "បង្ហាញ",
+        "page": "ទំព័រ",
+        "of": "នៃ",
+        "total": "សរុប",
+        "prev": "មុន",
+        "next": "បន្ទាប់",
+        "empty": "គ្មានទិន្នន័យ",
+        "emptyDescription": "មិនមានកំណត់ត្រាដើម្បីបង្ហាញទេ។",
+        "selectRow": "ជ្រើសរើសជួរ",
+        "selectAll": "ជ្រើសរើសទាំងអស់",
+        "sortBy": "តម្រៀបតាម {{column}}"
+      },
+      "status": {
+        "draft": "សេចក្តីព្រាង",
+        "scheduled": "បានកំណត់ពេល",
+        "published": "បានផ្សាយ",
+        "archived": "បានទុកក្នុងប័ណ្ណសារ"
+      },
+      "schedule": {
+        "status": "ស្ថានភាព",
+        "publishAt": "ផ្សាយនៅ",
+        "publishAtHint": "ពេលស្ថានភាពជា បានកំណត់ពេល វានឹងផ្សាយនៅពេលនេះ។",
+        "expireAt": "ផុតកំណត់នៅ",
+        "expireAtHint": "ស្រេចចិត្ត។ ទុកក្នុងប័ណ្ណសារដោយស្វ័យប្រវត្តិក្រោយពេលនេះ។",
+        "storedHint": "ស្ថានភាពដែលរក្សាទុក (ខុសពីស្ថានភាពជាក់ស្តែង)"
       }
     },
     "dashboard": {
-      "title": "ផ្ទាំងគ្រប់គ្រង"
+      "title": "ផ្ទាំងគ្រប់គ្រង",
+      "overview": "ទិដ្ឋភាពរួម",
+      "quickActions": "សកម្មភាពរហ័ស",
+      "newProject": "គម្រោងថ្មី",
+      "newPost": "អត្ថបទថ្មី",
+      "viewSite": "មើលគេហទំព័រ",
+      "latestPosts": "អត្ថបទថ្មីៗ",
+      "latestProjects": "គម្រោងថ្មីៗ",
+      "recentActivity": "សកម្មភាពថ្មីៗ",
+      "viewAll": "មើលទាំងអស់",
+      "empty": "មិនទាន់មានទិន្នន័យ",
+      "untitled": "គ្មានចំណងជើង",
+      "cards": {
+        "title": "ផ្ទាំងគ្រប់គ្រង",
+        "projects": "គម្រោង",
+        "posts": "អត្ថបទ",
+        "experience": "បទពិសោធន៍",
+        "messages": "សារមិនទាន់អាន",
+        "users": "អ្នកប្រើប្រាស់",
+        "publishedCount": "បានផ្សាយ {{count}}",
+        "draftsCount": "សេចក្តីព្រាង {{count}}",
+        "currentRolesCount": "តួនាទីបច្ចុប្បន្ន {{count}}",
+        "unreadHint": "រង់ចាំការឆ្លើយតប",
+        "usersHint": "គណនីសរុប"
+      },
+      "insights": {
+        "title": "ការវិភាគមាតិកា",
+        "statusBreakdown": "ការបែងចែកស្ថានភាព",
+        "trend": "ផ្សាយក្នុងមួយខែ",
+        "health": "សុខភាពមាតិកា",
+        "missingCover": "គ្មានរូបគm",
+        "missingSlug": "គ្មាន slug",
+        "missingExcerpt": "គ្មានសេចក្តីសង្ខេប",
+        "storage": "ការផ្ទុករូបភាព"
+      }
     },
     "tabs": {
       "general": "មាតិកាទូទៅ",
@@ -229,19 +300,26 @@
       "settings": "ការកំណត់",
       "homeSection": "ទំព័រដើម",
       "aboutSection": "អំពី",
-      "contactSection": "ទំនាក់ទំនង"
+      "contactSection": "ទំនាក់ទំនង",
+      "dashboard": "ផ្ទាំងគ្រប់គ្រង",
+      "skills": "ជំនាញ",
+      "certificates": "វិញ្ញាបនបត្រ"
     },
     "subtitles": {
       "general": "គ្រប់គ្រងមាតិកាសំខាន់ៗរបស់ផតថលីយ៉ូរបស់អ្នក",
       "profile": "គ្រប់គ្រងប្រវត្តិរូប និងការកំណត់គណនីរបស់អ្នក",
       "settings": "កំណត់អត្តសញ្ញាណគេហទំព័រ រចនាប័ទ្ម និងការធ្វើសមកាលកម្ម",
-      "default": "ផ្ទាំងគ្រប់គ្រងអ្នកគ្រប់គ្រង"
+      "default": "ផ្ទាំងគ្រប់គ្រងអ្នកគ្រប់គ្រង",
+      "dashboard": "ទិដ្ឋភាពរួមនៃផតថ្វូលីយ៉ូរបស់អ្នក",
+      "skills": "បង្ហាញជំនាញវិជ្ជាជីវៈរបស់អ្នក",
+      "certificates": "បង្ហាញវិញ្ញាបនបត្ររបស់អ្នក"
     },
     "header": {
       "searchPlaceholder": "ស្វែងរកក្នុងផ្ទាំងគ្រប់គ្រង...",
       "viewLiveSite": "មើលគេហទំព័រផ្ទាល់",
       "switchTheme": "ប្ដូរទៅរបៀប {{mode}}",
-      "logout": "ចាកចេញ"
+      "logout": "ចាកចេញ",
+      "toggleSidebar": "បិទ/បើកម៉ឺនុយរុករក"
     },
     "sidebar": {
       "groups": {
@@ -1039,6 +1117,18 @@
         "sync": {
           "label": "សមកាលកម្មគេហទំព័រ",
           "description": "តំណឆ្លុះ GitHub token និងការបញ្ជាបង្កើតឡើងវិញដោយដៃ"
+        },
+        "seo": {
+          "label": "SEO",
+          "description": "ទិន្នន័យមេតា និងកាតសង្គម"
+        },
+        "social": {
+          "label": "បណ្តាញសង្គម",
+          "description": "តំណប្រវត្តិរូបសង្គម"
+        },
+        "featureFlags": {
+          "label": "ការបិទបើកមុខងារ",
+          "description": "បិទបើកផ្នែកសាធារណៈ"
         }
       },
       "workspace": {
@@ -1538,6 +1628,31 @@
             "save": "រក្សាទុកការកែប្រែទំនាក់ទំនង"
           }
         }
+      },
+      "actions": {
+        "save": "រក្សាទុកការផ្លាស់ប្តូរ"
+      },
+      "seo": {
+        "title": "SEO និងទិន្នន័យមេតា",
+        "description": "លំនាំដើមសម្រាប់ម៉ាស៊ីនស្វែងរក និងការចែករំលែកសង្គម។",
+        "metaTitle": "ចំណងជើងមេតា",
+        "metaTitlePlaceholder": "ចំណងជើងគេហទំព័រសម្រាប់លទ្ធផលស្វែងរក",
+        "metaDescription": "ការពិពណ៌នាមេតា",
+        "metaDescriptionPlaceholder": "ការពិពណ៌នាខ្លីបង្ហាញក្នុងលទ្ធផលស្វែងរក",
+        "keywords": "ពាក្យគន្លឹះ",
+        "keywordsPlaceholder": "ពាក្យគន្លឹះ បំបែកដោយក្បៀស",
+        "ogImage": "URL រូបភាព Open Graph",
+        "twitterHandle": "ឈ្មោះ Twitter"
+      },
+      "social": {
+        "title": "តំណបណ្តាញសង្គម",
+        "description": "តំណបង្ហាញលើគេហទំព័រសាធារណៈ។"
+      },
+      "featureFlags": {
+        "title": "ការបិទបើកមុខងារ",
+        "description": "បង្ហាញ ឬលាក់ផ្នែកសាធារណៈដោយមិនចាំបាច់ដាក់ឲ្យដំណើរការឡើងវិញ។",
+        "contact": "ទំនាក់ទំនង",
+        "showLabel": "បង្ហាញ {{label}}"
       }
     },
     "profile": {
@@ -1776,6 +1891,302 @@
         "noteReEnable": "គណនីអាចចូលប្រើបានវិញភ្លាមៗបន្ទាប់ពីការផ្លាស់ប្តូរនេះ",
         "noteDisable": "គណនីនៅតែមានក្នុងប្រព័ន្ធ ហើយអាចបើកឡើងវិញពេលក្រោយពី User Management"
       }
+    },
+    "skills": {
+      "workspace": {
+        "eyebrow": "ជំនាញ",
+        "title": "កន្លែងគ្រប់គ្រងជំនាញ",
+        "description": "គ្រប់គ្រងជំនាញដែលបង្ហាញលើផតថ្វូលីយ៉ូ។",
+        "summaryAria": "សង្ខេបជំនាញ",
+        "searchPlaceholder": "ស្វែងរកជំនាញ...",
+        "addNew": "បន្ថែមជំនាញ"
+      },
+      "levels": {
+        "beginner": "ដំបូង",
+        "intermediate": "មធ្យម",
+        "advanced": "ខ្ពស់",
+        "expert": "ជំនាញ"
+      },
+      "table": {
+        "columns": {
+          "name": "ជំនាញ",
+          "status": "ស្ថានភាព",
+          "actions": "សកម្មភាព"
+        },
+        "untitled": "គ្មានឈ្មោះ",
+        "viewHistory": "មើលប្រវត្តិ",
+        "status": {
+          "visible": "បង្ហាញ",
+          "hidden": "លាក់",
+          "featured": "លេចធ្លោ"
+        },
+        "empty": {
+          "title": "មិនទាន់មានជំនាញ",
+          "description": "បន្ថែមជំនាញដំបូងរបស់អ្នក។",
+          "action": "បន្ថែមជំនាញ"
+        }
+      },
+      "stats": {
+        "total": {
+          "label": "ជំនាញសរុប",
+          "hint": "ទាំងអស់"
+        },
+        "visible": {
+          "hint": "បង្ហាញជាសាធារណៈ"
+        },
+        "featured": {
+          "hint": "បានបន្លិច"
+        },
+        "categories": {
+          "label": "ប្រភេទ",
+          "hint": "ប្រភេទផ្សេងៗ"
+        }
+      },
+      "form": {
+        "languages": {
+          "en": "អង់គ្លេស",
+          "km": "ខ្មែរ"
+        },
+        "fields": {
+          "name": "ឈ្មោះ",
+          "nameRequired": "ត្រូវការឈ្មោះជាភាសាអង់គ្លេស",
+          "namePlaceholder": "ឧ. ការអនុវត្ត ISO 27001",
+          "description": "ការពិពណ៌នា",
+          "descriptionPlaceholder": "ការពិពណ៌នាខ្លី (ស្រេចចិត្ត)",
+          "category": "ប្រភេទ",
+          "categoryPlaceholder": "ឧ. អភិបាលកិច្ច",
+          "level": "កម្រិតជំនាញ",
+          "slug": "Slug",
+          "slugHint": "បង្កើតស្វ័យប្រវត្តិពីឈ្មោះ",
+          "slugPlaceholder": "iso-27001",
+          "visibility": "ភាពមើលឃើញ",
+          "optionVisible": "បង្ហាញ",
+          "optionHidden": "លាក់",
+          "featured": "លេចធ្លោ",
+          "optionFeatured": "លេចធ្លោ",
+          "optionNotFeatured": "មិនលេចធ្លោ"
+        },
+        "sections": {
+          "details": {
+            "title": "ព័ត៌មានជំនាញ",
+            "description": "ដាក់ឈ្មោះនិងពិពណ៌នាជំនាញ។"
+          },
+          "meta": {
+            "title": "ទិន្នន័យមេតា",
+            "description": "ប្រភេទ កម្រិត និងភាពមើលឃើញ។"
+          }
+        },
+        "dialogs": {
+          "addTitle": "បន្ថែមជំនាញ",
+          "editTitle": "កែប្រែជំនាញ",
+          "description": "ជំនាញបង្ហាញលើផតថ្វូលីយ៉ូសាធារណៈ។"
+        },
+        "actions": {
+          "cancel": "បោះបង់",
+          "saving": "កំពុងរក្សាទុក...",
+          "save": "រក្សាទុក"
+        }
+      },
+      "messages": {
+        "created": "បានបង្កើត",
+        "updated": "បានកែប្រែ",
+        "deleted": "បានលុប",
+        "shown": "កំពុងបង្ហាញ",
+        "hidden": "បានលាក់",
+        "featured": "បានដាក់លេចធ្លោ",
+        "unfeatured": "បានដកលេចធ្លោ",
+        "deletedMany": "បានលុប {{count}}",
+        "shownMany": "បានបង្ហាញ {{count}}",
+        "hiddenMany": "បានលាក់ {{count}}",
+        "featuredMany": "បានដាក់លេចធ្លោ {{count}}",
+        "unfeaturedMany": "បានដកលេចធ្លោ {{count}}"
+      },
+      "bulk": {
+        "selected": "បានជ្រើស",
+        "show": "បង្ហាញ",
+        "showSelected": "បង្ហាញដែលជ្រើស",
+        "hide": "លាក់",
+        "hideSelected": "លាក់ដែលជ្រើស",
+        "feature": "លេចធ្លោ",
+        "featureSelected": "ដាក់លេចធ្លោ",
+        "unfeature": "ដកលេចធ្លោ",
+        "unfeatureSelected": "ដកលេចធ្លោ",
+        "deleteSelected": "លុបដែលជ្រើស"
+      },
+      "dialogs": {
+        "deleteTitle": "លុបឬ?",
+        "deleteMessage": "តើអ្នកប្រាកដថាចង់លុប \"{{name}}\" មែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។",
+        "deleteManyTitle": "លុបឬ?",
+        "deleteManyMessage": "លុប {{count}} ដែលបានជ្រើស? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។"
+      }
+    },
+    "certificates": {
+      "workspace": {
+        "eyebrow": "វិញ្ញាបនបត្រ",
+        "title": "កន្លែងគ្រប់គ្រងវិញ្ញាបនបត្រ",
+        "description": "គ្រប់គ្រងវិញ្ញាបនបត្ររបស់អ្នក។",
+        "summaryAria": "សង្ខេបវិញ្ញាបនបត្រ",
+        "searchPlaceholder": "ស្វែងរកវិញ្ញាបនបត្រ...",
+        "addNew": "បន្ថែមវិញ្ញាបនបត្រ"
+      },
+      "table": {
+        "columns": {
+          "name": "វិញ្ញាបនបត្រ",
+          "status": "ស្ថានភាព",
+          "actions": "សកម្មភាព"
+        },
+        "untitled": "គ្មានឈ្មោះ",
+        "viewHistory": "មើលប្រវត្តិ",
+        "status": {
+          "visible": "បង្ហាញ",
+          "hidden": "លាក់",
+          "featured": "លេចធ្លោ",
+          "hasCredential": "មានលេខសម្គាល់",
+          "noCredential": "គ្មានលេខសម្គាល់"
+        },
+        "empty": {
+          "title": "មិនទាន់មានវិញ្ញាបនបត្រ",
+          "description": "បន្ថែមវិញ្ញាបនបត្រដំបូងរបស់អ្នក។",
+          "action": "បន្ថែមវិញ្ញាបនបត្រ"
+        }
+      },
+      "stats": {
+        "total": {
+          "label": "វិញ្ញាបនបត្រសរុប",
+          "hint": "ទាំងអស់"
+        },
+        "visible": {
+          "hint": "បង្ហាញជាសាធារណៈ"
+        },
+        "featured": {
+          "hint": "បានបន្លិច"
+        },
+        "organizations": {
+          "label": "ស្ថាប័ន",
+          "hint": "ស្ថាប័នផ្សេងៗ"
+        }
+      },
+      "form": {
+        "languages": {
+          "en": "អង់គ្លេស",
+          "km": "ខ្មែរ"
+        },
+        "fields": {
+          "name": "ឈ្មោះ",
+          "nameRequired": "ត្រូវការឈ្មោះជាភាសាអង់គ្លេស",
+          "namePlaceholder": "ឧ. CISSP",
+          "description": "ការពិពណ៌នា",
+          "descriptionPlaceholder": "ការពិពណ៌នាខ្លី (ស្រេចចិត្ត)",
+          "organization": "ស្ថាប័នផ្តល់",
+          "organizationRequired": "ត្រូវការស្ថាប័នផ្តល់",
+          "organizationPlaceholder": "ឧ. (ISC)2",
+          "issueDate": "កាលបរិច្ឆេទចេញ",
+          "expiryDate": "កាលបរិច្ឆេទផុតកំណត់",
+          "expiryHint": "ទុកទទេបើមិនផុតកំណត់",
+          "credentialId": "លេខសម្គាល់",
+          "credentialIdPlaceholder": "ឧ. ABC-12345",
+          "url": "តំណផ្ទៀងផ្ទាត់",
+          "urlPlaceholder": "https://...",
+          "slug": "Slug",
+          "slugHint": "បង្កើតស្វ័យប្រវត្តិពីឈ្មោះ",
+          "slugPlaceholder": "cissp",
+          "visibility": "ភាពមើលឃើញ",
+          "optionVisible": "បង្ហាញ",
+          "optionHidden": "លាក់",
+          "featured": "លេចធ្លោ",
+          "optionFeatured": "លេចធ្លោ",
+          "optionNotFeatured": "មិនលេចធ្លោ"
+        },
+        "sections": {
+          "details": {
+            "title": "ព័ត៌មានវិញ្ញាបនបត្រ",
+            "description": "ឈ្មោះនិងស្ថាប័នផ្តល់។"
+          },
+          "credential": {
+            "title": "លេខសម្គាល់",
+            "description": "កាលបរិច្ឆេទ លេខសម្គាល់ និងតំណ។"
+          }
+        },
+        "dialogs": {
+          "addTitle": "បន្ថែមវិញ្ញាបនបត្រ",
+          "editTitle": "កែប្រែវិញ្ញាបនបត្រ",
+          "description": "វិញ្ញាបនបត្របង្ហាញលើផតថ្វូលីយ៉ូសាធារណៈ។"
+        },
+        "actions": {
+          "cancel": "បោះបង់",
+          "saving": "កំពុងរក្សាទុក...",
+          "save": "រក្សាទុក"
+        }
+      },
+      "messages": {
+        "created": "បានបង្កើត",
+        "updated": "បានកែប្រែ",
+        "deleted": "បានលុប",
+        "shown": "កំពុងបង្ហាញ",
+        "hidden": "បានលាក់",
+        "featured": "បានដាក់លេចធ្លោ",
+        "unfeatured": "បានដកលេចធ្លោ",
+        "deletedMany": "បានលុប {{count}}",
+        "shownMany": "បានបង្ហាញ {{count}}",
+        "hiddenMany": "បានលាក់ {{count}}",
+        "featuredMany": "បានដាក់លេចធ្លោ {{count}}",
+        "unfeaturedMany": "បានដកលេចធ្លោ {{count}}"
+      },
+      "bulk": {
+        "selected": "បានជ្រើស",
+        "show": "បង្ហាញ",
+        "showSelected": "បង្ហាញដែលជ្រើស",
+        "hide": "លាក់",
+        "hideSelected": "លាក់ដែលជ្រើស",
+        "feature": "លេចធ្លោ",
+        "featureSelected": "ដាក់លេចធ្លោ",
+        "unfeature": "ដកលេចធ្លោ",
+        "unfeatureSelected": "ដកលេចធ្លោ",
+        "deleteSelected": "លុបដែលជ្រើស"
+      },
+      "dialogs": {
+        "deleteTitle": "លុបឬ?",
+        "deleteMessage": "តើអ្នកប្រាកដថាចង់លុប \"{{name}}\" មែនទេ? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។",
+        "deleteManyTitle": "លុបឬ?",
+        "deleteManyMessage": "លុប {{count}} ដែលបានជ្រើស? សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។"
+      }
+    },
+    "palette": {
+      "placeholder": "ស្វែងរក ឬ លោតទៅ...",
+      "ariaLabel": "ផ្ទាំងពាក្យបញ្ជា",
+      "untitled": "គ្មានចំណងជើង",
+      "empty": "រកមិនឃើញលទ្ធផល",
+      "navigateTo": "ទៅកាន់",
+      "createItem": "បង្កើត {{label}}",
+      "groups": {
+        "recent": "ថ្មីៗ",
+        "navigation": "ការរុករក",
+        "create": "បង្កើត"
+      },
+      "hintNavigate": "រុករក",
+      "hintSelect": "ជ្រើស"
+    },
+    "notifications": {
+      "title": "ការជូនដំណឹង",
+      "empty": "មិនទាន់មានការជូនដំណឹង",
+      "clearAll": "សម្អាតទាំងអស់"
     }
+  },
+  "skills": {
+    "title": "ជំនាញ និងជំនាញវិជ្ជាជីវៈ",
+    "subtitle": "សមត្ថភាពបច្ចេកទេស និងអភិបាលកិច្ចផ្នែកសន្តិសុខ ការអនុលោម និងវិស្វកម្ម។",
+    "uncategorized": "ផ្សេងៗ",
+    "levels": {
+      "beginner": "ដំបូង",
+      "intermediate": "មធ្យម",
+      "advanced": "ខ្ពស់",
+      "expert": "ជំនាញ"
+    }
+  },
+  "certificates": {
+    "title": "វិញ្ញាបនបត្រ",
+    "subtitle": "វិញ្ញាបនបត្រវិជ្ជាជីវៈ និងភស្តុតាងបញ្ជាក់។",
+    "verify": "ផ្ទៀងផ្ទាត់",
+    "credentialId": "លេខសម្គាល់"
   }
 }

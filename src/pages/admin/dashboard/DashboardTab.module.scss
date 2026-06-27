@@ -1,0 +1,274 @@
+.statGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.quickActions {
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.quickActionsRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.panel {
+    padding: 1.25rem;
+}
+
+.panelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.viewAll {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8125rem;
+    color: var(--primary-color, #2f6df6);
+    padding: 0.25rem 0.4rem;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+
+    &:hover {
+        background: rgba(127, 127, 127, 0.1);
+    }
+}
+
+.list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.listItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    padding: 0.6rem 0.5rem;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    color: var(--text-primary);
+    transition: background 0.15s ease;
+
+    &:not(:last-child) {
+        border-bottom: 1px solid var(--glass-border, rgba(127, 127, 127, 0.15));
+    }
+
+    &:hover {
+        background: rgba(127, 127, 127, 0.08);
+    }
+}
+
+.listItemTitle {
+    font-size: 0.875rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.listItemDate {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.listLoading {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+}
+
+.activityList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.activityItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0.25rem;
+    font-size: 0.8125rem;
+
+    &:not(:last-child) {
+        border-bottom: 1px solid var(--glass-border, rgba(127, 127, 127, 0.15));
+    }
+}
+
+.activityAction {
+    font-weight: 600;
+    text-transform: capitalize;
+    color: var(--text-primary);
+}
+
+.activityModule {
+    text-transform: capitalize;
+    color: var(--text-secondary);
+}
+
+.activityEntity {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-secondary);
+}
+
+.activityTime {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.insights {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.insightsBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.insightsLabel {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+}
+
+.statusPills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.statusPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    padding: 0.25rem 0.55rem;
+    border: 1px solid var(--glass-border, rgba(127, 127, 127, 0.15));
+    border-radius: 999px;
+}
+
+.statusDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.trend {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    height: 92px;
+}
+
+.trendCol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.trendBarTrack {
+    width: 100%;
+    max-width: 38px;
+    height: 56px;
+    display: flex;
+    align-items: flex-end;
+    background: rgba(127, 127, 127, 0.08);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.trendBar {
+    width: 100%;
+    min-height: 3px;
+    background: var(--primary-color, #2f6df6);
+    border-radius: 6px 6px 0 0;
+}
+
+.trendCount {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.trendLabel {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+.healthGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 0.75rem;
+}
+
+.healthMetric {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--glass-border, rgba(127, 127, 127, 0.15));
+    border-radius: 8px;
+}
+
+.healthValue {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.healthLabel {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}

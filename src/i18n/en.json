@@ -117,7 +117,14 @@
           "updated": "Updated",
           "deleted": "Deleted"
         },
-        "close": "Close"
+        "close": "Close",
+        "restore": "Restore",
+        "restoreConfirmTitle": "Restore this version?",
+        "restoreConfirmMessage": "This re-applies the selected snapshot as a new edit. Current values are overwritten but preserved in history.",
+        "restorePreview": "Preview of this version",
+        "restoreSuccess": "Version restored.",
+        "restoreError": "Failed to restore version.",
+        "restoreConfirm": "Restore version"
       },
       "quotaBanner": {
         "title": "Daily Resource Limit Reached",
@@ -131,10 +138,72 @@
       },
       "header": {
         "adminBrand": "Admin"
+      },
+      "table": {
+        "exportCsv": "Export to CSV",
+        "show": "Show",
+        "page": "Page",
+        "of": "of",
+        "total": "Total",
+        "prev": "Prev",
+        "next": "Next",
+        "empty": "No data available",
+        "emptyDescription": "There are no records to display at the moment.",
+        "selectRow": "Select row",
+        "selectAll": "Select all rows",
+        "sortBy": "Sort by {{column}}"
+      },
+      "status": {
+        "draft": "Draft",
+        "scheduled": "Scheduled",
+        "published": "Published",
+        "archived": "Archived"
+      },
+      "schedule": {
+        "status": "Status",
+        "publishAt": "Publish at",
+        "publishAtHint": "When the status is Scheduled, it goes live at this time.",
+        "expireAt": "Expire at",
+        "expireAtHint": "Optional. Auto-archives after this time.",
+        "storedHint": "Stored status (differs from the effective status shown)"
       }
     },
     "dashboard": {
-      "title": "Dashboard"
+      "title": "Dashboard",
+      "overview": "Overview",
+      "quickActions": "Quick actions",
+      "newProject": "New project",
+      "newPost": "New blog post",
+      "viewSite": "View live site",
+      "latestPosts": "Latest blog posts",
+      "latestProjects": "Latest projects",
+      "recentActivity": "Recent activity",
+      "viewAll": "View all",
+      "empty": "Nothing here yet",
+      "untitled": "Untitled",
+      "cards": {
+        "title": "Dashboard",
+        "projects": "Projects",
+        "posts": "Blog posts",
+        "experience": "Experience",
+        "messages": "Unread messages",
+        "users": "Users",
+        "publishedCount": "{{count}} published",
+        "draftsCount": "{{count}} drafts",
+        "currentRolesCount": "{{count}} current",
+        "unreadHint": "Awaiting reply",
+        "usersHint": "Total accounts"
+      },
+      "insights": {
+        "title": "Content insights",
+        "statusBreakdown": "Status breakdown",
+        "trend": "Published per month",
+        "health": "Content health",
+        "missingCover": "Missing cover",
+        "missingSlug": "Missing slug",
+        "missingExcerpt": "Missing excerpt",
+        "storage": "Image storage"
+      }
     },
     "tabs": {
       "general": "General Content",
@@ -150,19 +219,26 @@
       "settings": "Settings",
       "homeSection": "Home",
       "aboutSection": "About",
-      "contactSection": "Contact"
+      "contactSection": "Contact",
+      "dashboard": "Dashboard",
+      "skills": "Skills",
+      "certificates": "Certificates"
     },
     "subtitles": {
       "general": "Manage your portfolio primary content",
       "profile": "Manage your personal profile and account settings",
       "settings": "Configure site-wide identity, visual aesthetics, and synchronization",
-      "default": "Administrator Dashboard"
+      "default": "Administrator Dashboard",
+      "dashboard": "Your portfolio at a glance",
+      "skills": "Showcase your professional skills",
+      "certificates": "Showcase your certifications"
     },
     "header": {
       "searchPlaceholder": "Search admin...",
       "viewLiveSite": "View Live Site",
       "switchTheme": "Switch to {{mode}} mode",
-      "logout": "Logout"
+      "logout": "Logout",
+      "toggleSidebar": "Toggle navigation menu"
     },
     "sidebar": {
       "groups": {
@@ -960,6 +1036,18 @@
         "sync": {
           "label": "Site Sync",
           "description": "Mirrors, GitHub token, and manual rebuild control."
+        },
+        "seo": {
+          "label": "SEO",
+          "description": "Search metadata & social cards"
+        },
+        "social": {
+          "label": "Social",
+          "description": "Social profile links"
+        },
+        "featureFlags": {
+          "label": "Feature flags",
+          "description": "Toggle public sections"
         }
       },
       "workspace": {
@@ -1460,6 +1548,31 @@
             "save": "Save Contact Changes"
           }
         }
+      },
+      "actions": {
+        "save": "Save changes"
+      },
+      "seo": {
+        "title": "SEO & metadata",
+        "description": "Defaults for search engines and social sharing.",
+        "metaTitle": "Meta title",
+        "metaTitlePlaceholder": "Site title for search results",
+        "metaDescription": "Meta description",
+        "metaDescriptionPlaceholder": "Short description shown in search results",
+        "keywords": "Keywords",
+        "keywordsPlaceholder": "comma, separated, keywords",
+        "ogImage": "Open Graph image URL",
+        "twitterHandle": "Twitter handle"
+      },
+      "social": {
+        "title": "Social links",
+        "description": "Links surfaced across the public site."
+      },
+      "featureFlags": {
+        "title": "Feature flags",
+        "description": "Show or hide public sections without redeploying.",
+        "contact": "Contact",
+        "showLabel": "Show {{label}}"
       }
     },
     "profile": {
@@ -1698,6 +1811,285 @@
         "noteReEnable": "The account can sign in again immediately after this change.",
         "noteDisable": "The account remains in the system and can be re-enabled later from User Management."
       }
+    },
+    "skills": {
+      "workspace": {
+        "eyebrow": "Skills",
+        "title": "Skills workspace",
+        "description": "Manage the skills shown on your portfolio.",
+        "summaryAria": "Skills summary",
+        "searchPlaceholder": "Search skills...",
+        "addNew": "Add skill"
+      },
+      "levels": {
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced",
+        "expert": "Expert"
+      },
+      "table": {
+        "columns": {
+          "name": "Skill",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "untitled": "Untitled skill",
+        "viewHistory": "View history",
+        "status": {
+          "visible": "Visible",
+          "hidden": "Hidden",
+          "featured": "Featured"
+        },
+        "empty": {
+          "title": "No skills yet",
+          "description": "Add your first skill to showcase your expertise.",
+          "action": "Add skill"
+        }
+      },
+      "stats": {
+        "total": {
+          "label": "Total skills",
+          "hint": "All skills"
+        },
+        "visible": {
+          "hint": "Shown publicly"
+        },
+        "featured": {
+          "hint": "Highlighted"
+        },
+        "categories": {
+          "label": "Categories",
+          "hint": "Distinct categories"
+        }
+      },
+      "form": {
+        "languages": {
+          "en": "English",
+          "km": "Khmer"
+        },
+        "fields": {
+          "name": "Name",
+          "nameRequired": "English name is required",
+          "namePlaceholder": "e.g. ISO 27001 Implementation",
+          "description": "Description",
+          "descriptionPlaceholder": "Short description (optional)",
+          "category": "Category",
+          "categoryPlaceholder": "e.g. Governance",
+          "level": "Proficiency",
+          "slug": "Slug",
+          "slugHint": "Auto-generated from name if left blank",
+          "slugPlaceholder": "iso-27001",
+          "visibility": "Visibility",
+          "optionVisible": "Visible",
+          "optionHidden": "Hidden",
+          "featured": "Featured",
+          "optionFeatured": "Featured",
+          "optionNotFeatured": "Not featured"
+        },
+        "sections": {
+          "details": {
+            "title": "Skill details",
+            "description": "Name and describe the skill."
+          },
+          "meta": {
+            "title": "Metadata",
+            "description": "Category, level and visibility."
+          }
+        },
+        "dialogs": {
+          "addTitle": "Add skill",
+          "editTitle": "Edit skill",
+          "description": "Skills appear on your public portfolio."
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "saving": "Saving...",
+          "save": "Save skill"
+        }
+      },
+      "messages": {
+        "created": "Skill created.",
+        "updated": "Skill updated.",
+        "deleted": "Skill deleted.",
+        "shown": "Skill is now visible.",
+        "hidden": "Skill hidden.",
+        "featured": "Skill featured.",
+        "unfeatured": "Skill unfeatured.",
+        "deletedMany": "Deleted {{count}} skills.",
+        "shownMany": "{{count}} skills are now visible.",
+        "hiddenMany": "{{count}} skills hidden.",
+        "featuredMany": "Featured {{count}} skills.",
+        "unfeaturedMany": "Unfeatured {{count}} skills."
+      },
+      "bulk": {
+        "selected": "selected",
+        "show": "Show",
+        "showSelected": "Show selected",
+        "hide": "Hide",
+        "hideSelected": "Hide selected",
+        "feature": "Feature",
+        "featureSelected": "Feature selected",
+        "unfeature": "Unfeature",
+        "unfeatureSelected": "Unfeature selected",
+        "deleteSelected": "Delete selected"
+      },
+      "dialogs": {
+        "deleteTitle": "Delete skill?",
+        "deleteMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "deleteManyTitle": "Delete skills?",
+        "deleteManyMessage": "Delete {{count}} selected skills? This action cannot be undone."
+      }
+    },
+    "certificates": {
+      "workspace": {
+        "eyebrow": "Certificates",
+        "title": "Certificates workspace",
+        "description": "Manage your certifications and credentials.",
+        "summaryAria": "Certificates summary",
+        "searchPlaceholder": "Search certificates...",
+        "addNew": "Add certificate"
+      },
+      "table": {
+        "columns": {
+          "name": "Certificate",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "untitled": "Untitled certificate",
+        "viewHistory": "View history",
+        "status": {
+          "visible": "Visible",
+          "hidden": "Hidden",
+          "featured": "Featured",
+          "hasCredential": "Has credential ID",
+          "noCredential": "No credential ID"
+        },
+        "empty": {
+          "title": "No certificates yet",
+          "description": "Add your first certificate to build credibility.",
+          "action": "Add certificate"
+        }
+      },
+      "stats": {
+        "total": {
+          "label": "Total certificates",
+          "hint": "All certificates"
+        },
+        "visible": {
+          "hint": "Shown publicly"
+        },
+        "featured": {
+          "hint": "Highlighted"
+        },
+        "organizations": {
+          "label": "Organizations",
+          "hint": "Distinct issuers"
+        }
+      },
+      "form": {
+        "languages": {
+          "en": "English",
+          "km": "Khmer"
+        },
+        "fields": {
+          "name": "Name",
+          "nameRequired": "English name is required",
+          "namePlaceholder": "e.g. CISSP",
+          "description": "Description",
+          "descriptionPlaceholder": "Short description (optional)",
+          "organization": "Issuing organization",
+          "organizationRequired": "Issuing organization is required",
+          "organizationPlaceholder": "e.g. (ISC)2",
+          "issueDate": "Issue date",
+          "expiryDate": "Expiry date",
+          "expiryHint": "Leave blank if it does not expire",
+          "credentialId": "Credential ID",
+          "credentialIdPlaceholder": "e.g. ABC-12345",
+          "url": "Credential URL",
+          "urlPlaceholder": "https://...",
+          "slug": "Slug",
+          "slugHint": "Auto-generated from name if left blank",
+          "slugPlaceholder": "cissp",
+          "visibility": "Visibility",
+          "optionVisible": "Visible",
+          "optionHidden": "Hidden",
+          "featured": "Featured",
+          "optionFeatured": "Featured",
+          "optionNotFeatured": "Not featured"
+        },
+        "sections": {
+          "details": {
+            "title": "Certificate details",
+            "description": "Name and issuer of the certificate."
+          },
+          "credential": {
+            "title": "Credential",
+            "description": "Dates, ID and verification link."
+          }
+        },
+        "dialogs": {
+          "addTitle": "Add certificate",
+          "editTitle": "Edit certificate",
+          "description": "Certificates appear on your public portfolio."
+        },
+        "actions": {
+          "cancel": "Cancel",
+          "saving": "Saving...",
+          "save": "Save certificate"
+        }
+      },
+      "messages": {
+        "created": "Certificate created.",
+        "updated": "Certificate updated.",
+        "deleted": "Certificate deleted.",
+        "shown": "Certificate is now visible.",
+        "hidden": "Certificate hidden.",
+        "featured": "Certificate featured.",
+        "unfeatured": "Certificate unfeatured.",
+        "deletedMany": "Deleted {{count}} certificates.",
+        "shownMany": "{{count}} certificates are now visible.",
+        "hiddenMany": "{{count}} certificates hidden.",
+        "featuredMany": "Featured {{count}} certificates.",
+        "unfeaturedMany": "Unfeatured {{count}} certificates."
+      },
+      "bulk": {
+        "selected": "selected",
+        "show": "Show",
+        "showSelected": "Show selected",
+        "hide": "Hide",
+        "hideSelected": "Hide selected",
+        "feature": "Feature",
+        "featureSelected": "Feature selected",
+        "unfeature": "Unfeature",
+        "unfeatureSelected": "Unfeature selected",
+        "deleteSelected": "Delete selected"
+      },
+      "dialogs": {
+        "deleteTitle": "Delete certificate?",
+        "deleteMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+        "deleteManyTitle": "Delete certificates?",
+        "deleteManyMessage": "Delete {{count}} selected certificates? This action cannot be undone."
+      }
+    },
+    "palette": {
+      "placeholder": "Search or jump to...",
+      "ariaLabel": "Command palette",
+      "untitled": "Untitled",
+      "empty": "No results found",
+      "navigateTo": "Go to",
+      "createItem": "Create {{label}}",
+      "groups": {
+        "recent": "Recent",
+        "navigation": "Navigation",
+        "create": "Create"
+      },
+      "hintNavigate": "Navigate",
+      "hintSelect": "Select"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "empty": "No notifications yet",
+      "clearAll": "Clear all"
     }
   },
   "nav": {
@@ -1709,7 +2101,9 @@
     "contact": "Contact",
     "primary": "Primary navigation",
     "open": "Open navigation menu",
-    "close": "Close navigation menu"
+    "close": "Close navigation menu",
+    "skills": "Skills",
+    "certificates": "Certificates"
   },
   "hero": {
     "defaultCta": "Get My CV",
@@ -1778,5 +2172,22 @@
     "projects": "Related Projects",
     "articles": "Related Articles",
     "viewAllProjects": "View All Projects"
+  },
+  "skills": {
+    "title": "Skills & Expertise",
+    "subtitle": "Technical and governance capabilities across security, compliance, and engineering.",
+    "uncategorized": "Other",
+    "levels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "expert": "Expert"
+    }
+  },
+  "certificates": {
+    "title": "Certifications",
+    "subtitle": "Professional certifications and verified credentials.",
+    "verify": "Verify credential",
+    "credentialId": "Credential ID"
   }
 }

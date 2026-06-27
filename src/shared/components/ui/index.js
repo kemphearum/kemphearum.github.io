@@ -12,3 +12,4 @@ export { default as Tabs } from './tabs/Tabs';
 export { default as DataTable } from './data-table/DataTable';
 export { default as EmptyState } from './empty-state/EmptyState';
 export { default as Skeleton } from './skeleton/Skeleton';
+export { default as SectionHeader } from './section-header/SectionHeader';

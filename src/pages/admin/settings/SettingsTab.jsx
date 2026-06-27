@@ -17,6 +17,7 @@ import IdentitySection from './components/IdentitySection';
 import TypographySection from './components/TypographySection';
 import VisualsSection from './components/VisualsSection';
 import SyncSection from './components/SyncSection';
+import { listSettingsSections } from '../../../registry/settingsRegistry';
 
 const DEFAULT_VISUAL_SETTINGS = SettingsService.constructor.DEFAULT_VISUAL_SETTINGS || {};
 
@@ -59,11 +60,18 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
     // Sub-tab Navigation State
     const [activeSubTab, setActiveSubTab] = useState('identity');
 
+    const settingsSections = listSettingsSections();
     const subTabs = [
         { id: 'identity', label: t('admin.settings.subTabs.identity.label'), description: t('admin.settings.subTabs.identity.description'), icon: Globe },
         { id: 'typography', label: t('admin.settings.subTabs.typography.label'), description: t('admin.settings.subTabs.typography.description'), icon: Type },
         { id: 'visuals', label: t('admin.settings.subTabs.visuals.label'), description: t('admin.settings.subTabs.visuals.description'), icon: Eye },
-        { id: 'sync', label: t('admin.settings.subTabs.sync.label'), description: t('admin.settings.subTabs.sync.description'), icon: RefreshCw }
+        { id: 'sync', label: t('admin.settings.subTabs.sync.label'), description: t('admin.settings.subTabs.sync.description'), icon: RefreshCw },
+        ...settingsSections.map((section) => ({
+            id: section.id,
+            label: t(section.labelKey),
+            description: t(section.descriptionKey),
+            icon: section.icon
+        }))
     ];
 
     // Custom Confirmation Dialog State
@@ -417,6 +425,10 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         }
     };
 
+    settingsSections.forEach((section) => {
+        sectionMeta[section.id] = sectionMeta[section.id] || { count: '', hint: t(section.descriptionKey) };
+    });
+
     return (
         <div className={tabStyles.tabContentFadeIn}>
             <div className={tabStyles.workspaceShell}>
@@ -524,6 +536,20 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         loading={loading}
                     />
                 </Tabs.Content>
+
+                {settingsSections.map((section) => {
+                    const SectionComponent = section.component;
+                    return (
+                        <Tabs.Content key={section.id} value={section.id} className={tabStyles.tabPanel}>
+                            <SectionComponent
+                                settingsData={settingsData}
+                                setSettingsData={setSettingsData}
+                                onSave={handleSaveSettings}
+                                loading={loading}
+                            />
+                        </Tabs.Content>
+                    );
+                })}
             </Tabs>
 
             <Dialog open={confirmDialog.isOpen} onOpenChange={(open) => !open && setConfirmDialog(prev => ({ ...prev, isOpen: false }))}>
