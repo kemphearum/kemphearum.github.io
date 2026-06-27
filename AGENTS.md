@@ -62,6 +62,7 @@ React Router 7 + Vite + Firebase personal portfolio. These rules govern how AI c
 - Follow the existing ESLint config (`eslint.config.js`) — flat config, `react-hooks` + `react-refresh` recommended rules, `no-unused-vars` with `^[A-Z_]` ignore pattern. Run `npm run lint` after non-trivial changes.
 - Routing is React Router 7 (`app/routes.ts`, `app/routes/`) — use existing route patterns, not raw `react-router-dom` APIs unless already used that way in this repo.
 - Firebase: never hand-edit generated/build artifacts (`build/`, `dist/`, `.firebase/`, `.react-router/`). Firestore rules changes go in `firestore.rules` and must stay consistent with `firestore.rules.test.mjs`.
+- Firebase CI/CD: When deploying via GitHub Actions using `google-github-actions/auth@v2` and `firebase-tools`, always use Node 20 (`node-version: 20`) to avoid the Node 22 native fetch `Premature close` bug, and explicitly pass the credentials path to `GOOGLE_APPLICATION_CREDENTIALS` (e.g. `env: GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}`).
 - Tests use Vitest + Testing Library (`@testing-library/react`, `jsdom`). New components/utilities with logic should get a colocated test unless told otherwise.
 
 ## Working Style
