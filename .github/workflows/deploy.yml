@@ -121,6 +121,7 @@ jobs:
           path: ./build/client
 
       - name: Authenticate to Primary Firebase
+        id: auth-primary
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -129,8 +130,11 @@ jobs:
 
       - name: Deploy to Primary Firebase Hosting
         run: npx --yes firebase-tools@15.22.0 deploy --only hosting --project phearum-info --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-primary.outputs.credentials_file_path }}
 
       - name: Authenticate to Backup Firebase
+        id: auth-backup
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BACKUP }}
@@ -140,3 +144,5 @@ jobs:
       - name: Deploy to Backup Firebase Hosting
         continue-on-error: true
         run: npx --yes firebase-tools@15.22.0 deploy --only hosting --project kem-phearum --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-backup.outputs.credentials_file_path }}
