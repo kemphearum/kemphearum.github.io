@@ -10,6 +10,7 @@ import { getContentType } from '../../../registry/contentTypeRegistry';
 import { ACTIONS } from '../../../utils/permissions';
 import { fuzzyScore } from '../../../utils/fuzzy';
 import { readRecent, pushRecent } from '../../../hooks/useCommandPalette';
+import { useDebounce } from '../../../hooks/useDebounce';
 import styles from './CommandPalette.module.scss';
 
 const RESULTS_PER_TYPE = 6;
@@ -17,6 +18,7 @@ const RESULTS_PER_TYPE = 6;
 const CommandPalette = ({ open, onClose, onNavigate, isActionAllowed, canViewTab }) => {
   const { t, language } = useTranslation();
   const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 250);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [recent, setRecent] = useState([]);
   const inputRef = useRef(null);
@@ -30,7 +32,7 @@ const CommandPalette = ({ open, onClose, onNavigate, isActionAllowed, canViewTab
   const providerData = useQueries({
     queries: providers.map((provider) => ({
       queryKey: ['palette', provider.key],
-      enabled: open,
+      enabled: open && debouncedQuery.trim().length > 0,
       staleTime: 300000,
       gcTime: 300000,
       refetchOnWindowFocus: false,
@@ -66,7 +68,7 @@ const CommandPalette = ({ open, onClose, onNavigate, isActionAllowed, canViewTab
   };
 
   const groups = useMemo(() => {
-    const trimmed = query.trim();
+    const trimmed = debouncedQuery.trim();
     const result = [];
 
     // Search results (only when typing)
@@ -151,7 +153,7 @@ const CommandPalette = ({ open, onClose, onNavigate, isActionAllowed, canViewTab
 
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, providers, providerData, recent, language, t, canViewTab, isActionAllowed]);
+  }, [debouncedQuery, providers, providerData, recent, language, t, canViewTab, isActionAllowed]);
 
   const flatCommands = useMemo(() => groups.flatMap((group) => group.commands), [groups]);
 

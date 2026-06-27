@@ -130,9 +130,10 @@ Adding a content type is "register, don't edit many files". The registries:
 `Admin` shell via `hooks/useCommandPalette.js` (global Cmd/Ctrl+K). It offers
 navigation (every viewable tab), create actions (content types the role can create),
 and fuzzy content search across all registered search providers — grouped by type,
-↑/↓ to move, Enter to open, Esc to close. Provider lists are cached under
-`['palette', key]` (5 min) to minimize Firestore reads, and recent picks persist in
-`localStorage`. Fuzzy ranking lives in `utils/fuzzy.js`. RBAC-gated: results and
+↑/↓ to move, Enter to open, Esc to close. To minimize Firestore reads, search queries
+are debounced (250ms), providers are lazy-loaded only when typing, and results are cached
+under `['palette', key]` (5 min). Recent picks persist in `localStorage`.
+Fuzzy ranking lives in `utils/fuzzy.js`. RBAC-gated: results and
 navigation only show tabs/modules the role may view.
 
 ## Notifications

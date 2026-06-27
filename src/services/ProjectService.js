@@ -1,7 +1,6 @@
 import BaseService from './BaseService';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
-import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 import { normalizeProject, validateProject } from '../domain/project/projectDomain';
 import { getLanguageFromStorage, localizeEntityFields } from '../utils/localization';
 

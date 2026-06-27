@@ -541,12 +541,14 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                     const SectionComponent = section.component;
                     return (
                         <Tabs.Content key={section.id} value={section.id} className={tabStyles.tabPanel}>
-                            <SectionComponent
-                                settingsData={settingsData}
-                                setSettingsData={setSettingsData}
-                                onSave={handleSaveSettings}
-                                loading={loading}
-                            />
+                            <React.Suspense fallback={<div className="ui-spinnerContainer">{t('admin.common.loading')}</div>}>
+                                <SectionComponent
+                                    settingsData={settingsData}
+                                    setSettingsData={setSettingsData}
+                                    onSave={handleSaveSettings}
+                                    loading={loading}
+                                />
+                            </React.Suspense>
                         </Tabs.Content>
                     );
                 })}

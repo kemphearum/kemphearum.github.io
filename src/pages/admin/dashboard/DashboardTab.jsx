@@ -36,7 +36,11 @@ const DashboardTab = ({ userRole, isActionAllowed, setActiveTab }) => {
     <div className="admin-tab-container">
       {widgets.map((widget) => {
         const WidgetComponent = widget.component;
-        return <WidgetComponent key={widget.id} ctx={ctx} />;
+        return (
+          <React.Suspense key={widget.id} fallback={<div className="loading-state">{t('admin.common.loading')}</div>}>
+            <WidgetComponent ctx={ctx} />
+          </React.Suspense>
+        );
       })}
     </div>
   );

@@ -16,15 +16,16 @@ describe('dashboardWidgetRegistry', () => {
 
     it('every widget has a component and a canView gate', () => {
         listDashboardWidgets().forEach((widget) => {
-            expect(typeof widget.component).toBe('function');
+            expect(widget.component).toBeTruthy();
+            expect(['function', 'object']).toContain(typeof widget.component);
             expect(typeof widget.canView).toBe('function');
         });
     });
 
     it('gates recent activity to superadmins', () => {
         const activity = listDashboardWidgets().find((w) => w.id === 'recentActivity');
-        expect(activity.canView(ctx({ userRole: 'superadmin' }))).toBe(true);
-        expect(activity.canView(ctx({ userRole: 'editor' }))).toBe(false);
+        expect(activity.canView(ctx({ userRole: 'superadmin', can: (mod) => mod === 'audit' }))).toBe(true);
+        expect(activity.canView(ctx({ userRole: 'editor', can: (mod) => false }))).toBe(false);
     });
 
     it('shows overview to everyone but hides quick actions without create rights', () => {

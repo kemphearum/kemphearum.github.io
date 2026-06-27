@@ -9,7 +9,8 @@ describe('settingsRegistry', () => {
 
     it('each section exposes a component + i18n keys + icon', () => {
         listSettingsSections().forEach((section) => {
-            expect(typeof section.component).toBe('function');
+            expect(section.component).toBeTruthy();
+            expect(['function', 'object']).toContain(typeof section.component);
             expect(section.labelKey).toMatch(/^admin\.settings\.subTabs\./);
             expect(section.descriptionKey).toBeTruthy();
             expect(section.icon).toBeTruthy();

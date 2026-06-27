@@ -1,6 +1,5 @@
 import BaseService from './BaseService';
 import { serverTimestamp } from 'firebase/firestore';
-import { isActionAllowed, ACTIONS, MODULES } from '../utils/permissions';
 import { normalizeExperience, validateExperience } from '../domain/experience/experienceDomain';
 import { getLanguageFromStorage, getLocalizedField, localizeEntityFields } from '../utils/localization';
 

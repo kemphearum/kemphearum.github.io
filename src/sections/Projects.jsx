@@ -214,13 +214,10 @@ const Projects = ({ isStandalone = false }) => {
                                 </motion.div>
                             ))
                         ) : (
-                            <motion.div
-                                className={styles.empty}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                            >
-                                <p>{t('projects.emptyFiltered')}</p>
-                            </motion.div>
+                            <div className={styles.emptyState}>
+                                <h3>{visibleProjects.length === 0 ? t('projects.empty') : t('projects.emptyFiltered')}</h3>
+                                <p>{visibleProjects.length === 0 ? t('projects.hint') : t('projects.emptyFilteredHint')}</p>
+                            </div>
                         )}
                     </motion.div>
                 )}
@@ -263,13 +260,6 @@ const Projects = ({ isStandalone = false }) => {
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </button>
                     </motion.div>
-                )}
-
-                {!loading && visibleProjects.length === 0 && (
-                    <div className={styles.empty}>
-                        <p>{t('projects.empty')}</p>
-                        <p className={styles.hint}>{t('projects.hint')}</p>
-                    </div>
                 )}
             </div>
         </section>

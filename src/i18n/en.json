@@ -2137,6 +2137,7 @@
     "searchAria": "Search projects",
     "filterAll": "All",
     "emptyFiltered": "No projects match this filter.",
+    "emptyFilteredHint": "Try adjusting your search or filters.",
     "empty": "No projects found yet.",
     "hint": "Visit /admin to add projects."
   },
@@ -2148,6 +2149,8 @@
     "filterAll": "All",
     "emptyTitle": "No posts found",
     "emptyDescription": "Try adjusting your search terms.",
+    "empty": "No posts published yet.",
+    "hint": "Visit /admin to add posts.",
     "readMore": "Read Article ->",
     "justNow": "Just now"
   },

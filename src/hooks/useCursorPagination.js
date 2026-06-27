@@ -29,6 +29,7 @@ export const useCursorPagination = (initialLimit = 5, dependencies = []) => {
   }, []);
 
   // Reset pagination when dependencies or limit change
+   
   useEffect(() => {
     reset();
   }, [...dependencies, limit]);

@@ -1,72 +1,23 @@
-import { LayoutTemplate, FileText, BriefcaseBusiness, Sparkles, Award } from 'lucide-react';
+import { listFeatures } from './featureRegistry';
 
 /**
- * Central registry of CMS content types.
+ * Central registry of CMS content types, now derived from the Feature Registry.
  *
  * Sidebar navigation, admin routing, the command-palette search, and dashboard
- * counts all derive from these descriptors, so adding a content type is mostly a
- * matter of registering it here (plus its domain/service/tab and Firestore rules).
- *
- * Descriptor shape:
- *  - key           tab key + react-query base key
- *  - module        permissions module (MODULES.*)
- *  - navGroup      sidebar group id ('main' | 'management' | 'system')
- *  - labelKey      i18n key for the tab/nav label
- *  - subtitleKey   optional i18n key for the page subtitle
- *  - icon          lucide icon component
- *  - load          dynamic import of the admin tab component
- *  - statusCapable supports the scheduled-publishing status model (P2-4)
- *  - search        optional search-provider descriptor (P2-3)
+ * counts all derive from these descriptors.
  */
-export const CONTENT_TYPES = [
-    {
-        key: 'experience',
-        module: 'experience',
-        navGroup: 'main',
-        labelKey: 'admin.tabs.experience',
-        icon: BriefcaseBusiness,
-        statusCapable: false,
-        load: () => import('../pages/admin/experience/ExperienceTab')
-    },
-    {
-        key: 'projects',
-        module: 'projects',
-        navGroup: 'main',
-        labelKey: 'admin.tabs.projects',
-        icon: LayoutTemplate,
-        statusCapable: true,
-        load: () => import('../pages/admin/projects/ProjectsTab')
-    },
-    {
-        key: 'blog',
-        module: 'blog',
-        navGroup: 'management',
-        labelKey: 'admin.tabs.blog',
-        icon: FileText,
-        statusCapable: true,
-        load: () => import('../pages/admin/blog/BlogTab')
-    },
-    {
-        key: 'skills',
-        module: 'skills',
-        navGroup: 'main',
-        labelKey: 'admin.tabs.skills',
-        subtitleKey: 'admin.subtitles.skills',
-        icon: Sparkles,
-        statusCapable: false,
-        load: () => import('../pages/admin/skills/SkillsTab')
-    },
-    {
-        key: 'certificates',
-        module: 'certificates',
-        navGroup: 'main',
-        labelKey: 'admin.tabs.certificates',
-        subtitleKey: 'admin.subtitles.certificates',
-        icon: Award,
-        statusCapable: false,
-        load: () => import('../pages/admin/certificates/CertificatesTab')
-    }
-];
+export const CONTENT_TYPES = listFeatures()
+    .filter((f) => f.contentType)
+    .map((f) => ({
+        key: f.id,
+        module: f.id,
+        navGroup: f.nav?.group || 'main',
+        labelKey: f.nav?.labelKey,
+        subtitleKey: f.contentType.subtitleKey,
+        icon: f.nav?.icon,
+        statusCapable: f.contentType.statusCapable || false,
+        load: f.contentType.load
+    }));
 
 const byKey = Object.fromEntries(CONTENT_TYPES.map((type) => [type.key, type]));
 

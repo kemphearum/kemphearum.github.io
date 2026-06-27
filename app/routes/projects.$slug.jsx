@@ -1,8 +1,37 @@
-import ProjectDetail, { loader as serverLoader, meta } from "../../src/pages/ProjectDetail";
+import ProjectDetail from "../../src/pages/ProjectDetail";
+import ProjectService from "../../src/services/ProjectService";
+import { getLocalizedField } from "../../src/utils/localization";
+import { generateMetaTags } from "../../src/utils/SeoHelper";
 
-export default ProjectDetail;
-export const loader = serverLoader;
-export { meta };
+const getMetaLanguage = () => {
+    if (typeof window === 'undefined') return 'en';
+    return localStorage.getItem('portfolio.language') === 'km' ? 'km' : 'en';
+};
+
+export async function loader({ params }) {
+    try {
+        return await ProjectService.fetchProjectBySlug(params.slug);
+    } catch (e) {
+        console.error("Project detail loader failed:", e);
+        return null;
+    }
+}
+
+export function meta({ data }) {
+    const language = getMetaLanguage();
+    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    if (!data) return [{ title: `${tr('Project Not Found', 'រកមិនឃើញគម្រោង')} | Kem Phearum` }];
+
+    const title = getLocalizedField(data.title, language);
+    const description = getLocalizedField(data.description, language);
+
+    return generateMetaTags({
+        title,
+        description: description || tr('Project details and technical implementation.', 'ព័ត៌មានលម្អិតគម្រោង និងការអនុវត្តបច្ចេកទេស។'),
+        image: data.imageUrl,
+        type: 'article'
+    });
+}
 
 export async function clientLoader({ serverLoader }) {
   try {
@@ -15,3 +44,5 @@ export async function clientLoader({ serverLoader }) {
     return null;
   }
 }
+
+export default ProjectDetail;
