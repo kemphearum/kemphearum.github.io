@@ -38,7 +38,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: "npm"
 
       - name: Install dependencies
@@ -112,7 +112,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: Download build-output
         uses: actions/download-artifact@v4
@@ -129,7 +129,7 @@ jobs:
           export_environment_variables: true
 
       - name: Deploy to Primary Firebase Hosting
-        run: npx --yes firebase-tools@13.11.0 deploy --only hosting --project phearum-info --non-interactive --debug
+        run: npx --yes firebase-tools deploy --only hosting --project phearum-info --non-interactive --debug
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-primary.outputs.credentials_file_path }}
 
@@ -143,6 +143,6 @@ jobs:
 
       - name: Deploy to Backup Firebase Hosting
         continue-on-error: true
-        run: npx --yes firebase-tools@13.11.0 deploy --only hosting --project kem-phearum --non-interactive --debug
+        run: npx --yes firebase-tools deploy --only hosting --project kem-phearum --non-interactive --debug
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-backup.outputs.credentials_file_path }}
