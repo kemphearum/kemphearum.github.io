@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart2, FileText, Database, User } from 'lucide-react';
+import { BarChart2, FileText, Database, User, Code, Award } from 'lucide-react';
 
 // Icons as small components
 export const icons = {
@@ -44,6 +44,12 @@ export const icons = {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
         </svg>
+    ),
+    skills: (
+        <Code size={18} />
+    ),
+    certificates: (
+        <Award size={18} />
     )
 };
 
@@ -57,5 +63,7 @@ export const tabLabels = {
     users: 'Users',
     audit: 'Audit Logs',
     analytics: 'Analytics',
-    settings: 'Settings'
+    settings: 'Settings',
+    skills: 'Skills',
+    certificates: 'Certificates'
 };
