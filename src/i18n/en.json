@@ -241,6 +241,7 @@
     "header": {
       "searchPlaceholder": "Search admin...",
       "viewLiveSite": "View Live Site",
+      "viewResume": "View Résumé",
       "switchTheme": "Switch to {{mode}} mode",
       "logout": "Logout",
       "toggleSidebar": "Toggle navigation menu"

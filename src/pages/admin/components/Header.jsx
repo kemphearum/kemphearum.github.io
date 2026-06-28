@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import styles from './Header.module.scss';
-import { LogOut, Sun, Moon, ExternalLink } from 'lucide-react';
+import { LogOut, Sun, Moon, ExternalLink, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import LanguageSwitcher from '../../../shared/components/LanguageSwitcher';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -79,6 +79,11 @@ const Header = ({
                 <div className={styles.languageSwitcher}>
                     <LanguageSwitcher />
                 </div>
+
+                <button onClick={() => navigate('/resume')} className={styles.viewSiteBtn}>
+                    <FileText size={16} />
+                    <span>{t('admin.header.viewResume', 'View Résumé')}</span>
+                </button>
 
                 <button onClick={() => navigate('/')} className={styles.viewSiteBtn}>
                     <ExternalLink size={16} />
