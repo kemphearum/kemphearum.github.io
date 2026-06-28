@@ -17,6 +17,16 @@ export const normalizeProject = (data) => {
     const title = buildLocalizedFieldFromInput(data, 'title', 'Untitled Project');
     const description = buildLocalizedFieldFromInput(data, 'description');
     const content = buildLocalizedFieldFromInput(data, 'content');
+    
+    // Explicit project sections
+    const problem = buildLocalizedFieldFromInput(data, 'problem');
+    const solution = buildLocalizedFieldFromInput(data, 'solution');
+    const architecture = buildLocalizedFieldFromInput(data, 'architecture');
+    const impact = buildLocalizedFieldFromInput(data, 'impact');
+    
+    const galleryUrls = Array.isArray(data.galleryUrls) 
+        ? data.galleryUrls.filter(Boolean) 
+        : (typeof data.galleryUrls === 'string' ? data.galleryUrls.split(',').map(u => u.trim()).filter(Boolean) : []);
 
     return {
         title,
@@ -26,6 +36,11 @@ export const normalizeProject = (data) => {
         liveUrl: (data.liveUrl || '').trim(),
         slug: slugify((data.slug || title.en || 'untitled').trim()),
         content,
+        problem,
+        solution,
+        architecture,
+        impact,
+        galleryUrls,
         ...normalizeStatusFields(data),
         featured: !!data.featured,
         ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl })

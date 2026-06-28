@@ -272,6 +272,7 @@ const DataTable = ({
           )}
         </div>
       ) : (
+        <div className="ui-table-responsive-wrapper" tabIndex={0} role="region" aria-label={t('admin.common.table.dataTable', { defaultValue: 'Data Table' })}>
         <table className="ui-table">
           <thead>
             {showExport && paginatedData.length > 0 && (
@@ -401,6 +402,7 @@ const DataTable = ({
           )}
         </tbody>
       </table>
+      </div>
       )}
 
       {/* Pagination Controls */}

@@ -59,6 +59,7 @@ const ProjectDetail = () => {
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [readProgress, setReadProgress] = useState(0);
     const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxImage, setLightboxImage] = useState(null);
     const [copied, setCopied] = useState(false);
     const [instaCopied, setInstaCopied] = useState(false);
     const scrollFrameRef = useRef(null);
@@ -86,7 +87,11 @@ const ProjectDetail = () => {
         ...project,
         title: getLocalizedField(project.title, language),
         description: getLocalizedField(project.description, language),
-        content: getLocalizedField(project.content, language)
+        content: getLocalizedField(project.content, language),
+        problem: getLocalizedField(project.problem, language),
+        solution: getLocalizedField(project.solution, language),
+        architecture: getLocalizedField(project.architecture, language),
+        impact: getLocalizedField(project.impact, language),
     } : null;
 
     // Scroll tracking
@@ -223,6 +228,23 @@ const ProjectDetail = () => {
     }
 
     const heroImg = localizedProject.imageUrl;
+    const dateStr = localizedProject.createdAt?.seconds 
+        ? new Date(localizedProject.createdAt.seconds * 1000).toISOString() 
+        : null;
+
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "CreativeWork",
+        "name": localizedProject.title,
+        "description": localizedProject.description,
+        ...(dateStr && { "dateCreated": dateStr }),
+        "url": currentUrl,
+        "author": {
+            "@type": "Person",
+            "name": "Kem Phearum"
+        },
+        ...(heroImg && { "image": heroImg })
+    };
 
     return (
         <>
@@ -232,6 +254,10 @@ const ProjectDetail = () => {
             <Navbar />
 
             <main className={styles.detailPage}>
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
                 <div className={styles.container}>
 
                     {/* Breadcrumb */}
@@ -246,10 +272,14 @@ const ProjectDetail = () => {
                         <span className={styles.current}>{localizedProject.title}</span>
                     </motion.nav>
 
-                    {/* Contained Featured Image */}
                     <motion.div
                         className={styles.featuredImage}
-                        onClick={() => heroImg && setLightboxOpen(true)}
+                        onClick={() => {
+                            if (heroImg) {
+                                setLightboxImage(heroImg);
+                                setLightboxOpen(true);
+                            }
+                        }}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1, duration: 0.5 }}
@@ -284,11 +314,77 @@ const ProjectDetail = () => {
                                 <p className={styles.projectDescription}>{localizedProject.description}</p>
                             )}
 
-                            <div className={styles.markdownBody}>
-                                <MarkdownRenderer content={localizedProject.content || tr('No detailed overview provided for this project yet.', 'មិនទាន់មានការពិពណ៌នាលម្អិតសម្រាប់គម្រោងនេះនៅឡើយទេ។')} />
-                            </div>
+                            {localizedProject.problem && (
+                                <div className={styles.projectSection}>
+                                    <h2>{tr('Problem Statement', 'បញ្ហាប្រឈម')}</h2>
+                                    <div className={styles.markdownBody}>
+                                        <MarkdownRenderer content={localizedProject.problem} />
+                                    </div>
+                                </div>
+                            )}
 
+                            {localizedProject.solution && (
+                                <div className={styles.projectSection}>
+                                    <h2>{tr('Solution', 'ដំណោះស្រាយ')}</h2>
+                                    <div className={styles.markdownBody}>
+                                        <MarkdownRenderer content={localizedProject.solution} />
+                                    </div>
+                                </div>
+                            )}
 
+                            {localizedProject.architecture && (
+                                <div className={styles.projectSection}>
+                                    <h2>{tr('Architecture', 'ស្ថាបត្យកម្ម')}</h2>
+                                    <div className={styles.markdownBody}>
+                                        <MarkdownRenderer content={localizedProject.architecture} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {localizedProject.content && (
+                                <div className={styles.projectSection}>
+                                    <h2>{tr('Implementation Details', 'ព័ត៌មានលម្អិតអំពីការអនុវត្ត')}</h2>
+                                    <div className={styles.markdownBody}>
+                                        <MarkdownRenderer content={localizedProject.content} />
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {!localizedProject.content && !localizedProject.problem && !localizedProject.solution && !localizedProject.architecture && (
+                                <div className={styles.markdownBody}>
+                                    <MarkdownRenderer content={tr('No detailed overview provided for this project yet.', 'មិនទាន់មានការពិពណ៌នាលម្អិតសម្រាប់គម្រោងនេះនៅឡើយទេ។')} />
+                                </div>
+                            )}
+
+                            {localizedProject.impact && (
+                                <div className={styles.projectSection}>
+                                    <h2>{tr('Results & Impact', 'លទ្ធផល និងផលប៉ះពាល់')}</h2>
+                                    <div className={styles.markdownBody}>
+                                        <MarkdownRenderer content={localizedProject.impact} />
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Gallery */}
+                            {localizedProject.galleryUrls && localizedProject.galleryUrls.length > 0 && (
+                                <div className={styles.projectSection}>
+                                    <h2>{tr('Gallery', 'វិចិត្រសាល')}</h2>
+                                    <div className={styles.galleryGrid}>
+                                        {localizedProject.galleryUrls.map((url, idx) => (
+                                            <div 
+                                                key={idx} 
+                                                className={styles.galleryItem}
+                                                onClick={() => {
+                                                    setLightboxImage(url);
+                                                    setLightboxOpen(true);
+                                                }}
+                                            >
+                                                <img src={url} alt={`${localizedProject.title} screenshot ${idx + 1}`} loading="lazy" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Related Projects */}
                             <RelatedProjects currentProjectId={localizedProject.id} techStack={localizedProject.techStack} />
@@ -426,7 +522,7 @@ const ProjectDetail = () => {
                             <X size={22} />
                         </button>
                         <motion.img
-                            src={heroImg}
+                            src={lightboxImage || heroImg}
                             alt={localizedProject.title}
                             initial={{ scale: 0.9 }}
                             animate={{ scale: 1 }}

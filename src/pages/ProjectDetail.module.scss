@@ -244,6 +244,72 @@
     margin-bottom: 2rem;
 }
 
+/* ── Project Sections ── */
+.projectSection {
+    margin-bottom: 3.5rem;
+
+    h2 {
+        font-size: calc(var(--font-size-heading) * 1.2);
+        color: var(--heading-color);
+        margin-bottom: 1.5rem;
+        position: relative;
+        padding-bottom: 0.5rem;
+
+        &::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 3px;
+            background: linear-gradient(90deg, $primary-color, transparent);
+            border-radius: 2px;
+        }
+    }
+}
+
+/* ── Gallery ── */
+.galleryGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.galleryItem {
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    cursor: zoom-in;
+    position: relative;
+    background: var(--glass-surface);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.4s ease;
+    }
+
+    &:hover img {
+        transform: scale(1.05);
+    }
+    
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.1);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+    }
+    
+    &:hover::after {
+        opacity: 1;
+    }
+}
+
+
 /* ── Sidebar ── */
 .sidebar {
     position: sticky;

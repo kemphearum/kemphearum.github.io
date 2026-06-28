@@ -5,7 +5,7 @@ import { normalizeProject, validateProject } from '../domain/project/projectDoma
 import { getLanguageFromStorage, localizeEntityFields } from '../utils/localization';
 import { ACTIONS } from '../utils/permissionConstants';
 
-const PROJECT_LOCALIZED_FIELDS = ['title', 'description', 'content'];
+const PROJECT_LOCALIZED_FIELDS = ['title', 'description', 'content', 'problem', 'solution', 'architecture', 'impact'];
 
 class ProjectService extends BaseService {
     constructor() {

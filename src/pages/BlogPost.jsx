@@ -226,6 +226,23 @@ const BlogPost = () => {
     }
 
     const coverImg = post.coverImage;
+    const dateStr = post.createdAt?.seconds 
+        ? new Date(post.createdAt.seconds * 1000).toISOString() 
+        : null;
+
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": localizedPost.title,
+        "description": localizedPost.excerpt || localizedPost.title,
+        ...(dateStr && { "datePublished": dateStr }),
+        "url": currentUrl,
+        "author": {
+            "@type": "Person",
+            "name": "Kem Phearum"
+        },
+        ...(coverImg && { "image": coverImg })
+    };
 
     return (
         <>
@@ -235,6 +252,10 @@ const BlogPost = () => {
             <Navbar />
 
             <main className={styles.articlePage}>
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
                 <div className={styles.container}>
 
                     {/* Breadcrumb */}

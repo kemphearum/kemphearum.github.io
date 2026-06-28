@@ -45,6 +45,10 @@ const ProjectLocalizedFields = () => {
     const titleName = activeLanguage === 'en' ? 'titleEn' : 'titleKm';
     const descriptionName = activeLanguage === 'en' ? 'descriptionEn' : 'descriptionKm';
     const contentName = activeLanguage === 'en' ? 'contentEn' : 'contentKm';
+    const problemName = activeLanguage === 'en' ? 'problemEn' : 'problemKm';
+    const solutionName = activeLanguage === 'en' ? 'solutionEn' : 'solutionKm';
+    const architectureName = activeLanguage === 'en' ? 'architectureEn' : 'architectureKm';
+    const impactName = activeLanguage === 'en' ? 'impactEn' : 'impactKm';
     const languageLabel = activeLanguage === 'en' ? t('admin.projects.form.languages.en') : t('admin.projects.form.languages.km');
 
     return (
@@ -83,9 +87,61 @@ const ProjectLocalizedFields = () => {
             >
                 <FormMarkdownEditor
                     id={`project-content-${activeLanguage}`}
-                    rows={14}
+                    rows={8}
                     fullWidth={false}
                     placeholder={activeLanguage === 'en' ? t('admin.projects.form.fields.contentPlaceholderEn') : t('admin.projects.form.fields.contentPlaceholderKm')}
+                />
+            </FormField>
+
+            <FormField
+                key={problemName}
+                label={`${t('admin.projects.form.fields.problem')} (${languageLabel})`}
+                name={problemName}
+            >
+                <FormMarkdownEditor
+                    id={`project-problem-${activeLanguage}`}
+                    rows={6}
+                    fullWidth={false}
+                    placeholder="Describe the problem or challenge..."
+                />
+            </FormField>
+
+            <FormField
+                key={solutionName}
+                label={`${t('admin.projects.form.fields.solution')} (${languageLabel})`}
+                name={solutionName}
+            >
+                <FormMarkdownEditor
+                    id={`project-solution-${activeLanguage}`}
+                    rows={6}
+                    fullWidth={false}
+                    placeholder="Describe your solution..."
+                />
+            </FormField>
+
+            <FormField
+                key={architectureName}
+                label={`${t('admin.projects.form.fields.architecture')} (${languageLabel})`}
+                name={architectureName}
+            >
+                <FormMarkdownEditor
+                    id={`project-architecture-${activeLanguage}`}
+                    rows={6}
+                    fullWidth={false}
+                    placeholder="Describe the architecture..."
+                />
+            </FormField>
+
+            <FormField
+                key={impactName}
+                label={`${t('admin.projects.form.fields.impact')} (${languageLabel})`}
+                name={impactName}
+            >
+                <FormMarkdownEditor
+                    id={`project-impact-${activeLanguage}`}
+                    rows={6}
+                    fullWidth={false}
+                    placeholder="Describe the results and impact..."
                 />
             </FormField>
         </>
@@ -102,10 +158,19 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
         descriptionKm: getLanguageValue(initialData?.description, 'km', false),
         contentEn: getLanguageValue(initialData?.content, 'en', true),
         contentKm: getLanguageValue(initialData?.content, 'km', false),
+        problemEn: getLanguageValue(initialData?.problem, 'en', true),
+        problemKm: getLanguageValue(initialData?.problem, 'km', false),
+        solutionEn: getLanguageValue(initialData?.solution, 'en', true),
+        solutionKm: getLanguageValue(initialData?.solution, 'km', false),
+        architectureEn: getLanguageValue(initialData?.architecture, 'en', true),
+        architectureKm: getLanguageValue(initialData?.architecture, 'km', false),
+        impactEn: getLanguageValue(initialData?.impact, 'en', true),
+        impactKm: getLanguageValue(initialData?.impact, 'km', false),
         techStack: Array.isArray(initialData?.techStack) ? initialData.techStack.join(', ') : (initialData?.techStack || ''),
         githubUrl: initialData?.githubUrl || '',
         liveUrl: initialData?.liveUrl || '',
         slug: initialData?.slug || '',
+        galleryUrls: Array.isArray(initialData?.galleryUrls) ? initialData.galleryUrls.join(', ') : (initialData?.galleryUrls || ''),
         imageUrl: initialData?.imageUrl || '',
         image: null,
         status: getStoredStatus(initialData || {}),
@@ -183,6 +248,14 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
 
                                     <FormField label={t('admin.projects.form.fields.slug')} name="slug" hint={t('admin.projects.form.fields.slugHint')}>
                                         <FormInput placeholder={t('admin.projects.form.fields.slugPlaceholder')} />
+                                    </FormField>
+
+                                    <FormField label="Gallery Image URLs" name="galleryUrls" hint="Comma-separated image URLs for gallery">
+                                        <FormInput placeholder="https://..., https://..." 
+                                            onChange={() => {
+                                                // Convert comma separated to array before form submit in parent, or handle as string and let domain parse it
+                                            }} 
+                                        />
                                     </FormField>
                                 </div>
 

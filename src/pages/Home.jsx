@@ -11,6 +11,7 @@ import Experience from '@/sections/Experience';
 import Education from '@/sections/Education';
 import Skills from '@/sections/Skills';
 import Certificates from '@/sections/Certificates';
+import BackToTop from '@/sections/BackToTop';
 import SettingsService from '../../src/services/SettingsService';
 import { normalizeSectionTarget } from '../utils/sectionNavigation';
 import { getLocalizedField } from '../utils/localization';
@@ -149,6 +150,7 @@ export default function Home() {
         <FeaturedBlogs />
         <Contact />
       </main>
+      <BackToTop />
       <Footer />
     </>
   );

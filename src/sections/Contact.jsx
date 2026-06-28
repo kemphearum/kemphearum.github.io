@@ -178,6 +178,7 @@ const Contact = () => {
                         className={styles.form}
                         onSubmit={handleSubmit}
                         aria-busy={status === 'sending'}
+                        aria-describedby={status ? 'contact-status' : undefined}
                         initial={{ opacity: 0, y: 30 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         transition={{ type: "spring", duration: 0.8, delay: 0.3 }}
@@ -193,6 +194,7 @@ const Contact = () => {
                                     value={formData.name}
                                     onChange={handleChange}
                                     required
+                                    aria-invalid={status === 'error' || status === 'rate_limited'}
                                     placeholder={t('contact.namePlaceholder')}
                                 />
                             </div>
@@ -205,6 +207,7 @@ const Contact = () => {
                                     value={formData.email}
                                     onChange={handleChange}
                                     required
+                                    aria-invalid={status === 'error' || status === 'rate_limited'}
                                     placeholder={t('contact.emailPlaceholder')}
                                 />
                             </div>
@@ -229,6 +232,7 @@ const Contact = () => {
                                 value={formData.message}
                                 onChange={handleChange}
                                 required
+                                aria-invalid={status === 'error' || status === 'rate_limited'}
                                 placeholder={t('contact.messagePlaceholder')}
                             ></textarea>
                         </div>
@@ -258,6 +262,7 @@ const Contact = () => {
                         <AnimatePresence>
                             {status === 'success' && (
                                 <motion.div
+                                    id="contact-status"
                                     className={styles.success}
                                     role="status"
                                     aria-live="polite"
@@ -273,6 +278,7 @@ const Contact = () => {
                             )}
                             {status === 'error' && (
                                 <motion.div
+                                    id="contact-status"
                                     className={styles.error}
                                     role="alert"
                                     aria-live="assertive"
@@ -285,6 +291,7 @@ const Contact = () => {
                             )}
                             {status === 'rate_limited' && (
                                 <motion.div
+                                    id="contact-status"
                                     className={`${styles.error} ${styles.rateLimited}`}
                                     role="alert"
                                     aria-live="assertive"

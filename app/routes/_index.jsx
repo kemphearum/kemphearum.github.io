@@ -2,6 +2,7 @@ import Home from "../../src/pages/Home";
 import SettingsService from "../../src/services/SettingsService";
 import { getLocalizedField } from "../../src/utils/localization";
 import { buildBrowserTitle } from "../../src/utils/browserTitle";
+import { generateMetaTags } from "../../src/utils/SeoHelper";
 
 const getMetaLanguage = () => {
   if (typeof window === 'undefined') return 'en';
@@ -27,11 +28,12 @@ export function meta({ data }) {
       : 'ICT Security & IT Audit Professional'
   );
 
-  return [
-    { title },
-    { name: "description", content: desc },
-    { property: "og:title", content: title },
-  ];
+  return generateMetaTags({
+    title,
+    description: desc,
+    siteTitle: 'Kem Phearum',
+    type: 'website'
+  });
 }
 
 export default Home;

@@ -9,6 +9,7 @@ const Button = React.forwardRef(({
     isLoading = false,
     disabled = false,
     icon: Icon,
+    type = 'button',
     ...props 
 }, ref) => {
     const baseClass = 'ui-button';
@@ -20,6 +21,7 @@ const Button = React.forwardRef(({
             ref={ref}
             className={`${baseClass} ${variantClass} ${sizeClass} ${className}`}
             disabled={disabled || isLoading}
+            type={type}
             {...props}
         >
             {isLoading ? (

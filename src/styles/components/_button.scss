@@ -14,6 +14,11 @@
     user-select: none;
     outline: none;
 
+    @media (prefers-reduced-motion: reduce) {
+        transition: none !important;
+        transform: none !important;
+    }
+
     &:disabled, &[aria-disabled="true"] {
         opacity: 0.5;
         cursor: not-allowed;

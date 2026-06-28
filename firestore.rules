@@ -234,6 +234,88 @@ service cloud.firestore {
       && request.resource.data.time is timestamp;
     }
 
+    // ============================================================
+    // Schema Validation Helpers
+    // ============================================================
+    function isLocalizedField(field) {
+      return field is map && field.keys().hasAny(['en']) && field.en is string;
+    }
+    
+    function hasSystemFields(data) {
+      return (!data.keys().hasAny(['createdAt']) || data.createdAt is timestamp)
+          && (!data.keys().hasAny(['updatedAt']) || data.updatedAt is timestamp)
+          && (!data.keys().hasAny(['createdBy']) || data.createdBy is string)
+          && (!data.keys().hasAny(['updatedBy']) || data.updatedBy is string);
+    }
+
+    function isProjectPayloadValid() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['title', 'description', 'techStack', 'githubUrl', 'liveUrl', 'slug', 'content', 'visible', 'publishedAt', 'status', 'featured', 'imageUrl', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      && (!data.keys().hasAny(['title']) || isLocalizedField(data.title))
+      && (!data.keys().hasAny(['description']) || data.description is map)
+      && (!data.keys().hasAny(['content']) || data.content is map)
+      && (!data.keys().hasAny(['techStack']) || data.techStack is list)
+      && (!data.keys().hasAny(['slug']) || data.slug is string)
+      && (!data.keys().hasAny(['visible']) || data.visible is bool)
+      && (!data.keys().hasAny(['featured']) || data.featured is bool)
+      && hasSystemFields(data);
+    }
+    
+    function isExperiencePayloadValid() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['company', 'role', 'startDate', 'startMonthYear', 'endDate', 'endMonthYear', 'period', 'current', 'description', 'visible', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      && (!data.keys().hasAny(['company']) || isLocalizedField(data.company))
+      && (!data.keys().hasAny(['role']) || isLocalizedField(data.role))
+      && (!data.keys().hasAny(['current']) || data.current is bool)
+      && (!data.keys().hasAny(['visible']) || data.visible is bool)
+      && (!data.keys().hasAny(['order']) || data.order is number)
+      && hasSystemFields(data);
+    }
+    
+    function isSkillPayloadValid() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['name', 'description', 'category', 'level', 'slug', 'visible', 'featured', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      && (!data.keys().hasAny(['name']) || isLocalizedField(data.name))
+      && (!data.keys().hasAny(['slug']) || data.slug is string)
+      && (!data.keys().hasAny(['visible']) || data.visible is bool)
+      && (!data.keys().hasAny(['featured']) || data.featured is bool)
+      && (!data.keys().hasAny(['order']) || data.order is number)
+      && hasSystemFields(data);
+    }
+    
+    function isCertificatePayloadValid() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['name', 'description', 'organization', 'issueDate', 'expiryDate', 'credentialId', 'url', 'slug', 'visible', 'featured', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      && (!data.keys().hasAny(['name']) || isLocalizedField(data.name))
+      && (!data.keys().hasAny(['slug']) || data.slug is string)
+      && (!data.keys().hasAny(['visible']) || data.visible is bool)
+      && (!data.keys().hasAny(['featured']) || data.featured is bool)
+      && (!data.keys().hasAny(['order']) || data.order is number)
+      && hasSystemFields(data);
+    }
+    
+    function isEducationPayloadValid() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['school', 'degree', 'fieldOfStudy', 'startDate', 'startYear', 'endDate', 'endYear', 'period', 'current', 'description', 'visible', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      && (!data.keys().hasAny(['school']) || isLocalizedField(data.school))
+      && (!data.keys().hasAny(['degree']) || isLocalizedField(data.degree))
+      && (!data.keys().hasAny(['current']) || data.current is bool)
+      && (!data.keys().hasAny(['visible']) || data.visible is bool)
+      && (!data.keys().hasAny(['order']) || data.order is number)
+      && hasSystemFields(data);
+    }
+    
+    function isPostPayloadValid() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['title', 'excerpt', 'content', 'slug', 'tags', 'visible', 'publishedAt', 'status', 'featured', 'coverImage', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      && (!data.keys().hasAny(['title']) || isLocalizedField(data.title))
+      && (!data.keys().hasAny(['slug']) || data.slug is string)
+      && (!data.keys().hasAny(['tags']) || data.tags is list)
+      && (!data.keys().hasAny(['visible']) || data.visible is bool)
+      && (!data.keys().hasAny(['featured']) || data.featured is bool)
+      && hasSystemFields(data);
+    }
+
     // Audit log integrity: append-only, schema-pinned, and the recorded
     // email must match the authenticated principal (no spoofing other users).
     function isAuditLogPayloadValid() {
@@ -247,37 +329,35 @@ service cloud.firestore {
       && (request.resource.data.status == 'success' || request.resource.data.status == 'failure');
     }
 
-    // Allow public read for content, projects, experience, and posts.
-    // Writes are gated by server-side RBAC (canWriteModule) instead of the
-    // coarse isStaff() check, so restricted custom roles cannot write.
+    // writes are also gated by payload schemas
     match /content/{document=**} {
       allow read;
-      allow write: if canWriteModule('general');
+      allow write: if canWriteModule('general'); // Content schema is dynamic, so no strict shape
     }
 
     match /projects/{document=**} {
       allow read;
-      allow write: if canWriteModule('projects');
+      allow write: if canWriteModule('projects') && isProjectPayloadValid();
     }
 
     match /experience/{document=**} {
       allow read;
-      allow write: if canWriteModule('experience');
+      allow write: if canWriteModule('experience') && isExperiencePayloadValid();
     }
 
     match /skills/{document=**} {
       allow read;
-      allow write: if canWriteModule('skills');
+      allow write: if canWriteModule('skills') && isSkillPayloadValid();
     }
 
     match /certificates/{document=**} {
       allow read;
-      allow write: if canWriteModule('certificates');
+      allow write: if canWriteModule('certificates') && isCertificatePayloadValid();
     }
 
     match /education/{document=**} {
       allow read;
-      allow write: if canWriteModule('education');
+      allow write: if canWriteModule('education') && isEducationPayloadValid();
     }
 
     // Application Settings (Logo, Page Title, Audit Log Config, etc.)
@@ -289,7 +369,7 @@ service cloud.firestore {
     // Blog Posts Rules
     match /posts/{document=**} {
       allow read;
-      allow write: if canWriteModule('blog');
+      allow write: if canWriteModule('blog') && isPostPayloadValid();
     }
 
     // Messages: contact submissions are written via Cloud Functions (Admin

@@ -235,14 +235,17 @@ const Navbar = () => {
                                         {item.label}
                                     </Link>
                                 ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => scrollToSection(item.key)}
+                                    <a
+                                        href={isHome ? `#${item.key}` : `/#${item.key}`}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            scrollToSection(item.key);
+                                        }}
                                         className={active ? styles.activeNav : ''}
                                         aria-current={active ? 'page' : undefined}
                                     >
                                         {item.label}
-                                    </button>
+                                    </a>
                                 )}
                             </li>
                         )})}
