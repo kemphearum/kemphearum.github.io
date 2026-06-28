@@ -39,6 +39,7 @@ export async function loader({ request }) {
         { loc: `${baseUrl}/`, priority: '1.0', lastmod: new Date().toISOString() },
         { loc: `${baseUrl}/projects`, priority: '0.8', lastmod: new Date().toISOString() },
         { loc: `${baseUrl}/blog`, priority: '0.8', lastmod: new Date().toISOString() },
+        { loc: `${baseUrl}/resume`, priority: '0.7', lastmod: new Date().toISOString() },
     ];
 
     try {

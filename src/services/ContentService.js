@@ -41,6 +41,38 @@ class ContentService extends BaseService {
             };
         }
 
+        if (sectionName === 'profileInfo') {
+            const toList = (value) => (
+                Array.isArray(value)
+                    ? value.map((item) => (typeof item === 'string' ? item.trim() : item)).filter(Boolean)
+                    : (typeof value === 'string'
+                        ? value.split('\n').map((item) => item.trim()).filter(Boolean)
+                        : [])
+            );
+            const yearsOverride = Number(data.yearsExperienceOverride);
+
+            return {
+                ...data,
+                summary: toLocalizedField(data.summary || ''),
+                currentRole: toLocalizedField(data.currentRole || ''),
+                location: toLocalizedField(data.location || ''),
+                availabilityMessage: toLocalizedField(data.availabilityMessage || ''),
+                responseTime: toLocalizedField(data.responseTime || ''),
+                clearance: toLocalizedField(data.clearance || ''),
+                resumeHeadline: toLocalizedField(data.resumeHeadline || ''),
+                availabilityStatus: (data.availabilityStatus || '').trim(),
+                timezone: (data.timezone || '').trim(),
+                yearsExperienceOverride: Number.isFinite(yearsOverride) && yearsOverride > 0 ? yearsOverride : '',
+                workTypes: toList(data.workTypes),
+                preferredContact: toList(data.preferredContact),
+                languages: toList(data.languages),
+                industries: toList(data.industries),
+                accomplishments: toList(data.accomplishments),
+                oss: toList(data.oss),
+                community: toList(data.community)
+            };
+        }
+
         return data;
     }
 

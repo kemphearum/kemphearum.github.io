@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router';
+import { Copy, Check, Github, Linkedin, Twitter, Globe, FileText, Clock, MessageSquare } from 'lucide-react';
+import { generateQrSvg, DEFAULT_SITE_URL } from '../utils/qrcode';
 import ContentService from '../services/ContentService';
+import SettingsService from '../services/SettingsService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Contact.module.scss';
 // eslint-disable-next-line no-unused-vars
@@ -84,19 +88,94 @@ const submitContact = async (payload) => {
     throw lastError || new Error('Unable to submit contact form');
 };
 
+const TelegramIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+    </svg>
+);
+
+const getPortfolioUrl = () => {
+    if (typeof window === 'undefined') return DEFAULT_SITE_URL;
+    const origin = window.location.origin || '';
+    return origin && !origin.includes('localhost') ? origin : DEFAULT_SITE_URL;
+};
+
 const Contact = () => {
     const { trackEvent } = useAnalytics();
     const { language, t } = useTranslation();
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
     const [status, setStatus] = useState(null);
+    const [copied, setCopied] = useState(false);
 
-    const { data, isLoading: loading } = useQuery({
+    const portfolioUrl = getPortfolioUrl();
+
+    const { data, isLoading: loading, isError: contentError } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
+    retry: 1,
     refetchOnWindowFocus: false,
         queryKey: ['content', 'contact'],
         queryFn: () => ContentService.fetchSection('contact')
     });
+
+    const { data: settings } = useQuery({
+        staleTime: 60000,
+        gcTime: 300000,
+        retry: 1,
+        refetchOnWindowFocus: false,
+        queryKey: ['settings', 'global'],
+        queryFn: () => SettingsService.fetchGlobalSettings()
+    });
+
+    const { data: profileRaw } = useQuery({
+        staleTime: 60000,
+        gcTime: 300000,
+        retry: 1,
+        refetchOnWindowFocus: false,
+        queryKey: ['content', 'profileInfo'],
+        queryFn: () => ContentService.fetchSection('profileInfo')
+    });
+
+    const communication = settings?.communication || {};
+    const social = { ...(settings?.site?.social || {}), ...communication };
+    const profile = profileRaw || {};
+    
+    const responseTime = communication.responseTime || getLocalizedField(profile.responseTime, language);
+    const timeZone = communication.timeZone || profile.timezone;
+    const availabilityStatus = communication.availabilityStatus || profile.availabilityStatus;
+    const availabilityMessage = getLocalizedField(profile.availabilityMessage, language);
+    
+    let preferredContact = [];
+    if (communication.preferredContactMethod) {
+        preferredContact = [communication.preferredContactMethod];
+    } else if (Array.isArray(profile.preferredContact)) {
+        preferredContact = profile.preferredContact;
+    }
+    
+    const telegramEnabled = communication.telegramEnabled !== false;
+
+    const copyEmail = async () => {
+        if (!social.email || typeof navigator === 'undefined' || !navigator.clipboard) return;
+        try {
+            await navigator.clipboard.writeText(social.email);
+            setCopied(true);
+            trackEvent('contact_email_copied');
+            setTimeout(() => setCopied(false), 2000);
+        } catch (error) {
+            console.error('Clipboard copy failed:', error);
+        }
+    };
+
+    const socialLinks = [
+        { key: 'github', url: social.github, label: 'GitHub', Icon: Github },
+        { key: 'linkedin', url: social.linkedin, label: 'LinkedIn', Icon: Linkedin },
+        { key: 'twitter', url: social.twitter, label: 'X / Twitter', Icon: Twitter },
+        { key: 'telegram', url: social.telegramUrl || social.telegram, label: 'Telegram', Icon: TelegramIcon },
+        { key: 'website', url: social.website, label: 'Website', Icon: Globe }
+    ].filter((s) => s.url);
+
+    const qrUrl = (telegramEnabled && social.telegramUrl) ? social.telegramUrl : portfolioUrl;
+    const qrSvg = useMemo(() => generateQrSvg(qrUrl, { ecc: 'M', margin: 2 }), [qrUrl]);
 
     const rawContactContent = data || { introText: '' };
     const contactContent = {
@@ -160,7 +239,7 @@ const Contact = () => {
                     {t('contact.title')}
                 </motion.h2>
                 <div className={styles.content}>
-                    {loading ? (
+                    {loading && !contentError ? (
                         <div className={styles.skeletonText} />
                     ) : (
                         <motion.div
@@ -172,6 +251,83 @@ const Contact = () => {
                         >
                             <MarkdownRenderer content={contactContent.introText} />
                         </motion.div>
+                    )}
+
+                    <motion.div
+                        className={styles.contactMeta}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.25 }}
+                        viewport={{ once: true }}
+                    >
+                        {availabilityStatus && (
+                            <div className={`${styles.availability} ${styles[`availability--${availabilityStatus}`] || ''}`}>
+                                <span className={styles.availabilityDot} aria-hidden="true" />
+                                <span>
+                                    <strong>{t(`recruiter.availability.${availabilityStatus}`, 'Available')}</strong>
+                                    {availabilityMessage ? ` — ${availabilityMessage}` : ''}
+                                </span>
+                            </div>
+                        )}
+
+                        <div className={styles.metaFacts}>
+                            {responseTime && (
+                                <span className={styles.metaFact}><Clock size={14} /> {t('contact.responseTime', 'Typical response:')} {responseTime}</span>
+                            )}
+                            {timeZone && (
+                                <span className={styles.metaFact}><Globe size={14} /> {timeZone}</span>
+                            )}
+                            {preferredContact.length > 0 && (
+                                <span className={styles.metaFact}><MessageSquare size={14} /> {t('contact.preferred', 'Preferred:')} {preferredContact.join(', ')}</span>
+                            )}
+                        </div>
+
+                        <div className={styles.metaActions}>
+                            {social.email && (
+                                <button type="button" className={styles.copyBtn} onClick={copyEmail} aria-live="polite">
+                                    {copied ? <Check size={15} /> : <Copy size={15} />}
+                                    <span>{copied ? t('contact.emailCopied', 'Copied!') : social.email}</span>
+                                </button>
+                            )}
+                            <Link to="/resume" className={styles.resumeBtn}>
+                                <FileText size={15} /> {t('contact.downloadResume', 'Download résumé')}
+                            </Link>
+                        </div>
+
+                        {socialLinks.length > 0 && (
+                            <div className={styles.socials}>
+                                {/* eslint-disable-next-line no-unused-vars */}
+                                {socialLinks.map(({ key, url, label, Icon }) => (
+                                    <a key={key} href={url} target="_blank" rel="noopener noreferrer" className={styles.socialBtn} aria-label={label} title={label}>
+                                        <Icon size={18} />
+                                    </a>
+                                ))}
+                            </div>
+                        )}
+                    </motion.div>
+
+                    {telegramEnabled && (
+                        <div className={styles.qrPanel} aria-label={t('contact.qr.label', 'Scan to chat instantly')}>
+                            {communication.telegramQrCodeImage ? (
+                                <img src={communication.telegramQrCodeImage} alt="Telegram QR Code" className={styles.qrImage} />
+                            ) : (
+                                <div className={styles.qrCode} dangerouslySetInnerHTML={{ __html: qrSvg }} />
+                            )}
+                            <p className={styles.qrCaption}>{t('contact.qr.caption', 'Scan to chat instantly')}</p>
+                            {social.telegramUsername && <p className={styles.qrUsername}>{social.telegramUsername}</p>}
+                            {(social.telegramUrl || social.telegram) && (
+                                <a
+                                    href={social.telegramUrl || social.telegram}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={styles.telegramBtn}
+                                    aria-label="Contact on Telegram"
+                                >
+                                    <TelegramIcon />
+                                    {t('contact.telegram', 'Chat on Telegram')}
+                                </a>
+                            )}
+                        </div>
                     )}
 
                     <motion.form

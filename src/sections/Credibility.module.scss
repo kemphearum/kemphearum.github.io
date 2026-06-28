@@ -1,0 +1,113 @@
+.credibility {
+  background: var(--surface-bg);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.columnTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+
+  svg {
+    color: var(--accent-color);
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card {
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.cardTitle {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--accent-color);
+    }
+  }
+}
+
+.cardMeta {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.cardDesc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-top: 0.25rem;
+  
+  :global(.prose) {
+    p:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.cardContent {
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.cardAuthor {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  
+  .authorName {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+  }
+  
+  .authorRole {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+}

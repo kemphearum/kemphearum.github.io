@@ -16,6 +16,36 @@ export const formatExperienceDate = (yyyyMm) => {
 };
 
 /**
+ * Derives total years of experience from a set of experience records by spanning
+ * the earliest start year to the latest end year (or the current year for any
+ * "Present" role). Returns 0 when no usable dates are found.
+ * @param {Array<Object>} experiences - Experience records (with `period`)
+ * @returns {number}
+ */
+export const deriveYearsOfExperience = (experiences = []) => {
+    if (!Array.isArray(experiences) || experiences.length === 0) return 0;
+    let minYear = Infinity;
+    let maxYear = 0;
+    experiences.forEach((exp) => {
+        const period = typeof exp?.period === 'string' ? exp.period : '';
+        if (!period) return;
+        const years = period.match(/[12]\d{3}/g);
+        if (years) {
+            years.forEach((y) => {
+                const n = Number(y);
+                if (n < minYear) minYear = n;
+                if (n > maxYear) maxYear = n;
+            });
+        }
+        if (period.toLowerCase().includes('present')) {
+            maxYear = new Date().getFullYear();
+        }
+    });
+    if (!Number.isFinite(minYear) || maxYear === 0) return 0;
+    return Math.max(0, maxYear - minYear);
+};
+
+/**
  * Normalizes experience data for Firestore.
  * @param {Object} data - Raw form data
  * @returns {Object} Normalized data

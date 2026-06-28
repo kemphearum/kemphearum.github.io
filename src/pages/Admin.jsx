@@ -169,6 +169,8 @@ const Admin = () => {
         setAboutData,
         contactData,
         setContactData,
+        profileData,
+        setProfileData,
         settingsData,
         setSettingsData,
         sidebarPersistent,
@@ -224,7 +226,7 @@ const Admin = () => {
             case 'dashboard':
                 return <DashboardTab {...commonProps} setActiveTab={setActiveTab} />;
             case 'general':
-                return <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} loading={loading} saveSectionData={saveSectionData} />;
+                return <GeneralTab {...commonProps} homeData={homeData} setHomeData={setHomeData} aboutData={aboutData} setAboutData={setAboutData} contactData={contactData} setContactData={setContactData} profileData={profileData} setProfileData={setProfileData} loading={loading} saveSectionData={saveSectionData} />;
             case 'profile':
                 return <ProfileTab {...commonProps} user={user} setUserDisplayName={setUserDisplayName} />;
             case 'settings':

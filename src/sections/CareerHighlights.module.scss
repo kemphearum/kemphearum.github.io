@@ -4,7 +4,6 @@
     padding: 3rem 0 2rem;
     position: relative;
     z-index: 2;
-    margin-top: -4rem; /* Overlap hero slightly */
 }
 
 .container {
@@ -72,10 +71,6 @@
 }
 
 @media (max-width: 768px) {
-    .section {
-        margin-top: -2rem;
-    }
-    
     .grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 1rem;

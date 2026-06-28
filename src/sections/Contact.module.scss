@@ -189,3 +189,191 @@
         background-position: -200% 0;
     }
 }
+
+.contactMeta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+    margin: 0 auto 1.75rem;
+    max-width: 560px;
+}
+
+.availability {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border, rgba(127, 127, 127, 0.25));
+    background: var(--bg-surface-light, rgba(127, 127, 127, 0.06));
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+
+    strong { color: var(--text-primary); }
+}
+
+.availabilityDot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #16a34a;
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.18);
+    flex-shrink: 0;
+}
+
+.availability--freelance .availabilityDot { background: #d97706; box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.18); }
+.availability--not-available .availabilityDot { background: #9ca3af; box-shadow: 0 0 0 4px rgba(156, 163, 175, 0.18); }
+
+.metaFacts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem 1.1rem;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.metaFact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.metaActions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+}
+
+.copyBtn,
+.resumeBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 0.95rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1px solid var(--glass-border, rgba(127, 127, 127, 0.3));
+    background: var(--card-bg);
+    color: var(--text-primary);
+    transition: background 0.15s ease, transform 0.15s ease;
+
+    &:hover { background: var(--card-hover); }
+    &:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+}
+
+.resumeBtn {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+
+    &:hover { background: var(--primary-color-strong, var(--primary-color)); }
+}
+
+.socials {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.socialBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border, rgba(127, 127, 127, 0.3));
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+
+    &:hover { color: var(--primary-color); transform: translateY(-2px); }
+    &:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .copyBtn, .resumeBtn, .socialBtn { transition: none; }
+}
+
+.qrPanel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 auto 1.5rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--glass-border, rgba(127, 127, 127, 0.2));
+    background: var(--card-bg);
+    width: fit-content;
+    max-width: 220px;
+}
+
+.qrCode {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    padding: 4px;
+
+    svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+    }
+}
+
+.qrCaption {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
+    text-align: center;
+}
+
+.qrImage {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.qrUsername {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: -0.2rem 0 0.2rem;
+    text-align: center;
+}
+
+.telegramBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: #fff;
+    background: #229ED9;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+
+    &:hover {
+        background: #1a8bc0;
+        transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+        outline: 2px solid #229ED9;
+        outline-offset: 2px;
+    }
+}

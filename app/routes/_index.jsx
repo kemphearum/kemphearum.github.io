@@ -1,8 +1,9 @@
 import Home from "../../src/pages/Home";
 import SettingsService from "../../src/services/SettingsService";
+import ContentService from "../../src/services/ContentService";
 import { getLocalizedField } from "../../src/utils/localization";
 import { buildBrowserTitle } from "../../src/utils/browserTitle";
-import { generateMetaTags, generatePersonSchema } from "../../src/utils/SeoHelper";
+import { generateMetaTags, generatePersonSchema, DEFAULT_SITE_URL } from "../../src/utils/SeoHelper";
 
 const getMetaLanguage = () => {
   if (typeof window === 'undefined') return 'en';

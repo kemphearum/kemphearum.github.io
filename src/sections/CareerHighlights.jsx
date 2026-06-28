@@ -10,6 +10,7 @@ import ProjectService from '../services/ProjectService';
 import CertificateService from '../services/CertificateService';
 import SkillService from '../services/SkillService';
 import { filterPublished } from '../domain/shared/contentStatus';
+import { deriveYearsOfExperience } from '../domain/experience/experienceDomain';
 
 const CareerHighlights = () => {
     const { t } = useTranslation();
@@ -47,28 +48,10 @@ const CareerHighlights = () => {
     });
 
     // Calculate stats
-    const yearsOfExp = React.useMemo(() => {
-        const visible = filterPublished(experiencesData || []);
-        if (!visible.length) return 0;
-        let minYear = 9999;
-        let maxYear = 0;
-        visible.forEach(exp => {
-            if (!exp.period) return;
-            const years = exp.period.match(/[12]\d{3}/g);
-            if (years) {
-                years.forEach(y => {
-                    const yearNum = Number(y);
-                    if (yearNum < minYear) minYear = yearNum;
-                    if (yearNum > maxYear) maxYear = yearNum;
-                });
-            }
-            if (exp.period.toLowerCase().includes('present')) {
-                maxYear = new Date().getFullYear();
-            }
-        });
-        if (minYear === 9999) return 0;
-        return maxYear - minYear;
-    }, [experiencesData]);
+    const yearsOfExp = React.useMemo(
+        () => deriveYearsOfExperience(filterPublished(experiencesData || [])),
+        [experiencesData]
+    );
 
     const projectsCount = filterPublished(projectsData || []).length;
     const certsCount = filterPublished(certificatesData || []).length;
@@ -80,22 +63,22 @@ const CareerHighlights = () => {
         {
             icon: <Briefcase size={24} />,
             value: yearsOfExp > 0 ? `${yearsOfExp}+` : '-',
-            label: t('career.stats.years', 'Years Experience')
+            label: t('career.stats.years')
         },
         {
             icon: <FolderGit2 size={24} />,
             value: projectsCount > 0 ? projectsCount : '-',
-            label: t('career.stats.projects', 'Projects Delivered')
+            label: t('career.stats.projects')
         },
         {
             icon: <Award size={24} />,
             value: certsCount > 0 ? certsCount : '-',
-            label: t('career.stats.certifications', 'Certifications')
+            label: t('career.stats.certifications')
         },
         {
             icon: <ShieldCheck size={24} />,
             value: advancedSkillsCount > 0 ? `${advancedSkillsCount}+` : '-',
-            label: t('career.stats.coreSkills', 'Core Skills')
+            label: t('career.stats.coreSkills')
         }
     ];
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, User, Mail } from 'lucide-react';
+import { Home, User, Mail, IdCard } from 'lucide-react';
 import tabStyles from './GeneralTab.module.scss';
 import ImageProcessingService from '../../../services/ImageProcessingService';
 import HistoryModal from '../components/HistoryModal';
@@ -11,12 +11,13 @@ import Form from '../components/Form';
 import HomeSection from './components/HomeSection';
 import AboutSection from './components/AboutSection';
 import ContactSection from './components/ContactSection';
+import ProfileSection from './components/ProfileSection';
 import { getLanguageValue } from '../../../utils/localization';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { ACTIONS, MODULES } from '../../../utils/permissions';
 
 
-const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData, isActionAllowed }) => {
+const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, saveSectionData, isActionAllowed }) => {
 
     const { t } = useTranslation();
     const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
@@ -26,6 +27,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
     const [homePreview, setHomePreview] = useState(false);
     const [aboutPreview, setAboutPreview] = useState(false);
     const [contactPreview, setContactPreview] = useState(false);
+    const [profilePreview, setProfilePreview] = useState(false);
 
     const canEdit = isActionAllowed(ACTIONS.EDIT, MODULES.GENERAL);
     const canViewHistory = isActionAllowed(ACTIONS.VIEW_HISTORY, MODULES.GENERAL);
@@ -84,6 +86,31 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
         });
     };
 
+    const handleSaveProfile = async (data) => {
+        const splitComma = (v) => (v || '').split(',').map((s) => s.trim()).filter(Boolean);
+        const splitLines = (v) => (v || '').split('\n').map((s) => s.trim()).filter(Boolean);
+        const loc = (en, km) => ({ en: (en || '').trim(), km: (km || '').trim() });
+        await saveSectionData('profileInfo', {
+            summary: loc(data.summaryEn, data.summaryKm),
+            currentRole: loc(data.currentRoleEn, data.currentRoleKm),
+            location: loc(data.locationEn, data.locationKm),
+            availabilityMessage: loc(data.availabilityMessageEn, data.availabilityMessageKm),
+            responseTime: loc(data.responseTimeEn, data.responseTimeKm),
+            clearance: loc(data.clearanceEn, data.clearanceKm),
+            resumeHeadline: loc(data.resumeHeadlineEn, data.resumeHeadlineKm),
+            availabilityStatus: (data.availabilityStatus || '').trim(),
+            timezone: (data.timezone || '').trim(),
+            yearsExperienceOverride: data.yearsExperienceOverride,
+            workTypes: splitComma(data.workTypes),
+            preferredContact: splitComma(data.preferredContact),
+            languages: splitComma(data.languages),
+            industries: splitComma(data.industries),
+            accomplishments: splitLines(data.accomplishments),
+            oss: splitLines(data.oss),
+            community: splitLines(data.community)
+        });
+    };
+
     const handleOpenHistory = (recordId, title) => {
         if (!canViewHistory) return;
         setHistoryModal({ isOpen: true, recordId, title });
@@ -92,6 +119,22 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
     const homeFormKey = `home:${getLanguageValue(homeData.greeting, 'en', true)}:${getLanguageValue(homeData.greeting, 'km', false)}:${getLanguageValue(homeData.name, 'en', true)}:${getLanguageValue(homeData.name, 'km', false)}:${getLanguageValue(homeData.subtitle, 'en', true)}:${getLanguageValue(homeData.subtitle, 'km', false)}:${getLanguageValue(homeData.description, 'en', true)}:${getLanguageValue(homeData.description, 'km', false)}:${getLanguageValue(homeData.ctaText, 'en', true)}:${getLanguageValue(homeData.ctaText, 'km', false)}:${homeData.ctaLink || ''}:${homeData.profileImageUrl || ''}`;
     const aboutFormKey = `about:${getLanguageValue(aboutData.bio, 'en', true)}:${getLanguageValue(aboutData.bio, 'km', false)}:${Array.isArray(aboutData.skills) ? aboutData.skills.join(',') : (aboutData.skills || '')}`;
     const contactFormKey = `contact:${getLanguageValue(contactData.introText, 'en', true)}:${getLanguageValue(contactData.introText, 'km', false)}`;
+    const profile = profileData || {};
+    const asCsv = (value) => (Array.isArray(value) ? value.join(', ') : (value || ''));
+    const asLines = (value) => (Array.isArray(value) ? value.join('\n') : (value || ''));
+    const profileFormKey = `profile:${getLanguageValue(profile.summary, 'en', true)}:${getLanguageValue(profile.currentRole, 'en', true)}:${profile.availabilityStatus || ''}:${asCsv(profile.languages)}:${(profile.accomplishments || []).length}`;
+    const profileFilled = [
+        getLanguageValue(profile.summary, 'en', true),
+        getLanguageValue(profile.currentRole, 'en', true),
+        profile.availabilityStatus,
+        getLanguageValue(profile.location, 'en', true),
+        profile.timezone,
+        asCsv(profile.workTypes),
+        asCsv(profile.languages),
+        asCsv(profile.industries),
+        asLines(profile.accomplishments),
+        getLanguageValue(profile.responseTime, 'en', true)
+    ].filter(Boolean).length;
     const homeFilled = [
         getLanguageValue(homeData.greeting, 'en', true),
         getLanguageValue(homeData.greeting, 'km', false),
@@ -115,8 +158,8 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
         getLanguageValue(contactData.introText, 'en', true),
         getLanguageValue(contactData.introText, 'km', false)
     ].filter(Boolean).length;
-    const totalFilled = homeFilled + aboutFilled + contactFilled;
-    const totalFields = 17;
+    const totalFilled = homeFilled + aboutFilled + contactFilled + profileFilled;
+    const totalFields = 27;
     const sectionMeta = [
         {
             value: 'home',
@@ -141,6 +184,14 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
             icon: Mail,
             filled: contactFilled,
             total: 2
+        },
+        {
+            value: 'profile',
+            label: t('admin.tabs.profileSection'),
+            description: t('admin.general.sectionDescriptions.profile'),
+            icon: IdCard,
+            filled: profileFilled,
+            total: 10
         }
     ];
 
@@ -155,7 +206,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                     </div>
                     <div className={tabStyles.workspaceStats}>
                         <div className={tabStyles.workspaceStat}>
-                            <span className={tabStyles.workspaceStatValue}>3</span>
+                            <span className={tabStyles.workspaceStatValue}>4</span>
                             <span className={tabStyles.workspaceStatLabel}>{t('admin.general.workspace.sectionsLabel')}</span>
                             <span className={tabStyles.workspaceStatHint}>{t('admin.general.workspace.sectionsHint')}</span>
                         </div>
@@ -251,9 +302,52 @@ const GeneralTab = ({ homeData, aboutData, contactData, loading, saveSectionData
                             introTextKm: getLanguageValue(contactData.introText, 'km', false)
                         }}
                     >
-                        <ContactSection 
+                        <ContactSection
                             contactPreview={contactPreview}
                             setContactPreview={setContactPreview}
+                            loading={loading}
+                            onOpenHistory={handleOpenHistory}
+                            canEdit={canEdit}
+                            canViewHistory={canViewHistory}
+                        />
+
+                    </Form>
+                </Tabs.Content>
+
+                <Tabs.Content value="profile" className={tabStyles.tabPanel}>
+                    <Form
+                        onSubmit={handleSaveProfile}
+                        key={profileFormKey}
+                        defaultValues={{
+                            summaryEn: getLanguageValue(profile.summary, 'en', true),
+                            summaryKm: getLanguageValue(profile.summary, 'km', false),
+                            currentRoleEn: getLanguageValue(profile.currentRole, 'en', true),
+                            currentRoleKm: getLanguageValue(profile.currentRole, 'km', false),
+                            locationEn: getLanguageValue(profile.location, 'en', true),
+                            locationKm: getLanguageValue(profile.location, 'km', false),
+                            availabilityMessageEn: getLanguageValue(profile.availabilityMessage, 'en', true),
+                            availabilityMessageKm: getLanguageValue(profile.availabilityMessage, 'km', false),
+                            responseTimeEn: getLanguageValue(profile.responseTime, 'en', true),
+                            responseTimeKm: getLanguageValue(profile.responseTime, 'km', false),
+                            clearanceEn: getLanguageValue(profile.clearance, 'en', true),
+                            clearanceKm: getLanguageValue(profile.clearance, 'km', false),
+                            resumeHeadlineEn: getLanguageValue(profile.resumeHeadline, 'en', true),
+                            resumeHeadlineKm: getLanguageValue(profile.resumeHeadline, 'km', false),
+                            availabilityStatus: profile.availabilityStatus || '',
+                            timezone: profile.timezone || '',
+                            yearsExperienceOverride: profile.yearsExperienceOverride || '',
+                            workTypes: asCsv(profile.workTypes),
+                            preferredContact: asCsv(profile.preferredContact),
+                            languages: asCsv(profile.languages),
+                            industries: asCsv(profile.industries),
+                            accomplishments: asLines(profile.accomplishments),
+                            oss: asLines(profile.oss),
+                            community: asLines(profile.community)
+                        }}
+                    >
+                        <ProfileSection
+                            profilePreview={profilePreview}
+                            setProfilePreview={setProfilePreview}
                             loading={loading}
                             onOpenHistory={handleOpenHistory}
                             canEdit={canEdit}

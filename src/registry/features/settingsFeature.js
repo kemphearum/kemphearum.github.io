@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Search, Share2, ToggleLeft } from 'lucide-react';
+import { Settings, Search, Share2, ToggleLeft, MessageSquare } from 'lucide-react';
 import { ACTIONS } from '../../utils/permissionConstants';
 
 export const settingsFeature = {
@@ -34,6 +34,13 @@ export const settingsFeature = {
             descriptionKey: 'admin.settings.subTabs.featureFlags.description',
             icon: ToggleLeft,
             component: React.lazy(() => import('../../pages/admin/settings/components/FeatureFlagsSection'))
+        },
+        {
+            id: 'communication',
+            labelKey: 'admin.settings.subTabs.communication.label',
+            descriptionKey: 'admin.settings.subTabs.communication.description',
+            icon: MessageSquare,
+            component: React.lazy(() => import('../../pages/admin/settings/components/CommunicationSection'))
         }
     ]
 };

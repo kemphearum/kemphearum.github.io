@@ -12,6 +12,8 @@ import Education from '@/sections/Education';
 import Skills from '@/sections/Skills';
 import Certificates from '@/sections/Certificates';
 import CareerHighlights from '@/sections/CareerHighlights';
+import RecruiterSnapshot from '@/sections/RecruiterSnapshot';
+import Credibility from '@/sections/Credibility';
 import BackToTop from '@/sections/BackToTop';
 import SettingsService from '../../src/services/SettingsService';
 import { normalizeSectionTarget } from '../utils/sectionNavigation';
@@ -27,7 +29,9 @@ export async function loader() {
   try {
     return await SettingsService.fetchGlobalSettings();
   } catch (error) {
-    console.error("Home Loader Error:", error);
+    if (error?.code !== 'unavailable') {
+      console.warn('Home Loader Error:', error);
+    }
     return null;
   }
 }
@@ -86,7 +90,7 @@ export default function Home() {
   // Track scroll position to save the active section
   useEffect(() => {
     let timeout;
-    const sections = ['home', 'about', 'experience', 'skills', 'projects', 'certificates', 'blog', 'contact'];
+    const sections = ['home', 'about', 'experience', 'skills', 'certificates', 'projects', 'blog', 'contact'];
 
     const handleScroll = () => {
       clearTimeout(timeout);
@@ -143,12 +147,14 @@ export default function Home() {
       <main>
         <Hero />
         <CareerHighlights />
+        <RecruiterSnapshot />
         <About />
         <Experience />
         <Education />
         <Skills />
-        <FeaturedProjects />
         <Certificates />
+        <Credibility />
+        <FeaturedProjects />
         <FeaturedBlogs />
         <Contact />
       </main>

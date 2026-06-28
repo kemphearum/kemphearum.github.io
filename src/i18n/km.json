@@ -2318,5 +2318,13 @@
   "education": {
     "title": "Education",
     "empty": "No education records to display yet."
+  },
+  "career": {
+    "stats": {
+      "years": "ឆ្នាំនៃបទពិសោធន៍",
+      "projects": "គម្រោងដែលបានបញ្ចប់",
+      "certifications": "វិញ្ញាបនបត្រ",
+      "coreSkills": "ជំនាញគោល"
+    }
   }
 }

@@ -12,6 +12,7 @@ export default [
   route("api/auth-log", "routes/api.authLog.jsx", { id: "api-auth-log" }),
   route("api/db-sync", "routes/api.dbSync.jsx", { id: "api-db-sync" }),
   route("sitemap.xml", "routes/sitemap[.]xml.jsx"),
+  route("resume", "routes/resume.jsx", { id: "resume" }),
   route(":section", "routes/section-redirect.jsx", { id: "section-redirect" }),
   route("*", "routes/$.jsx", { id: "not-found" }),
 ] satisfies RouteConfig;

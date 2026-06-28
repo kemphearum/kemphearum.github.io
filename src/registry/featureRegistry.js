@@ -16,6 +16,11 @@ import { homeFeature } from './features/homeFeature';
 import { aboutFeature } from './features/aboutFeature';
 import { contactFeature } from './features/contactFeature';
 import { profileFeature } from './features/profileFeature';
+import { profileInfoFeature } from './features/profileInfoFeature';
+import { testimonialsFeature } from './features/testimonialsFeature';
+import { awardsFeature } from './features/awardsFeature';
+import { publicationsFeature } from './features/publicationsFeature';
+import { speakingFeature } from './features/speakingFeature';
 
 /**
  * Feature Module Registry
@@ -42,7 +47,12 @@ export const FEATURES = [
     profileFeature,
     homeFeature,
     aboutFeature,
-    contactFeature
+    contactFeature,
+    profileInfoFeature,
+    testimonialsFeature,
+    awardsFeature,
+    publicationsFeature,
+    speakingFeature
 ];
 
 const byId = Object.fromEntries(FEATURES.map((f) => [f.id, f]));

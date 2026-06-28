@@ -9,7 +9,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { normalizeSectionTarget } from '../utils/sectionNavigation';
 import { getLocalizedField } from '../utils/localization';
 
-const SECTION_IDS = ['home', 'about', 'experience', 'skills', 'projects', 'certificates', 'blog', 'contact'];
+const SECTION_IDS = ['home', 'about', 'experience', 'skills', 'certificates', 'projects', 'blog', 'contact'];
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -29,8 +29,8 @@ const Navbar = () => {
         { key: 'about', type: 'section', label: t('nav.about') },
         { key: 'experience', type: 'section', label: t('nav.experience') },
         { key: 'skills', type: 'section', label: t('nav.skills') },
-        { key: 'projects', type: 'route', to: '/projects', label: t('nav.projects') },
         { key: 'certificates', type: 'section', label: t('nav.certificates') },
+        { key: 'projects', type: 'route', to: '/projects', label: t('nav.projects') },
         { key: 'blog', type: 'route', to: '/blog', label: t('nav.blog') },
         { key: 'contact', type: 'section', label: t('nav.contact') }
     ];

@@ -71,7 +71,7 @@ export const useAdminBootstrap = ({
         if (!user || !userRole) return;
 
         const activeSections = activeTab === 'general'
-            ? ['home', 'about', 'contact']
+            ? ['home', 'about', 'contact', 'profileInfo']
             : activeTab === 'settings'
                 ? ['settings']
                 : [];
@@ -82,7 +82,7 @@ export const useAdminBootstrap = ({
     useEffect(() => {
         if (!user || !userRole) return undefined;
 
-        const sections = ['settings', 'home', 'about', 'contact'];
+        const sections = ['settings', 'home', 'about', 'contact', 'profileInfo'];
         const prefetch = () => sections.forEach(fetchSectionOnce);
 
         if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {

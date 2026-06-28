@@ -17,6 +17,11 @@ export const useAdminContent = ({
     const [homeData, setHomeData] = useState({ greeting: '', name: '', subtitle: '', description: '', ctaText: '', ctaLink: '', profileImageUrl: '' });
     const [aboutData, setAboutData] = useState({ bio: '', skills: '' });
     const [contactData, setContactData] = useState({ introText: '' });
+    const [profileData, setProfileData] = useState({
+        summary: '', currentRole: '', location: '', availabilityStatus: '', availabilityMessage: '',
+        responseTime: '', clearance: '', resumeHeadline: '', timezone: '', yearsExperienceOverride: '',
+        workTypes: [], preferredContact: [], languages: [], industries: [], accomplishments: [], oss: [], community: []
+    });
     const [settingsData, setSettingsData] = useState({
         title: '',
         favicon: '',
@@ -74,6 +79,7 @@ export const useAdminContent = ({
                         });
                         break;
                     case 'contact': setContactData(prev => ({ ...prev, ...data })); break;
+                    case 'profileInfo': setProfileData(prev => ({ ...prev, ...data })); break;
                     default: break;
                 }
             }
@@ -131,6 +137,8 @@ export const useAdminContent = ({
         setAboutData,
         contactData,
         setContactData,
+        profileData,
+        setProfileData,
         settingsData,
         setSettingsData,
         sidebarPersistent,
