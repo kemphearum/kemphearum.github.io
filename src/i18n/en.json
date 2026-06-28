@@ -2289,7 +2289,16 @@
     "sending": "Sending...",
     "success": "Message sent successfully!",
     "error": "Something went wrong. Please try again.",
-    "rateLimited": "Please wait a few minutes before sending another message."
+    "rateLimited": "Please wait a few minutes before sending another message.",
+    "downloadResume": "View Résumé",
+    "emailCopied": "Copied!",
+    "responseTime": "Typical response:",
+    "preferred": "Preferred:",
+    "telegram": "Chat on Telegram",
+    "qr": {
+      "label": "Scan to connect instantly",
+      "caption": "Scan to chat on Telegram"
+    }
   },
   "footer": {
     "siteMirrors": "Site Mirrors"
