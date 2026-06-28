@@ -11,7 +11,7 @@ export const certificatesFeature = {
         actions: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.FEATURE, ACTIONS.TOGGLE_VISIBILITY, ACTIONS.VIEW_HISTORY]
     },
     nav: {
-        group: 'main',
+        group: 'career',
         labelKey: 'admin.tabs.certificates',
         icon: Award
     },

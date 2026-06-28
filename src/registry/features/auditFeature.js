@@ -7,7 +7,7 @@ export const auditFeature = {
         actions: []
     },
     nav: {
-        group: 'system',
+        group: 'administration',
         labelKey: 'admin.tabs.audit',
         icon: ScrollText
     }

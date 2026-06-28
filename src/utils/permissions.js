@@ -128,14 +128,14 @@ const isDefaultRoleCapabilityAllowed = (action, moduleName, normalizedRole) => {
 
     if (normalizedRole === 'editor') {
         // Editors are restricted from Admin/SuperAdmin data layers
-        const adminModules = [MODULES.DATABASE, MODULES.EXPERIENCE, MODULES.EDUCATION, MODULES.MESSAGES, MODULES.GENERAL];
+        const adminModules = [MODULES.DATABASE, MODULES.EXPERIENCE, MODULES.EDUCATION, MODULES.MESSAGES, MODULES.GENERAL, MODULES.RESUME];
         if (adminModules.includes(moduleName)) return false;
 
         // Editors are excluded from low-level DB operations
         if (action === ACTIONS.DATABASE_ACTIONS) return false;
 
         // Default modules allowed for editor — content authoring actions only.
-        if (![MODULES.BLOG, MODULES.PROJECTS, MODULES.SKILLS, MODULES.CERTIFICATES].includes(moduleName)) return false;
+        if (![MODULES.BLOG, MODULES.PROJECTS, MODULES.SKILLS, MODULES.CERTIFICATES, MODULES.COMMUNICATION].includes(moduleName)) return false;
         return EDITOR_ALLOWED_ACTIONS.has(action);
     }
 

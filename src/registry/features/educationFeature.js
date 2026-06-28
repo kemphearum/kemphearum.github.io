@@ -11,7 +11,7 @@ export const educationFeature = {
         actions: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.TOGGLE_VISIBILITY]
     },
     nav: {
-        group: 'main',
+        group: 'career',
         labelKey: 'admin.tabs.education',
         icon: GraduationCap
     },

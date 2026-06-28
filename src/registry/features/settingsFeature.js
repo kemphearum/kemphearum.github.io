@@ -8,7 +8,7 @@ export const settingsFeature = {
         actions: [ACTIONS.VIEW, ACTIONS.EDIT]
     },
     nav: {
-        group: 'system',
+        group: 'administration',
         labelKey: 'admin.tabs.settings',
         icon: Settings,
         order: 99

@@ -24,6 +24,10 @@ import { deriveYearsOfExperience } from '../domain/experience/experienceDomain';
 import { generateQrSvg } from '../utils/qrcode';
 import { DEFAULT_SITE_URL } from '../utils/SeoHelper';
 import { useRequireAuth } from '../hooks/useRequireAuth';
+import { auth } from '../firebase';
+import UserService from '../services/UserService';
+import { isActionAllowed } from '../utils/permissions';
+import { ACTIONS } from '../utils/permissionConstants';
 
 const QUERY_OPTS = { staleTime: 60000, gcTime: 300000, refetchOnWindowFocus: false };
 
@@ -55,6 +59,26 @@ const Resume = () => {
     const { data: awardsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['awards'], queryFn: () => AwardService.getAll() });
     const { data: publicationsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['publications'], queryFn: () => PublicationService.getAll() });
     const { data: speakingRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['speaking'], queryFn: () => SpeakingService.getAll() });
+
+    const { data: userRecord } = useQuery({ 
+        ...QUERY_OPTS, 
+        queryKey: ['currentUser', auth.currentUser?.uid], 
+        queryFn: () => UserService.fetchUserById(auth.currentUser?.uid), 
+        enabled: !!isAuthed && !!auth.currentUser?.uid 
+    });
+    
+    const { data: rolePermissions } = useQuery({ 
+        ...QUERY_OPTS, 
+        queryKey: ['rolePermissions'], 
+        queryFn: () => UserService.fetchRolePermissions(() => {}), 
+        enabled: !!isAuthed 
+    });
+
+    const userRole = userRecord?.role || 'pending';
+    const isResumeAllowed = useMemo(() => {
+        if (!isAuthed || !userRecord || !rolePermissions) return null;
+        return isActionAllowed(ACTIONS.VIEW, 'resume', userRole, rolePermissions);
+    }, [isAuthed, userRecord, userRole, rolePermissions]);
 
     const profile = profileRaw || {};
     const site = settings?.site || {};
@@ -121,6 +145,23 @@ const Resume = () => {
     };
 
     if (!authChecked || !isAuthed) return null;
+
+    if (isResumeAllowed === false) {
+        return (
+            <div className={styles.page}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '1rem', padding: '2rem', textAlign: 'center' }}>
+                    <h2>{t('restricted.title', 'Access Restricted')}</h2>
+                    <p>{t('restricted.description', 'You do not have permission to view this content.')}</p>
+                    <Link to="/admin" className={styles.toolbarBtn} style={{ marginTop: '1rem' }}>
+                        <ArrowLeft size={16} /> Back to Admin
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+    
+    // Wait until role permission is loaded
+    if (isResumeAllowed === null) return null;
 
     return (
         <div className={styles.page}>

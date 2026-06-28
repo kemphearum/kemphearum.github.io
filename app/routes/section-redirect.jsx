@@ -1,4 +1,4 @@
-import { redirect } from "react-router";
+
 
 const SECTION_REDIRECTS = {
   home: "/",
@@ -16,7 +16,7 @@ export async function loader({ params }) {
   if (!target) {
     throw new Response("Not Found", { status: 404 });
   }
-  return redirect(target);
+  return new Response(null, { status: 302, headers: { Location: target } });
 }
 
 export default function SectionRedirectRoute() {

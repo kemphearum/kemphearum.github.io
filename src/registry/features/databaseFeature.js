@@ -7,7 +7,7 @@ export const databaseFeature = {
         actions: [ACTIONS.DATABASE_ACTIONS]
     },
     nav: {
-        group: 'management',
+        group: 'administration',
         labelKey: 'admin.tabs.database',
         icon: DatabaseIcon
     }

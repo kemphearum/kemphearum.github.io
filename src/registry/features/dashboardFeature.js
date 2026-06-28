@@ -10,7 +10,7 @@ export const dashboardFeature = {
         actions: [ACTIONS.VIEW]
     },
     nav: {
-        group: 'system',
+        
         labelKey: 'admin.tabs.dashboard',
         icon: LayoutDashboard,
         order: 0

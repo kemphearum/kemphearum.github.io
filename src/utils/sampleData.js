@@ -1,6 +1,12 @@
 import ProjectService from '../services/ProjectService';
 import BlogService from '../services/BlogService';
 import ExperienceService from '../services/ExperienceService';
+import SkillService from '../services/SkillService';
+import EducationService from '../services/EducationService';
+import CertificateService from '../services/CertificateService';
+import AwardService from '../services/AwardService';
+import PublicationService from '../services/PublicationService';
+import SpeakingService from '../services/SpeakingService';
 
 /**
  * High-quality bilingual sample data for Projects, Blog posts, and Experience.
@@ -286,6 +292,68 @@ export const SAMPLE_DATA = {
             descriptionKm: "ជួយការងារដោះស្រាយបញ្ហាផ្នែករឹង និងផ្នែកទន់",
             startDate: "2018-06-01", endDate: "2018-08-31", visible: true
         }
+    ],
+    skills: [
+        {
+            nameEn: "React.js", nameKm: "React.js",
+            descriptionEn: "Component-based UI library", descriptionKm: "បណ្ណាល័យ UI ផ្អែកលើ Component",
+            category: "Frontend", level: "expert", yearsOfExperience: 5, visible: true, featured: true
+        },
+        {
+            nameEn: "Node.js", nameKm: "Node.js",
+            descriptionEn: "JavaScript runtime environment", descriptionKm: "កម្មវិធីដំណើរការ JavaScript",
+            category: "Backend", level: "advanced", yearsOfExperience: 4, visible: true, featured: true
+        },
+        {
+            nameEn: "Firebase", nameKm: "Firebase",
+            descriptionEn: "Backend-as-a-Service platform", descriptionKm: "វេទិកា Backend-as-a-Service",
+            category: "Backend", level: "advanced", yearsOfExperience: 3, visible: true, featured: false
+        }
+    ],
+    education: [
+        {
+            schoolEn: "Royal University of Phnom Penh", schoolKm: "សាកលវិទ្យាល័យភូមិន្ទភ្នំពេញ",
+            degreeEn: "Bachelor of Science", degreeKm: "បរិញ្ញាបត្រវិទ្យាសាស្ត្រ",
+            fieldOfStudyEn: "Computer Science", fieldOfStudyKm: "វិទ្យាសាស្ត្រកុំព្យូទ័រ",
+            startYear: "2016", endYear: "2020", current: false, visible: true
+        }
+    ],
+    certificates: [
+        {
+            nameEn: "AWS Certified Developer", nameKm: "អ្នកអភិវឌ្ឍន៍ដែលទទួលស្គាល់ដោយ AWS",
+            organization: "Amazon Web Services",
+            issueDate: "2023-05-10", credentialId: "AWS-DEV-12345", url: "https://aws.amazon.com", visible: true, featured: true
+        },
+        {
+            nameEn: "ISO/IEC 27001 Lead Implementer", nameKm: "អ្នកអនុវត្តនាំមុខ ISO/IEC 27001",
+            organization: "PECB",
+            issueDate: "2022-08-20", credentialId: "PECB-27001-LI", visible: true, featured: true
+        }
+    ],
+    awards: [
+        {
+            titleEn: "Best Innovator Award", titleKm: "ពានរង្វាន់អ្នកច្នៃប្រឌិតឆ្នើម",
+            organizationEn: "Tech Community Cambodia", organizationKm: "សហគមន៍បច្ចេកវិទ្យាកម្ពុជា",
+            descriptionEn: "Awarded for exceptional contribution to open source.", descriptionKm: "ទទួលបានសម្រាប់ការរួមចំណែកដ៏ពិសេស",
+            issueDate: "2022-11-15", visible: true, featured: true
+        }
+    ],
+    publications: [
+        {
+            titleEn: "Modern Web Architecture", titleKm: "ស្ថាបត្យកម្មវិបសាយទំនើប",
+            publisherEn: "Tech Journal", publisherKm: "ទស្សនាវដ្តីបច្ចេកវិទ្យា",
+            descriptionEn: "An overview of scaling web applications.", descriptionKm: "ទិដ្ឋភាពទូទៅនៃការពង្រីកកម្មវិធីវិបសាយ",
+            publishDate: "2023-08-01", link: "https://example.com/publication", visible: true, featured: true
+        }
+    ],
+    speaking: [
+        {
+            titleEn: "Scaling Node.js Applications", titleKm: "ការពង្រីកកម្មវិធី Node.js",
+            eventNameEn: "DevCon Cambodia 2024", eventNameKm: "DevCon កម្ពុជា ២០២៤",
+            locationEn: "Phnom Penh", locationKm: "ភ្នំពេញ",
+            descriptionEn: "A session on handling high traffic with Node.", descriptionKm: "វគ្គសិក្សាអំពីការគ្រប់គ្រងចរាចរណ៍ទិន្នន័យខ្ពស់",
+            date: "2024-03-20", visible: true, featured: true
+        }
     ]
 };
 
@@ -299,7 +367,13 @@ export const seedSampleData = async (userRole, trackWrite) => {
     const results = {
         projects: { created: 0, failed: 0 },
         posts: { created: 0, failed: 0 },
-        experience: { created: 0, failed: 0 }
+        experience: { created: 0, failed: 0 },
+        skills: { created: 0, failed: 0 },
+        education: { created: 0, failed: 0 },
+        certificates: { created: 0, failed: 0 },
+        awards: { created: 0, failed: 0 },
+        publications: { created: 0, failed: 0 },
+        speaking: { created: 0, failed: 0 }
     };
 
     // Seed Projects
@@ -332,6 +406,72 @@ export const seedSampleData = async (userRole, trackWrite) => {
         } catch (error) {
             console.error(`Failed to seed experience: ${exp.companyEn}`, error);
             results.experience.failed++;
+        }
+    }
+
+    // Seed Skills
+    for (const skill of SAMPLE_DATA.skills) {
+        try {
+            await SkillService.saveSkill(userRole, skill, trackWrite);
+            results.skills.created++;
+        } catch (error) {
+            console.error(`Failed to seed skill: ${skill.nameEn}`, error);
+            results.skills.failed++;
+        }
+    }
+
+    // Seed Education
+    for (const edu of SAMPLE_DATA.education) {
+        try {
+            await EducationService.saveEducation(userRole, edu, trackWrite);
+            results.education.created++;
+        } catch (error) {
+            console.error(`Failed to seed education: ${edu.schoolEn}`, error);
+            results.education.failed++;
+        }
+    }
+
+    // Seed Certificates
+    for (const cert of SAMPLE_DATA.certificates) {
+        try {
+            await CertificateService.saveCertificate(userRole, cert, trackWrite);
+            results.certificates.created++;
+        } catch (error) {
+            console.error(`Failed to seed certificate: ${cert.nameEn}`, error);
+            results.certificates.failed++;
+        }
+    }
+
+    // Seed Awards
+    for (const award of SAMPLE_DATA.awards) {
+        try {
+            await AwardService.saveAward(userRole, award, trackWrite);
+            results.awards.created++;
+        } catch (error) {
+            console.error(`Failed to seed award: ${award.titleEn}`, error);
+            results.awards.failed++;
+        }
+    }
+
+    // Seed Publications
+    for (const pub of SAMPLE_DATA.publications) {
+        try {
+            await PublicationService.savePublication(userRole, pub, trackWrite);
+            results.publications.created++;
+        } catch (error) {
+            console.error(`Failed to seed publication: ${pub.titleEn}`, error);
+            results.publications.failed++;
+        }
+    }
+
+    // Seed Speaking
+    for (const speak of SAMPLE_DATA.speaking) {
+        try {
+            await SpeakingService.saveSpeaking(userRole, speak, trackWrite);
+            results.speaking.created++;
+        } catch (error) {
+            console.error(`Failed to seed speaking: ${speak.titleEn}`, error);
+            results.speaking.failed++;
         }
     }
 

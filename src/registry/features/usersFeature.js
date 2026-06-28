@@ -7,7 +7,7 @@ export const usersFeature = {
         actions: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.VIEW_HISTORY]
     },
     nav: {
-        group: 'system',
+        group: 'administration',
         labelKey: 'admin.tabs.users',
         icon: UsersIcon
     }

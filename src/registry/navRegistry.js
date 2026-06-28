@@ -20,9 +20,11 @@ export const SPECIAL_ITEMS = listFeatures()
  * its descriptor.
  */
 export const NAV_GROUPS = [
-    { id: 'main', titleKey: 'admin.sidebar.groups.main', keys: [] },
-    { id: 'management', titleKey: 'admin.sidebar.groups.management', keys: [] },
-    { id: 'system', titleKey: 'admin.sidebar.groups.system', keys: [] }
+    { id: 'site_content', titleKey: 'admin.sidebar.groups.site_content', keys: [] },
+    { id: 'career', titleKey: 'admin.sidebar.groups.career', keys: [] },
+    { id: 'professional', titleKey: 'admin.sidebar.groups.professional', keys: [] },
+    { id: 'communication', titleKey: 'admin.sidebar.groups.communication', keys: [] },
+    { id: 'administration', titleKey: 'admin.sidebar.groups.administration', keys: [] }
 ];
 
 // Populate NAV_GROUPS based on feature definitions

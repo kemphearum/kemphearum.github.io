@@ -7,7 +7,7 @@ export const generalFeature = {
         actions: [ACTIONS.EDIT, ACTIONS.VIEW_HISTORY]
     },
     nav: {
-        group: 'main',
+        group: 'site_content',
         labelKey: 'admin.tabs.general',
         icon: Home
     }

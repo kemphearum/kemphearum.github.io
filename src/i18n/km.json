@@ -310,6 +310,7 @@
       "analytics": "វិភាគ",
       "profile": "ប្រវត្តិរូបរបស់ខ្ញុំ",
       "settings": "ការកំណត់",
+      "resume": "ប្រវត្តិរូប",
       "homeSection": "ទំព័រដើម",
       "aboutSection": "អំពី",
       "contactSection": "ទំនាក់ទំនង",
@@ -317,10 +318,10 @@
       "skills": "ជំនាញ",
       "certificates": "វិញ្ញាបនបត្រ",
       "education": "ការអប់រំ",
-      "testimonials": "ទីបន្ទាល់",
       "awards": "រង្វាន់",
       "publications": "ការបោះពុម្ពផ្សាយ",
-      "speaking": "ការនិយាយជាសាធារណៈ"
+      "speaking": "ការនិយាយជាសាធារណៈ",
+      "communication": "ទំនាក់ទំនង"
     },
     "subtitles": {
       "general": "គ្រប់គ្រងមាតិកាសំខាន់ៗរបស់ផតថលីយ៉ូរបស់អ្នក",
@@ -341,9 +342,11 @@
     },
     "sidebar": {
       "groups": {
-        "main": "មេ",
-        "management": "ការគ្រប់គ្រង",
-        "system": "ប្រព័ន្ធ"
+        "site_content": "មាតិកាគេហទំព័រ",
+        "career": "អាជីព",
+        "professional": "វិជ្ជាជីវៈ",
+        "communication": "ទំនាក់ទំនង",
+        "administration": "រដ្ឋបាល"
       },
       "systemStatus": "ស្ថានភាពប្រព័ន្ធ",
       "connectedSynced": "បានភ្ជាប់ និងធ្វើសមកាលកម្ម",
@@ -2332,6 +2335,28 @@
   "education": {
     "title": "Education",
     "empty": "No education records to display yet."
+  },
+  "resume": {
+    "toolbar": "មុខងារប្រវត្តិរូបសង្ខេប",
+    "back": "ត្រលប់ទៅទំព័រដើម",
+    "download": "ទាញយកឯកសារ PDF",
+    "print": "បោះពុម្ព",
+    "scanToView": "ស្កេនដើម្បីមើលប្រវត្តិរូបផ្ទាល់",
+    "summary": "សេចក្តីសង្ខេបវិជ្ជាជីវៈ",
+    "yearsExperience": "ឆ្នាំនៃបទពិសោធន៍",
+    "industries": "ជំនាញក្នុងឧស្សាហកម្ម",
+    "highlights": "សមិទ្ធផលសំខាន់ៗ",
+    "experience": "បទពិសោធន៍ការងារ",
+    "skills": "ជំនាញ",
+    "otherSkills": "ផ្សេងៗ",
+    "certifications": "វិញ្ញាបនបត្រ",
+    "awards": "ពានរង្វាន់ និងកិត្តិយស",
+    "publications": "ការបោះពុម្ពផ្សាយ",
+    "speaking": "ការនិយាយ និងព្រឹត្តិការណ៍",
+    "education": "ការអប់រំ",
+    "projects": "គម្រោងដែលបានជ្រើសរើស",
+    "languages": "ភាសា",
+    "generatedFrom": "បានបង្កើតពី"
   },
   "career": {
     "stats": {

@@ -10,7 +10,7 @@ describe('contentTypeRegistry', () => {
 
     it('resolves a descriptor with the required fields', () => {
         const blog = getContentType('blog');
-        expect(blog).toMatchObject({ key: 'blog', module: 'blog', navGroup: 'management', labelKey: 'admin.tabs.blog' });
+        expect(blog).toMatchObject({ key: 'blog', module: 'blog', navGroup: 'site_content', labelKey: 'admin.tabs.blog' });
         expect(typeof blog.load).toBe('function');
         expect(blog.icon).toBeTruthy();
     });

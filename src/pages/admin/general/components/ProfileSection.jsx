@@ -104,39 +104,6 @@ const ProfileSection = ({
                                 <p>{t('admin.general.sections.profile.availability.description')}</p>
                             </div>
 
-                            <FormField label={t('admin.general.sections.profile.fields.availabilityStatus')} name="availabilityStatus">
-                                <select>
-                                    {AVAILABILITY_OPTIONS.map((value) => (
-                                        <option key={value || 'none'} value={value}>
-                                            {value
-                                                ? t(`admin.general.sections.profile.availabilityOptions.${value}`)
-                                                : t('admin.general.sections.profile.availabilityOptions.none')}
-                                        </option>
-                                    ))}
-                                </select>
-                            </FormField>
-
-                            <FormField label={t('admin.general.sections.profile.fields.availabilityMessageEn')} name="availabilityMessageEn">
-                                <FormInput placeholder={t('admin.general.sections.profile.fields.availabilityMessagePlaceholder')} />
-                            </FormField>
-                            <FormField label={t('admin.general.sections.profile.fields.availabilityMessageKm')} name="availabilityMessageKm">
-                                <FormInput />
-                            </FormField>
-
-                            <FormField label={t('admin.general.sections.profile.fields.responseTimeEn')} name="responseTimeEn">
-                                <FormInput placeholder={t('admin.general.sections.profile.fields.responseTimePlaceholder')} />
-                            </FormField>
-                            <FormField label={t('admin.general.sections.profile.fields.responseTimeKm')} name="responseTimeKm">
-                                <FormInput />
-                            </FormField>
-
-                            <FormField
-                                label={t('admin.general.sections.profile.fields.timezone')}
-                                name="timezone"
-                            >
-                                <FormInput placeholder={t('admin.general.sections.profile.fields.timezonePlaceholder')} />
-                            </FormField>
-
                             <FormField
                                 label={t('admin.general.sections.profile.fields.yearsExperienceOverride')}
                                 name="yearsExperienceOverride"
@@ -153,13 +120,7 @@ const ProfileSection = ({
                                 <FormInput placeholder={t('admin.general.sections.profile.fields.workTypesPlaceholder')} />
                             </FormField>
 
-                            <FormField
-                                label={t('admin.general.sections.profile.fields.preferredContact')}
-                                name="preferredContact"
-                                hint={t('admin.general.sections.profile.fields.preferredContactHint')}
-                            >
-                                <FormInput placeholder={t('admin.general.sections.profile.fields.preferredContactPlaceholder')} />
-                            </FormField>
+
 
                             <FormField
                                 label={t('admin.general.sections.profile.fields.languages')}

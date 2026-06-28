@@ -12,7 +12,7 @@ export const projectsFeature = {
         actions: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.FEATURE, ACTIONS.TOGGLE_VISIBILITY, ACTIONS.VIEW_HISTORY]
     },
     nav: {
-        group: 'main',
+        group: 'site_content',
         labelKey: 'admin.tabs.projects',
         icon: LayoutTemplate
     },

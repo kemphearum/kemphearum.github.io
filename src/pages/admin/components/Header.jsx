@@ -80,10 +80,7 @@ const Header = ({
                     <LanguageSwitcher />
                 </div>
 
-                <button onClick={() => navigate('/resume')} className={styles.viewSiteBtn}>
-                    <FileText size={16} />
-                    <span>{t('admin.header.viewResume', 'View Résumé')}</span>
-                </button>
+
 
                 <button onClick={() => navigate('/')} className={styles.viewSiteBtn}>
                     <ExternalLink size={16} />

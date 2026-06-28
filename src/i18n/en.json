@@ -217,6 +217,7 @@
       "analytics": "Analytics",
       "profile": "My Profile",
       "settings": "Settings",
+      "resume": "Résumé",
       "homeSection": "Home",
       "aboutSection": "About",
       "contactSection": "Contact",
@@ -224,10 +225,10 @@
       "skills": "Skills",
       "certificates": "Certificates",
       "education": "Education",
-      "testimonials": "Testimonials",
       "awards": "Awards",
       "publications": "Publications",
-      "speaking": "Speaking"
+      "speaking": "Speaking",
+      "communication": "Communication"
     },
     "subtitles": {
       "general": "Manage your portfolio primary content",
@@ -248,9 +249,11 @@
     },
     "sidebar": {
       "groups": {
-        "main": "MAIN",
-        "management": "MANAGEMENT",
-        "system": "SYSTEM"
+        "site_content": "SITE CONTENT",
+        "career": "CAREER",
+        "professional": "PROFESSIONAL",
+        "communication": "COMMUNICATION",
+        "administration": "ADMINISTRATION"
       },
       "systemStatus": "System Status",
       "connectedSynced": "Connected & Synced",
@@ -2336,6 +2339,28 @@
   "education": {
     "title": "Education",
     "empty": "No education records to display yet."
+  },
+  "resume": {
+    "toolbar": "Resume actions",
+    "back": "Back to portfolio",
+    "download": "Download PDF",
+    "print": "Print",
+    "scanToView": "Scan for live portfolio",
+    "summary": "Professional Summary",
+    "yearsExperience": "Years experience",
+    "industries": "Industry expertise",
+    "highlights": "Key Accomplishments",
+    "experience": "Experience",
+    "skills": "Skills",
+    "otherSkills": "Other",
+    "certifications": "Certifications",
+    "awards": "Awards & Honors",
+    "publications": "Publications",
+    "speaking": "Speaking & Events",
+    "education": "Education",
+    "projects": "Selected Projects",
+    "languages": "Languages",
+    "generatedFrom": "Generated from"
   },
   "career": {
     "stats": {

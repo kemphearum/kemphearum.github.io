@@ -7,5 +7,8 @@ export const ACTIONS = {
     DISABLE: 'disable',
     FEATURE: 'feature',
     TOGGLE_VISIBILITY: 'toggle_visibility',
-    VIEW_HISTORY: 'view_history'
+    VIEW_HISTORY: 'view_history',
+    UPLOAD: 'upload',
+    DOWNLOAD: 'download',
+    PUBLISH: 'publish'
 };

@@ -11,7 +11,7 @@ export const publicationsFeature = {
         actions: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.FEATURE, ACTIONS.TOGGLE_VISIBILITY, ACTIONS.VIEW_HISTORY]
     },
     nav: {
-        group: 'main',
+        group: 'professional',
         labelKey: 'admin.tabs.publications',
         icon: BookOpen
     },

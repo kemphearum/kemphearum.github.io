@@ -12,7 +12,7 @@ export const blogFeature = {
         actions: [ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE, ACTIONS.FEATURE, ACTIONS.TOGGLE_VISIBILITY, ACTIONS.VIEW_HISTORY]
     },
     nav: {
-        group: 'management',
+        group: 'site_content',
         labelKey: 'admin.tabs.blog',
         icon: FileText
     },

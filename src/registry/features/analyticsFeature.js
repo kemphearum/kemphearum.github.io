@@ -7,7 +7,7 @@ export const analyticsFeature = {
         actions: []
     },
     nav: {
-        group: 'system',
+        group: 'administration',
         labelKey: 'admin.tabs.analytics',
         icon: BarChart2
     }

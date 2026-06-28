@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Copy, Check, Github, Linkedin, Twitter, Globe, Clock, MessageSquare } from 'lucide-react';
+import { Copy, Check, Github, Linkedin, Twitter, Globe, Clock, MessageSquare, FileText } from 'lucide-react';
 import { generateQrSvg } from '../utils/qrcode';
 import { DEFAULT_SITE_URL } from '../utils/SeoHelper';
-import ContentService from '../services/ContentService';
-import SettingsService from '../services/SettingsService';
+import CommunicationService from '../services/CommunicationService';
+import ResumeService from '../services/ResumeService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Contact.module.scss';
 // eslint-disable-next-line no-unused-vars
@@ -109,49 +109,33 @@ const Contact = () => {
 
     const portfolioUrl = getPortfolioUrl();
 
-    const { data, isLoading: loading, isError: contentError } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    retry: 1,
-    refetchOnWindowFocus: false,
-        queryKey: ['content', 'contact'],
-        queryFn: () => ContentService.fetchSection('contact')
-    });
-
-    const { data: settings } = useQuery({
+    const { data: commData, isLoading: commLoading } = useQuery({
         staleTime: 60000,
         gcTime: 300000,
         retry: 1,
         refetchOnWindowFocus: false,
-        queryKey: ['settings', 'global'],
-        queryFn: () => SettingsService.fetchGlobalSettings()
+        queryKey: ['content', 'communication'],
+        queryFn: () => CommunicationService.get()
     });
 
-    const { data: profileRaw } = useQuery({
+    const { data: resumeData } = useQuery({
         staleTime: 60000,
         gcTime: 300000,
         retry: 1,
         refetchOnWindowFocus: false,
-        queryKey: ['content', 'profileInfo'],
-        queryFn: () => ContentService.fetchSection('profileInfo')
+        queryKey: ['content', 'resume'],
+        queryFn: () => ResumeService.get()
     });
 
-    const communication = settings?.communication || {};
-    const social = { ...(settings?.site?.social || {}), ...communication };
-    const profile = profileRaw || {};
+    const communication = commData || {};
+    const social = communication || {};
     
-    const responseTime = communication.responseTime || getLocalizedField(profile.responseTime, language);
-    const timeZone = communication.timeZone || profile.timezone;
-    const availabilityStatus = communication.availabilityStatus || profile.availabilityStatus;
-    const availabilityMessage = getLocalizedField(profile.availabilityMessage, language);
-    
-    let preferredContact = [];
-    if (communication.preferredContactMethod) {
-        preferredContact = [communication.preferredContactMethod];
-    } else if (Array.isArray(profile.preferredContact)) {
-        preferredContact = profile.preferredContact;
-    }
-    
+    const responseTime = getLocalizedField(communication.responseTime, language);
+    const timeZone = communication.timeZone;
+    const availabilityStatus = communication.availabilityStatus;
+    const availabilityMessage = getLocalizedField(communication.availabilityMessage, language);
+    const preferredContact = communication.preferredContact || [];
+    const introText = getLocalizedField(communication.introText, language);
     const telegramEnabled = communication.telegramEnabled !== false;
 
     const copyEmail = async () => {
@@ -176,12 +160,6 @@ const Contact = () => {
 
     const qrUrl = (telegramEnabled && social.telegramUrl) ? social.telegramUrl : portfolioUrl;
     const qrSvg = useMemo(() => generateQrSvg(qrUrl, { ecc: 'M', margin: 2 }), [qrUrl]);
-
-    const rawContactContent = data || { introText: '' };
-    const contactContent = {
-        ...rawContactContent,
-        introText: getLocalizedField(rawContactContent.introText, language)
-    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -239,7 +217,7 @@ const Contact = () => {
                     {t('contact.title')}
                 </motion.h2>
                 <div className={styles.content}>
-                    {loading && !contentError ? (
+                    {commLoading ? (
                         <div className={styles.skeletonText} />
                     ) : (
                         <motion.div
@@ -249,7 +227,7 @@ const Contact = () => {
                             transition={{ delay: 0.2 }}
                             viewport={{ once: true }}
                         >
-                            <MarkdownRenderer content={contactContent.introText} />
+                            <MarkdownRenderer content={introText} />
                         </motion.div>
                     )}
 
@@ -261,7 +239,11 @@ const Contact = () => {
                         viewport={{ once: true }}
                     >
                         {availabilityStatus && (
-                            <div className={`${styles.availability} ${styles[`availability--${availabilityStatus}`] || ''}`}>
+                            <div
+                                role="status"
+                                aria-label={`Availability: ${t(`recruiter.availability.${availabilityStatus}`, 'Available')}${availabilityMessage ? ` — ${availabilityMessage}` : ''}`}
+                                className={`${styles.availability} ${styles[`availability--${availabilityStatus}`] || ''}`}
+                            >
                                 <span className={styles.availabilityDot} aria-hidden="true" />
                                 <span>
                                     <strong>{t(`recruiter.availability.${availabilityStatus}`, 'Available')}</strong>
@@ -270,47 +252,80 @@ const Contact = () => {
                             </div>
                         )}
 
-                        <div className={styles.metaFacts}>
+                        <div className={styles.metaFacts} aria-label="Contact details">
                             {responseTime && (
-                                <span className={styles.metaFact}><Clock size={14} /> {t('contact.responseTime', 'Typical response:')} {responseTime}</span>
+                                <span className={styles.metaFact}><Clock size={14} aria-hidden="true" /> {t('contact.responseTime', 'Typical response:')} {responseTime}</span>
                             )}
                             {timeZone && (
-                                <span className={styles.metaFact}><Globe size={14} /> {timeZone}</span>
+                                <span className={styles.metaFact}><Globe size={14} aria-hidden="true" /> {timeZone}</span>
                             )}
                             {preferredContact.length > 0 && (
-                                <span className={styles.metaFact}><MessageSquare size={14} /> {t('contact.preferred', 'Preferred:')} {preferredContact.join(', ')}</span>
+                                <span className={styles.metaFact}><MessageSquare size={14} aria-hidden="true" /> {t('contact.preferred', 'Preferred:')} {preferredContact.join(', ')}</span>
                             )}
                         </div>
 
                         <div className={styles.metaActions}>
                             {social.email && (
-                                <button type="button" className={styles.copyBtn} onClick={copyEmail} aria-live="polite">
-                                    {copied ? <Check size={15} /> : <Copy size={15} />}
+                                <button
+                                    type="button"
+                                    className={styles.copyBtn}
+                                    onClick={copyEmail}
+                                    aria-label={copied ? t('contact.emailCopied', 'Copied!') : `${t('contact.copyEmail', 'Copy email address')}: ${social.email}`}
+                                    aria-live="polite"
+                                >
+                                    {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
                                     <span>{copied ? t('contact.emailCopied', 'Copied!') : social.email}</span>
                                 </button>
                             )}
                         </div>
 
                         {socialLinks.length > 0 && (
-                            <div className={styles.socials}>
+                            <nav className={styles.socials} aria-label="Social links">
                                 {/* eslint-disable-next-line no-unused-vars */}
                                 {socialLinks.map(({ key, url, label, Icon }) => (
                                     <a key={key} href={url} target="_blank" rel="noopener noreferrer" className={styles.socialBtn} aria-label={label} title={label}>
-                                        <Icon size={18} />
+                                        <Icon size={18} aria-hidden="true" />
                                     </a>
                                 ))}
+                            </nav>
+                        )}
+                        
+                        {resumeData?.pdfBase64 && resumeData?.publicDownloadEnabled && (
+                            <div className={styles.resumeDownloadAction} style={{ marginTop: '1.5rem' }}>
+                                <a 
+                                    href={resumeData.pdfBase64} 
+                                    download="Resume.pdf" 
+                                    className="ui-btn ui-btn--outline"
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', width: '100%', justifyContent: 'center' }}
+                                >
+                                    <FileText size={18} />
+                                    Download Résumé
+                                </a>
                             </div>
                         )}
                     </motion.div>
 
                     {telegramEnabled && (
-                        <div className={styles.qrPanel} aria-label={t('contact.qr.label', 'Scan to chat instantly')}>
+                        <div
+                            className={styles.qrPanel}
+                            role="region"
+                            aria-label={t('contact.qr.label', 'Scan to connect instantly')}
+                        >
                             {communication.telegramQrCodeImage ? (
-                                <img src={communication.telegramQrCodeImage} alt="Telegram QR Code" className={styles.qrImage} />
+                                <img
+                                    src={communication.telegramQrCodeImage}
+                                    alt={t('contact.qr.imageAlt', 'Telegram QR code — scan to open chat')}
+                                    className={styles.qrImage}
+                                />
                             ) : (
-                                <div className={styles.qrCode} dangerouslySetInnerHTML={{ __html: qrSvg }} />
+                                <div
+                                    className={styles.qrCode}
+                                    role="img"
+                                    aria-label={t('contact.qr.svgAlt', 'QR code linking to Telegram')}
+                                    dangerouslySetInnerHTML={{ __html: qrSvg }}
+                                />
                             )}
-                            <p className={styles.qrCaption}>{t('contact.qr.caption', 'Scan to chat instantly')}</p>
+                            <p className={styles.qrCaption}>{t('contact.qr.caption', 'Scan to chat on Telegram')}</p>
                             {social.telegramUsername && <p className={styles.qrUsername}>{social.telegramUsername}</p>}
                             {(social.telegramUrl || social.telegram) && (
                                 <a
@@ -318,9 +333,9 @@ const Contact = () => {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className={styles.telegramBtn}
-                                    aria-label="Contact on Telegram"
+                                    aria-label={`${t('contact.telegram', 'Chat on Telegram')}${social.telegramUsername ? ` (@${social.telegramUsername})` : ''}`}
                                 >
-                                    <TelegramIcon />
+                                    <TelegramIcon aria-hidden="true" />
                                     {t('contact.telegram', 'Chat on Telegram')}
                                 </a>
                             )}

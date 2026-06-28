@@ -98,11 +98,8 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
             responseTime: loc(data.responseTimeEn, data.responseTimeKm),
             clearance: loc(data.clearanceEn, data.clearanceKm),
             resumeHeadline: loc(data.resumeHeadlineEn, data.resumeHeadlineKm),
-            availabilityStatus: (data.availabilityStatus || '').trim(),
-            timezone: (data.timezone || '').trim(),
             yearsExperienceOverride: data.yearsExperienceOverride,
             workTypes: splitComma(data.workTypes),
-            preferredContact: splitComma(data.preferredContact),
             languages: splitComma(data.languages),
             industries: splitComma(data.industries),
             accomplishments: splitLines(data.accomplishments),
@@ -126,14 +123,11 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
     const profileFilled = [
         getLanguageValue(profile.summary, 'en', true),
         getLanguageValue(profile.currentRole, 'en', true),
-        profile.availabilityStatus,
         getLanguageValue(profile.location, 'en', true),
-        profile.timezone,
         asCsv(profile.workTypes),
         asCsv(profile.languages),
         asCsv(profile.industries),
-        asLines(profile.accomplishments),
-        getLanguageValue(profile.responseTime, 'en', true)
+        asLines(profile.accomplishments)
     ].filter(Boolean).length;
     const homeFilled = [
         getLanguageValue(homeData.greeting, 'en', true),
@@ -191,7 +185,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
             description: t('admin.general.sectionDescriptions.profile'),
             icon: IdCard,
             filled: profileFilled,
-            total: 10
+            total: 7
         }
     ];
 

@@ -7,7 +7,7 @@ export const messagesFeature = {
         actions: [ACTIONS.DELETE, ACTIONS.VIEW_HISTORY]
     },
     nav: {
-        group: 'management',
+        group: 'communication',
         labelKey: 'admin.tabs.messages',
         icon: MessageSquare,
         badgeKey: 'unreadMessagesCount'

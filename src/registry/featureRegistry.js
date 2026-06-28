@@ -14,13 +14,13 @@ import { analyticsFeature } from './features/analyticsFeature';
 import { generalFeature } from './features/generalFeature';
 import { homeFeature } from './features/homeFeature';
 import { aboutFeature } from './features/aboutFeature';
-import { contactFeature } from './features/contactFeature';
+import { communicationFeature } from './features/communicationFeature.js';
 import { profileFeature } from './features/profileFeature';
 import { profileInfoFeature } from './features/profileInfoFeature';
-import { testimonialsFeature } from './features/testimonialsFeature';
 import { awardsFeature } from './features/awardsFeature';
 import { publicationsFeature } from './features/publicationsFeature';
 import { speakingFeature } from './features/speakingFeature';
+import { resumeFeature } from './features/resumeFeature';
 
 /**
  * Feature Module Registry
@@ -47,12 +47,12 @@ export const FEATURES = [
     profileFeature,
     homeFeature,
     aboutFeature,
-    contactFeature,
+    communicationFeature,
     profileInfoFeature,
-    testimonialsFeature,
     awardsFeature,
     publicationsFeature,
-    speakingFeature
+    speakingFeature,
+    resumeFeature
 ];
 
 const byId = Object.fromEntries(FEATURES.map((f) => [f.id, f]));
