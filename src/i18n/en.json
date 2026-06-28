@@ -151,7 +151,9 @@
         "emptyDescription": "There are no records to display at the moment.",
         "selectRow": "Select row",
         "selectAll": "Select all rows",
-        "sortBy": "Sort by {{column}}"
+        "sortBy": "Sort by {{column}}",
+        "status": "Status",
+        "actions": "Actions"
       },
       "status": {
         "draft": "Draft",
@@ -166,7 +168,11 @@
         "expireAt": "Expire at",
         "expireAtHint": "Optional. Auto-archives after this time.",
         "storedHint": "Stored status (differs from the effective status shown)"
-      }
+      },
+      "visible": "Visible",
+      "hidden": "Hidden",
+      "featured": "Featured",
+      "viewHistory": "View History"
     },
     "dashboard": {
       "title": "Dashboard",
@@ -221,6 +227,7 @@
       "homeSection": "Home",
       "aboutSection": "About",
       "contactSection": "Contact",
+      "profileSection": "Professional Profile",
       "dashboard": "Dashboard",
       "skills": "Skills",
       "certificates": "Certificates",
@@ -356,14 +363,15 @@
       "sectionDescriptions": {
         "home": "Hero copy, CTA, and portrait",
         "about": "Bio and skills snapshot",
-        "contact": "Intro text above the form"
+        "contact": "Intro text above the form",
+        "profile": "Recruiter-facing professional summary"
       },
       "workspace": {
         "eyebrow": "Content Studio",
         "title": "Manage the core sections visitors read first.",
         "description": "Update your hero messaging, biography, and contact intro from one place, with clearer section progress and less visual clutter.",
         "sectionsLabel": "Sections",
-        "sectionsHint": "Home, About, and Contact",
+        "sectionsHint": "Home, About, and Professional Profile",
         "fieldsFilledLabel": "Fields Filled",
         "fieldsFilledHint": "Quick signal for content completeness"
       },
@@ -452,6 +460,58 @@
             "description": "Keep this copy short. It should invite contact, explain what people can reach out about, and reduce friction."
           },
           "save": "Save Contact Changes"
+        },
+        "profile": {
+          "title": "Professional Profile",
+          "description": "Recruiter-facing facts shown in the quick view and résumé. All fields are optional.",
+          "history": "History",
+          "summary": {
+            "title": "Summary & headline",
+            "description": "A concise professional summary and your current role, surfaced to recruiters first."
+          },
+          "details": {
+            "title": "Profile details",
+            "description": "Experience, expertise, and credibility signals used across the quick view and résumé."
+          },
+          "fields": {
+            "summaryEn": "Professional Summary (EN)",
+            "summaryKm": "Professional Summary (KM)",
+            "summaryPlaceholderEn": "2–3 sentences on your focus, strengths, and measurable impact...",
+            "summaryPlaceholderKm": "សេចក្ដីសង្ខេបអាជីព (ខ្មែរ)...",
+            "currentRoleEn": "Current Role (EN)",
+            "currentRoleKm": "Current Role (KM)",
+            "currentRolePlaceholder": "e.g. ISMS Manager / IT Auditor",
+            "locationEn": "Preferred Location (EN)",
+            "locationKm": "Preferred Location (KM)",
+            "locationPlaceholder": "e.g. Phnom Penh, Cambodia (remote-friendly)",
+            "accomplishments": "Recent Accomplishments",
+            "accomplishmentsHint": "One per line — measurable outcomes (risk reduced, findings closed).",
+            "accomplishmentsPlaceholder": "Led ISO 27001 certification in 9 months\nClosed 18 audit findings across 3 cycles",
+            "yearsExperienceOverride": "Years of Experience (override)",
+            "yearsExperienceOverrideHint": "Leave blank to auto-calculate from your experience entries.",
+            "workTypes": "Preferred Work Types",
+            "workTypesHint": "Comma separated — e.g. Full-time, Contract, Remote.",
+            "workTypesPlaceholder": "Full-time, Contract, Remote",
+            "languages": "Languages",
+            "languagesHint": "Comma separated — e.g. English (Fluent), Khmer (Native).",
+            "languagesPlaceholder": "English (Fluent), Khmer (Native)",
+            "industries": "Industry Expertise",
+            "industriesHint": "Comma separated — e.g. Banking, Government, Fintech.",
+            "industriesPlaceholder": "Banking, Government, Fintech",
+            "clearanceEn": "Security Clearance (EN)",
+            "clearanceKm": "Security Clearance (KM)",
+            "clearancePlaceholder": "Optional — e.g. background-checked",
+            "resumeHeadlineEn": "Résumé Headline (EN)",
+            "resumeHeadlineKm": "Résumé Headline (KM)",
+            "resumeHeadlinePlaceholder": "Optional headline shown at the top of the résumé",
+            "oss": "Open-source Contributions",
+            "ossHint": "One per line.",
+            "ossPlaceholder": "Maintainer of ...\nContributor to ...",
+            "community": "Community Involvement",
+            "communityHint": "One per line.",
+            "communityPlaceholder": "Mentor at ...\nOrganizer of ..."
+          },
+          "save": "Save Profile Changes"
         }
       }
     },
@@ -2221,6 +2281,121 @@
         "deleteTitle": "Delete Education Entry?",
         "deleteMessage": "Are you sure you want to remove this education? This action cannot be undone."
       }
+    },
+    "awards": {
+      "stats": {
+        "total": "Total Awards"
+      },
+      "toolbar": {
+        "search": "Search awards...",
+        "add": "Add Award"
+      },
+      "table": {
+        "columns": {
+          "title": "Award Title",
+          "organization": "Organization",
+          "date": "Issue Date"
+        },
+        "empty": {
+          "title": "No awards found",
+          "description": "Get started by creating a new award.",
+          "action": "Add Award"
+        }
+      },
+      "form": {
+        "title": {
+          "en": "English Title",
+          "km": "Khmer Title"
+        },
+        "organization": {
+          "en": "English Organization",
+          "km": "Khmer Organization"
+        },
+        "description": {
+          "en": "English Description",
+          "km": "Khmer Description"
+        },
+        "issueDate": "Issue Date",
+        "link": "Link URL"
+      }
+    },
+    "publications": {
+      "stats": {
+        "total": "Total Publications"
+      },
+      "toolbar": {
+        "search": "Search publications...",
+        "add": "Add Publication"
+      },
+      "table": {
+        "columns": {
+          "title": "Publication Title",
+          "publisher": "Publisher",
+          "date": "Publish Date"
+        },
+        "empty": {
+          "title": "No publications found",
+          "description": "Get started by creating a new publication.",
+          "action": "Add Publication"
+        }
+      },
+      "form": {
+        "title": {
+          "en": "English Title",
+          "km": "Khmer Title"
+        },
+        "publisher": {
+          "en": "English Publisher",
+          "km": "Khmer Publisher"
+        },
+        "description": {
+          "en": "English Description",
+          "km": "Khmer Description"
+        },
+        "publishDate": "Publish Date",
+        "link": "Link URL"
+      }
+    },
+    "speaking": {
+      "stats": {
+        "total": "Total Speaking Events"
+      },
+      "toolbar": {
+        "search": "Search events...",
+        "add": "Add Event"
+      },
+      "table": {
+        "columns": {
+          "title": "Event Title",
+          "location": "Location",
+          "date": "Date"
+        },
+        "empty": {
+          "title": "No speaking events found",
+          "description": "Get started by creating a new event.",
+          "action": "Add Event"
+        }
+      },
+      "form": {
+        "title": {
+          "en": "English Title",
+          "km": "Khmer Title"
+        },
+        "eventName": {
+          "en": "English Event Name",
+          "km": "Khmer Event Name"
+        },
+        "location": {
+          "en": "English Location",
+          "km": "Khmer Location"
+        },
+        "description": {
+          "en": "English Description",
+          "km": "Khmer Description"
+        },
+        "date": "Date",
+        "link": "Link URL"
+      }
     }
   },
   "nav": {
@@ -2307,7 +2482,7 @@
     "qr": {
       "label": "Scan to connect instantly",
       "caption": "Scan to chat on Telegram",
-      "imageAlt": "Telegram QR code \u2014 scan to open chat",
+      "imageAlt": "Telegram QR code — scan to open chat",
       "svgAlt": "QR code linking to Telegram"
     }
   },
@@ -2369,5 +2544,12 @@
       "certifications": "Certifications",
       "coreSkills": "Core Skills"
     }
+  },
+  "credibility": {
+    "title": "Trust & Credibility",
+    "subtitle": "Industry recognition, thoughts, and community involvement.",
+    "awards": "Awards & Honors",
+    "publications": "Publications",
+    "speaking": "Speaking Events"
   }
 }

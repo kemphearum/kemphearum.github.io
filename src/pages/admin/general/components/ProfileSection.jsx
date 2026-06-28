@@ -6,8 +6,6 @@ import FormInput from '../../components/FormInput';
 import FormMarkdownEditor from '../../components/FormMarkdownEditor';
 import { useTranslation } from '../../../../hooks/useTranslation';
 
-const AVAILABILITY_OPTIONS = ['', 'open', 'open-to-opportunities', 'freelance', 'not-available'];
-
 const ProfileSection = ({
     profilePreview,
     setProfilePreview,
@@ -100,8 +98,8 @@ const ProfileSection = ({
                     <aside className="ui-generalAside">
                         <div className="ui-generalAsideCard">
                             <div className="ui-generalAsideCard__head">
-                                <h4>{t('admin.general.sections.profile.availability.title')}</h4>
-                                <p>{t('admin.general.sections.profile.availability.description')}</p>
+                                <h4>{t('admin.general.sections.profile.details.title')}</h4>
+                                <p>{t('admin.general.sections.profile.details.description')}</p>
                             </div>
 
                             <FormField

@@ -1,9 +1,10 @@
-import React from 'react';
-import { Rocket, Settings2, DatabaseZap, BookOpen, Copy } from 'lucide-react';
+import React, { useState } from 'react';
+import { Rocket, Settings2, DatabaseZap, BookOpen, Copy, Play } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { seedSampleData } from '../../../../utils/sampleData';
 
-const DatabaseAdvancedPanel = ({ showToast }) => {
+const DatabaseAdvancedPanel = ({ showToast, userRole, trackWrite, onSuccess }) => {
   const { language } = useTranslation();
   const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
 
@@ -19,6 +20,24 @@ const DatabaseAdvancedPanel = ({ showToast }) => {
         tr('Failed to copy command.', 'មិនអាចចម្លងពាក្យបញ្ជាបានទេ។'),
         'error'
       );
+    }
+  };
+
+  const [isSeeding, setIsSeeding] = useState(false);
+  const handleSeed = async () => {
+    if (!window.confirm(tr('Are you sure you want to seed sample data?', 'តើអ្នកប្រាកដថាចង់បញ្ចូលទិន្នន័យគំរូឬទេ?'))) return;
+    setIsSeeding(true);
+    try {
+        const results = await seedSampleData(userRole, trackWrite);
+        let createdCount = 0;
+        Object.values(results).forEach(r => createdCount += r.created);
+        showToast?.(tr(`Successfully seeded ${createdCount} items.`, `បានបញ្ចូលទិន្នន័យចំនួន ${createdCount} ជោគជ័យ។`), 'success');
+        if (onSuccess) onSuccess();
+    } catch (error) {
+        console.error(error);
+        showToast?.(tr('Seeding failed.', 'ការបញ្ចូលទិន្នន័យបានបរាជ័យ។'), 'error');
+    } finally {
+        setIsSeeding(false);
     }
   };
 
@@ -38,20 +57,20 @@ const DatabaseAdvancedPanel = ({ showToast }) => {
             </h5>
             <p className="ui-text-secondary ui-text-small ui-mb-medium">
               {tr(
-                'Use standard, hard-reset, or full-reset modes from seed-all.cjs.',
-                'ប្រើ Standard, Hard Reset ឬ Full Reset ពី seed-all.cjs។'
+                'Use standard, hard-reset, or full-reset modes from seed-sample-data.mjs.',
+                'ប្រើ Standard, Hard Reset ឬ Full Reset ពី seed-sample-data.mjs។'
               )}
             </p>
-            <code className="ui-advanced-code">node scripts/seed-all.cjs</code>
-            <code className="ui-advanced-code">node scripts/seed-all.cjs --hard-reset</code>
-            <code className="ui-advanced-code">node scripts/seed-all.cjs --full-reset</code>
+            <code className="ui-advanced-code">node scripts/seed-sample-data.mjs</code>
+            <code className="ui-advanced-code">node scripts/seed-sample-data.mjs --hard-reset</code>
+            <code className="ui-advanced-code">node scripts/seed-sample-data.mjs --full-reset</code>
           </div>
           <div className="ui-flex-gap-medium">
-            <Button variant="ghost" size="sm" icon={Copy} onClick={() => copyText('node scripts/seed-all.cjs --hard-reset', 'hard reset')}>
-              {tr('Copy Hard Reset', 'ចម្លង Hard Reset')}
+            <Button variant="primary" size="sm" icon={Play} onClick={handleSeed} disabled={isSeeding}>
+              {isSeeding ? tr('Seeding...', 'កំពុងបញ្ចូល...') : tr('Run Seed in Browser', 'បញ្ចូលទិន្នន័យទីនេះ')}
             </Button>
-            <Button variant="ghost" size="sm" icon={Copy} onClick={() => copyText('node scripts/seed-all.cjs --full-reset', 'full reset')}>
-              {tr('Copy Full Reset', 'ចម្លង Full Reset')}
+            <Button variant="ghost" size="sm" icon={Copy} onClick={() => copyText('node scripts/seed-sample-data.mjs', 'seed script')}>
+              {tr('Copy CLI Command', 'ចម្លង CLI Command')}
             </Button>
           </div>
         </div>

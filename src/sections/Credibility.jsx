@@ -64,7 +64,7 @@ const Credibility = () => {
                                 {publications.map((item) => (
                                     <div key={item.id} className={styles.card}>
                                         <div className={styles.cardTitle}>
-                                            {item.url ? <a href={item.url} target="_blank" rel="noopener noreferrer">{item.title}</a> : item.title}
+                                            {item.link ? <a href={item.link} target="_blank" rel="noopener noreferrer">{item.title}</a> : item.title}
                                         </div>
                                         <div className={styles.cardMeta}>{item.publisher} {item.publishDate && `· ${String(item.publishDate).slice(0,4)}`}</div>
                                         {item.description && <div className={styles.cardDesc}><MarkdownRenderer content={item.description} /></div>}

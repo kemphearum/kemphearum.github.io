@@ -114,7 +114,7 @@ const Contact = () => {
         gcTime: 300000,
         retry: 1,
         refetchOnWindowFocus: false,
-        queryKey: ['content', 'communication'],
+        queryKey: ['content', 'contact'],
         queryFn: () => CommunicationService.get()
     });
 

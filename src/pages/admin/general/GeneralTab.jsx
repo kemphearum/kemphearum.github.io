@@ -10,14 +10,13 @@ import Form from '../components/Form';
 // Section Components
 import HomeSection from './components/HomeSection';
 import AboutSection from './components/AboutSection';
-import ContactSection from './components/ContactSection';
 import ProfileSection from './components/ProfileSection';
 import { getLanguageValue } from '../../../utils/localization';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { ACTIONS, MODULES } from '../../../utils/permissions';
 
 
-const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, saveSectionData, isActionAllowed }) => {
+const GeneralTab = ({ homeData, aboutData, profileData, loading, saveSectionData, isActionAllowed }) => {
 
     const { t } = useTranslation();
     const [historyModal, setHistoryModal] = useState({ isOpen: false, recordId: null, title: '' });
@@ -26,7 +25,6 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
     // Preview states for Markdown editors
     const [homePreview, setHomePreview] = useState(false);
     const [aboutPreview, setAboutPreview] = useState(false);
-    const [contactPreview, setContactPreview] = useState(false);
     const [profilePreview, setProfilePreview] = useState(false);
 
     const canEdit = isActionAllowed(ACTIONS.EDIT, MODULES.GENERAL);
@@ -77,15 +75,6 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
         });
     };
 
-    const handleSaveContact = async (data) => {
-        await saveSectionData('contact', {
-            introText: {
-                en: (data.introTextEn || '').trim(),
-                km: (data.introTextKm || '').trim()
-            }
-        });
-    };
-
     const handleSaveProfile = async (data) => {
         const splitComma = (v) => (v || '').split(',').map((s) => s.trim()).filter(Boolean);
         const splitLines = (v) => (v || '').split('\n').map((s) => s.trim()).filter(Boolean);
@@ -94,8 +83,6 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
             summary: loc(data.summaryEn, data.summaryKm),
             currentRole: loc(data.currentRoleEn, data.currentRoleKm),
             location: loc(data.locationEn, data.locationKm),
-            availabilityMessage: loc(data.availabilityMessageEn, data.availabilityMessageKm),
-            responseTime: loc(data.responseTimeEn, data.responseTimeKm),
             clearance: loc(data.clearanceEn, data.clearanceKm),
             resumeHeadline: loc(data.resumeHeadlineEn, data.resumeHeadlineKm),
             yearsExperienceOverride: data.yearsExperienceOverride,
@@ -115,7 +102,6 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
 
     const homeFormKey = `home:${getLanguageValue(homeData.greeting, 'en', true)}:${getLanguageValue(homeData.greeting, 'km', false)}:${getLanguageValue(homeData.name, 'en', true)}:${getLanguageValue(homeData.name, 'km', false)}:${getLanguageValue(homeData.subtitle, 'en', true)}:${getLanguageValue(homeData.subtitle, 'km', false)}:${getLanguageValue(homeData.description, 'en', true)}:${getLanguageValue(homeData.description, 'km', false)}:${getLanguageValue(homeData.ctaText, 'en', true)}:${getLanguageValue(homeData.ctaText, 'km', false)}:${homeData.ctaLink || ''}:${homeData.profileImageUrl || ''}`;
     const aboutFormKey = `about:${getLanguageValue(aboutData.bio, 'en', true)}:${getLanguageValue(aboutData.bio, 'km', false)}:${Array.isArray(aboutData.skills) ? aboutData.skills.join(',') : (aboutData.skills || '')}`;
-    const contactFormKey = `contact:${getLanguageValue(contactData.introText, 'en', true)}:${getLanguageValue(contactData.introText, 'km', false)}`;
     const profile = profileData || {};
     const asCsv = (value) => (Array.isArray(value) ? value.join(', ') : (value || ''));
     const asLines = (value) => (Array.isArray(value) ? value.join('\n') : (value || ''));
@@ -148,12 +134,8 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
         getLanguageValue(aboutData.bio, 'km', false),
         Array.isArray(aboutData.skills) ? aboutData.skills.length > 0 : aboutData.skills
     ].filter(Boolean).length;
-    const contactFilled = [
-        getLanguageValue(contactData.introText, 'en', true),
-        getLanguageValue(contactData.introText, 'km', false)
-    ].filter(Boolean).length;
-    const totalFilled = homeFilled + aboutFilled + contactFilled + profileFilled;
-    const totalFields = 27;
+    const totalFilled = homeFilled + aboutFilled + profileFilled;
+    const totalFields = 22;
     const sectionMeta = [
         {
             value: 'home',
@@ -170,14 +152,6 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
             icon: User,
             filled: aboutFilled,
             total: 3
-        },
-        {
-            value: 'contact',
-            label: t('admin.tabs.contactSection'),
-            description: t('admin.general.sectionDescriptions.contact'),
-            icon: Mail,
-            filled: contactFilled,
-            total: 2
         },
         {
             value: 'profile',
@@ -200,7 +174,7 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
                     </div>
                     <div className={tabStyles.workspaceStats}>
                         <div className={tabStyles.workspaceStat}>
-                            <span className={tabStyles.workspaceStatValue}>4</span>
+                            <span className={tabStyles.workspaceStatValue}>3</span>
                             <span className={tabStyles.workspaceStatLabel}>{t('admin.general.workspace.sectionsLabel')}</span>
                             <span className={tabStyles.workspaceStatHint}>{t('admin.general.workspace.sectionsHint')}</span>
                         </div>
@@ -287,27 +261,6 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
                     </Form>
                 </Tabs.Content>
 
-                <Tabs.Content value="contact" className={tabStyles.tabPanel}>
-                    <Form 
-                        onSubmit={handleSaveContact}
-                        key={contactFormKey}
-                        defaultValues={{
-                            introTextEn: getLanguageValue(contactData.introText, 'en', true),
-                            introTextKm: getLanguageValue(contactData.introText, 'km', false)
-                        }}
-                    >
-                        <ContactSection
-                            contactPreview={contactPreview}
-                            setContactPreview={setContactPreview}
-                            loading={loading}
-                            onOpenHistory={handleOpenHistory}
-                            canEdit={canEdit}
-                            canViewHistory={canViewHistory}
-                        />
-
-                    </Form>
-                </Tabs.Content>
-
                 <Tabs.Content value="profile" className={tabStyles.tabPanel}>
                     <Form
                         onSubmit={handleSaveProfile}
@@ -319,19 +272,12 @@ const GeneralTab = ({ homeData, aboutData, contactData, profileData, loading, sa
                             currentRoleKm: getLanguageValue(profile.currentRole, 'km', false),
                             locationEn: getLanguageValue(profile.location, 'en', true),
                             locationKm: getLanguageValue(profile.location, 'km', false),
-                            availabilityMessageEn: getLanguageValue(profile.availabilityMessage, 'en', true),
-                            availabilityMessageKm: getLanguageValue(profile.availabilityMessage, 'km', false),
-                            responseTimeEn: getLanguageValue(profile.responseTime, 'en', true),
-                            responseTimeKm: getLanguageValue(profile.responseTime, 'km', false),
                             clearanceEn: getLanguageValue(profile.clearance, 'en', true),
                             clearanceKm: getLanguageValue(profile.clearance, 'km', false),
                             resumeHeadlineEn: getLanguageValue(profile.resumeHeadline, 'en', true),
                             resumeHeadlineKm: getLanguageValue(profile.resumeHeadline, 'km', false),
-                            availabilityStatus: profile.availabilityStatus || '',
-                            timezone: profile.timezone || '',
                             yearsExperienceOverride: profile.yearsExperienceOverride || '',
                             workTypes: asCsv(profile.workTypes),
-                            preferredContact: asCsv(profile.preferredContact),
                             languages: asCsv(profile.languages),
                             industries: asCsv(profile.industries),
                             accomplishments: asLines(profile.accomplishments),

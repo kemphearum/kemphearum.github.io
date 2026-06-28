@@ -110,8 +110,8 @@ const PublicationTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const workspaceStats = [
     { label: t('admin.publications.stats.total', 'Total Publications'), value: publicationStats.total, icon: BookOpen },
-    { label: t('admin.common.stats.published', 'Published'), value: publicationStats.visible, icon: Eye },
-    { label: t('admin.common.stats.featured', 'Featured'), value: publicationStats.featured, icon: Star },
+    { label: t('admin.common.stats.published.label', 'Published'), value: publicationStats.visible, icon: Eye },
+    { label: t('admin.common.stats.featured.label', 'Featured'), value: publicationStats.featured, icon: Star },
   ];
 
   const canCreate = isActionAllowed(ACTIONS.CREATE, MODULES.PUBLICATIONS || 'publications');

@@ -59,7 +59,7 @@ const SpeakingTable = ({
     },
     {
       key: 'visible',
-      header: t('admin.common.status', 'Status'),
+      header: t('admin.common.table.status', 'Status'),
       sortable: true,
       render: (row) => (
         <div className="ui-blog-statusCell">
@@ -74,7 +74,7 @@ const SpeakingTable = ({
     },
     {
       key: 'actions',
-      header: t('admin.common.actions', 'Actions'),
+      header: t('admin.common.table.actions', 'Actions'),
       className: 'ui-table-cell--actions',
       render: (row) => renderAdminActions({
         row,

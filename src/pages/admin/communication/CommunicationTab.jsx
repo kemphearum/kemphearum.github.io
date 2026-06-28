@@ -20,6 +20,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
     const queryClient = useQueryClient();
     const { record: showNotification } = useNotifications();
     const [activeSection, setActiveSection] = useState('contact');
+    const [contactPreview, setContactPreview] = useState(false);
 
     const canEditCommunication = isActionAllowed(ACTIONS.EDIT, MODULES.COMMUNICATION);
     const canPublishCommunication = isActionAllowed(ACTIONS.PUBLISH, MODULES.COMMUNICATION);
@@ -28,7 +29,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
     const canDeleteResume = isActionAllowed(ACTIONS.DELETE, 'resume');
 
     const { data: commData = {}, isLoading: commLoading } = useQuery({
-        queryKey: ['communication'],
+        queryKey: ['contact'],
         queryFn: () => CommunicationService.get()
     });
 
@@ -40,8 +41,8 @@ const CommunicationTab = ({ isActionAllowed }) => {
     const updateCommMutation = useMutation({
         mutationFn: (data) => CommunicationService.update(data),
         onSuccess: () => {
-            queryClient.invalidateQueries(['communication']);
-            queryClient.invalidateQueries(['content', 'communication']);
+            queryClient.invalidateQueries(['contact']);
+            queryClient.invalidateQueries(['content', 'contact']);
             showNotification(t('admin.common.saved', 'Saved successfully'), 'success');
         },
         onError: (err) => showNotification(err.message, 'error')
@@ -57,7 +58,6 @@ const CommunicationTab = ({ isActionAllowed }) => {
     });
 
     const handleSaveContact = (data) => {
-        console.log("Saving Contact Data:", data);
         updateCommMutation.mutate({
             email: data.email,
             secondaryEmail: data.secondaryEmail,
@@ -160,10 +160,60 @@ const CommunicationTab = ({ isActionAllowed }) => {
                             introTextKm: loc(commData.introText, 'km')
                         }}>
                             <div className="ui-form p-4">
-                                <div className="ui-formGrid">
-                                    <FormField label="Professional Email" name="email"><FormInput /></FormField>
-                                    <FormField label="Secondary Email" name="secondaryEmail"><FormInput /></FormField>
+                                <div className="ui-generalSectionGrid ui-generalSectionGrid--compact mb-6">
+                                    <div className="ui-generalPrimary">
+                                        <div className="ui-generalAsideCard">
+                                            <div className="ui-generalAsideCard__head">
+                                                <h4>{t('admin.general.sections.contact.intro.title', 'Contact intro')}</h4>
+                                                <p>{t('admin.general.sections.contact.intro.description', 'Set the tone before visitors reach the form so expectations feel clear and welcoming.')}</p>
+                                            </div>
+
+                                            <FormField 
+                                                label={t('admin.general.sections.contact.fields.introEn', 'Contact Intro (EN) *')} 
+                                                name="introTextEn"
+                                            >
+                                                <FormMarkdownEditor 
+                                                    id="contact-intro-en"
+                                                    placeholder={t('admin.general.sections.contact.fields.introPlaceholderEn', "Although I'm not currently looking for any new opportunities...")}
+                                                    isPreviewMode={contactPreview}
+                                                    onTogglePreview={() => setContactPreview(!contactPreview)}
+                                                    rows="4"
+                                                />
+                                            </FormField>
+                                            <FormField 
+                                                label={t('admin.general.sections.contact.fields.introKm', 'Contact Intro (KM)')} 
+                                                name="introTextKm"
+                                            >
+                                                <FormMarkdownEditor 
+                                                    id="contact-intro-km"
+                                                    placeholder={t('admin.general.sections.contact.fields.introPlaceholderKm', "សរសេរការណែនាំខ្លីៗសម្រាប់ការទាក់ទង...")}
+                                                    isPreviewMode={contactPreview}
+                                                    onTogglePreview={() => setContactPreview(!contactPreview)}
+                                                    rows="4"
+                                                />
+                                            </FormField>
+                                        </div>
+                                    </div>
+
+                                    <aside className="ui-generalAside">
+                                        <div className="ui-generalAsideCard">
+                                            <div className="ui-generalAsideCard__head">
+                                                <h4>{t('admin.general.sections.contact.bestPractice.title', 'Best practice')}</h4>
+                                                <p>{t('admin.general.sections.contact.bestPractice.description', 'Keep this copy short. It should invite contact, explain what people can reach out about, and reduce friction.')}</p>
+                                            </div>
+                                        </div>
+                                    </aside>
                                 </div>
+
+                                <div className="ui-generalAsideCard mb-6">
+                                    <div className="ui-generalAsideCard__head">
+                                        <h4>Social Links & Direct Contact</h4>
+                                        <p>These details are displayed on the frontend contact section.</p>
+                                    </div>
+                                    <div className="ui-formGrid">
+                                        <FormField label="Professional Email" name="email"><FormInput /></FormField>
+                                        <FormField label="Secondary Email" name="secondaryEmail"><FormInput /></FormField>
+                                    </div>
                                 <div className="ui-formGrid">
                                     <FormField label="Phone" name="phone"><FormInput /></FormField>
                                     <FormField label="WhatsApp" name="whatsapp"><FormInput /></FormField>
@@ -176,14 +226,8 @@ const CommunicationTab = ({ isActionAllowed }) => {
                                     <FormField label="X (Twitter) URL" name="twitter"><FormInput /></FormField>
                                     <FormField label="Personal Website" name="website"><FormInput /></FormField>
                                 </div>
-                                <div className="ui-formGrid" style={{gridTemplateColumns: '1fr'}}>
-                                    <FormField label="Intro Text (EN)" name="introTextEn">
-                                        <FormMarkdownEditor placeholder="Write a short intro for the contact section..." />
-                                    </FormField>
-                                    <FormField label="Intro Text (KM)" name="introTextKm">
-                                        <FormMarkdownEditor placeholder="សរសេរការណែនាំខ្លីៗសម្រាប់ការទាក់ទង..." />
-                                    </FormField>
                                 </div>
+
                                 <Button type="submit" disabled={!canEditCommunication} isLoading={updateCommMutation.isPending}>
                                     <Save size={16}/> Save Contact Info
                                 </Button>

@@ -22,6 +22,7 @@ import {
     tabSubtitleKeys
 } from './admin/adminUtils';
 import { listContentTypes, getContentType, isContentType } from '../registry/contentTypeRegistry';
+import { ACTIONS } from '../utils/permissionConstants';
 import { useCommandPalette } from '../hooks/useCommandPalette';
 import CommandPalette from './admin/search/CommandPalette';
 import { useNotifications } from '../context/NotificationContextValue';
@@ -433,6 +434,7 @@ const Admin = () => {
             onLogout={() => AuthService.logout()}
             rolePermissions={rolePermissions}
             isTabAllowed={isTabAllowed}
+            isResumeAllowed={checkActionAllowed(ACTIONS.VIEW, 'resume')}
             unreadMessagesCount={unreadMessagesCount}
             lastSyncTime={lastSyncTime}
             title={t(getContentType(activeTab)?.labelKey || tabLabelKeys[activeTab] || 'admin.dashboard.title')}

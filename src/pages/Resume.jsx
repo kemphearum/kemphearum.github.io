@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import {
     Printer, Download, ArrowLeft, Mail, MapPin, Clock,
     Globe, Github, Linkedin, Briefcase, GraduationCap, Award, FolderGit2
@@ -8,7 +8,7 @@ import {
 import styles from './Resume.module.scss';
 import MarkdownRenderer from '@/sections/MarkdownRenderer';
 import ContentService from '../services/ContentService';
-import SettingsService from '../services/SettingsService';
+import CommunicationService from '../services/CommunicationService';
 import ExperienceService from '../services/ExperienceService';
 import EducationService from '../services/EducationService';
 import SkillService from '../services/SkillService';
@@ -47,10 +47,11 @@ const getPortfolioUrl = () => {
 const Resume = () => {
     const { authChecked, isAuthed } = useRequireAuth();
     const { language, t } = useTranslation();
+    const navigate = useNavigate();
 
     const { data: profileRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'profileInfo'], queryFn: () => ContentService.fetchSection('profileInfo') });
     const { data: homeRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'home'], queryFn: () => ContentService.fetchSection('home') });
-    const { data: settings } = useQuery({ ...QUERY_OPTS, queryKey: ['settings', 'global'], queryFn: () => SettingsService.fetchGlobalSettings() });
+    const { data: commRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'contact'], queryFn: () => CommunicationService.get() });
     const { data: experienceRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['experience'], queryFn: () => ExperienceService.getAll() });
     const { data: educationRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['education'], queryFn: () => EducationService.getAll() });
     const { data: skillsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['skills'], queryFn: () => SkillService.getAll() });
@@ -60,18 +61,18 @@ const Resume = () => {
     const { data: publicationsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['publications'], queryFn: () => PublicationService.getAll() });
     const { data: speakingRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['speaking'], queryFn: () => SpeakingService.getAll() });
 
-    const { data: userRecord } = useQuery({ 
-        ...QUERY_OPTS, 
-        queryKey: ['currentUser', auth.currentUser?.uid], 
-        queryFn: () => UserService.fetchUserById(auth.currentUser?.uid), 
-        enabled: !!isAuthed && !!auth.currentUser?.uid 
+    const { data: userRecord } = useQuery({
+        ...QUERY_OPTS,
+        queryKey: ['currentUser', auth.currentUser?.uid],
+        queryFn: () => UserService.fetchUserById(auth.currentUser?.uid),
+        enabled: !!isAuthed && !!auth.currentUser?.uid
     });
-    
-    const { data: rolePermissions } = useQuery({ 
-        ...QUERY_OPTS, 
-        queryKey: ['rolePermissions'], 
-        queryFn: () => UserService.fetchRolePermissions(() => {}), 
-        enabled: !!isAuthed 
+
+    const { data: rolePermissions } = useQuery({
+        ...QUERY_OPTS,
+        queryKey: ['rolePermissions'],
+        queryFn: () => UserService.fetchRolePermissions(() => {}),
+        enabled: !!isAuthed
     });
 
     const userRole = userRecord?.role || 'pending';
@@ -81,8 +82,9 @@ const Resume = () => {
     }, [isAuthed, userRecord, userRole, rolePermissions]);
 
     const profile = profileRaw || {};
-    const site = settings?.site || {};
-    const social = site.social || {};
+    // Contact details (email, social links, timezone) are owned by content/contact.
+    const comm = commRaw || {};
+    const social = comm;
 
     const name = getLocalizedField(homeRaw?.name, language) || 'Kem Phearum';
     const headline = getLocalizedField(profile.resumeHeadline, language)
@@ -144,6 +146,15 @@ const Resume = () => {
         if (typeof window !== 'undefined') window.print();
     };
 
+    const handleBack = (e) => {
+        e.preventDefault();
+        if (window.history.length > 2) {
+            navigate(-1);
+        } else {
+            navigate('/');
+        }
+    };
+
     if (!authChecked || !isAuthed) return null;
 
     if (isResumeAllowed === false) {
@@ -153,22 +164,22 @@ const Resume = () => {
                     <h2>{t('restricted.title', 'Access Restricted')}</h2>
                     <p>{t('restricted.description', 'You do not have permission to view this content.')}</p>
                     <Link to="/admin" className={styles.toolbarBtn} style={{ marginTop: '1rem' }}>
-                        <ArrowLeft size={16} /> Back to Admin
+                        <ArrowLeft size={16} /> {t('resume.backToAdmin', 'Back to Admin')}
                     </Link>
                 </div>
             </div>
         );
     }
-    
+
     // Wait until role permission is loaded
     if (isResumeAllowed === null) return null;
 
     return (
         <div className={styles.page}>
             <div className={styles.toolbar} role="toolbar" aria-label={t('resume.toolbar', 'Resume actions')}>
-                <Link to="/" className={styles.toolbarBtn}>
-                    <ArrowLeft size={16} /> {t('resume.back', 'Back to portfolio')}
-                </Link>
+                <a href="/" onClick={handleBack} className={styles.toolbarBtn}>
+                    <ArrowLeft size={16} /> {t('resume.back', 'Back')}
+                </a>
                 <div className={styles.toolbarActions}>
                     <button type="button" className={styles.toolbarBtn} onClick={handlePrint}>
                         <Download size={16} /> {t('resume.download', 'Download PDF')}
@@ -189,7 +200,7 @@ const Resume = () => {
                                 <li><Mail size={13} /> <a href={`mailto:${social.email}`}>{social.email}</a></li>
                             )}
                             {location && <li><MapPin size={13} /> {location}</li>}
-                            {profile.timezone && <li><Clock size={13} /> {profile.timezone}</li>}
+                            {comm.timeZone && <li><Clock size={13} /> {comm.timeZone}</li>}
                             {social.linkedin && (
                                 <li><Linkedin size={13} /> <a href={social.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
                             )}

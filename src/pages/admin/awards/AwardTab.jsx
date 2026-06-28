@@ -110,8 +110,8 @@ const AwardTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const workspaceStats = [
     { label: t('admin.awards.stats.total', 'Total Awards'), value: awardStats.total, icon: Award },
-    { label: t('admin.common.stats.published', 'Published'), value: awardStats.visible, icon: Eye },
-    { label: t('admin.common.stats.featured', 'Featured'), value: awardStats.featured, icon: Star },
+    { label: t('admin.common.stats.published.label', 'Published'), value: awardStats.visible, icon: Eye },
+    { label: t('admin.common.stats.featured.label', 'Featured'), value: awardStats.featured, icon: Star },
   ];
 
   const canCreate = isActionAllowed(ACTIONS.CREATE, MODULES.AWARDS || 'awards');

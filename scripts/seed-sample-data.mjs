@@ -128,6 +128,44 @@ const DATA = {
             description: L('Advanced research in applied cryptography and network security.', ''),
             startYear: '2020', endYear: '2022', isCurrent: false, visible: true, order: 2
         }
+    ],
+    awards: [
+        {
+            id: 'sample-award-1',
+            title: L('Cybersecurity Excellence Award', 'ពានរង្វាន់សន្តិសុខបច្ចេកវិទ្យាល្អឯក'),
+            organization: L('National Cybersecurity Agency', 'ទីភ្នាក់ងារសន្តិសុខបច្ចេកវិទ្យាជាតិ'),
+            description: L('Recognized for outstanding contribution to the national zero-trust architecture initiative.', ''),
+            issueDate: '2023-11', link: '', featured: true, visible: true, order: 1
+        }
+    ],
+    publications: [
+        {
+            id: 'sample-pub-1',
+            title: L('State of Cloud Security in Southeast Asia', 'ស្ថានភាពសន្តិសុខ Cloud នៅអាស៊ីអាគ្នេយ៍'),
+            publisher: L('InfoSec Journal', 'ទស្សនាវដ្តី InfoSec'),
+            description: L('A comprehensive analysis of cloud adoption trends and associated risk profiles.', ''),
+            publishDate: '2023-08', link: 'https://example.com/publication', featured: true, visible: true, order: 1
+        }
+    ],
+    speaking: [
+        {
+            id: 'sample-speak-1',
+            title: L('Implementing ISO 27001 in Agile Environments', 'ការអនុវត្ត ISO 27001 ក្នុងបរិស្ថាន Agile'),
+            eventName: L('Agile Security Summit 2023', 'សន្និសីទ Agile Security 2023'),
+            location: L('Phnom Penh, Cambodia', 'ភ្នំពេញ កម្ពុជា'),
+            description: L('Keynote on blending rapid deployment cycles with strict compliance requirements.', ''),
+            date: '2023-10-15', link: '', featured: true, visible: true, order: 1
+        }
+    ],
+    testimonials: [
+        {
+            id: 'sample-test-1',
+            name: L('Sokha', 'សុខា'),
+            company: L('Tech Startup', 'ក្រុមហ៊ុនបច្ចេកវិទ្យា'),
+            role: L('CTO', 'ប្រធានផ្នែកបច្ចេកវិទ្យា'),
+            quote: L('Phearum transformed our security posture in less than 3 months. Outstanding professional.', 'ភាវរម្យបានកែប្រែស្ថានភាពសន្តិសុខរបស់យើងក្នុងរយៈពេលតិចជាង ៣ខែ។ ជាអ្នកអាជីពដ៏អស្ចារ្យម្នាក់។'),
+            featured: true, visible: true, order: 1
+        }
     ]
 };
 

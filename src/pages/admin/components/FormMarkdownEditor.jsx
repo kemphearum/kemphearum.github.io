@@ -1,4 +1,4 @@
-import React, { useId, useRef, useState } from 'react';
+import React, { useId, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { Bold, Italic, Link as LinkIcon, Code, Eye, Edit2 } from 'lucide-react';
 import MarkdownRenderer from '@/sections/MarkdownRenderer';
 import { useFormContext } from 'react-hook-form';
@@ -7,7 +7,7 @@ import { useTranslation } from '../../../hooks/useTranslation';
 /**
  * FormMarkdownEditor component with toolbar actions and preview capability.
  */
-const FormMarkdownEditor = ({
+const FormMarkdownEditor = forwardRef(({
     value,
     onChange,
     name,
@@ -20,10 +20,12 @@ const FormMarkdownEditor = ({
     fullWidth = true,
     className = '',
     ...props
-}) => {
+}, ref) => {
     const { t } = useTranslation();
     const formContext = useFormContext();
     const textareaRef = useRef(null);
+    useImperativeHandle(ref, () => textareaRef.current);
+    
     const internalId = useId();
     const textareaId = id || `markdown-editor-${internalId.replace(/:/g, '')}`;
     const [localPreviewMode, setLocalPreviewMode] = useState(false);
@@ -246,6 +248,8 @@ const FormMarkdownEditor = ({
             </div>
         </div>
     );
-};
+});
+
+FormMarkdownEditor.displayName = 'FormMarkdownEditor';
 
 export default FormMarkdownEditor;

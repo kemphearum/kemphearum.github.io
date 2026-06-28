@@ -17,6 +17,7 @@ const AdminLayout = ({
     onLogout,
     rolePermissions,
     isTabAllowed,
+    isResumeAllowed,
     unreadMessagesCount,
     title,
     subtitle,
@@ -100,6 +101,7 @@ const AdminLayout = ({
                             ? rolePermissions?.[userRole]?.includes('settings')
                             : rolePermissions?.[userRole]?.allowedTabs?.includes('settings')
                     )}
+                isResumeAllowed={isResumeAllowed}
                 onHeightChange={handleHeaderHeightChange}
             />
             

@@ -51,20 +51,18 @@ class ContentService extends BaseService {
             );
             const yearsOverride = Number(data.yearsExperienceOverride);
 
+            // Availability, response time, timezone and preferred-contact methods are
+            // owned by the `content/contact` document (CommunicationService). This
+            // profile doc holds CV / recruiter facts only.
             return {
                 ...data,
                 summary: toLocalizedField(data.summary || ''),
                 currentRole: toLocalizedField(data.currentRole || ''),
                 location: toLocalizedField(data.location || ''),
-                availabilityMessage: toLocalizedField(data.availabilityMessage || ''),
-                responseTime: toLocalizedField(data.responseTime || ''),
                 clearance: toLocalizedField(data.clearance || ''),
                 resumeHeadline: toLocalizedField(data.resumeHeadline || ''),
-                availabilityStatus: (data.availabilityStatus || '').trim(),
-                timezone: (data.timezone || '').trim(),
                 yearsExperienceOverride: Number.isFinite(yearsOverride) && yearsOverride > 0 ? yearsOverride : '',
                 workTypes: toList(data.workTypes),
-                preferredContact: toList(data.preferredContact),
                 languages: toList(data.languages),
                 industries: toList(data.industries),
                 accomplishments: toList(data.accomplishments),

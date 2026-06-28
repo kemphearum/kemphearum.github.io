@@ -330,6 +330,12 @@ service cloud.firestore {
     }
 
     // writes are also gated by payload schemas
+    match /content/contact {
+      allow write: if canWriteModule('communication');
+    }
+    match /content/resume {
+      allow write: if canWriteModule('resume');
+    }
     match /content/{document=**} {
       allow read;
       allow write: if canWriteModule('general'); // Content schema is dynamic, so no strict shape

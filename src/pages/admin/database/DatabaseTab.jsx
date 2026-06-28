@@ -495,7 +495,12 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 canSync={canSyncDatabase}
             />
 
-            <DatabaseAdvancedPanel showToast={showToast} />
+            <DatabaseAdvancedPanel 
+                showToast={showToast} 
+                userRole={userRole} 
+                trackWrite={trackWrite} 
+                onSuccess={refetchDbHealth}
+            />
 
             <AuditSettingsPanel 
                 auditSettings={auditSettings}

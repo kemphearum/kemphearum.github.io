@@ -97,7 +97,7 @@ const AwardFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, load
                             </div>
 
                             <div className="ui-blog-formCard">
-                                <h3 className="ui-blog-formCard__title">{t('admin.common.status', 'Status')}</h3>
+                                <h3 className="ui-blog-formCard__title">{t('admin.common.table.status', 'Status')}</h3>
                                 <div className="ui-blog-formCard__toggles">
                                     <FormField
                                         label={t('admin.common.visible', 'Visible')}

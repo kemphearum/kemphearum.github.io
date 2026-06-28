@@ -1,5 +1,6 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, setLogLevel } from 'firebase/firestore';
+setLogLevel('error');
 import { getAuth } from 'firebase/auth';
 import { getAnalytics } from "firebase/analytics";
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';

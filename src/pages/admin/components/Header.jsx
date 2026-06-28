@@ -18,6 +18,7 @@ const Header = ({
     onProfileClick,
     currentRoute,
     isSettingsAllowed,
+    isResumeAllowed,
     onHeightChange
 }) => {
     const navigate = useNavigate();
@@ -86,6 +87,18 @@ const Header = ({
                     <ExternalLink size={16} />
                     <span>{t('admin.header.viewLiveSite')}</span>
                 </button>
+
+                {isResumeAllowed && (
+                    <button
+                        type="button"
+                        onClick={() => navigate('/resume')}
+                        className={styles.viewSiteBtn}
+                        title={t('admin.header.viewResume')}
+                    >
+                        <FileText size={16} />
+                        <span>{t('admin.header.viewResume')}</span>
+                    </button>
+                )}
 
                 <div className={styles.topActions}>
                     <NotificationCenter />

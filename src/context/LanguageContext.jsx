@@ -51,13 +51,25 @@ export const LanguageProvider = ({ children }) => {
         setLanguageState((prev) => (prev === 'en' ? 'km' : 'en'));
     }, []);
 
-    const t = useCallback((key, params = {}) => {
-        const { returnObjects = false, ...interpolationParams } = params;
+    const t = useCallback((key, paramsOrFallback = {}) => {
+        let interpolationParams = {};
+        let returnObjects = false;
+        let defaultValue = null;
+
+        if (typeof paramsOrFallback === 'string') {
+            defaultValue = paramsOrFallback;
+        } else if (paramsOrFallback && typeof paramsOrFallback === 'object') {
+            const { returnObjects: ro = false, defaultValue: dv = null, ...rest } = paramsOrFallback;
+            returnObjects = ro;
+            defaultValue = dv;
+            interpolationParams = rest;
+        }
+
         const activeDictionary = translations[language] || translations[DEFAULT_LANGUAGE];
         const englishDictionary = translations[DEFAULT_LANGUAGE];
         const localized = getNestedValue(activeDictionary, key);
         const fallback = getNestedValue(englishDictionary, key);
-        const value = (localized ?? fallback ?? key);
+        const value = (localized ?? fallback ?? defaultValue ?? key);
 
         if (typeof value === 'string') return interpolate(value, interpolationParams);
         if (returnObjects && value !== undefined) return interpolateValue(value, interpolationParams);

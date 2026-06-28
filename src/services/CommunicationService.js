@@ -5,8 +5,8 @@ import AuthService from './AuthService';
 
 class CommunicationService extends BaseService {
     constructor() {
-        super('content'); // Using 'content' collection with document 'communication'
-        this.documentId = 'communication';
+        super('content'); // Using 'content' collection
+        this.documentId = 'contact'; // Reuse the existing 'contact' document to preserve schema and data
     }
 
     async get() {

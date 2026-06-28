@@ -18,9 +18,8 @@ export const useAdminContent = ({
     const [aboutData, setAboutData] = useState({ bio: '', skills: '' });
     const [contactData, setContactData] = useState({ introText: '' });
     const [profileData, setProfileData] = useState({
-        summary: '', currentRole: '', location: '', availabilityStatus: '', availabilityMessage: '',
-        responseTime: '', clearance: '', resumeHeadline: '', timezone: '', yearsExperienceOverride: '',
-        workTypes: [], preferredContact: [], languages: [], industries: [], accomplishments: [], oss: [], community: []
+        summary: '', currentRole: '', location: '', clearance: '', resumeHeadline: '', yearsExperienceOverride: '',
+        workTypes: [], languages: [], industries: [], accomplishments: [], oss: [], community: []
     });
     const [settingsData, setSettingsData] = useState({
         title: '',

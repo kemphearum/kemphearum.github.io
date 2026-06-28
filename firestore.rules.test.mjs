@@ -138,3 +138,27 @@ test('F-10: pending user CANNOT read rolePermissions; staff CAN', async () => {
   await seed('u10', 'editor');
   await assertSucceeds(getDoc(doc(authed('u10'), 'rolePermissions', 'editor')));
 });
+
+test('Custom module routing: communication role CAN write content/contact', async () => {
+  await seed('u11', 'comms_mgr', {}, {
+    baseRole: 'pending',
+    allowedTabs: ['communication'],
+    allowedActions: { communication: ['edit'] }
+  });
+  const db = authed('u11');
+  await assertSucceeds(setDoc(doc(db, 'content', 'contact'), { introText: 'hello' }));
+  // but cannot write other general content
+  await assertFails(setDoc(doc(db, 'content', 'home'), { title: 'hello' }));
+});
+
+test('Custom module routing: resume role CAN write content/resume', async () => {
+  await seed('u12', 'resume_mgr', {}, {
+    baseRole: 'pending',
+    allowedTabs: ['resume'],
+    allowedActions: { resume: ['edit'] }
+  });
+  const db = authed('u12');
+  await assertSucceeds(setDoc(doc(db, 'content', 'resume'), { title: 'hello' }));
+  // but cannot write communication
+  await assertFails(setDoc(doc(db, 'content', 'contact'), { introText: 'hello' }));
+});

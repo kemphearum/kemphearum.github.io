@@ -12,22 +12,30 @@ const getMetaLanguage = () => {
 
 export async function loader() {
   try {
-    return await SettingsService.fetchGlobalSettings();
+    const [settings, profile] = await Promise.all([
+      SettingsService.fetchGlobalSettings(),
+      ContentService.fetchSection('profileInfo')
+    ]);
+    return { settings, profile };
   } catch (error) {
     console.error("Home Loader Error:", error);
-    return null;
+    return { settings: null, profile: null };
   }
 }
 
 export function meta({ data }) {
   const language = getMetaLanguage();
-  const site = data?.site || data || {};
+  // Backward compatible with the legacy loader shape (raw settings doc).
+  const settings = data?.settings ?? data;
+  const site = settings?.site || settings || {};
+  const profile = data?.profile || null;
   const title = buildBrowserTitle(site, language);
   const desc = getLocalizedField(site.tagline, language) || (
     language === 'km'
       ? 'អ្នកជំនាញសន្តិសុខ ICT និងសវនកម្ម IT'
       : 'ICT Security & IT Audit Professional'
   );
+  const url = site.canonicalUrl || DEFAULT_SITE_URL;
 
   return [
     ...generateMetaTags({
@@ -35,10 +43,11 @@ export function meta({ data }) {
       description: desc,
       siteTitle: 'Kem Phearum',
       type: 'website',
+      url,
       image: site.ogImageUrl || '/og-image.png'
     }),
     {
-      "script:ld+json": generatePersonSchema(site, language)
+      "script:ld+json": generatePersonSchema(site, language, profile)
     }
   ];
 }

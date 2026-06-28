@@ -111,8 +111,8 @@ const SpeakingTab = ({ userRole, showToast, isActionAllowed }) => {
 
   const workspaceStats = [
     { label: t('admin.speaking.stats.total', 'Total Events'), value: speakingStats.total, icon: Mic },
-    { label: t('admin.common.stats.published', 'Published'), value: speakingStats.visible, icon: Eye },
-    { label: t('admin.common.stats.featured', 'Featured'), value: speakingStats.featured, icon: Star },
+    { label: t('admin.common.stats.published.label', 'Published'), value: speakingStats.visible, icon: Eye },
+    { label: t('admin.common.stats.featured.label', 'Featured'), value: speakingStats.featured, icon: Star },
   ];
 
   const canCreate = isActionAllowed(ACTIONS.CREATE, MODULES.SPEAKING || 'speaking');

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { BadgeCheck, MapPin, Clock, FileText, Send, Sparkles } from 'lucide-react';
 import styles from './RecruiterSnapshot.module.scss';
 import ContentService from '../services/ContentService';
+import CommunicationService from '../services/CommunicationService';
 import SkillService from '../services/SkillService';
 import CertificateService from '../services/CertificateService';
 import ProjectService from '../services/ProjectService';
@@ -16,23 +17,26 @@ import { filterPublished } from '../domain/shared/contentStatus';
 import { deriveYearsOfExperience } from '../domain/experience/experienceDomain';
 
 const QUERY_OPTS = { staleTime: 60000, gcTime: 300000, refetchOnWindowFocus: false };
+// Availability status values are defined by the Communication tab (content/contact).
 const AVAILABILITY_CLASS = {
     open: 'open',
-    'open-to-opportunities': 'open',
     freelance: 'freelance',
-    'not-available': 'closed'
+    limited: 'freelance',
+    busy: 'closed'
 };
 
 const RecruiterSnapshot = () => {
     const { language, t } = useTranslation();
 
     const { data: profileRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'profileInfo'], queryFn: () => ContentService.fetchSection('profileInfo') });
+    const { data: commRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'contact'], queryFn: () => CommunicationService.get() });
     const { data: skillsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['skills'], queryFn: () => SkillService.getAll() });
     const { data: certsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['certificates'], queryFn: () => CertificateService.getAll() });
     const { data: projectsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['projects'], queryFn: () => ProjectService.getAll() });
     const { data: experienceRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['experience'], queryFn: () => ExperienceService.getAll() });
 
     const profile = profileRaw || {};
+    const comm = commRaw || {};
 
     const coreExpertise = useMemo(() => {
         const visible = filterPublished(skillsRaw || []);
@@ -52,16 +56,20 @@ const RecruiterSnapshot = () => {
     const currentRole = getLocalizedField(profile.currentRole, language);
     const summary = getLocalizedField(profile.summary, language);
     const location = getLocalizedField(profile.location, language);
-    const availabilityMessage = getLocalizedField(profile.availabilityMessage, language);
     const accomplishments = Array.isArray(profile.accomplishments) ? profile.accomplishments.slice(0, 4) : [];
     const workTypes = Array.isArray(profile.workTypes) ? profile.workTypes : [];
     const industries = Array.isArray(profile.industries) ? profile.industries : [];
 
+    // Availability + timezone are owned by the Communication tab (content/contact).
+    const availabilityStatus = comm.availabilityStatus || '';
+    const availabilityMessage = getLocalizedField(comm.availabilityMessage, language);
+    const timezone = comm.timeZone || '';
+
     // Backward compatible: render nothing until a professional profile is configured.
-    const hasContent = currentRole || summary || profile.availabilityStatus || accomplishments.length > 0;
+    const hasContent = currentRole || summary || availabilityStatus || accomplishments.length > 0;
     if (!hasContent) return null;
 
-    const availabilityClass = AVAILABILITY_CLASS[profile.availabilityStatus] || 'open';
+    const availabilityClass = AVAILABILITY_CLASS[availabilityStatus] || 'open';
 
     return (
         <section id="recruiter" className={styles.section} aria-labelledby="recruiter-heading">
@@ -82,14 +90,14 @@ const RecruiterSnapshot = () => {
                             <ul className={styles.metaLine}>
                                 {years > 0 && <li><BadgeCheck size={14} /> {t('recruiter.years', '{{count}}+ years experience').replace('{{count}}', years)}</li>}
                                 {location && <li><MapPin size={14} /> {location}</li>}
-                                {profile.timezone && <li><Clock size={14} /> {profile.timezone}</li>}
+                                {timezone && <li><Clock size={14} /> {timezone}</li>}
                             </ul>
                         </div>
-                        {profile.availabilityStatus && (
+                        {availabilityStatus && (
                             <div className={`${styles.availability} ${styles[availabilityClass]}`}>
                                 <span className={styles.availabilityDot} aria-hidden="true" />
                                 <div className={styles.availabilityText}>
-                                    <strong>{t(`recruiter.availability.${profile.availabilityStatus}`, 'Available')}</strong>
+                                    <strong>{t(`recruiter.availability.${availabilityStatus}`, 'Available')}</strong>
                                     {availabilityMessage && <span>{availabilityMessage}</span>}
                                 </div>
                             </div>
