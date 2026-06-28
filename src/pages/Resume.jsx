@@ -23,6 +23,7 @@ import { filterPublished } from '../domain/shared/contentStatus';
 import { deriveYearsOfExperience } from '../domain/experience/experienceDomain';
 import { generateQrSvg } from '../utils/qrcode';
 import { DEFAULT_SITE_URL } from '../utils/SeoHelper';
+import { useRequireAuth } from '../hooks/useRequireAuth';
 
 const QUERY_OPTS = { staleTime: 60000, gcTime: 300000, refetchOnWindowFocus: false };
 
@@ -40,6 +41,7 @@ const getPortfolioUrl = () => {
 };
 
 const Resume = () => {
+    const { authChecked, isAuthed } = useRequireAuth();
     const { language, t } = useTranslation();
 
     const { data: profileRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'profileInfo'], queryFn: () => ContentService.fetchSection('profileInfo') });
@@ -117,6 +119,8 @@ const Resume = () => {
     const handlePrint = () => {
         if (typeof window !== 'undefined') window.print();
     };
+
+    if (!authChecked || !isAuthed) return null;
 
     return (
         <div className={styles.page}>

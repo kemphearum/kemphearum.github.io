@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router';
-import { Copy, Check, Github, Linkedin, Twitter, Globe, FileText, Clock, MessageSquare } from 'lucide-react';
+import { Copy, Check, Github, Linkedin, Twitter, Globe, Clock, MessageSquare } from 'lucide-react';
 import { generateQrSvg } from '../utils/qrcode';
 import { DEFAULT_SITE_URL } from '../utils/SeoHelper';
 import ContentService from '../services/ContentService';
@@ -290,9 +289,6 @@ const Contact = () => {
                                     <span>{copied ? t('contact.emailCopied', 'Copied!') : social.email}</span>
                                 </button>
                             )}
-                            <Link to="/resume" className={styles.resumeBtn}>
-                                <FileText size={15} /> {t('contact.downloadResume', 'Download résumé')}
-                            </Link>
                         </div>
 
                         {socialLinks.length > 0 && (
