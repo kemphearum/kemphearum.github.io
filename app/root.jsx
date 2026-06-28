@@ -267,6 +267,19 @@ export function ErrorBoundary() {
   const error = useRouteError();
 
   if (isRouteErrorResponse(error)) {
+    if (typeof error.data === 'string' && error.data.trim().startsWith('<!DOCTYPE html>')) {
+      const STORAGE_KEY = 'rr:preload-error-reloaded';
+      if (typeof window !== 'undefined') {
+        if (window.sessionStorage.getItem(STORAGE_KEY) !== 'true') {
+          window.sessionStorage.setItem(STORAGE_KEY, 'true');
+          window.location.reload();
+          return null; // Return nothing while reloading
+        } else {
+          window.sessionStorage.removeItem(STORAGE_KEY);
+        }
+      }
+    }
+
     let title = "Page Not Found";
     let message = "The link you followed might be broken, or the page may have moved.";
     
@@ -303,6 +316,11 @@ export default function App() {
   const location = useLocation();
 
   useEffect(() => {
+    // Clear the preload error flag on successful load
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem('rr:preload-error-reloaded');
+    }
+
     // Redirect hash-based URLs from the old HashRouter (e.g., #/projects) to new clean URLs
     // But don't redirect section hashes (e.g., #about or /#about)
     if (typeof window !== 'undefined' && window.location.hash.startsWith('#/')) {
