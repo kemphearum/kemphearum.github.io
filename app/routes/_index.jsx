@@ -33,7 +33,8 @@ export function meta({ data }) {
       title,
       description: desc,
       siteTitle: 'Kem Phearum',
-      type: 'website'
+      type: 'website',
+      image: site.ogImageUrl || '/og-image.png'
     }),
     {
       "script:ld+json": generatePersonSchema(site, language)

@@ -47,7 +47,7 @@ export function meta({ data }) {
     { name: "description", content: desc },
     { property: "og:title", content: title },
     { property: "og:description", content: desc },
-    { property: "og:image", content: site.pageFaviconUrl || "/vite.svg" },
+    { property: "og:image", content: site.ogImageUrl || "/og-image.png" },
   ];
 }
 
