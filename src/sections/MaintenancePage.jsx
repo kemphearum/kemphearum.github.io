@@ -57,7 +57,7 @@ const MaintenancePage = ({ error, resetErrorBoundary, title, message }) => {
     const resolvedMessage = safeText(message) || (error
         ? tr("We encountered an unexpected error while preparing this page. Don't worry, it's usually temporary.", 'មានកំហុសមិនបានរំពឹងទុកពេលរៀបចំទំព័រនេះ។ កុំបារម្ភ វាជាបញ្ហាបណ្តោះអាសន្ន។')
         : tr("We're currently fine-tuning some details to bring you the best experience. Please check back in a moment!", 'យើងកំពុងកែសម្រួលលម្អិតខ្លះៗ ដើម្បីផ្តល់បទពិសោធន៍ល្អបំផុត។ សូមត្រលប់មកវិញបន្តិចទៀត!'));
-    const errorDetail = safeText(error?.statusText) || safeText(error?.message) || tr('Unknown error', 'កំហុសមិនស្គាល់');
+    const errorDetail = safeText(error?.data) || safeText(error?.statusText) || safeText(error?.message) || tr('Unknown error', 'កំហុសមិនស្គាល់');
 
     return (
         <div className={styles.maintenanceWrapper}>
