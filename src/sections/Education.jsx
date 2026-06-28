@@ -99,6 +99,9 @@ const Education = () => {
                                         <h3 className={styles.degree}>
                                             {exp.degree}
                                             {exp.fieldOfStudy ? ` in ${exp.fieldOfStudy}` : ''}
+                                            {exp.type && exp.type !== 'Degree' && (
+                                                <span className={styles.typeBadge} style={{ marginLeft: '1rem', verticalAlign: 'middle' }}>{exp.type}</span>
+                                            )}
                                         </h3>
                                         <div className={styles.meta}>
                                             <span className={styles.school}>

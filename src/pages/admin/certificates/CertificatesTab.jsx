@@ -11,6 +11,7 @@ import { useAdminCrud } from '../hooks/useAdminCrud';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { getLocalizedField } from '../../../utils/localization';
 import { ACTIONS, MODULES } from '../../../utils/permissions';
+import ImageProcessingService from '../../../services/ImageProcessingService';
 
 const CertificatesTab = ({ userRole, showToast, isActionAllowed }) => {
   const { language, t } = useTranslation();
@@ -164,8 +165,14 @@ const CertificatesTab = ({ userRole, showToast, isActionAllowed }) => {
     if (!ensurePermission(editingItem ? ACTIONS.EDIT : ACTIONS.CREATE)) return;
 
     await saveItem(async () => {
+      let badgeUrl = formData.badgeUrl || '';
+      if (formData.badge instanceof File) {
+        badgeUrl = await ImageProcessingService.compress(formData.badge);
+      }
+
+      const { badge: _badge, ...rest } = formData;
       const action = editingItem ? 'updated' : 'created';
-      await CertificateService.saveCertificate(userRole, { ...formData, id: editingItem?.id || null }, (count, label) =>
+      await CertificateService.saveCertificate(userRole, { ...rest, badgeUrl, id: editingItem?.id || null }, (count, label) =>
         trackWrite(count, label, {
           action,
           module: 'certificates',

@@ -137,6 +137,15 @@
     display: flex;
     gap: 1.5rem;
     flex-wrap: wrap;
+    align-items: center;
+}
+
+.companyLogo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 4px;
+    margin-right: 0.5rem;
 }
 
 .company {
@@ -204,6 +213,24 @@
         &:last-child {
             margin-bottom: 0;
         }
+    }
+}
+
+.techStack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--glass-border);
+
+    .techBadge {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 12px;
+        background: var(--glass-surface);
+        border: 1px solid var(--glass-border);
+        color: var(--text-secondary);
     }
 }
 

@@ -26,10 +26,15 @@ export const normalizeExperience = (data) => {
     const company = buildLocalizedFieldFromInput(data, 'company');
     const role = buildLocalizedFieldFromInput(data, 'role');
     const description = buildLocalizedFieldFromInput(data, 'description');
+    const keyResponsibilities = buildLocalizedFieldFromInput(data, 'keyResponsibilities');
+    const majorAchievements = buildLocalizedFieldFromInput(data, 'majorAchievements');
 
     return {
         company,
         role,
+        companyLogoUrl: (data.companyLogoUrl || '').trim(),
+        employmentType: (data.employmentType || '').trim(),
+        location: (data.location || '').trim(),
         startDate: startLabel,
         startMonthYear: data.startMonthYear || '',
         endDate: endLabel,
@@ -37,6 +42,14 @@ export const normalizeExperience = (data) => {
         period: `${startLabel} - ${endLabel}`,
         current: !!data.current,
         description,
+        keyResponsibilities,
+        majorAchievements,
+        technologiesUsed: Array.isArray(data.technologiesUsed) 
+            ? data.technologiesUsed.filter(Boolean) 
+            : (typeof data.technologiesUsed === 'string' ? data.technologiesUsed.split(',').map(s => s.trim()).filter(Boolean) : []),
+        relatedProjects: Array.isArray(data.relatedProjects) 
+            ? data.relatedProjects.filter(Boolean) 
+            : (typeof data.relatedProjects === 'string' ? data.relatedProjects.split(',').map(s => s.trim()).filter(Boolean) : []),
         visible: data.visible !== false,
         order: Number(data.order) || 0
     };

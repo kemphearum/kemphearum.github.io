@@ -75,7 +75,17 @@ const Skills = ({ isStandalone = false }) => {
                                 <ul className={styles.skillList}>
                                     {group.items.map((skill) => (
                                         <li key={skill.id} className={styles.skill}>
-                                            <span className={styles.skillName}>{skill.name}</span>
+                                            <div className={styles.skillMain}>
+                                                {skill.iconUrl && (
+                                                    <img src={skill.iconUrl} alt="" className={styles.skillIcon} loading="lazy" />
+                                                )}
+                                                <div className={styles.skillInfo}>
+                                                    <span className={styles.skillName}>{skill.name}</span>
+                                                    {Number(skill.yearsOfExperience) > 0 && (
+                                                        <span className={styles.skillYears}>{skill.yearsOfExperience} yrs</span>
+                                                    )}
+                                                </div>
+                                            </div>
                                             <span className={styles.levelDots} aria-label={t(`skills.levels.${skill.level}`)} title={t(`skills.levels.${skill.level}`)}>
                                                 {[1, 2, 3, 4].map((dot) => (
                                                     <span

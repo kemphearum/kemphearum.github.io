@@ -9,6 +9,7 @@ import { useAdminCrud } from '../hooks/useAdminCrud';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { getLocalizedField } from '../../../utils/localization';
 import { ACTIONS, MODULES } from '../../../utils/permissions';
+import ImageProcessingService from '../../../services/ImageProcessingService';
 
 
 const normalizeTimelineMonth = (value, isEnd = false) => {
@@ -251,9 +252,16 @@ const ExperienceTab = ({ userRole, showToast, isActionAllowed }) => {
     if (!ensurePermission(editingItem ? ACTIONS.EDIT : ACTIONS.CREATE)) return;
 
     await saveItem(async () => {
+      let companyLogoUrl = formData.companyLogoUrl || '';
+      if (formData.logo instanceof File) {
+        companyLogoUrl = await ImageProcessingService.compress(formData.logo);
+      }
+
+      const { logo: _logo, ...rest } = formData;
       const action = editingItem ? 'updated' : 'created';
       const dataToSave = {
-        ...formData,
+        ...rest,
+        companyLogoUrl,
         startMonthYear: formData.startDate,
         endMonthYear: formData.endDate,
         current: formData.isPresent,

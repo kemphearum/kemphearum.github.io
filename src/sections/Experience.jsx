@@ -101,9 +101,14 @@ const Experience = () => {
                                             <h3 className={styles.role}>{exp.role}</h3>
                                             <div className={styles.meta}>
                                                 <span className={styles.company}>
-                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                                                    </svg>
+                                                    {exp.companyLogoUrl && (
+                                                        <img src={exp.companyLogoUrl} alt="" className={styles.companyLogo} loading="lazy" />
+                                                    )}
+                                                    {!exp.companyLogoUrl && (
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                                                        </svg>
+                                                    )}
                                                     {exp.company}
                                                 </span>
                                                 <span className={styles.period}>
@@ -112,12 +117,47 @@ const Experience = () => {
                                                     </svg>
                                                     {exp.period}
                                                 </span>
+                                                {exp.employmentType && (
+                                                    <span className={styles.period}>
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+                                                        </svg>
+                                                        {exp.employmentType}
+                                                    </span>
+                                                )}
+                                                {exp.location && (
+                                                    <span className={styles.period}>
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+                                                        </svg>
+                                                        {exp.location}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         <div className={styles.description}>
                                             {exp.description ? (
                                                 <MarkdownRenderer content={exp.description} />
                                             ) : null}
+                                            {exp.keyResponsibilities && (
+                                                <div style={{ marginTop: '1rem' }}>
+                                                    <strong>{t('experience.keyResponsibilities', 'Key Responsibilities:')}</strong>
+                                                    <MarkdownRenderer content={getLocalizedField(exp.keyResponsibilities, language)} />
+                                                </div>
+                                            )}
+                                            {exp.majorAchievements && (
+                                                <div style={{ marginTop: '1rem' }}>
+                                                    <strong>{t('experience.majorAchievements', 'Major Achievements:')}</strong>
+                                                    <MarkdownRenderer content={getLocalizedField(exp.majorAchievements, language)} />
+                                                </div>
+                                            )}
+                                            {Array.isArray(exp.technologiesUsed) && exp.technologiesUsed.length > 0 && (
+                                                <div className={styles.techStack}>
+                                                    {exp.technologiesUsed.map(tech => (
+                                                        <span key={tech} className={styles.techBadge}>{tech}</span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </motion.div>

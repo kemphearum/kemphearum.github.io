@@ -81,6 +81,17 @@ const EducationFormFields = ({ activeLanguage, setActiveLanguage }) => {
                         activeLanguage={activeLanguage}
                         setActiveLanguage={setActiveLanguage}
                     />
+
+                    <FormField label="Entry Type" name="type">
+                        <FormSelect
+                            options={[
+                                { label: 'Degree', value: 'Degree' },
+                                { label: 'Course', value: 'Course' },
+                                { label: 'Award', value: 'Award' },
+                                { label: 'Publication', value: 'Publication' }
+                            ]}
+                        />
+                    </FormField>
                 </div>
             </div>
 
@@ -161,6 +172,7 @@ const EducationFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, 
         endYear: '',
         isPresent: false,
         visible: true,
+        type: 'Degree',
         ...initialData
     };
 

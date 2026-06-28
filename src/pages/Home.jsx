@@ -11,6 +11,7 @@ import Experience from '@/sections/Experience';
 import Education from '@/sections/Education';
 import Skills from '@/sections/Skills';
 import Certificates from '@/sections/Certificates';
+import CareerHighlights from '@/sections/CareerHighlights';
 import BackToTop from '@/sections/BackToTop';
 import SettingsService from '../../src/services/SettingsService';
 import { normalizeSectionTarget } from '../utils/sectionNavigation';
@@ -141,6 +142,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
+        <CareerHighlights />
         <About />
         <Experience />
         <Education />

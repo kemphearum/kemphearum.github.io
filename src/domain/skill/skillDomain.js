@@ -18,6 +18,14 @@ export const normalizeSkill = (data) => {
         description,
         category: (data.category || '').trim(),
         level: SKILL_LEVELS.includes(data.level) ? data.level : 'intermediate',
+        yearsOfExperience: Number(data.yearsOfExperience) || 0,
+        iconUrl: (data.iconUrl || '').trim(),
+        relatedProjects: Array.isArray(data.relatedProjects) 
+            ? data.relatedProjects.filter(Boolean) 
+            : (typeof data.relatedProjects === 'string' ? data.relatedProjects.split(',').map(s => s.trim()).filter(Boolean) : []),
+        relatedCertifications: Array.isArray(data.relatedCertifications) 
+            ? data.relatedCertifications.filter(Boolean) 
+            : (typeof data.relatedCertifications === 'string' ? data.relatedCertifications.split(',').map(s => s.trim()).filter(Boolean) : []),
         slug: data.slug ? slugify(data.slug) : slugify(nameEn || ''),
         visible: data.visible !== false,
         featured: !!data.featured,

@@ -10,6 +10,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import { getLocalizedField } from '../utils/localization';
 import { filterPublished } from '../domain/shared/contentStatus';
+import { generateCredentialSchema } from '../utils/SeoHelper';
 
 const formatMonth = (value, language) => {
     if (!value || typeof value !== 'string') return '';
@@ -69,7 +70,13 @@ const Certificates = ({ isStandalone = false }) => {
                                 viewport={{ once: true, amount: 0.2 }}
                                 transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.3) }}
                             >
-                                <div className={styles.cardIcon}><Award size={22} /></div>
+                                <div className={styles.cardIcon}>
+                                    {cert.badgeUrl ? (
+                                        <img src={cert.badgeUrl} alt="" className={styles.badgeImage} loading="lazy" />
+                                    ) : (
+                                        <Award size={22} />
+                                    )}
+                                </div>
                                 <h3 className={styles.cardTitle}>{cert.name}</h3>
                                 {cert.organization && (
                                     <p className={styles.cardMeta}><Building2 size={14} /> {cert.organization}</p>
@@ -85,9 +92,26 @@ const Certificates = ({ isStandalone = false }) => {
                                         {t('certificates.verify')} <ExternalLink size={14} />
                                     </a>
                                 )}
+                                {Array.isArray(cert.skillsCovered) && cert.skillsCovered.length > 0 && (
+                                    <div className={styles.skillsCovered}>
+                                        {cert.skillsCovered.map(skill => (
+                                            <span key={skill} className={styles.skillBadge}>{skill}</span>
+                                        ))}
+                                    </div>
+                                )}
                             </motion.article>
                         ))}
                     </div>
+                )}
+
+                {/* Structured Data */}
+                {certificates.length > 0 && (
+                    <script
+                        type="application/ld+json"
+                        dangerouslySetInnerHTML={{
+                            __html: JSON.stringify(certificates.map(generateCredentialSchema))
+                        }}
+                    />
                 )}
             </div>
         </section>

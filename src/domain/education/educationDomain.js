@@ -34,6 +34,7 @@ export const normalizeEducation = (data) => {
     }
 
     return {
+        type: (data.type || 'Degree').trim(),
         school,
         degree,
         fieldOfStudy,

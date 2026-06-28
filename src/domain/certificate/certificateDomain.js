@@ -19,6 +19,10 @@ export const normalizeCertificate = (data) => {
         expiryDate: (data.expiryDate || '').trim(),
         credentialId: (data.credentialId || '').trim(),
         url: (data.url || '').trim(),
+        badgeUrl: (data.badgeUrl || '').trim(),
+        skillsCovered: Array.isArray(data.skillsCovered) 
+            ? data.skillsCovered.filter(Boolean) 
+            : (typeof data.skillsCovered === 'string' ? data.skillsCovered.split(',').map(s => s.trim()).filter(Boolean) : []),
         slug: data.slug ? slugify(data.slug) : slugify(nameEn || ''),
         visible: data.visible !== false,
         featured: !!data.featured,

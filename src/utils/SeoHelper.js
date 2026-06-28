@@ -28,3 +28,32 @@ export const generateMetaTags = ({ title, description, image, type = 'website', 
 
     return tags;
 };
+
+export const generatePersonSchema = (siteData) => {
+    return {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": siteData?.siteName || "Kem Phearum",
+        "jobTitle": "ICT Security & IT Audit Professional",
+        "url": "https://phearum-info.web.app",
+        "sameAs": [
+            siteData?.socialLinks?.github,
+            siteData?.socialLinks?.linkedin,
+            siteData?.socialLinks?.twitter
+        ].filter(Boolean)
+    };
+};
+
+export const generateCredentialSchema = (certificate) => {
+    return {
+        "@context": "https://schema.org",
+        "@type": "EducationalOccupationalCredential",
+        "name": certificate.name,
+        "credentialCategory": "Certificate",
+        "recognizedBy": {
+            "@type": "Organization",
+            "name": certificate.organization
+        },
+        "url": certificate.url
+    };
+};

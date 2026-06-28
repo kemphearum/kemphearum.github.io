@@ -6,8 +6,37 @@ import FormField from '../../components/FormField';
 import FormInput from '../../components/FormInput';
 import FormMarkdownEditor from '../../components/FormMarkdownEditor';
 import FormSelect from '../../components/FormSelect';
+import FormDropzone from '../../components/FormDropzone';
+import { Controller } from 'react-hook-form';
 import { getLanguageValue } from '../../../../utils/localization';
 import { useTranslation } from '../../../../hooks/useTranslation';
+
+const CompanyLogoField = () => {
+    const { control, setValue, watch } = useFormContext();
+    const activeImage = watch('companyLogoUrl');
+
+    return (
+        <Controller
+            name="logo"
+            control={control}
+            render={({ field }) => (
+                <FormDropzone
+                    file={field.value}
+                    onFileChange={(file) => {
+                        field.onChange(file);
+                        if (file) {
+                            setValue('companyLogoUrl', '', { shouldDirty: true });
+                        }
+                    }}
+                    currentImageUrl={activeImage}
+                    onClearExisting={() => setValue('companyLogoUrl', '', { shouldDirty: true })}
+                    placeholder="Upload company logo"
+                    circular={true}
+                />
+            )}
+        />
+    );
+};
 
 const ExperienceLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
     const { t } = useTranslation();
@@ -50,9 +79,33 @@ const ExperienceLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
             >
                 <FormMarkdownEditor
                     id={`experience-description-${activeLanguage}`}
-                    rows={8}
+                    rows={4}
                     fullWidth={false}
                     placeholder={activeLanguage === 'en' ? t('admin.experience.form.fields.descriptionPlaceholderEn') : t('admin.experience.form.fields.descriptionPlaceholderKm')}
+                />
+            </FormField>
+
+            <FormField
+                label={`Key Responsibilities (${languageLabel})`}
+                name={activeLanguage === 'en' ? 'keyResponsibilitiesEn' : 'keyResponsibilitiesKm'}
+            >
+                <FormMarkdownEditor
+                    id={`experience-responsibilities-${activeLanguage}`}
+                    rows={5}
+                    fullWidth={false}
+                    placeholder="List key responsibilities..."
+                />
+            </FormField>
+
+            <FormField
+                label={`Major Achievements (${languageLabel})`}
+                name={activeLanguage === 'en' ? 'majorAchievementsEn' : 'majorAchievementsKm'}
+            >
+                <FormMarkdownEditor
+                    id={`experience-achievements-${activeLanguage}`}
+                    rows={5}
+                    fullWidth={false}
+                    placeholder="List major achievements..."
                 />
             </FormField>
         </>
@@ -129,6 +182,33 @@ const ExperienceFormFields = ({ activeLanguage, setActiveLanguage }) => {
                     >
                         <FormInput type="month" disabled={isPresent} />
                     </FormField>
+
+                    <FormField label="Employment Type" name="employmentType">
+                        <FormSelect
+                            options={[
+                                { label: 'Full-time', value: 'Full-time' },
+                                { label: 'Contract', value: 'Contract' },
+                                { label: 'Freelance', value: 'Freelance' },
+                                { label: 'Internship', value: 'Internship' }
+                            ]}
+                        />
+                    </FormField>
+
+                    <FormField label="Location" name="location">
+                        <FormInput placeholder="e.g. Remote, City" />
+                    </FormField>
+
+                    <FormField label="Technologies Used" name="technologiesUsed" hint="Comma-separated skill slugs">
+                        <FormInput placeholder="e.g. react, nodejs" />
+                    </FormField>
+
+                    <FormField label="Related Projects" name="relatedProjects" hint="Comma-separated project slugs">
+                        <FormInput placeholder="e.g. project-a, project-b" />
+                    </FormField>
+
+                    <FormField label="Company Logo">
+                        <CompanyLogoField />
+                    </FormField>
                 </div>
 
                 <div className="ui-blog-formSection">
@@ -168,11 +248,21 @@ const ExperienceFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit,
         roleKm: getLanguageValue(initialData?.role, 'km', false),
         descriptionEn: getLanguageValue(initialData?.description, 'en', true),
         descriptionKm: getLanguageValue(initialData?.description, 'km', false),
+        keyResponsibilitiesEn: getLanguageValue(initialData?.keyResponsibilities, 'en', true),
+        keyResponsibilitiesKm: getLanguageValue(initialData?.keyResponsibilities, 'km', false),
+        majorAchievementsEn: getLanguageValue(initialData?.majorAchievements, 'en', true),
+        majorAchievementsKm: getLanguageValue(initialData?.majorAchievements, 'km', false),
         startDate: '',
         endDate: '',
         isPresent: false,
         visible: true,
-        ...initialData
+        employmentType: 'Full-time',
+        location: '',
+        companyLogoUrl: '',
+        logo: null,
+        ...initialData,
+        technologiesUsed: Array.isArray(initialData?.technologiesUsed) ? initialData.technologiesUsed.join(', ') : (initialData?.technologiesUsed || ''),
+        relatedProjects: Array.isArray(initialData?.relatedProjects) ? initialData.relatedProjects.join(', ') : (initialData?.relatedProjects || ''),
     };
 
     return (

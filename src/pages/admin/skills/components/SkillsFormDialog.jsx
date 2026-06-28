@@ -4,9 +4,38 @@ import Form from '../../components/Form';
 import FormField from '../../components/FormField';
 import FormInput from '../../components/FormInput';
 import FormSelect from '../../components/FormSelect';
+import FormDropzone from '../../components/FormDropzone';
+import { Controller, useFormContext } from 'react-hook-form';
 import { getLanguageValue } from '../../../../utils/localization';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { SKILL_LEVELS } from '../../../../domain/skill/skillDomain';
+
+const SkillIconField = () => {
+    const { control, setValue, watch } = useFormContext();
+    const activeImage = watch('iconUrl');
+
+    return (
+        <Controller
+            name="icon"
+            control={control}
+            render={({ field }) => (
+                <FormDropzone
+                    file={field.value}
+                    onFileChange={(file) => {
+                        field.onChange(file);
+                        if (file) {
+                            setValue('iconUrl', '', { shouldDirty: true });
+                        }
+                    }}
+                    currentImageUrl={activeImage}
+                    onClearExisting={() => setValue('iconUrl', '', { shouldDirty: true })}
+                    placeholder="Upload tech icon"
+                    circular={true}
+                />
+            )}
+        />
+    );
+};
 
 const SkillLocalizedFields = () => {
     const [activeLanguage, setActiveLanguage] = useState('en');
@@ -54,10 +83,15 @@ const SkillsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loa
         descriptionKm: getLanguageValue(initialData?.description, 'km', false),
         category: '',
         level: 'intermediate',
-        slug: '',
+        yearsOfExperience: 0,
+        iconUrl: '',
+        icon: null,
+        order: 0,
         visible: true,
         featured: false,
-        ...initialData
+        ...initialData,
+        relatedProjects: Array.isArray(initialData?.relatedProjects) ? initialData.relatedProjects.join(', ') : (initialData?.relatedProjects || ''),
+        relatedCertifications: Array.isArray(initialData?.relatedCertifications) ? initialData.relatedCertifications.join(', ') : (initialData?.relatedCertifications || ''),
     };
 
     return (
@@ -102,6 +136,22 @@ const SkillsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loa
                                                 value: level
                                             }))}
                                         />
+                                    </FormField>
+
+                                    <FormField label="Years of Experience" name="yearsOfExperience">
+                                        <FormInput type="number" min="0" step="0.5" placeholder="e.g. 5" />
+                                    </FormField>
+
+                                    <FormField label="Related Projects" name="relatedProjects" hint="Comma-separated project slugs">
+                                        <FormInput placeholder="e.g. project-a, project-b" />
+                                    </FormField>
+
+                                    <FormField label="Related Certifications" name="relatedCertifications" hint="Comma-separated cert slugs">
+                                        <FormInput placeholder="e.g. cert-a, cert-b" />
+                                    </FormField>
+
+                                    <FormField label="Skill Icon">
+                                        <SkillIconField />
                                     </FormField>
 
                                     <FormField label={t('admin.skills.form.fields.slug')} name="slug" hint={t('admin.skills.form.fields.slugHint')}>

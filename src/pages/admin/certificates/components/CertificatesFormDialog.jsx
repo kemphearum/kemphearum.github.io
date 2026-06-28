@@ -4,8 +4,37 @@ import Form from '../../components/Form';
 import FormField from '../../components/FormField';
 import FormInput from '../../components/FormInput';
 import FormSelect from '../../components/FormSelect';
+import FormDropzone from '../../components/FormDropzone';
+import { Controller, useFormContext } from 'react-hook-form';
 import { getLanguageValue } from '../../../../utils/localization';
 import { useTranslation } from '../../../../hooks/useTranslation';
+
+const CertificateBadgeField = () => {
+    const { control, setValue, watch } = useFormContext();
+    const activeImage = watch('badgeUrl');
+
+    return (
+        <Controller
+            name="badge"
+            control={control}
+            render={({ field }) => (
+                <FormDropzone
+                    file={field.value}
+                    onFileChange={(file) => {
+                        field.onChange(file);
+                        if (file) {
+                            setValue('badgeUrl', '', { shouldDirty: true });
+                        }
+                    }}
+                    currentImageUrl={activeImage}
+                    onClearExisting={() => setValue('badgeUrl', '', { shouldDirty: true })}
+                    placeholder="Upload credential badge"
+                    circular={true}
+                />
+            )}
+        />
+    );
+};
 
 const CertificateLocalizedFields = () => {
     const [activeLanguage, setActiveLanguage] = useState('en');
@@ -56,10 +85,13 @@ const CertificatesFormDialog = ({ open, onOpenChange, mode, initialData, onSubmi
         expiryDate: '',
         credentialId: '',
         url: '',
+        badgeUrl: '',
+        badge: null,
         slug: '',
         visible: true,
         featured: false,
-        ...initialData
+        ...initialData,
+        skillsCovered: Array.isArray(initialData?.skillsCovered) ? initialData.skillsCovered.join(', ') : (initialData?.skillsCovered || ''),
     };
 
     return (
@@ -115,6 +147,14 @@ const CertificatesFormDialog = ({ open, onOpenChange, mode, initialData, onSubmi
 
                                     <FormField label={t('admin.certificates.form.fields.url')} name="url">
                                         <FormInput placeholder={t('admin.certificates.form.fields.urlPlaceholder')} />
+                                    </FormField>
+
+                                    <FormField label="Skills Covered" name="skillsCovered" hint="Comma-separated skill slugs">
+                                        <FormInput placeholder="e.g. security, governance" />
+                                    </FormField>
+
+                                    <FormField label="Credential Badge">
+                                        <CertificateBadgeField />
                                     </FormField>
 
                                     <FormField label={t('admin.certificates.form.fields.slug')} name="slug" hint={t('admin.certificates.form.fields.slugHint')}>

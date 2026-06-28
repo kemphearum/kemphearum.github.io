@@ -137,6 +137,16 @@
     display: flex;
     gap: 1.5rem;
     flex-wrap: wrap;
+    align-items: center;
+}
+
+.typeBadge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
 }
 
 .school {

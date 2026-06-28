@@ -11,6 +11,7 @@ import { useAdminCrud } from '../hooks/useAdminCrud';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { getLocalizedField } from '../../../utils/localization';
 import { ACTIONS, MODULES } from '../../../utils/permissions';
+import ImageProcessingService from '../../../services/ImageProcessingService';
 
 const SkillsTab = ({ userRole, showToast, isActionAllowed }) => {
   const { language, t } = useTranslation();
@@ -164,8 +165,14 @@ const SkillsTab = ({ userRole, showToast, isActionAllowed }) => {
     if (!ensurePermission(editingItem ? ACTIONS.EDIT : ACTIONS.CREATE)) return;
 
     await saveItem(async () => {
+      let iconUrl = formData.iconUrl || '';
+      if (formData.icon instanceof File) {
+        iconUrl = await ImageProcessingService.compress(formData.icon);
+      }
+
+      const { icon: _icon, ...rest } = formData;
       const action = editingItem ? 'updated' : 'created';
-      await SkillService.saveSkill(userRole, { ...formData, id: editingItem?.id || null }, (count, label) =>
+      await SkillService.saveSkill(userRole, { ...rest, iconUrl, id: editingItem?.id || null }, (count, label) =>
         trackWrite(count, label, {
           action,
           module: 'skills',
