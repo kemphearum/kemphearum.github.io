@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 import { useLanguage } from '../../context/LanguageContext';
 import styles from './LanguageSwitcher.module.scss';

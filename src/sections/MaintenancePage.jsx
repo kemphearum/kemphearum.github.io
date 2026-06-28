@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 import { Home, RefreshCcw, AlertCircle, Wrench } from 'lucide-react';
 import styles from './MaintenancePage.module.scss';

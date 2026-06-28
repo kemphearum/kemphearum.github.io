@@ -245,6 +245,48 @@
                     "order": "DESCENDING"
                 }
             ]
+        },
+        {
+            "collectionGroup": "skills",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "visible",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "certificates",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "visible",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "education",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "visible",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
         }
     ],
     "fieldOverrides": []
