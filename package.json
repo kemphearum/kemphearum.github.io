@@ -6,7 +6,7 @@
   "homepage": "https://kemphearum.github.io/",
   "scripts": {
     "dev": "react-router dev",
-    "build": "react-router build",
+    "build": "react-router build && node scripts/flatten-prerender.mjs",
     "lint": "eslint .",
     "preview": "react-router preview",
     "test": "vitest run",
