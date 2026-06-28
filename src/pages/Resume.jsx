@@ -21,7 +21,8 @@ import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
 import { filterPublished } from '../domain/shared/contentStatus';
 import { deriveYearsOfExperience } from '../domain/experience/experienceDomain';
-import { generateQrSvg, DEFAULT_SITE_URL } from '../utils/qrcode';
+import { generateQrSvg } from '../utils/qrcode';
+import { DEFAULT_SITE_URL } from '../utils/SeoHelper';
 
 const QUERY_OPTS = { staleTime: 60000, gcTime: 300000, refetchOnWindowFocus: false };
 
