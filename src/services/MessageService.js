@@ -34,17 +34,6 @@ class MessageService extends BaseService {
         this._setCachedUnreadCount(this._getCachedUnreadCount() + amount);
     }
 
-    _isQuotaExceededError(error) {
-        const code = String(error?.code || '').toLowerCase();
-        const message = String(error?.message || '').toLowerCase();
-        return (
-            code.includes('resource-exhausted')
-            || code.includes('quota')
-            || message.includes('quota exceeded')
-            || message.includes('too many requests')
-            || message.includes('429')
-        );
-    }
 
     _increaseUnreadBackoff() {
         this.unreadCountBackoffMs = this.unreadCountBackoffMs
@@ -193,24 +182,25 @@ class MessageService extends BaseService {
 
         const q = query(collection(db, this.collectionName), where('isRead', '==', false));
         this.unreadCountInFlight = (async () => {
-            try {
-                const snapshot = await getCountFromServer(q);
-                const count = Number(snapshot.data()?.count || 0);
-                this._setCachedUnreadCount(count);
-                this._resetUnreadBackoff();
-                return this._getCachedUnreadCount();
-            } catch (error) {
-                if (this._isQuotaExceededError(error)) {
+            const { data: snapshot, error } = await BaseService.safe(() => getCountFromServer(q));
+            
+            this.unreadCountInFlight = null;
+            
+            if (error) {
+                if (error === 'QUOTA_EXCEEDED') {
                     this._increaseUnreadBackoff();
                     console.warn(
                         `Unread count query throttled; backing off for ${Math.round(this.unreadCountBackoffMs / 1000)}s.`
                     );
                     return this._getCachedUnreadCount();
                 }
-                throw error;
-            } finally {
-                this.unreadCountInFlight = null;
+                throw new Error(error);
             }
+            
+            const count = Number(snapshot.data()?.count || 0);
+            this._setCachedUnreadCount(count);
+            this._resetUnreadBackoff();
+            return this._getCachedUnreadCount();
         })();
 
         return this.unreadCountInFlight;

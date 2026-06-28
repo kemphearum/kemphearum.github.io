@@ -25,7 +25,7 @@ describe('dashboardWidgetRegistry', () => {
     it('gates recent activity to superadmins', () => {
         const activity = listDashboardWidgets().find((w) => w.id === 'recentActivity');
         expect(activity.canView(ctx({ userRole: 'superadmin', can: (mod) => mod === 'audit' }))).toBe(true);
-        expect(activity.canView(ctx({ userRole: 'editor', can: (mod) => false }))).toBe(false);
+        expect(activity.canView(ctx({ userRole: 'editor', can: () => false }))).toBe(false);
     });
 
     it('shows overview to everyone but hides quick actions without create rights', () => {

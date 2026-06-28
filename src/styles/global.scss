@@ -27,8 +27,9 @@ $lg: 1024px;
     padding: 0;
 
     &:focus-visible {
-        outline: 2px solid var(--primary-color);
+        outline: 2px solid var(--focus-ring-color, var(--primary-color));
         outline-offset: 2px;
+        box-shadow: 0 0 0 4px rgba(47, 109, 246, 0.2);
     }
 }
 

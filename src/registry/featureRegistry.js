@@ -3,6 +3,7 @@ import { projectsFeature } from './features/projectsFeature';
 import { experienceFeature } from './features/experienceFeature';
 import { skillsFeature } from './features/skillsFeature';
 import { certificatesFeature } from './features/certificatesFeature';
+import { educationFeature } from './features/educationFeature';
 import { dashboardFeature } from './features/dashboardFeature';
 import { settingsFeature } from './features/settingsFeature';
 import { messagesFeature } from './features/messagesFeature';
@@ -26,6 +27,7 @@ import { profileFeature } from './features/profileFeature';
 export const FEATURES = [
     dashboardFeature,
     generalFeature,
+    educationFeature,
     experienceFeature,
     projectsFeature,
     skillsFeature,

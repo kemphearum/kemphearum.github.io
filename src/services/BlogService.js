@@ -3,6 +3,7 @@ import { db } from '../firebase';
 import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
 import { normalizePost, validatePost } from '../domain/blog/blogDomain';
 import { getLanguageFromStorage, localizeEntityFields } from '../utils/localization';
+import { ACTIONS } from '../utils/permissionConstants';
 
 const BLOG_LOCALIZED_FIELDS = ['title', 'excerpt', 'content'];
 
@@ -183,7 +184,6 @@ class BlogService extends BaseService {
      * @returns {Promise<{isNew: boolean, id: string}>}
      */
     async savePost(userRole, formData, trackWrite) {
-        const action = formData.id ? ACTIONS.EDIT : ACTIONS.CREATE;
         // Validation handled in UI and Firestore rules
 
         // 1. Normalize

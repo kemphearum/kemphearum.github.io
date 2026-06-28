@@ -4,7 +4,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 vi.mock('framer-motion', () => ({
-    motion: new Proxy({}, { get: () => ({ children, ...props }) => React.createElement('div', props, children) })
+    motion: new Proxy({}, {
+        // eslint-disable-next-line no-unused-vars
+        get: () => ({ children, initial, animate, whileInView, viewport, transition, variants, ...props }) => React.createElement('div', props, children)
+    })
 }));
 vi.mock('../hooks/useTranslation', () => ({
     useTranslation: () => ({ t: (key) => key, language: 'en' })

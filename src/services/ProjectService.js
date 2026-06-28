@@ -3,6 +3,7 @@ import { db } from '../firebase';
 import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
 import { normalizeProject, validateProject } from '../domain/project/projectDomain';
 import { getLanguageFromStorage, localizeEntityFields } from '../utils/localization';
+import { ACTIONS } from '../utils/permissionConstants';
 
 const PROJECT_LOCALIZED_FIELDS = ['title', 'description', 'content'];
 
@@ -102,7 +103,6 @@ class ProjectService extends BaseService {
      * @returns {Promise<{isNew: boolean, id: string}>}
      */
     async saveProject(userRole, formData, imageUrl, trackWrite) {
-        const action = formData.id ? ACTIONS.EDIT : ACTIONS.CREATE;
         // Validation handled in UI and Firestore rules
 
         // 1. Normalize

@@ -32,7 +32,8 @@ export const useCursorPagination = (initialLimit = 5, dependencies = []) => {
    
   useEffect(() => {
     reset();
-  }, [...dependencies, limit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...dependencies, limit, reset]);
 
   const updateAfterFetch = useCallback((requestCursorOrLastDoc, lastDocOrHasMore, maybeHasMore) => {
     let requestCursor = requestCursorOrLastDoc;

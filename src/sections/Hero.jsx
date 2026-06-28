@@ -15,7 +15,6 @@ import { Download, Send } from 'lucide-react';
 const Hero = () => {
     const { trackEvent } = useAnalytics();
     const { language, t } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const navigate = useNavigate();
 
     const handleSectionLinkClick = (e, target) => {
@@ -69,13 +68,16 @@ const Hero = () => {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
-            transition: { staggerChildren: 0.2 }
+            transition: { 
+                delayChildren: 0.1,
+                staggerChildren: 0.15 
+            }
         }
     };
 
     const itemVariants = {
         hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
+        visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }
     };
 
     return (
@@ -97,11 +99,8 @@ const Hero = () => {
                 initial="hidden"
                 animate="visible"
             >
-                <motion.div
+                <div
                     className={styles.content}
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
                 >
                     {loading ? (
                         <div className={styles.skeleton}>
@@ -150,7 +149,7 @@ const Hero = () => {
                             </motion.div>
                         </>
                     )}
-                </motion.div>
+                </div>
                 <motion.div variants={itemVariants} className={styles.imageWrapper}>
                     <div className={styles.imageContainer}>
                         <div className={styles.imageGlow} />

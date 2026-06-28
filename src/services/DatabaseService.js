@@ -1,7 +1,7 @@
 import { db } from '../firebase';
 import { collection, getDocs, query, where, doc, writeBatch, setDoc, Timestamp, getDoc, limit as firestoreLimit } from 'firebase/firestore';
 import SettingsService from './SettingsService';
-import { isQuotaExceededError } from './BaseService';
+import BaseService, { isQuotaExceededError } from './BaseService';
 
 class DatabaseService {
     static SOFT_DOC_LIMIT = 50000;
@@ -189,25 +189,25 @@ class DatabaseService {
         await SettingsService.saveSettings('audit', finalAudit, trackWrite);
 
         // Security Event Logging
-        try {
-            const AuditLogService = (await import('./AuditLogService')).default;
-            await AuditLogService.addAuditLog({
-                email: userEmail || 'unknown@admin.portfolio',
-                action: 'UPDATE_DATABASE_AUDIT_SETTINGS',
-                details: {
-                    setting: key,
-                    value: value,
-                    scope: key === 'logAll' ? 'global' : 'single'
-                },
-                ipAddress: 'Admin Session',
-                country: 'Internal',
-                city: 'Internal',
-                userAgent: 'Administrative Action',
-                deviceType: 'desktop',
-                sessionId: 'service-action'
-            }, 'success', null, trackWrite);
-        } catch (e) {
-            console.error("Failed to log security event:", e);
+        const AuditLogService = (await import('./AuditLogService')).default;
+        const { error: auditError } = await BaseService.safe(() => AuditLogService.addAuditLog({
+            email: userEmail || 'unknown@admin.portfolio',
+            action: 'UPDATE_DATABASE_AUDIT_SETTINGS',
+            details: {
+                setting: key,
+                value: value,
+                scope: key === 'logAll' ? 'global' : 'single'
+            },
+            ipAddress: 'Admin Session',
+            country: 'Internal',
+            city: 'Internal',
+            userAgent: 'Administrative Action',
+            deviceType: 'desktop',
+            sessionId: 'service-action'
+        }, 'success', null, trackWrite));
+        
+        if (auditError) {
+            console.error("Failed to log security event:", auditError);
         }
 
         return newSettings;

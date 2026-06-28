@@ -275,6 +275,11 @@ service cloud.firestore {
       allow write: if canWriteModule('certificates');
     }
 
+    match /education/{document=**} {
+      allow read;
+      allow write: if canWriteModule('education');
+    }
+
     // Application Settings (Logo, Page Title, Audit Log Config, etc.)
     match /settings/{document=**} {
       allow read;

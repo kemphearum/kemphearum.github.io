@@ -110,6 +110,24 @@ const DATA = {
             id: 'sample-cert-2', name: L('ISO 27001 Lead Implementer'), organization: 'PECB', issueDate: '2022-09', expiryDate: '',
             credentialId: 'PECB-7788', url: 'https://example.com/verify/pecb', slug: 'iso-27001-lead-implementer', featured: false, order: 2
         }
+    ],
+    education: [
+        {
+            id: 'sample-edu-1',
+            school: L('Royal University of Phnom Penh', 'សាកលវិទ្យាល័យភូមិន្ទភ្នំពេញ'),
+            degree: L('Bachelor of Science', 'បរិញ្ញាបត្រវិទ្យាសាស្ត្រ'),
+            fieldOfStudy: L('Computer Science', 'វិទ្យាសាស្ត្រកុំព្យូទ័រ'),
+            description: L('Focus on software engineering, algorithms, and cybersecurity fundamentals.', ''),
+            startYear: '2015', endYear: '2019', isCurrent: false, visible: true, order: 1
+        },
+        {
+            id: 'sample-edu-2',
+            school: L('Institute of Technology of Cambodia', 'វិទ្យាស្ថានបច្ចេកវិទ្យាកម្ពុជា'),
+            degree: L('Master of Information Technology', 'បរិញ្ញាបត្រជាន់ខ្ពស់បច្ចេកវិទ្យាព័ត៌មាន'),
+            fieldOfStudy: L('Data Science and Security', 'វិទ្យាសាស្ត្រទិន្នន័យ និងសន្តិសុខ'),
+            description: L('Advanced research in applied cryptography and network security.', ''),
+            startYear: '2020', endYear: '2022', isCurrent: false, visible: true, order: 2
+        }
     ]
 };
 

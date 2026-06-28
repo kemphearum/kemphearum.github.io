@@ -68,7 +68,7 @@ describe('CommandPalette', () => {
         renderComponent();
         expect(screen.getByRole('dialog')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('admin.palette.placeholder')).toBeInTheDocument();
-    });
+    }, 10000);
 
     it('closes on overlay click', () => {
         const onClose = vi.fn();

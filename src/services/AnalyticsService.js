@@ -81,18 +81,19 @@ class AnalyticsService extends BaseService {
 
         // Compatibility fallback: older rows might only have a `date` field.
         if (rows.length === 0) {
-            try {
-                const byDateQuery = query(
-                    collection(db, this.collectionName),
-                    where('date', '>=', startKey),
-                    where('date', '<=', endKey),
-                    orderBy('date', 'desc'),
-                    firestoreLimit(MAX_ANALYTICS_ROWS)
-                );
-                querySnapshot = await getDocs(byDateQuery);
-                rows = querySnapshot.docs.map((snapshotDoc) => ({ id: snapshotDoc.id, ...snapshotDoc.data() }));
-            } catch (dateFallbackError) {
+            const byDateQuery = query(
+                collection(db, this.collectionName),
+                where('date', '>=', startKey),
+                where('date', '<=', endKey),
+                orderBy('date', 'desc'),
+                firestoreLimit(MAX_ANALYTICS_ROWS)
+            );
+            const { data: fallbackSnapshot, error: dateFallbackError } = await BaseService.safe(() => getDocs(byDateQuery));
+            if (dateFallbackError) {
                 console.warn('[Analytics] Date-key fallback query failed:', dateFallbackError);
+            } else {
+                querySnapshot = fallbackSnapshot;
+                rows = querySnapshot.docs.map((snapshotDoc) => ({ id: snapshotDoc.id, ...snapshotDoc.data() }));
             }
         }
 
@@ -132,13 +133,13 @@ class AnalyticsService extends BaseService {
         );
 
         let totalCount = 0;
-        try {
-            const totalSnap = await getCountFromServer(baseQuery);
-            totalCount = totalSnap.data().count;
-        } catch (countError) {
+        const { data: totalSnap, error: countError } = await BaseService.safe(() => getCountFromServer(baseQuery));
+        if (countError) {
             // Some environments/rules may reject count() while normal reads still work.
             // Continue with paged reads and derive a best-effort total below.
             console.warn('[Analytics] count() failed in fetchAnalyticsDetails, falling back to page-size total.', countError);
+        } else {
+            totalCount = totalSnap.data().count;
         }
 
         const queryWindow = Math.min(MAX_DETAIL_WINDOW, Math.max(limit, page * limit));
@@ -147,18 +148,19 @@ class AnalyticsService extends BaseService {
 
         // Compatibility fallback: older rows might only have a `date` field.
         if (docs.length === 0) {
-            try {
-                const byDateQuery = query(
-                    collection(db, this.collectionName),
-                    where('date', '>=', startKey),
-                    where('date', '<=', endKey),
-                    orderBy('date', 'desc'),
-                    firestoreLimit(queryWindow)
-                );
-                querySnapshot = await getDocs(byDateQuery);
-                docs = querySnapshot.docs;
-            } catch (dateFallbackError) {
+            const byDateQuery = query(
+                collection(db, this.collectionName),
+                where('date', '>=', startKey),
+                where('date', '<=', endKey),
+                orderBy('date', 'desc'),
+                firestoreLimit(queryWindow)
+            );
+            const { data: dateSnapshot, error: dateFallbackError } = await BaseService.safe(() => getDocs(byDateQuery));
+            if (dateFallbackError) {
                 console.warn('[Analytics] Date-key fallback details query failed:', dateFallbackError);
+            } else {
+                querySnapshot = dateSnapshot;
+                docs = querySnapshot.docs;
             }
         }
 

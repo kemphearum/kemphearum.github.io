@@ -13,6 +13,7 @@ export default defineConfig([
     'functions/node_modules/**',
     '.vercel/**',
     '.firebase/**',
+    'manifest-hosted.js',
   ]),
   {
     files: ['**/*.{js,jsx}'],
@@ -32,6 +33,10 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowExportNames: ['meta', 'links', 'loader', 'action', 'headers', 'clientLoader', 'clientAction'] },
+      ],
     },
   },
   {

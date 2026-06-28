@@ -8,6 +8,7 @@ import FeaturedBlogs from '@/sections/FeaturedBlogs';
 import Contact from '@/sections/Contact';
 import Footer from '@/sections/Footer';
 import Experience from '@/sections/Experience';
+import Education from '@/sections/Education';
 import Skills from '@/sections/Skills';
 import Certificates from '@/sections/Certificates';
 import SettingsService from '../../src/services/SettingsService';
@@ -141,6 +142,7 @@ export default function Home() {
         <Hero />
         <About />
         <Experience />
+        <Education />
         <Skills />
         <FeaturedProjects />
         <Certificates />

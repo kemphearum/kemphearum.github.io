@@ -11,6 +11,7 @@ export default defineConfig({
     },
     dedupe: ["react", "react-dom"]
   },
+  // eslint-disable-next-line no-undef
   plugins: [!process.env.VITEST && reactRouter({ presets: [vercelPreset()] })].filter(Boolean),
   ssr: {
     noExternal: [

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { tabLabels } from '../../components/constants';
 import { Button } from '../../../../shared/components/ui';
 import DeleteConfirmDialog from '../../../../shared/components/dialog/DeleteConfirmDialog';
@@ -14,7 +14,7 @@ const NON_REMOVABLE_ROLES = ['superadmin', 'admin', 'editor', 'pending'];
 const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, availableRoles = [] }) => {
   const { t } = useTranslation();
   
-  const getTabsForBaseRole = (baseRole) => {
+  const getTabsForBaseRole = useCallback((baseRole) => {
     const normalizedBase = normalizeRole(baseRole) || 'pending';
     const allConfigurableTabs = Object.keys(tabLabels).filter((tab) => !NON_CONFIGURABLE_TABS.includes(tab));
 
@@ -25,21 +25,21 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
       return allConfigurableTabs;
     }
     return allConfigurableTabs;
-  };
+  }, []);
 
-  const getLocalizedLabel = (key, fallback) => {
+  const getLocalizedLabel = useCallback((key, fallback) => {
     const translated = t(key);
     return translated === key ? fallback : translated;
-  };
+  }, [t]);
 
-  const getRoleLabel = (role) => getLocalizedLabel(`admin.roles.${role}`, formatRoleDisplayName(role));
-  const getTabLabel = (tab) => getLocalizedLabel(`admin.tabs.${tab}`, tabLabels[tab]);
-  const newRolePreviewLabel = (roleValue) => {
+  const getRoleLabel = useCallback((role) => getLocalizedLabel(`admin.roles.${role}`, formatRoleDisplayName(role)), [getLocalizedLabel]);
+  const getTabLabel = useCallback((tab) => getLocalizedLabel(`admin.tabs.${tab}`, tabLabels[tab]), [getLocalizedLabel]);
+  const newRolePreviewLabel = useCallback((roleValue) => {
     const translated = t('admin.rolePermissions.newRolePreview', { role: roleValue });
     return translated === 'admin.rolePermissions.newRolePreview'
       ? `Role id: ${roleValue}`
       : translated;
-  };
+  }, [t]);
   const removeRoleConfirmLabel = (roleValue) => {
     const translated = t('admin.rolePermissions.removeRoleConfirm', { role: roleValue });
     return translated === 'admin.rolePermissions.removeRoleConfirm'
@@ -80,7 +80,7 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
       }
       return acc;
     }, {})
-  ), [roleEntryMap]);
+  ), [roleEntryMap, getTabsForBaseRole]);
 
   const [selectedByRole, setSelectedByRole] = useState({});
   const [actionsByRole, setActionsByRole] = useState({});
@@ -149,7 +149,7 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
       acc[role] = false;
       return acc;
     }, {}));
-  }, [managedRoles, roleEntryMap]);
+  }, [managedRoles, roleEntryMap, getTabsForBaseRole]);
 
   const roleTabsMap = useMemo(() => (
     managedRoles.reduce((acc, role) => {
@@ -157,7 +157,7 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
       acc[role] = getTabsForBaseRole(selectedBaseRole);
       return acc;
     }, {})
-  ), [baseByRole, managedRoles, roleEntryMap]);
+  ), [baseByRole, managedRoles, roleEntryMap, getTabsForBaseRole]);
 
   const toggleTab = (role, tab) => {
     setSelectedByRole((prev) => {

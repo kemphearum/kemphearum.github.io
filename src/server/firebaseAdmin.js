@@ -60,6 +60,17 @@ export const normalizeText = (value, maxLength = 5000) => (
         .slice(0, maxLength)
 );
 
+export const apiSuccess = (data = null, status = 200) => ({
+    status,
+    body: { success: true, ...(data && { data }) }
+});
+
+export const apiError = (message, code = 'INTERNAL_ERROR', status = 500) => ({
+    status,
+    body: { success: false, error: { code, message } }
+});
+
+
 export const getBearerToken = (request) => {
     const header = String(request.headers.get('authorization') || '');
     return header.startsWith('Bearer ') ? header.slice(7).trim() : '';

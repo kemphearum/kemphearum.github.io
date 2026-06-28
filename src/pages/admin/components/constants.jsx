@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart2, FileText, Database, User, Code, Award } from 'lucide-react';
+import { BarChart2, FileText, Database, User, Code, Award, BookOpen } from 'lucide-react';
 
 // Icons as small components
 export const icons = {
@@ -50,6 +50,9 @@ export const icons = {
     ),
     certificates: (
         <Award size={18} />
+    ),
+    education: (
+        <BookOpen size={18} />
     )
 };
 
@@ -65,5 +68,6 @@ export const tabLabels = {
     analytics: 'Analytics',
     settings: 'Settings',
     skills: 'Skills',
-    certificates: 'Certificates'
+    certificates: 'Certificates',
+    education: 'Education'
 };

@@ -23,7 +23,7 @@ export const processAuthEvent = async ({ payload, headers, authToken }) => {
     const email = normalizeEmail(data.email);
 
     if (!email || !isValidEmail(email)) {
-        return { status: 400, body: { success: false, error: 'A valid email is required.' } };
+        return { status: 400, body: { success: false, error: { code: 'BAD_REQUEST', message: 'A valid email is required.' } } };
     }
 
     try {
@@ -34,10 +34,10 @@ export const processAuthEvent = async ({ payload, headers, authToken }) => {
             try {
                 const decoded = await getAdminAuth().verifyIdToken(authToken);
                 if (normalizeEmail(decoded.email) !== email) {
-                    return { status: 403, body: { success: false, error: 'Email does not match the authenticated user.' } };
+                    return { status: 403, body: { success: false, error: { code: 'FORBIDDEN', message: 'Email does not match the authenticated user.' } } };
                 }
             } catch {
-                return { status: 401, body: { success: false, error: 'Invalid authentication token.' } };
+                return { status: 401, body: { success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid authentication token.' } } };
             }
         }
 
@@ -62,9 +62,9 @@ export const processAuthEvent = async ({ payload, headers, authToken }) => {
         return { status: 200, body: { success: true } };
     } catch (error) {
         if (error?.code === 'RATE_LIMITED') {
-            return { status: 429, body: { success: false, error: error.message } };
+            return { status: 429, body: { success: false, error: { code: 'RATE_LIMITED', message: error.message } } };
         }
         console.error('Auth audit API error:', error);
-        return { status: 500, body: { success: false, error: 'Internal server error' } };
+        return { status: 500, body: { success: false, error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } } };
     }
 };

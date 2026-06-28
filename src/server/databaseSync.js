@@ -13,7 +13,7 @@ const GITHUB_DISPATCH_URL = 'https://api.github.com/repos/kemphearum/kemphearum.
  */
 export const processDatabaseSync = async ({ authToken, payload }) => {
     if (!authToken) {
-        return { status: 401, body: { success: false, error: 'Authentication required.' } };
+        return { status: 401, body: { success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required.' } } };
     }
 
     let requesterEmail;
@@ -21,16 +21,16 @@ export const processDatabaseSync = async ({ authToken, payload }) => {
         const decoded = await getAdminAuth().verifyIdToken(authToken);
         requesterEmail = normalizeEmail(decoded.email);
     } catch {
-        return { status: 401, body: { success: false, error: 'Invalid authentication token.' } };
+        return { status: 401, body: { success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid authentication token.' } } };
     }
 
     if (!SUPERADMIN_EMAILS.has(requesterEmail)) {
-        return { status: 403, body: { success: false, error: 'Only the Super Admin can run database sync.' } };
+        return { status: 403, body: { success: false, error: { code: 'FORBIDDEN', message: 'Only the Super Admin can run database sync.' } } };
     }
 
     const token = globalThis.process?.env?.GITHUB_DISPATCH_TOKEN;
     if (!token) {
-        return { status: 503, body: { success: false, error: 'GitHub dispatch token is not configured.' } };
+        return { status: 503, body: { success: false, error: { code: 'SERVICE_UNAVAILABLE', message: 'GitHub dispatch token is not configured.' } } };
     }
 
     const requestedBy = normalizeEmail(payload?.requestedBy) || requesterEmail;
@@ -56,13 +56,13 @@ export const processDatabaseSync = async ({ authToken, payload }) => {
             console.error('GitHub dispatch failed:', response.status, message);
             return {
                 status: response.status === 401 || response.status === 403 ? 403 : 502,
-                body: { success: false, error: 'GitHub rejected the database sync request.' }
+                body: { success: false, error: { code: 'BAD_GATEWAY', message: 'GitHub rejected the database sync request.' } }
             };
         }
 
         return { status: 200, body: { success: true } };
     } catch (error) {
         console.error('databaseSync error:', error);
-        return { status: 502, body: { success: false, error: 'Failed to dispatch database sync.' } };
+        return { status: 502, body: { success: false, error: { code: 'BAD_GATEWAY', message: 'Failed to dispatch database sync.' } } };
     }
 };

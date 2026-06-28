@@ -62,7 +62,7 @@ const Projects = ({ isStandalone = false }) => {
     const visibleProjects = filterPublished(projects);
 
     // Extract unique tech-stack tags for filtering (trimmed and deduped)
-    const allTags = visibleProjects.reduce((acc, proj) => {
+    const allTags = React.useMemo(() => visibleProjects.reduce((acc, proj) => {
         if (Array.isArray(proj.techStack)) {
             proj.techStack.forEach(tag => {
                 const trimmed = tag.trim();
@@ -70,7 +70,7 @@ const Projects = ({ isStandalone = false }) => {
             });
         }
         return acc;
-    }, []);
+    }, []), [visibleProjects]);
 
     const displayTags = React.useMemo(() => {
         const rawFilters = settings?.projectFilters;

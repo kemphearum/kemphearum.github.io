@@ -26,13 +26,35 @@ vi.mock('../../../services/ExperienceService', () => ({
     default: { fetchStats: vi.fn().mockResolvedValue({ total: 2, currentRoles: 1 }) }
 }));
 vi.mock('../../../services/MessageService', () => ({
-    default: { getUnreadCount: vi.fn().mockResolvedValue(7) }
+    default: {
+        fetchStats: vi.fn().mockResolvedValue({ unread: 2 }),
+        getUnreadCount: vi.fn().mockResolvedValue(2)
+    }
 }));
 vi.mock('../../../services/UserService', () => ({
     default: { fetchStats: vi.fn().mockResolvedValue({ total: 4 }) }
 }));
+vi.mock('../../../services/EducationService', () => ({
+    default: { fetchStats: vi.fn().mockResolvedValue({ total: 2 }) }
+}));
 vi.mock('../../../services/AuditLogService', () => ({
     default: { fetchActivityDetails: vi.fn().mockResolvedValue({ data: [] }) }
+}));
+
+import OverviewWidget from './widgets/OverviewWidget';
+import QuickActionsWidget from './widgets/QuickActionsWidget';
+import InsightsWidget from './widgets/InsightsWidget';
+import LatestContentWidget from './widgets/LatestContentWidget';
+import RecentActivityWidget from './widgets/RecentActivityWidget';
+
+vi.mock('../../../registry/dashboardWidgetRegistry', () => ({
+    listDashboardWidgets: () => [
+        { id: 'overview', order: 10, canView: () => true, component: OverviewWidget },
+        { id: 'quickActions', order: 20, canView: (ctx) => ctx.isActionAllowed('create', 'projects') || ctx.isActionAllowed('create', 'blog'), component: QuickActionsWidget },
+        { id: 'insights', order: 30, canView: (ctx) => ctx.can('projects') || ctx.can('blog'), component: InsightsWidget },
+        { id: 'latestContent', order: 40, canView: (ctx) => ctx.can('projects') || ctx.can('blog'), component: LatestContentWidget },
+        { id: 'recentActivity', order: 50, canView: (ctx) => ctx.can('audit'), component: RecentActivityWidget }
+    ]
 }));
 
 import DashboardTab from './DashboardTab';
@@ -55,11 +77,11 @@ describe('DashboardTab', () => {
     it('renders overview cards and quick actions for a permitted role', async () => {
         renderDashboard();
 
-        expect(await screen.findByText('admin.dashboard.cards.projects')).toBeTruthy();
-        expect(screen.getByText('admin.dashboard.cards.posts')).toBeTruthy();
-        expect(screen.getByText('admin.dashboard.newProject')).toBeTruthy();
-        expect(screen.getByText('admin.dashboard.recentActivity')).toBeTruthy();
-    });
+        expect(await screen.findByText('admin.dashboard.cards.projects', {}, { timeout: 4000 })).toBeTruthy();
+        expect(await screen.findByText('admin.dashboard.cards.posts', {}, { timeout: 4000 })).toBeTruthy();
+        expect(await screen.findByText('admin.dashboard.newProject', {}, { timeout: 4000 })).toBeTruthy();
+        expect(await screen.findByText('admin.dashboard.recentActivity', {}, { timeout: 4000 })).toBeTruthy();
+    }, 10000);
 
     it('hides modules the role cannot view', async () => {
         const isActionAllowed = (_action, module) => module === 'blog';

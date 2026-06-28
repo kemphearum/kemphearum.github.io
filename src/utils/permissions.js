@@ -128,7 +128,7 @@ const isDefaultRoleCapabilityAllowed = (action, moduleName, normalizedRole) => {
 
     if (normalizedRole === 'editor') {
         // Editors are restricted from Admin/SuperAdmin data layers
-        const adminModules = [MODULES.DATABASE, MODULES.EXPERIENCE, MODULES.MESSAGES, MODULES.GENERAL];
+        const adminModules = [MODULES.DATABASE, MODULES.EXPERIENCE, MODULES.EDUCATION, MODULES.MESSAGES, MODULES.GENERAL];
         if (adminModules.includes(moduleName)) return false;
 
         // Editors are excluded from low-level DB operations

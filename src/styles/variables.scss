@@ -72,7 +72,7 @@ $z-modal: 1000; // dialogs, command palette
 $z-toast: 1100; // toasts (above modals)
 
 @mixin wow-hover {
-  transition: $transition;
+  transition: $transition-fast;
 
   &:hover:not(:disabled) {
     filter: brightness(1.15);

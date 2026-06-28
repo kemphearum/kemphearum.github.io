@@ -11,6 +11,7 @@ import { ActivityContext } from './ActivityContextValue';
 export const ActivityProvider = ({ children }) => {
     const [dailyUsage, setDailyUsage] = useState({ reads: 0, writes: 0, deletes: 0 });
     const [currentDateKey, setCurrentDateKey] = useState(getTodayDateKey());
+    // eslint-disable-next-line no-unused-vars
     const [user, setUser] = useState(null);
     const [trackerTick, setTrackerTick] = useState(0);
     const [loggingConfig, setLoggingConfig] = useState({

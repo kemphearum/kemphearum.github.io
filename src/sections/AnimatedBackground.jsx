@@ -67,88 +67,83 @@ const AnimatedBackground = ({
             initParticles();
         };
 
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = variant === 'geometry' ? Math.random() * 8 + 4 : Math.random() * 1.5 + 0.5;
-                this.shape = variant === 'geometry' ? (Math.random() > 0.5 ? 'triangle' : 'square') : 'circle';
-                this.rotation = Math.random() * 360;
-                this.rotationSpeed = (Math.random() - 0.5) * 2;
-                this.baseX = this.x;
-                this.baseY = this.y;
-                this.density = (Math.random() * 30) + 1;
-                this.velocity = {
+        const createParticle = () => {
+            const p = {
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: variant === 'geometry' ? Math.random() * 8 + 4 : Math.random() * 1.5 + 0.5,
+                shape: variant === 'geometry' ? (Math.random() > 0.5 ? 'triangle' : 'square') : 'circle',
+                rotation: Math.random() * 360,
+                rotationSpeed: (Math.random() - 0.5) * 2,
+                density: (Math.random() * 30) + 1,
+                velocity: {
                     x: (Math.random() - 0.5) * maxVelocity,
                     y: (Math.random() - 0.5) * maxVelocity
-                };
-            }
+                },
+                draw() {
+                    const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+                    const opacityMultiplier = isLightMode ? 2 : 1;
 
-            draw() {
-                // Check light mode state
-                const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
-                const opacityMultiplier = isLightMode ? 2 : 1; // Double opacity in light mode for better contrast
+                    const geoOpacity = Math.min(0.15 * opacityMultiplier, 0.4);
+                    const circleOpacity = Math.min(0.4 * opacityMultiplier, 0.8);
+                    const strokeOpacity = Math.min(0.3 * opacityMultiplier, 0.7);
 
-                const geoOpacity = Math.min(0.15 * opacityMultiplier, 0.4);
-                const circleOpacity = Math.min(0.4 * opacityMultiplier, 0.8);
-                const strokeOpacity = Math.min(0.3 * opacityMultiplier, 0.7);
+                    ctx.fillStyle = variant === 'geometry' ? `rgba(108, 99, 255, ${geoOpacity})` : `rgba(108, 99, 255, ${circleOpacity})`;
+                    ctx.strokeStyle = `rgba(108, 99, 255, ${strokeOpacity})`;
+                    ctx.lineWidth = isLightMode ? 1.5 : 1;
 
-                ctx.fillStyle = variant === 'geometry' ? `rgba(108, 99, 255, ${geoOpacity})` : `rgba(108, 99, 255, ${circleOpacity})`;
-                ctx.strokeStyle = `rgba(108, 99, 255, ${strokeOpacity})`;
-                ctx.lineWidth = isLightMode ? 1.5 : 1;
-
-                if (this.shape === 'circle') {
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                    ctx.closePath();
-                    ctx.fill();
-                } else {
-                    // Geometry shapes
-                    ctx.save();
-                    ctx.translate(this.x, this.y);
-                    ctx.rotate(this.rotation * Math.PI / 180);
-                    ctx.beginPath();
-
-                    if (this.shape === 'square') {
-                        ctx.rect(-this.size / 2, -this.size / 2, this.size, this.size);
-                    } else if (this.shape === 'triangle') {
-                        ctx.moveTo(0, -this.size);
-                        ctx.lineTo(this.size, this.size);
-                        ctx.lineTo(-this.size, this.size);
+                    if (this.shape === 'circle') {
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                         ctx.closePath();
+                        ctx.fill();
+                    } else {
+                        ctx.save();
+                        ctx.translate(this.x, this.y);
+                        ctx.rotate(this.rotation * Math.PI / 180);
+                        ctx.beginPath();
+
+                        if (this.shape === 'square') {
+                            ctx.rect(-this.size / 2, -this.size / 2, this.size, this.size);
+                        } else if (this.shape === 'triangle') {
+                            ctx.moveTo(0, -this.size);
+                            ctx.lineTo(this.size, this.size);
+                            ctx.lineTo(-this.size, this.size);
+                            ctx.closePath();
+                        }
+
+                        ctx.stroke();
+                        ctx.fill();
+                        ctx.restore();
                     }
+                },
+                update() {
+                    this.x += this.velocity.x;
+                    this.y += this.velocity.y;
+                    this.rotation += this.rotationSpeed * (speed / 50);
 
-                    ctx.stroke();
-                    ctx.fill();
-                    ctx.restore();
+                    if (this.x > canvas.width + this.size) this.x = -this.size;
+                    else if (this.x < -this.size) this.x = canvas.width + this.size;
+                    if (this.y > canvas.height + this.size) this.y = -this.size;
+                    else if (this.y < -this.size) this.y = canvas.height + this.size;
+
+                    if (shouldTrackPointer && mouseRef.current.x !== null) {
+                        let dx = mouseRef.current.x - this.x;
+                        let dy = mouseRef.current.y - this.y;
+                        let distanceSq = dx * dx + dy * dy;
+                        let radius = mouseRef.current.radius;
+                        if (distanceSq === 0 || distanceSq >= radius * radius) return;
+                        let distance = Math.sqrt(distanceSq);
+                        let force = (radius - distance) / radius;
+                        this.x -= (dx / distance) * force * this.density;
+                        this.y -= (dy / distance) * force * this.density;
+                    }
                 }
-            }
-
-            update() {
-                this.x += this.velocity.x;
-                this.y += this.velocity.y;
-                this.rotation += this.rotationSpeed * (speed / 50);
-
-                if (this.x > canvas.width + this.size) this.x = -this.size;
-                else if (this.x < -this.size) this.x = canvas.width + this.size;
-                if (this.y > canvas.height + this.size) this.y = -this.size;
-                else if (this.y < -this.size) this.y = canvas.height + this.size;
-
-                if (shouldTrackPointer && mouseRef.current.x !== null) {
-                    let dx = mouseRef.current.x - this.x;
-                    let dy = mouseRef.current.y - this.y;
-                    let distanceSq = dx * dx + dy * dy;
-                    let radius = mouseRef.current.radius;
-                    // Gate on squared distance first — skip the sqrt entirely for
-                    // particles outside the interaction radius.
-                    if (distanceSq === 0 || distanceSq >= radius * radius) return;
-                    let distance = Math.sqrt(distanceSq);
-                    let force = (radius - distance) / radius;
-                    this.x -= (dx / distance) * force * this.density;
-                    this.y -= (dy / distance) * force * this.density;
-                }
-            }
-        }
+            };
+            p.baseX = p.x;
+            p.baseY = p.y;
+            return p;
+        };
 
         const initParticles = () => {
             particles = [];
@@ -156,7 +151,7 @@ const AnimatedBackground = ({
 
             const numberOfParticles = Math.min(maxParticles, (canvas.width * canvas.height) / mappedArea);
             for (let i = 0; i < numberOfParticles; i++) {
-                particles.push(new Particle());
+                particles.push(createParticle());
             }
         };
 

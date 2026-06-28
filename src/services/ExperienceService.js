@@ -31,7 +31,7 @@ class ExperienceService extends BaseService {
      * Replaces direct object manipulation in the UI component.
      */
     async saveExperience(userRole, formData, trackWrite) {
-        const action = formData.id ? ACTIONS.EDIT : ACTIONS.CREATE;
+        // Validation handled in UI and Firestore rules
         // Validation handled in UI and Firestore rules
 
         // 1. Normalize

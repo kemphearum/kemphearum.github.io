@@ -1,4 +1,4 @@
-/* eslint-disable react-refresh/only-export-components */
+
 import {
   Links,
   Meta,
@@ -47,6 +47,9 @@ export function Layout({ children }) {
         <meta charSet="UTF-8" />
         <link rel="icon" type="image/svg+xml" href="/vite.svg" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://firestore.googleapis.com" />
         <Meta />
         <Links />
       </head>
@@ -226,8 +229,28 @@ function SettingsApplier({ children, initialSettings }) {
   const bgInteractive = siteConfig.bgInteractive ?? defaultBgInteractive ?? true;
   const bgStyle = siteConfig.bgStyle || defaultBgStyle || 'plexus';
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Kem Phearum",
+    "url": typeof window !== 'undefined' ? window.location.origin : "https://kemphearum.com",
+    "jobTitle": "Security Consultant",
+    "worksFor": {
+      "@type": "Organization",
+      "name": "Security & Governance"
+    },
+    "sameAs": [
+      siteConfig.githubUrl,
+      siteConfig.linkedinUrl
+    ].filter(Boolean)
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <AnimatedBackground
         density={bgDensity}
         speed={bgSpeed}

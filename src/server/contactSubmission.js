@@ -122,15 +122,15 @@ export const processContactSubmission = async ({ payload, clientIp }) => {
     const message = String(data.message || '').trim().slice(0, 5000);
 
     if (!name || name.length < 2) {
-        return { status: 400, body: { success: false, error: 'Name is required.' } };
+        return { status: 400, body: { success: false, error: { code: 'BAD_REQUEST', message: 'Name is required.' } } };
     }
 
     if (!email || !isValidEmail(email)) {
-        return { status: 400, body: { success: false, error: 'A valid email is required.' } };
+        return { status: 400, body: { success: false, error: { code: 'BAD_REQUEST', message: 'A valid email is required.' } } };
     }
 
     if (!message || message.length < 10) {
-        return { status: 400, body: { success: false, error: 'Message is too short.' } };
+        return { status: 400, body: { success: false, error: { code: 'BAD_REQUEST', message: 'Message is too short.' } } };
     }
 
     try {
@@ -151,10 +151,10 @@ export const processContactSubmission = async ({ payload, clientIp }) => {
         return { status: 200, body: { success: true } };
     } catch (error) {
         if (error?.code === 'RATE_LIMITED_MINUTE' || error?.code === 'RATE_LIMITED_DAY') {
-            return { status: 429, body: { success: false, error: error.message } };
+            return { status: 429, body: { success: false, error: { code: error.code, message: error.message } } };
         }
 
         console.error('Contact API error:', error);
-        return { status: 500, body: { success: false, error: 'Internal server error' } };
+        return { status: 500, body: { success: false, error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } } };
     }
 };

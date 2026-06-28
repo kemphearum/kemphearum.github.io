@@ -16,7 +16,7 @@ export async function action({ request }) {
         return new Response('', { status: 204, headers: corsHeaders });
     }
     if (request.method !== 'POST') {
-        return toJsonResponse({ success: false, error: 'Method not allowed' }, 405, corsHeaders);
+        return toJsonResponse({ success: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' } }, 405, corsHeaders);
     }
 
     const payload = await parseRequestPayload(request);
@@ -27,5 +27,5 @@ export async function action({ request }) {
 
 export async function loader({ request }) {
     const origin = String(request.headers.get('origin') || '');
-    return toJsonResponse({ success: false, error: 'Method not allowed' }, 405, buildApiCorsHeaders(origin));
+    return toJsonResponse({ success: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' } }, 405, buildApiCorsHeaders(origin));
 }
