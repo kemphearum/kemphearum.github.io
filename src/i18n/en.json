@@ -223,7 +223,11 @@
       "dashboard": "Dashboard",
       "skills": "Skills",
       "certificates": "Certificates",
-      "education": "Education"
+      "education": "Education",
+      "testimonials": "Testimonials",
+      "awards": "Awards",
+      "publications": "Publications",
+      "speaking": "Speaking"
     },
     "subtitles": {
       "general": "Manage your portfolio primary content",
@@ -2292,12 +2296,15 @@
     "rateLimited": "Please wait a few minutes before sending another message.",
     "downloadResume": "View Résumé",
     "emailCopied": "Copied!",
+    "copyEmail": "Copy email address",
     "responseTime": "Typical response:",
     "preferred": "Preferred:",
     "telegram": "Chat on Telegram",
     "qr": {
       "label": "Scan to connect instantly",
-      "caption": "Scan to chat on Telegram"
+      "caption": "Scan to chat on Telegram",
+      "imageAlt": "Telegram QR code \u2014 scan to open chat",
+      "svgAlt": "QR code linking to Telegram"
     }
   },
   "footer": {
