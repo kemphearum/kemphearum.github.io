@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { useTranslation } from '../hooks/useTranslation';
