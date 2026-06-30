@@ -2,7 +2,7 @@
 
 .backToTop {
     position: fixed;
-    bottom: 2rem;
+    bottom: calc(2rem + var(--status-banner-height, 0px));
     right: 2rem;
     width: 45px;
     height: 45px;

@@ -138,12 +138,14 @@
     white-space: nowrap;
 }
 
-
 .socialLinks {
     flex: 1;
     display: flex;
     gap: 0.75rem;
     justify-content: flex-end;
+    
+    // Prevent overlap with the fixed BackToTop button (45px width + 2rem offset)
+    padding-right: 5rem;
 }
 
 .socialLink {
@@ -216,5 +218,6 @@
     .socialLinks {
         justify-content: center;
         width: 100%;
+        padding-right: 0;
     }
 }

@@ -211,6 +211,9 @@ const PublicationTab = ({ userRole, showToast, isActionAllowed }) => {
         stats={workspaceStats}
         addLabel={t('admin.publications.toolbar.add', 'Add Publication')}
         searchPlaceholder={t('admin.publications.toolbar.search', 'Search publications...')}
+        eyebrow={t('admin.publications.workspace.eyebrow', 'Authorship')}
+        title={t('admin.publications.workspace.title', 'Publications')}
+        description={t('admin.publications.workspace.description', 'Manage published articles, papers, and books.')}
       />
 
       <BulkActionsBar

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import SettingsService from '../../../services/SettingsService';
 import BaseService from '../../../services/BaseService';
-import { RefreshCw, Globe, Type, Eye, Trash2, AlertCircle, Activity } from 'lucide-react';
+import { RefreshCw, Globe, Type, Eye, Trash2, AlertCircle, Activity, ShieldAlert } from 'lucide-react';
 import ImageProcessingService from '../../../services/ImageProcessingService';
 import tabStyles from './SettingsTab.module.scss';
 import axios from 'axios';
@@ -17,6 +17,7 @@ import IdentitySection from './components/IdentitySection';
 import TypographySection from './components/TypographySection';
 import VisualsSection from './components/VisualsSection';
 import SyncSection from './components/SyncSection';
+import StatusSection from './components/StatusSection';
 import { listSettingsSections } from '../../../registry/settingsRegistry';
 
 const DEFAULT_VISUAL_SETTINGS = SettingsService.constructor.DEFAULT_VISUAL_SETTINGS || {};
@@ -66,6 +67,7 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
         { id: 'typography', label: t('admin.settings.subTabs.typography.label'), description: t('admin.settings.subTabs.typography.description'), icon: Type },
         { id: 'visuals', label: t('admin.settings.subTabs.visuals.label'), description: t('admin.settings.subTabs.visuals.description'), icon: Eye },
         { id: 'sync', label: t('admin.settings.subTabs.sync.label'), description: t('admin.settings.subTabs.sync.description'), icon: RefreshCw },
+        { id: 'status', label: t('admin.settings.subTabs.status.label', 'Site Status'), description: t('admin.settings.subTabs.status.description', 'Maintenance & Overlays'), icon: ShieldAlert },
         ...settingsSections.map((section) => ({
             id: section.id,
             label: t(section.labelKey),
@@ -116,6 +118,9 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                 bgGlowOpacity: settingsData.bgGlowOpacity ?? DEFAULT_VISUAL_SETTINGS.bgGlowOpacity ?? 50,
                 bgInteractive: settingsData.bgInteractive ?? DEFAULT_VISUAL_SETTINGS.bgInteractive ?? true,
                 notificationsEnabled: settingsData.notificationsEnabled ?? DEFAULT_VISUAL_SETTINGS.notificationsEnabled ?? true,
+                siteStatus: settingsData.siteStatus || 'live',
+                siteStatusType: settingsData.siteStatusType || 'watermark',
+                siteStatusMessage: settingsData.siteStatusMessage || { en: '', km: '' },
                 sidebarPersistent
             };
 
@@ -422,6 +427,10 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
             hint: tokenReady
                 ? t('admin.settings.sectionMeta.sync.statusForRebuilds', { status: syncStatusLabel })
                 : t('admin.settings.sectionMeta.sync.tokenNeededForRebuilds')
+        },
+        status: {
+            count: settingsData.siteStatus === 'live' ? t('admin.settings.sectionMeta.status.live', 'Live') : (settingsData.siteStatus === 'testing' ? t('admin.settings.sectionMeta.status.testing', 'Testing') : t('admin.settings.sectionMeta.status.maintenance', 'Maintenance')),
+            hint: settingsData.siteStatusType === 'dialog' ? t('admin.settings.sectionMeta.status.dialog', 'Blocking Dialog') : t('admin.settings.sectionMeta.status.watermark', 'Subtle Watermark')
         }
     };
 
@@ -532,6 +541,15 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                         addMirror={addMirror}
                         removeMirror={removeMirror}
                         mirrors={mirrors}
+                        onSave={handleSaveSettings}
+                        loading={loading}
+                    />
+                </Tabs.Content>
+
+                <Tabs.Content value="status" className={tabStyles.tabPanel}>
+                    <StatusSection 
+                        settingsData={settingsData}
+                        setSettingsData={setSettingsData}
                         onSave={handleSaveSettings}
                         loading={loading}
                     />

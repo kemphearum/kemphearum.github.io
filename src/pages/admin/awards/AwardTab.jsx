@@ -212,6 +212,9 @@ const AwardTab = ({ userRole, showToast, isActionAllowed }) => {
         stats={workspaceStats}
         addLabel={t('admin.awards.toolbar.add', 'Add Award')}
         searchPlaceholder={t('admin.awards.toolbar.search', 'Search awards...')}
+        eyebrow={t('admin.awards.workspace.eyebrow', 'Recognition')}
+        title={t('admin.awards.workspace.title', 'Awards')}
+        description={t('admin.awards.workspace.description', 'Manage professional awards and recognitions.')}
       />
 
       <BulkActionsBar

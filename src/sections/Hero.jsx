@@ -110,7 +110,12 @@ const Hero = () => {
                             <div className={styles.skeletonLine} style={{ width: '100%', height: '60px' }} />
                         </div>
                     ) : (
-                        <>
+                        <motion.div
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                            style={{ width: '100%' }}
+                        >
                             <motion.p variants={itemVariants} className={styles.greeting}>
                                 <span className={styles.greetingIcon}>👋</span> {content.greeting}
                             </motion.p>
@@ -147,7 +152,7 @@ const Hero = () => {
                                     <Send size={18} />
                                 </Link>
                             </motion.div>
-                        </>
+                        </motion.div>
                     )}
                 </div>
                 <motion.div variants={itemVariants} className={styles.imageWrapper}>

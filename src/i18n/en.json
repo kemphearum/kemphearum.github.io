@@ -1114,6 +1114,10 @@
           "label": "Social",
           "description": "Social profile links"
         },
+        "communication": {
+          "label": "Communication",
+          "description": "Contact info, links, and resume settings"
+        },
         "featureFlags": {
           "label": "Feature flags",
           "description": "Toggle public sections"
@@ -1196,6 +1200,37 @@
         }
       },
       "sections": {
+        "status": {
+          "title": "Site Status & Maintenance",
+          "modeTitle": "Operating Mode",
+          "modeDescription": "Control the visibility and interaction level of the public site.",
+          "testingConfigTitle": "Testing Overlay Settings",
+          "testingConfigDesc": "Configure the progress bar, end date, and feedback link for the full-screen beta testing page.",
+          "maintenanceConfigTitle": "Maintenance Overlay Settings",
+          "maintenanceConfigDesc": "Configure progress, end date, and an optional contact link for the full-screen maintenance page.",
+          "messageTitle": "Status Message",
+          "messageDescription": "The message displayed in the dialog or watermark overlay.",
+          "behaviorTitle": "Behavior Notes",
+          "fields": {
+            "siteStatus": "Site Status",
+            "siteStatusType": "Presentation Type",
+            "messageEn": "Message (English)",
+            "messageKm": "Message (Khmer)",
+            "testingProgress": "Testing Progress (%)",
+            "testingEndDate": "Expected End Date",
+            "testingFeedbackUrl": "Feedback / Bug Report URL",
+            "maintenanceProgress": "Maintenance Progress (%)",
+            "maintenanceEndDate": "Expected Return Date",
+            "maintenanceContactUrl": "Contact / Support URL"
+          },
+          "options": {
+            "live": "Live (Normal)",
+            "testing": "Testing Mode",
+            "maintenance": "Maintenance Mode",
+            "watermark": "Subtle Watermark (Non-blocking)",
+            "dialog": "Full Screen Dialog (Blocking)"
+          }
+        },
         "identity": {
           "eyebrow": "Identity System",
           "title": "Shape how the portfolio is recognized in tabs, branding, and collection filters.",
@@ -2320,6 +2355,11 @@
       }
     },
     "publications": {
+      "workspace": {
+        "eyebrow": "Authorship",
+        "title": "Publications",
+        "description": "Manage published articles, papers, and books."
+      },
       "stats": {
         "total": "Total Publications"
       },

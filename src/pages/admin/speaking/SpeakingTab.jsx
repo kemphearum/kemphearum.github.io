@@ -213,6 +213,9 @@ const SpeakingTab = ({ userRole, showToast, isActionAllowed }) => {
         stats={workspaceStats}
         addLabel={t('admin.speaking.toolbar.add', 'Add Event')}
         searchPlaceholder={t('admin.speaking.toolbar.search', 'Search events...')}
+        eyebrow={t('admin.speaking.workspace.eyebrow', 'Public Engagements')}
+        title={t('admin.speaking.workspace.title', 'Speaking')}
+        description={t('admin.speaking.workspace.description', 'Manage speaking engagements and events.')}
       />
 
       <BulkActionsBar

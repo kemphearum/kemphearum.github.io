@@ -23,6 +23,7 @@ import { queryClient } from '../src/queryClient';
 import React, { useCallback, useEffect } from 'react';
 import SettingsService from '../src/services/SettingsService';
 import AnimatedBackground from '@/sections/AnimatedBackground';
+import SiteStatusOverlay from '../src/components/SiteStatusOverlay';
 import '../src/styles/global.scss';
 import { useAnalytics } from '../src/hooks/useAnalytics';
 import { Analytics } from "@vercel/analytics/react";
@@ -184,8 +185,10 @@ function SettingsApplier({ children, initialSettings }) {
         { field: 'fontAdminTab', prop: '--font-admin-tab', weightProp: '--font-weight-admin-tab', styleProp: '--font-style-admin-tab', sizeProp: '--font-size-admin-tab', defaultWeight: '600', defaultSize: '1rem' },
       ];
 
+      const khmerPremiumConfig = typographyMetadata.presets?.find(p => p.id === 'khmer-premium')?.config || {};
+
       categories.forEach(({ field, prop, weightProp, styleProp, sizeProp, defaultWeight, defaultSize }) => {
-        const key = typpo[field] || 'inter';
+        const key = typpo[field] || khmerPremiumConfig[field] || 'inter';
         const sizeField = `${field}Size`;
         const weightField = `${field}Weight`;
         const italicField = `${field}Italic`;
@@ -258,6 +261,7 @@ function SettingsApplier({ children, initialSettings }) {
         interactive={bgInteractive}
         variant={bgStyle}
       />
+      <SiteStatusOverlay config={siteConfig} />
       {children}
     </>
   );

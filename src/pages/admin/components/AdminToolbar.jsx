@@ -10,17 +10,28 @@ const AdminToolbar = ({
   canCreate = true,
   stats = [],
   addLabel = 'Add',
-  searchPlaceholder = 'Search...'
+  searchPlaceholder = 'Search...',
+  eyebrow,
+  title,
+  description
 }) => {
   return (
     <section className="ui-blog-workspace">
       <div className="ui-blog-workspace__overview">
-        <div className="ui-blog-workspace__intro">
-          <span className="ui-blog-workspace__eyebrow">
-            <Sparkles size={14} />
-          </span>
-          <div className="ui-blog-workspace__copy" />
-        </div>
+        {(eyebrow || title || description) && (
+          <div className="ui-blog-workspace__intro">
+            {eyebrow && (
+              <span className="ui-blog-workspace__eyebrow">
+                <Sparkles size={14} />
+                {eyebrow}
+              </span>
+            )}
+            <div className="ui-blog-workspace__copy">
+              {title && <h2>{title}</h2>}
+              {description && <p>{description}</p>}
+            </div>
+          </div>
+        )}
 
         {stats.length > 0 && (
           <div className="ui-blog-workspace__stats">

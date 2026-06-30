@@ -91,7 +91,13 @@ class SettingsService extends BaseService {
         glassOpacity: 0.82,
         glassBlur: 12,
         glassColor: '#0b1527',
-        sidebarPersistent: true
+        sidebarPersistent: true,
+        siteStatus: 'live',
+        siteStatusType: 'watermark',
+        siteStatusMessage: { en: '', km: '' },
+        testingProgress: 85,
+        testingEndDate: '',
+        testingFeedbackUrl: ''
     };
 
     static DEFAULT_TYPOGRAPHY_METADATA = {
