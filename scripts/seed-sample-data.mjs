@@ -160,18 +160,18 @@ const DATA = {
         }
     ],
     skills: [
-        { id: 'sample-skill-1', name: L('ISO/IEC 27001'), category: 'Governance', level: 'expert', slug: 'iso-27001', featured: true, order: 1 },
-        { id: 'sample-skill-2', name: L('Risk Management'), category: 'Governance', level: 'advanced', slug: 'risk-management', featured: false, order: 2 },
-        { id: 'sample-skill-3', name: L('SIEM & Monitoring'), category: 'Security Operations', level: 'advanced', slug: 'siem', featured: false, order: 3 },
-        { id: 'sample-skill-4', name: L('React'), category: 'Engineering', level: 'advanced', slug: 'react', featured: false, order: 4 }
+        { id: 'sample-skill-1', name: L('ISO/IEC 27001', 'ISO/IEC 27001'), category: 'Governance', level: 'expert', slug: 'iso-27001', featured: true, order: 1 },
+        { id: 'sample-skill-2', name: L('Risk Management', 'ការគ្រប់គ្រងហានិភ័យ'), category: 'Governance', level: 'advanced', slug: 'risk-management', featured: false, order: 2 },
+        { id: 'sample-skill-3', name: L('SIEM & Monitoring', 'SIEM និងការតាមដាន'), category: 'Security Operations', level: 'advanced', slug: 'siem', featured: false, order: 3 },
+        { id: 'sample-skill-4', name: L('React', 'React'), category: 'Engineering', level: 'advanced', slug: 'react', featured: false, order: 4 }
     ],
     certificates: [
         {
-            id: 'sample-cert-1', name: L('CISSP'), organization: '(ISC)2', issueDate: '2023-05', expiryDate: '2026-05',
+            id: 'sample-cert-1', name: L('CISSP', 'CISSP'), organization: '(ISC)2', issueDate: '2023-05', expiryDate: '2026-05',
             credentialId: 'CISSP-123456', url: 'https://example.com/verify/cissp', slug: 'cissp', featured: true, order: 1
         },
         {
-            id: 'sample-cert-2', name: L('ISO 27001 Lead Implementer'), organization: 'PECB', issueDate: '2022-09', expiryDate: '',
+            id: 'sample-cert-2', name: L('ISO 27001 Lead Implementer', 'អ្នកអនុវត្តនាំមុខ ISO 27001'), organization: 'PECB', issueDate: '2022-09', expiryDate: '',
             credentialId: 'PECB-7788', url: 'https://example.com/verify/pecb', slug: 'iso-27001-lead-implementer', featured: false, order: 2
         }
     ],
