@@ -233,7 +233,9 @@ const SiteStatusOverlay = ({ config }) => {
     }
 
     // Watermark Type
-    const repeatText = isMaintenance ? 'MAINTENANCE...' : 'TESTING...';
+    const repeatText = isMaintenance 
+        ? (language === 'km' ? 'កំពុងថែទាំ...' : 'MAINTENANCE...')
+        : (language === 'km' ? 'កំពុងសាកល្បង...' : 'TESTING...');
     const bannerColor = isMaintenance ? '#ef4444' : '#60a5fa';
 
     return (
@@ -249,7 +251,10 @@ const SiteStatusOverlay = ({ config }) => {
                 <div className={styles.bannerLeft}>
                     {isMaintenance ? <Wrench size={16} color={bannerColor} /> : <Beaker size={16} color={bannerColor} />}
                     <span style={{ color: bannerColor }}>
-                        {isMaintenance ? 'MAINTENANCE MODE (LIVE & ACCESSIBLE)' : 'TEST MODE (LIVE & ACCESSIBLE)'}
+                        {isMaintenance 
+                            ? (language === 'km' ? 'របៀបថែទាំប្រព័ន្ធ (ដំណើរការ & អាចចូលប្រើបាន)' : 'MAINTENANCE MODE (LIVE & ACCESSIBLE)')
+                            : (language === 'km' ? 'របៀបសាកល្បង (ដំណើរការ & អាចចូលប្រើបាន)' : 'TEST MODE (LIVE & ACCESSIBLE)')
+                        }
                     </span>
                 </div>
                 <div className={styles.bannerRight}>
