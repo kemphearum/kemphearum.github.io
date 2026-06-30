@@ -129,28 +129,40 @@ const Hero = () => {
                                 <MarkdownRenderer content={content.description} />
                             </motion.div>
                             <motion.div variants={itemVariants} className={styles.cta}>
-                                <Link 
-                                    to={content.ctaLink || "/#experience"}
-                                    onClick={(e) => {
-                                        trackEvent('hero_cta_clicked', { link: content.ctaLink || "#experience" });
-                                        handleSectionLinkClick(e, content.ctaLink || '#experience');
-                                    }}
-                                    className={styles.ctaButton}
+                                <motion.div
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
                                 >
-                                    {content.ctaText || t('hero.defaultCta')}
-                                    <Download size={18} />
-                                </Link>
-                                <Link 
-                                    to="/#contact"
-                                    onClick={(e) => {
-                                        trackEvent('hero_contact_clicked');
-                                        handleSectionLinkClick(e, '#contact');
-                                    }}
-                                    className={styles.ctaSecondary}
+                                    <Link 
+                                        to={content.ctaLink || "/#experience"}
+                                        onClick={(e) => {
+                                            trackEvent('hero_cta_clicked', { link: content.ctaLink || "#experience" });
+                                            handleSectionLinkClick(e, content.ctaLink || '#experience');
+                                        }}
+                                        className={styles.ctaButton}
+                                    >
+                                        {content.ctaText || t('hero.defaultCta')}
+                                        <Download size={18} />
+                                    </Link>
+                                </motion.div>
+                                <motion.div
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
                                 >
-                                    {t('hero.contactCta')}
-                                    <Send size={18} />
-                                </Link>
+                                    <Link 
+                                        to="/#contact"
+                                        onClick={(e) => {
+                                            trackEvent('hero_contact_clicked');
+                                            handleSectionLinkClick(e, '#contact');
+                                        }}
+                                        className={styles.ctaSecondary}
+                                    >
+                                        {t('hero.contactCta')}
+                                        <Send size={18} />
+                                    </Link>
+                                </motion.div>
                             </motion.div>
                         </motion.div>
                     )}

@@ -213,7 +213,6 @@
     box-shadow: 0 4px 15px rgba($primary-color, 0.3);
 
     &:hover {
-        transform: translateY(-3px);
         box-shadow: 0 8px 25px rgba($primary-color, 0.4);
 
         svg {
@@ -244,7 +243,6 @@
         border-color: $primary-color;
         color: $primary-color;
         background: rgba($primary-color, 0.05);
-        transform: translateY(-3px);
     }
 
     svg {

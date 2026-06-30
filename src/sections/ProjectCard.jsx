@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router';
+import { motion } from 'framer-motion';
 import { useAnalytics } from '../hooks/useAnalytics';
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
@@ -17,7 +18,14 @@ const ProjectCard = ({ project }) => {
     };
 
     return (
-        <article className={styles.card}>
+        <motion.article 
+            className={styles.card}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            whileHover={{ y: -8 }}
+        >
             <div className={styles.imageWrapper}>
                 {project.imageUrl ? (
                     <img
@@ -103,7 +111,7 @@ const ProjectCard = ({ project }) => {
                     )}
                 </div>
             </div>
-        </article>
+        </motion.article>
     );
 };
 
