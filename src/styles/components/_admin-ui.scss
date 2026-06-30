@@ -861,7 +861,7 @@
 }
 
 // BLOG WORKSPACE
-.ui-blog-workspace {
+.ui-admin-workspace {
     display: flex;
     flex-direction: column;
     gap: 1rem;
@@ -873,20 +873,20 @@
     box-shadow: 0 6px 16px rgba(3, 8, 20, 0.12);
 }
 
-.ui-blog-workspace__overview {
+.ui-admin-workspace__overview {
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
 }
 
-.ui-blog-workspace__intro {
+.ui-admin-workspace__intro {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 1.5rem;
 }
 
-.ui-blog-workspace__eyebrow {
+.ui-admin-workspace__eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
@@ -902,7 +902,7 @@
     width: fit-content;
 }
 
-.ui-blog-workspace__copy {
+.ui-admin-workspace__copy {
     max-width: 720px;
 
     h2 {
@@ -920,13 +920,13 @@
     }
 }
 
-.ui-blog-workspace__stats {
+.ui-admin-workspace__stats {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.85rem;
 }
 
-.ui-blog-workspace__stat {
+.ui-admin-workspace__stat {
     display: flex;
     gap: 0.85rem;
     align-items: flex-start;
@@ -938,7 +938,7 @@
     box-shadow: 0 1px 2px rgba(9, 17, 31, 0.08);
 }
 
-.ui-blog-workspace__statIcon {
+.ui-admin-workspace__statIcon {
     width: 38px;
     height: 38px;
     border-radius: 12px;
@@ -951,41 +951,41 @@
     border: 1px solid var(--workspace-stat-icon-border, rgba($primary-color, 0.2));
 }
 
-.ui-blog-workspace__statBody {
+.ui-admin-workspace__statBody {
     display: flex;
     flex-direction: column;
     gap: 0.12rem;
 }
 
-.ui-blog-workspace__statValue {
+.ui-admin-workspace__statValue {
     font-size: 1.35rem;
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
 }
 
-.ui-blog-workspace__statLabel {
+.ui-admin-workspace__statLabel {
     font-size: 0.82rem;
     font-weight: 700;
     color: var(--text-primary);
 }
 
-.ui-blog-workspace__statHint {
+.ui-admin-workspace__statHint {
     font-size: 0.74rem;
     color: var(--text-secondary);
     line-height: 1.5;
 }
 
-.ui-blog-toolbar {
+.ui-admin-toolbar {
     margin-bottom: 0;
     align-items: stretch;
 }
 
-.ui-blog-toolbar__search {
+.ui-admin-toolbar__search {
     max-width: 480px;
 }
 
-.ui-blog-toolbar__actions {
+.ui-admin-toolbar__actions {
     display: flex;
     gap: 0.75rem;
     justify-content: flex-end;
@@ -994,7 +994,7 @@
     min-width: 0;
 }
 
-.ui-blog-toolbar__actionGroup {
+.ui-admin-toolbar__actionGroup {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
@@ -1004,11 +1004,11 @@
     background: var(--bg-surface-light);
 }
 
-.ui-blog-toolbar__create {
+.ui-admin-toolbar__create {
     box-shadow: 0 12px 24px rgba($primary-color, 0.2);
 }
 
-.ui-blog-toolbar__foot {
+.ui-admin-toolbar__foot {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
@@ -1023,47 +1023,47 @@
 }
 
 @media (max-width: 768px) {
-    .ui-blog-workspace {
+    .ui-admin-workspace {
         padding: 1rem;
         border-radius: 16px;
     }
 
-    .ui-blog-workspace__intro {
+    .ui-admin-workspace__intro {
         flex-direction: column;
     }
 
-    .ui-blog-workspace__stats {
+    .ui-admin-workspace__stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .ui-blog-toolbar {
+    .ui-admin-toolbar {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .ui-blog-toolbar__search {
+    .ui-admin-toolbar__search {
         max-width: 100%;
     }
 
-    .ui-blog-toolbar__actions {
+    .ui-admin-toolbar__actions {
         display: grid;
         grid-template-columns: 1fr;
         justify-content: stretch;
         gap: 0.6rem;
     }
 
-    .ui-blog-toolbar__actionGroup,
-    .ui-blog-toolbar__actions > .ui-button {
+    .ui-admin-toolbar__actionGroup,
+    .ui-admin-toolbar__actions > .ui-button {
         width: 100%;
     }
 
-    .ui-blog-toolbar__actionGroup {
+    .ui-admin-toolbar__actionGroup {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.45rem;
     }
 
-    .ui-blog-toolbar__actionGroup .ui-button {
+    .ui-admin-toolbar__actionGroup .ui-button {
         width: 100%;
         justify-content: center;
     }
@@ -1100,11 +1100,11 @@
 }
 
 @media (max-width: 540px) {
-    .ui-blog-workspace__stats {
+    .ui-admin-workspace__stats {
         grid-template-columns: 1fr;
     }
 
-    .ui-blog-toolbar__actionGroup {
+    .ui-admin-toolbar__actionGroup {
         grid-template-columns: 1fr;
     }
 }

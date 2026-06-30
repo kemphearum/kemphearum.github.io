@@ -4,7 +4,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { getLanguageValue } from '../utils/localization';
 import MarkdownRenderer from '@/sections/MarkdownRenderer';
 import { AlertCircle, Beaker, Settings, Wrench, Clock } from 'lucide-react';
-import { useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import styles from './SiteStatusOverlay.module.scss';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
@@ -24,6 +24,19 @@ const SiteStatusOverlay = ({ config }) => {
         });
         return () => unsubscribe();
     }, []);
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l') {
+                e.preventDefault();
+                navigate('/admin');
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [navigate]);
 
     // Default to 'live' if undefined
     const status = config?.siteStatus || 'live';
