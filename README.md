@@ -14,7 +14,8 @@ Live sites:
 - Hero, About, Experience, Projects, Blog, Contact, Footer
 - Light and dark theme with persistent preference
 - Blog markdown rendering with sanitization and code highlighting
-- SEO-friendly SSG routing with clean URLs
+- Fully statically generated (SSG) for high performance and zero-cost free-tier hosting
+- Auto-generated `sitemap.xml` and `rss.xml` for SEO
 
 ### Admin Dashboard
 - Firebase Auth (email/password)
@@ -249,6 +250,12 @@ cd portfolio
 npm install
 ```
 
+### Seed Initial Database
+Initialize your Firestore database with required configuration, sample content, and default layouts:
+```bash
+npm run seed -- --project your-firebase-project-id
+```
+
 ### Development
 ```bash
 npm run dev
@@ -272,8 +279,9 @@ npm test
 ## Scripts
 
 - `npm run dev` - start local dev server
-- `npm run build` - production build (client + server output)
+- `npm run build` - production SSG build with route flattening
 - `npm run preview` - preview production build
+- `npm run seed` - populates Firestore with initial sample data and layout configuration
 - `npm run lint` - lint project
 - `npm test` - run unit tests
 - `npm run deploy:firebase:hosting` - deploy static hosting only
