@@ -3,6 +3,7 @@ import { Save, ShieldAlert, Type } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import FormField from '../../components/FormField';
 import FormMarkdownEditor from '../../components/FormMarkdownEditor';
+import FormSelect from '../../components/FormSelect';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { getLanguageValue } from '../../../../utils/localization';
 
@@ -45,26 +46,28 @@ const StatusSection = ({ settingsData, setSettingsData, onSave, loading }) => {
                                 
                                 <div className="ui-formGrid">
                                     <FormField label={t('admin.settings.sections.status.fields.siteStatus', 'Site Status')} name="siteStatus">
-                                        <select 
+                                        <FormSelect 
                                             name="siteStatus" 
                                             value={settingsData.siteStatus || 'live'} 
                                             onChange={handleFormChange}
-                                        >
-                                            <option value="live">{t('admin.settings.sections.status.options.live', 'Live (Normal)')}</option>
-                                            <option value="testing">{t('admin.settings.sections.status.options.testing', 'Testing Mode')}</option>
-                                            <option value="maintenance">{t('admin.settings.sections.status.options.maintenance', 'Maintenance Mode')}</option>
-                                        </select>
+                                            options={[
+                                                { value: 'live', label: t('admin.settings.sections.status.options.live', 'Live (Normal)') },
+                                                { value: 'testing', label: t('admin.settings.sections.status.options.testing', 'Testing Mode') },
+                                                { value: 'maintenance', label: t('admin.settings.sections.status.options.maintenance', 'Maintenance Mode') }
+                                            ]}
+                                        />
                                     </FormField>
 
                                     <FormField label={t('admin.settings.sections.status.fields.siteStatusType', 'Presentation Type')} name="siteStatusType">
-                                        <select 
+                                        <FormSelect 
                                             name="siteStatusType" 
                                             value={settingsData.siteStatusType || 'watermark'} 
                                             onChange={handleFormChange}
-                                        >
-                                            <option value="watermark">{t('admin.settings.sections.status.options.watermark', 'Subtle Watermark (Non-blocking)')}</option>
-                                            <option value="dialog">{t('admin.settings.sections.status.options.dialog', 'Full Screen Dialog (Blocking)')}</option>
-                                        </select>
+                                            options={[
+                                                { value: 'watermark', label: t('admin.settings.sections.status.options.watermark', 'Subtle Watermark (Non-blocking)') },
+                                                { value: 'dialog', label: t('admin.settings.sections.status.options.dialog', 'Full Screen Dialog (Blocking)') }
+                                            ]}
+                                        />
                                     </FormField>
                                 </div>
                             </div>
