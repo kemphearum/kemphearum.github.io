@@ -33,14 +33,24 @@ const SiteStatusOverlay = ({ config }) => {
     const type = isAdminAuthed ? 'watermark' : rawType;
 
     useEffect(() => {
+        const handleResize = () => {
+            if (status !== 'live' && type === 'watermark') {
+                const height = window.innerWidth <= 768 ? '75px' : '45px';
+                document.body.style.paddingBottom = height;
+                document.documentElement.style.setProperty('--status-banner-height', height);
+            }
+        };
+
         if (status !== 'live' && type === 'watermark') {
-            document.body.style.paddingBottom = '45px';
-            document.documentElement.style.setProperty('--status-banner-height', '45px');
+            handleResize();
+            window.addEventListener('resize', handleResize);
         } else {
             document.body.style.paddingBottom = '';
             document.documentElement.style.removeProperty('--status-banner-height');
         }
+
         return () => {
+            window.removeEventListener('resize', handleResize);
             document.body.style.paddingBottom = '';
             document.documentElement.style.removeProperty('--status-banner-height');
         };

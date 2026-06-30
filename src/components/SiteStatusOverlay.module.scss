@@ -47,6 +47,13 @@
     font-size: 0.85rem;
     font-weight: 600;
     
+    @media (max-width: 768px) {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        text-align: center;
+    }
+    
     .bannerLeft {
         display: flex;
         align-items: center;
@@ -115,6 +122,10 @@
             background-clip: text;
             -webkit-text-fill-color: transparent;
             line-height: 1.2;
+
+            @media (max-width: 768px) {
+                font-size: 2.2rem;
+            }
         }
 
         .subtitle {
@@ -259,6 +270,23 @@
                 svg {
                     width: 120px;
                     height: 120px;
+                }
+            }
+        }
+        
+        @media (max-width: 768px) {
+            width: 180px;
+            height: 180px;
+            
+            .centerLogo {
+                width: 110px;
+                height: 110px;
+                
+                .kp { font-size: 2.5rem; }
+                
+                .gears svg {
+                    width: 80px;
+                    height: 80px;
                 }
             }
         }

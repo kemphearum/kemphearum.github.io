@@ -21,17 +21,12 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-    const [theme, setTheme] = useState('dark');
-
-    useEffect(() => {
-        const recoverTheme = () => {
-            const saved = localStorage.getItem('portfolio-theme');
-            setTheme(saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
-        };
-
-        const frame = requestAnimationFrame(recoverTheme);
-        return () => cancelAnimationFrame(frame);
-    }, []);
+    const [theme, setTheme] = useState(() => {
+        if (typeof window === 'undefined') return 'dark';
+        const saved = localStorage.getItem('portfolio-theme');
+        if (saved) return saved;
+        return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    });
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);

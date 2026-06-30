@@ -1183,6 +1183,10 @@
     "settings": {
       "loading": "កំពុងផ្ទុកការកំណត់ Typography...",
       "subTabs": {
+        "status": {
+          "label": "ស្ថានភាពគេហទំព័រ",
+          "description": "ការថែទាំប្រព័ន្ធ និងការត្រួតស៊ីគ្នា"
+        },
         "identity": {
           "label": "អត្តសញ្ញាណ",
           "description": "ចំណងជើងកម្មវិធី ប្រព័ន្ធឡូហ្គោ តម្រង និង favicon"
@@ -1266,6 +1270,13 @@
         }
       },
       "sectionMeta": {
+        "status": {
+          "live": "ធម្មតា",
+          "testing": "សាកល្បង",
+          "maintenance": "ការថែទាំប្រព័ន្ធ",
+          "dialog": "ផ្ទាំងរារាំងពេញអេក្រង់",
+          "watermark": "ផ្ទាំងទឹកមិនរារាំង"
+        },
         "identity": {
           "faviconConfigured": "បានកំណត់ favicon",
           "addFavicon": "បន្ថែម favicon"

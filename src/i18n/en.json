@@ -1090,6 +1090,10 @@
     "settings": {
       "loading": "Loading Typography Settings...",
       "subTabs": {
+        "status": {
+          "label": "Site Status",
+          "description": "Maintenance & Overlays"
+        },
         "identity": {
           "label": "Identity",
           "description": "Browser title, branding system, filters, and favicon."
@@ -1173,6 +1177,13 @@
         }
       },
       "sectionMeta": {
+        "status": {
+          "live": "Live",
+          "testing": "Testing",
+          "maintenance": "Maintenance",
+          "dialog": "Blocking Dialog",
+          "watermark": "Subtle Watermark"
+        },
         "identity": {
           "faviconConfigured": "Favicon configured",
           "addFavicon": "Add a favicon"
