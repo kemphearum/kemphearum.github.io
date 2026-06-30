@@ -4,6 +4,36 @@ export const LANGUAGE_STORAGE_KEY = 'portfolio.language';
 
 const safeString = (value) => (typeof value === 'string' ? value : '');
 
+const monthMapKm = {
+  'Jan': 'មករា', 'January': 'មករា',
+  'Feb': 'កុម្ភៈ', 'February': 'កុម្ភៈ',
+  'Mar': 'មីនា', 'March': 'មីនា',
+  'Apr': 'មេសា', 'April': 'មេសា',
+  'May': 'ឧសភា',
+  'Jun': 'មិថុនា', 'June': 'មិថុនា',
+  'Jul': 'កក្កដា', 'July': 'កក្កដា',
+  'Aug': 'សីហា', 'August': 'សីហា',
+  'Sep': 'កញ្ញា', 'September': 'កញ្ញា',
+  'Oct': 'តុលា', 'October': 'តុលា',
+  'Nov': 'វិច្ឆិកា', 'November': 'វិច្ឆិកា',
+  'Dec': 'ធ្នូ', 'December': 'ធ្នូ',
+  'Present': 'បច្ចុប្បន្ន'
+};
+
+export const formatLocalizedPeriod = (periodStr, language) => {
+    if (!periodStr || typeof periodStr !== 'string') return periodStr;
+    if (language !== 'km') return periodStr;
+
+    let localizedStr = periodStr;
+    // Replace English months and "Present" with Khmer
+    Object.keys(monthMapKm).forEach(enWord => {
+        const regex = new RegExp(`\\b${enWord}\\b`, 'gi');
+        localizedStr = localizedStr.replace(regex, monthMapKm[enWord]);
+    });
+    
+    return localizedStr;
+};
+
 export const normalizeLanguage = (value) => (
     SUPPORTED_LANGUAGES.includes(value) ? value : DEFAULT_LANGUAGE
 );
