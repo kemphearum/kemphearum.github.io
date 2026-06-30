@@ -101,11 +101,31 @@ function ConditionalScrollRestoration() {
 function RouteScrollReset() {
   const location = useLocation();
   const navigationType = useNavigationType();
+  const isInitialRender = React.useRef(true);
 
   useEffect(() => {
+    const isFirstRun = isInitialRender.current;
+    isInitialRender.current = false;
+
+    // 1. Force a clean slate (scroll to top) on a hard page refresh.
+    // This provides a better UX for heavily dynamic portfolio sites than erratic native restoration.
+    if (isFirstRun) {
+      const isReload = window.performance && 
+        window.performance.getEntriesByType("navigation").length > 0 && 
+        window.performance.getEntriesByType("navigation")[0].type === "reload";
+
+      if (isReload && !location.hash) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        // Use a small timeout to override React Router's <ScrollRestoration /> which might fire slightly later
+        setTimeout(() => window.scrollTo(0, 0), 50);
+        return;
+      }
+    }
+
+    // 2. Normal routing behavior
     if (location.hash) return;
-    if (navigationType === 'POP') return;
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    if (navigationType === 'POP') return; // Let <ScrollRestoration /> handle back/forward buttons
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); // Scroll to top on standard navigation
   }, [location, navigationType]);
 
   return null;
