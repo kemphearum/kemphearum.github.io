@@ -4,7 +4,7 @@ import { Badge } from '@/shared/components/ui';
 import DataTable from '@/shared/components/ui/data-table/DataTable';
 import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableHelpers';
 import { useTranslation } from '../../../../hooks/useTranslation';
-import { getLocalizedField } from '../../../../utils/localization';
+import { getLocalizedField, formatLocalizedPeriod } from '../../../../utils/localization';
 
 /**
  * ExperienceTable Component
@@ -67,10 +67,12 @@ const ExperienceTable = ({
     if (!normalized) return '';
     const [year, month] = normalized.split('-');
     const date = new Date(Number(year), Number(month) - 1, 1);
-    return new Intl.DateTimeFormat(undefined, {
+    const locale = language === 'km' ? 'km-KH' : 'en-US';
+    const rawMonth = new Intl.DateTimeFormat(locale, {
       month: 'short',
       year: 'numeric'
     }).format(date);
+    return language === 'km' ? formatLocalizedPeriod(rawMonth, language) : rawMonth;
   };
 
   const getPeriodSummary = (row) => {

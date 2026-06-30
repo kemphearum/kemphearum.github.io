@@ -4,7 +4,7 @@ import { Badge, Button } from '@/shared/components/ui';
 import DataTable from '@/shared/components/ui/data-table/DataTable';
 import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableHelpers';
 import { useTranslation } from '../../../../hooks/useTranslation';
-import { getLocalizedField } from '../../../../utils/localization';
+import { getLocalizedField, formatLocalizedPeriod } from '../../../../utils/localization';
 import HighlightText from '@/shared/components/ui/HighlightText';
 import StatusBadge from '../../components/StatusBadge';
 
@@ -45,13 +45,15 @@ const ProjectsTable = ({
     if (!value?.seconds) return { day: '-', time: '' };
 
     const date = new Date(value.seconds * 1000);
-    return {
-      day: new Intl.DateTimeFormat(undefined, {
+    const locale = language === 'km' ? 'km-KH' : 'en-US';
+    const rawDay = new Intl.DateTimeFormat(locale, {
         month: 'short',
         day: 'numeric',
         year: 'numeric'
-      }).format(date),
-      time: new Intl.DateTimeFormat(undefined, {
+      }).format(date);
+    return {
+      day: language === 'km' ? formatLocalizedPeriod(rawDay, language) : rawDay,
+      time: new Intl.DateTimeFormat(locale, {
         hour: 'numeric',
         minute: '2-digit'
       }).format(date)

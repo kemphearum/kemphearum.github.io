@@ -4,7 +4,7 @@ import { Card, Spinner } from '@/shared/components/ui';
 import BaseService from '../../../../services/BaseService';
 import BlogService from '../../../../services/BlogService';
 import ProjectService from '../../../../services/ProjectService';
-import { getLocalizedField } from '../../../../utils/localization';
+import { getLocalizedField, formatLocalizedPeriod } from '../../../../utils/localization';
 import { MODULES } from '../../../../utils/permissions';
 import { STATUS, STATUS_VALUES, computeEffectiveStatus } from '../../../../domain/shared/contentStatus';
 import styles from '../DashboardTab.module.scss';
@@ -95,7 +95,9 @@ const InsightsWidget = ({ ctx }) => {
                     <div className={styles.trendBar} style={{ height: `${Math.round((m.count / trendMax) * 100)}%` }} />
                   </div>
                   <span className={styles.trendCount}>{m.count}</span>
-                  <span className={styles.trendLabel}>{new Intl.DateTimeFormat(language === 'km' ? 'km-KH' : 'en-US', { month: 'short' }).format(new Date(`${m.key}-01T00:00:00`))}</span>
+                  <span className={styles.trendLabel}>
+                    {language === 'km' ? formatLocalizedPeriod(new Intl.DateTimeFormat('km-KH', { month: 'short' }).format(new Date(`${m.key}-01T00:00:00`)), 'km') : new Intl.DateTimeFormat('en-US', { month: 'short' }).format(new Date(`${m.key}-01T00:00:00`))}
+                  </span>
                 </div>
               ))}
             </div>

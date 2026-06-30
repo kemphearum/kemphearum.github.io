@@ -5,7 +5,7 @@ import { Card, Spinner, EmptyState } from '@/shared/components/ui';
 import BaseService from '../../../../services/BaseService';
 import BlogService from '../../../../services/BlogService';
 import ProjectService from '../../../../services/ProjectService';
-import { getLocalizedField } from '../../../../utils/localization';
+import { getLocalizedField, formatLocalizedPeriod } from '../../../../utils/localization';
 import { MODULES } from '../../../../utils/permissions';
 import styles from '../DashboardTab.module.scss';
 
@@ -14,7 +14,8 @@ const QUERY_OPTS = { staleTime: 60000, gcTime: 300000, refetchOnWindowFocus: fal
 const formatDate = (value, language) => {
   const seconds = value?.seconds;
   if (!seconds) return '';
-  return new Intl.DateTimeFormat(language === 'km' ? 'km-KH' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(seconds * 1000));
+  const rawDate = new Intl.DateTimeFormat(language === 'km' ? 'km-KH' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(seconds * 1000));
+  return language === 'km' ? formatLocalizedPeriod(rawDate, language) : rawDate;
 };
 
 const LatestPanel = ({ titleKey, items, loading, type, ctx }) => {

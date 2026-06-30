@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Calendar, Download, RefreshCw, Clock3 } from 'lucide-react';
 import Button from '../../../../shared/components/ui/button/Button';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { formatLocalizedPeriod } from '../../../../utils/localization';
 
 /**
  * AnalyticsFilterBar Component
@@ -39,10 +40,13 @@ const AnalyticsFilterBar = ({
         const withYear = { ...compact, year: 'numeric' };
 
         const sameYear = startDate.getFullYear() === endDate.getFullYear();
-        const startText = startDate.toLocaleDateString(dateLocale, sameYear ? compact : withYear);
-        const endText = endDate.toLocaleDateString(dateLocale, withYear);
+        const rawStartText = startDate.toLocaleDateString(dateLocale, sameYear ? compact : withYear);
+        const rawEndText = endDate.toLocaleDateString(dateLocale, withYear);
+        const startText = language === 'km' ? formatLocalizedPeriod(rawStartText, language) : rawStartText;
+        const endText = language === 'km' ? formatLocalizedPeriod(rawEndText, language) : rawEndText;
+        
         const daysText = Number.isFinite(dayDiff) && dayDiff > 0
-            ? t('ui.DayDiffDayDayDiff1S')
+            ? t(dayDiff > 1 ? 'ui.dayCountPlural' : 'ui.dayCountSingular', { count: dayDiff })
             : t('ui.custom');
 
         return `${startText} ${t('ui.to')} ${endText} (${daysText})`;

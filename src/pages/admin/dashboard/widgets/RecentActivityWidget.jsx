@@ -4,12 +4,14 @@ import { Activity, ArrowRight } from 'lucide-react';
 import { Card, Spinner, EmptyState } from '@/shared/components/ui';
 import BaseService from '../../../../services/BaseService';
 import AuditLogService from '../../../../services/AuditLogService';
+import { formatLocalizedPeriod } from '../../../../utils/localization';
 import styles from '../DashboardTab.module.scss';
 
 const formatDate = (value, language) => {
   const seconds = value?.seconds;
   if (!seconds) return '';
-  return new Intl.DateTimeFormat(language === 'km' ? 'km-KH' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(seconds * 1000));
+  const rawDate = new Intl.DateTimeFormat(language === 'km' ? 'km-KH' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(seconds * 1000));
+  return language === 'km' ? formatLocalizedPeriod(rawDate, language) : rawDate;
 };
 
 const RecentActivityWidget = ({ ctx }) => {

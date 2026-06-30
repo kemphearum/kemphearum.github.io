@@ -2,6 +2,7 @@ import React from 'react';
 import { Eye, Mail, MailOpen, Trash2 } from 'lucide-react';
 import { Button, Badge, DataTable } from '../../../../shared/components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
+import { formatLocalizedPeriod } from '../../../../utils/localization';
 
 const getDateFromTimestamp = (timestamp) => {
     if (!timestamp?.seconds) return null;
@@ -10,15 +11,15 @@ const getDateFromTimestamp = (timestamp) => {
 
 const formatAbsoluteDate = (timestamp, locale, fallbackText) => {
     const date = getDateFromTimestamp(timestamp);
-    return date
-        ? new Intl.DateTimeFormat(locale, {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
-        }).format(date)
-        : fallbackText;
+    if (!date) return fallbackText;
+    const rawDate = new Intl.DateTimeFormat(locale, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    }).format(date);
+    return locale === 'km-KH' ? formatLocalizedPeriod(rawDate, 'km') : rawDate;
 };
 
 const formatRelativeDate = (timestamp, locale, fallbackText) => {

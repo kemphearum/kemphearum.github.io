@@ -10,6 +10,7 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { useCursorPagination } from '../../../hooks/useCursorPagination';
 import MessagesTable from './components/MessagesTable';
 import { useTranslation } from '../../../hooks/useTranslation';
+import { formatLocalizedPeriod } from '../../../utils/localization';
 import { ACTIONS, MODULES } from '../../../utils/permissions';
 
 const getDateFromTimestamp = (timestamp) => {
@@ -19,15 +20,15 @@ const getDateFromTimestamp = (timestamp) => {
 
 const formatDateTime = (timestamp, locale, fallbackText) => {
     const date = getDateFromTimestamp(timestamp);
-    return date
-        ? new Intl.DateTimeFormat(locale, {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
-        }).format(date)
-        : fallbackText;
+    if (!date) return fallbackText;
+    const rawDate = new Intl.DateTimeFormat(locale, {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    }).format(date);
+    return locale === 'km-KH' ? formatLocalizedPeriod(rawDate, 'km') : rawDate;
 };
 
 const buildRelativeTime = (timestamp, locale, fallbackText) => {

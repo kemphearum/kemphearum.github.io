@@ -8,7 +8,7 @@ import { SectionHeader } from '@/shared/components/ui';
 import styles from './Certificates.module.scss';
 import { useTranslation } from '../hooks/useTranslation';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
-import { getLocalizedField } from '../utils/localization';
+import { getLocalizedField, formatLocalizedPeriod } from '../utils/localization';
 import { filterPublished } from '../domain/shared/contentStatus';
 import { generateCredentialSchema } from '../utils/SeoHelper';
 
@@ -17,7 +17,8 @@ const formatMonth = (value, language) => {
     const match = value.match(/^(\d{4})-(\d{2})/);
     if (!match) return value;
     const date = new Date(Number(match[1]), Number(match[2]) - 1, 1);
-    return new Intl.DateTimeFormat(language === 'km' ? 'km-KH' : 'en-US', { month: 'short', year: 'numeric' }).format(date);
+    const rawDate = new Intl.DateTimeFormat(language === 'km' ? 'km-KH' : 'en-US', { month: 'short', year: 'numeric' }).format(date);
+    return language === 'km' ? formatLocalizedPeriod(rawDate, language) : rawDate;
 };
 
 const Certificates = ({ isStandalone = false }) => {
