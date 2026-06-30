@@ -13,7 +13,6 @@ import { filterPublished } from '../domain/shared/contentStatus';
 
 const Projects = ({ isStandalone = false }) => {
     const { language, t } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const ALL_FILTER = '__all__';
     const { data: projectsData, isLoading: loadingProjects } = useQuery({
     staleTime: 60000,
@@ -234,7 +233,7 @@ const Projects = ({ isStandalone = false }) => {
                             className={styles.pageBtn}
                             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                             disabled={currentPage === 1}
-                            aria-label={tr('Previous Page', 'ទំព័រមុន')}
+                            aria-label={t('ui.previousPage')}
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
@@ -255,7 +254,7 @@ const Projects = ({ isStandalone = false }) => {
                             className={styles.pageBtn}
                             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                             disabled={currentPage === totalPages}
-                            aria-label={tr('Next Page', 'ទំព័របន្ទាប់')}
+                            aria-label={t('ui.nextPage')}
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </button>

@@ -82,7 +82,7 @@ const EducationFormFields = ({ activeLanguage, setActiveLanguage }) => {
                         setActiveLanguage={setActiveLanguage}
                     />
 
-                    <FormField label="Entry Type" name="type">
+                    <FormField label={t('admin.education.form.fields.entryType')} name="type">
                         <FormSelect
                             options={[
                                 { label: 'Degree', value: 'Degree' },
@@ -107,7 +107,7 @@ const EducationFormFields = ({ activeLanguage, setActiveLanguage }) => {
                         name="startYear"
                         validation={{ required: t('admin.education.form.fields.startYearRequired') }}
                     >
-                        <FormInput type="text" placeholder="YYYY" />
+                        <FormInput type="text" placeholder={t('admin.education.form.fields.startYearPlaceholder')} />
                     </FormField>
 
                     <label className={`ui-EducationPresentToggle ${isPresent ? 'ui-EducationPresentToggle--active' : ''}`}>
@@ -125,7 +125,7 @@ const EducationFormFields = ({ activeLanguage, setActiveLanguage }) => {
                             required: !isPresent ? t('admin.education.form.fields.endYearRequired') : false,
                         }}
                     >
-                        <FormInput type="text" placeholder="YYYY" disabled={isPresent} />
+                        <FormInput type="text" placeholder={t('admin.education.form.fields.endYearPlaceholder')} disabled={isPresent} />
                     </FormField>
                 </div>
 

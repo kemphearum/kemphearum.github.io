@@ -60,7 +60,7 @@ export default {
     },
     async prerender() {
         // Pre-render base routes
-        const routes = ["/", "/blog", "/projects", "/resume"];
+        const routes = ["/", "/blog", "/projects", "/resume", "/sitemap.xml", "/rss.xml"];
 
         // Skip dynamic discovery in development to save API quota and prevent 429 errors
         if (process.env.NODE_ENV === 'development') {

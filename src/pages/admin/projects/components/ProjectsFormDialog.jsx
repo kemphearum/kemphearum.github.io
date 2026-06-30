@@ -102,7 +102,7 @@ const ProjectLocalizedFields = () => {
                     id={`project-problem-${activeLanguage}`}
                     rows={6}
                     fullWidth={false}
-                    placeholder="Describe the problem or challenge..."
+                    placeholder={t('admin.projects.form.fields.problemPlaceholder')}
                 />
             </FormField>
 
@@ -115,7 +115,7 @@ const ProjectLocalizedFields = () => {
                     id={`project-solution-${activeLanguage}`}
                     rows={6}
                     fullWidth={false}
-                    placeholder="Describe your solution..."
+                    placeholder={t('admin.projects.form.fields.solutionPlaceholder')}
                 />
             </FormField>
 
@@ -128,7 +128,7 @@ const ProjectLocalizedFields = () => {
                     id={`project-architecture-${activeLanguage}`}
                     rows={6}
                     fullWidth={false}
-                    placeholder="Describe the architecture..."
+                    placeholder={t('admin.projects.form.fields.architecturePlaceholder')}
                 />
             </FormField>
 
@@ -141,7 +141,7 @@ const ProjectLocalizedFields = () => {
                     id={`project-impact-${activeLanguage}`}
                     rows={6}
                     fullWidth={false}
-                    placeholder="Describe the results and impact..."
+                    placeholder={t('admin.projects.form.fields.resultsPlaceholder')}
                 />
             </FormField>
         </>
@@ -250,8 +250,8 @@ const ProjectsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                                         <FormInput placeholder={t('admin.projects.form.fields.slugPlaceholder')} />
                                     </FormField>
 
-                                    <FormField label="Gallery Image URLs" name="galleryUrls" hint="Comma-separated image URLs for gallery">
-                                        <FormInput placeholder="https://..., https://..." 
+                                    <FormField label={t('admin.projects.form.fields.galleryImageUrls')} name="galleryUrls" hint={t('admin.projects.form.fields.galleryHint')}>
+                                        <FormInput placeholder={t('admin.projects.form.fields.galleryPlaceholder')} 
                                             onChange={() => {
                                                 // Convert comma separated to array before form submit in parent, or handle as string and let domain parse it
                                             }} 

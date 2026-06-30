@@ -315,6 +315,46 @@ service cloud.firestore {
       && (!data.keys().hasAny(['featured']) || data.featured is bool)
       && hasSystemFields(data);
     }
+    
+    function isAwardPayloadValid() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['title', 'organization', 'description', 'issueDate', 'link', 'visible', 'featured', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      && (!data.keys().hasAny(['title']) || isLocalizedField(data.title))
+      && (!data.keys().hasAny(['organization']) || data.organization is string)
+      && (!data.keys().hasAny(['description']) || data.description is string)
+      && (!data.keys().hasAny(['link']) || data.link is string)
+      && (!data.keys().hasAny(['visible']) || data.visible is bool)
+      && (!data.keys().hasAny(['featured']) || data.featured is bool)
+      && (!data.keys().hasAny(['order']) || data.order is number)
+      && hasSystemFields(data);
+    }
+    
+    function isPublicationPayloadValid() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['title', 'publisher', 'description', 'publishDate', 'link', 'visible', 'featured', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      && (!data.keys().hasAny(['title']) || isLocalizedField(data.title))
+      && (!data.keys().hasAny(['publisher']) || data.publisher is string)
+      && (!data.keys().hasAny(['description']) || data.description is string)
+      && (!data.keys().hasAny(['link']) || data.link is string)
+      && (!data.keys().hasAny(['visible']) || data.visible is bool)
+      && (!data.keys().hasAny(['featured']) || data.featured is bool)
+      && (!data.keys().hasAny(['order']) || data.order is number)
+      && hasSystemFields(data);
+    }
+    
+    function isSpeakingPayloadValid() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['title', 'eventName', 'location', 'description', 'date', 'link', 'visible', 'featured', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      && (!data.keys().hasAny(['title']) || isLocalizedField(data.title))
+      && (!data.keys().hasAny(['eventName']) || data.eventName is string)
+      && (!data.keys().hasAny(['location']) || data.location is string)
+      && (!data.keys().hasAny(['description']) || data.description is string)
+      && (!data.keys().hasAny(['link']) || data.link is string)
+      && (!data.keys().hasAny(['visible']) || data.visible is bool)
+      && (!data.keys().hasAny(['featured']) || data.featured is bool)
+      && (!data.keys().hasAny(['order']) || data.order is number)
+      && hasSystemFields(data);
+    }
 
     // Audit log integrity: append-only, schema-pinned, and the recorded
     // email must match the authenticated principal (no spoofing other users).
@@ -373,17 +413,17 @@ service cloud.firestore {
 
     match /awards/{document=**} {
       allow read;
-      allow write: if canWriteModule('awards');
+      allow write: if canWriteModule('awards') && isAwardPayloadValid();
     }
 
     match /publications/{document=**} {
       allow read;
-      allow write: if canWriteModule('publications');
+      allow write: if canWriteModule('publications') && isPublicationPayloadValid();
     }
 
     match /speaking/{document=**} {
       allow read;
-      allow write: if canWriteModule('speaking');
+      allow write: if canWriteModule('speaking') && isSpeakingPayloadValid();
     }
 
     // Application Settings (Logo, Page Title, Audit Log Config, etc.)

@@ -120,7 +120,10 @@ const RecruiterSnapshot = () => {
                             <div className={styles.block}>
                                 <h3 className={styles.blockTitle}>{t('recruiter.accomplishments', 'Recent accomplishments')}</h3>
                                 <ul className={styles.bullets}>
-                                    {accomplishments.map((item, i) => <li key={i}>{item}</li>)}
+                                    {accomplishments.map((item, i) => {
+                                        const text = getLocalizedField(item, language) || getLocalizedField(item, 'en') || (typeof item === 'string' ? item : '');
+                                        return text ? <li key={i}>{text}</li> : null;
+                                    })}
                                 </ul>
                             </div>
                         )}
@@ -128,17 +131,23 @@ const RecruiterSnapshot = () => {
                         {workTypes.length > 0 && (
                             <div className={styles.block}>
                                 <h3 className={styles.blockTitle}>{t('recruiter.workTypes', 'Open to')}</h3>
-                                <div className={styles.tags}>
-                                    {workTypes.map((w) => <span key={w} className={styles.tagSoft}>{w}</span>)}
+                                <div className={styles.tagsRow}>
+                                    {workTypes.map((w, i) => {
+                                        const text = getLocalizedField(w, language) || getLocalizedField(w, 'en') || (typeof w === 'string' ? w : '');
+                                        return text ? <span key={i} className={styles.tagSoft}>{text}</span> : null;
+                                    })}
                                 </div>
                             </div>
                         )}
 
                         {industries.length > 0 && (
                             <div className={styles.block}>
-                                <h3 className={styles.blockTitle}>{t('recruiter.industries', 'Industry expertise')}</h3>
-                                <div className={styles.tags}>
-                                    {industries.map((i) => <span key={i} className={styles.tagSoft}>{i}</span>)}
+                                <h3 className={styles.blockTitle}>{t('recruiter.industries', 'Domain experience')}</h3>
+                                <div className={styles.tagsRow}>
+                                    {industries.map((ind, i) => {
+                                        const text = getLocalizedField(ind, language) || getLocalizedField(ind, 'en') || (typeof ind === 'string' ? ind : '');
+                                        return text ? <span key={i} className={styles.tagSoft}>{text}</span> : null;
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -152,7 +161,7 @@ const RecruiterSnapshot = () => {
                                 {t('recruiter.featured', 'Featured:')} {featuredProjects.map((p, i) => (
                                     <React.Fragment key={p.id}>
                                         {i > 0 && ', '}
-                                        {p.slug ? <Link to={`/projects/${p.slug}`}>{p.title}</Link> : p.title}
+                                        {p.slug ? <Link to={`/projects/${p.slug}`}>{getLocalizedField(p.title, language) || getLocalizedField(p.title, 'en') || p.title}</Link> : getLocalizedField(p.title, language) || getLocalizedField(p.title, 'en') || p.title}
                                     </React.Fragment>
                                 ))}
                             </span>

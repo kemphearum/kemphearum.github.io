@@ -8,107 +8,128 @@ import { useTranslation } from '../../../../hooks/useTranslation';
 const COLLECTION_META = [
   {
     key: 'posts',
-    label: { en: 'Posts', km: 'ប្លុក' },
+    labelKey: 'admin.database.stats.posts.label',
+    fallbackLabel: 'Posts',
     icon: FileText,
     color: '#38bdf8',
-    description: { en: 'View & Edit Content', km: 'មើល និងកែសម្រួលមាតិកា' },
+    descriptionKey: 'admin.database.stats.posts.desc',
+    fallbackDesc: 'View & Edit Content',
     tab: 'blog'
   },
   {
     key: 'projects',
-    label: { en: 'Projects', km: 'គម្រោង' },
+    labelKey: 'admin.database.stats.projects.label',
+    fallbackLabel: 'Projects',
     icon: Code,
     color: '#a78bfa',
-    description: { en: 'Project Portfolio', km: 'ផតហ្វូលីយ៉ូគម្រោង' },
+    descriptionKey: 'admin.database.stats.projects.desc',
+    fallbackDesc: 'Project Portfolio',
     tab: 'projects'
   },
   {
     key: 'experience',
-    label: { en: 'Experience', km: 'បទពិសោធន៍' },
+    labelKey: 'admin.database.stats.experience.label',
+    fallbackLabel: 'Experience',
     icon: FileText,
     color: '#f472b6',
-    description: { en: 'Professional History', km: 'ប្រវត្តិការងារ' },
+    descriptionKey: 'admin.database.stats.experience.desc',
+    fallbackDesc: 'Professional History',
     tab: 'experience'
   },
   {
     key: 'content',
-    label: { en: 'Content', km: 'មាតិកា' },
+    labelKey: 'admin.database.stats.content.label',
+    fallbackLabel: 'Content',
     icon: FileText,
     color: '#2dd4bf',
-    description: { en: 'General Site Info', km: 'ព័ត៌មានទូទៅគេហទំព័រ' },
+    descriptionKey: 'admin.database.stats.content.desc',
+    fallbackDesc: 'General Site Info',
     tab: 'general'
   },
   {
     key: 'messages',
-    label: { en: 'Messages', km: 'សារ' },
+    labelKey: 'admin.database.stats.messages.label',
+    fallbackLabel: 'Messages',
     icon: Mail,
     color: '#34d399',
-    description: { en: 'User Inquiries', km: 'សំណួរពីអ្នកប្រើ' },
+    descriptionKey: 'admin.database.stats.messages.desc',
+    fallbackDesc: 'User Inquiries',
     tab: 'messages'
   },
   {
     key: 'users',
-    label: { en: 'Users', km: 'អ្នកប្រើ' },
+    labelKey: 'admin.database.stats.users.label',
+    fallbackLabel: 'Users',
     icon: Users,
     color: '#fb923c',
-    description: { en: 'Admin Access', km: 'សិទ្ធិអ្នកគ្រប់គ្រង' },
+    descriptionKey: 'admin.database.stats.users.desc',
+    fallbackDesc: 'Admin Access',
     tab: 'users'
   },
   {
     key: 'auditLogs',
-    label: { en: 'Audit Logs', km: 'កំណត់ហេតុសវនកម្ម' },
+    labelKey: 'admin.database.stats.auditLogs.label',
+    fallbackLabel: 'Audit Logs',
     icon: Shield,
     color: '#f97316',
-    description: { en: 'Security event trail', km: 'កំណត់ត្រាព្រឹត្តិការណ៍សុវត្ថិភាព' },
+    descriptionKey: 'admin.database.stats.auditLogs.desc',
+    fallbackDesc: 'Security event trail',
     tab: 'audit'
   },
   {
     key: 'visits',
-    label: { en: 'Visits', km: 'ការចូលមើល' },
+    labelKey: 'admin.database.stats.visits.label',
+    fallbackLabel: 'Visits',
     icon: Activity,
     color: '#22c55e',
-    description: { en: 'Traffic logs', km: 'កំណត់ត្រាចរាចរណ៍' },
+    descriptionKey: 'admin.database.stats.visits.desc',
+    fallbackDesc: 'Traffic logs',
     tab: 'analytics'
   },
   {
     key: 'dailyUsage',
-    label: { en: 'Daily Usage', km: 'ការប្រើប្រាស់ប្រចាំថ្ងៃ' },
+    labelKey: 'admin.database.stats.dailyUsage.label',
+    fallbackLabel: 'Daily Usage',
     icon: BarChart2,
     color: '#06b6d4',
-    description: { en: 'Daily metric snapshots', km: 'សង្ខេបម៉ែត្រប្រចាំថ្ងៃ' },
+    descriptionKey: 'admin.database.stats.dailyUsage.desc',
+    fallbackDesc: 'Daily metric snapshots',
     tab: 'analytics'
   },
   {
     key: 'rolePermissions',
-    label: { en: 'Role Rules', km: 'ច្បាប់តួនាទី' },
+    labelKey: 'admin.database.stats.rolePermissions.label',
+    fallbackLabel: 'Role Rules',
     icon: KeyRound,
     color: '#f59e0b',
-    description: { en: 'Permission matrix', km: 'ម៉ាទ្រីសសិទ្ធិ' },
+    descriptionKey: 'admin.database.stats.rolePermissions.desc',
+    fallbackDesc: 'Permission matrix',
     tab: 'users'
   },
   {
     key: 'settings',
-    label: { en: 'Settings', km: 'ការកំណត់' },
+    labelKey: 'admin.database.stats.settings.label',
+    fallbackLabel: 'Settings',
     icon: Settings,
     color: '#94a3b8',
-    description: { en: 'Global system config', km: 'ការកំណត់ប្រព័ន្ធទូទៅ' },
+    descriptionKey: 'admin.database.stats.settings.desc',
+    fallbackDesc: 'Global system config',
     tab: 'settings'
   }
 ];
 
 const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, isFetching = false, totalDocs, setActiveTab }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { language, t } = useTranslation();
   const locale = language === 'km' ? 'km-KH' : 'en-US';
   const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const localizedCollections = useMemo(
     () =>
       COLLECTION_META.map((item) => ({
         ...item,
-        label: language === 'km' ? item.label.km : item.label.en,
-        description: language === 'km' ? item.description.km : item.description.en
+        label: t(item.labelKey, item.fallbackLabel),
+        description: t(item.descriptionKey, item.fallbackDesc)
       })),
-    [language]
+    [t]
   );
   const failureKeys = useMemo(() => Object.keys(healthFailures), [healthFailures]);
   const failedCount = failureKeys.length;
@@ -122,8 +143,8 @@ const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, isFetching = fa
 
   const usagePercent = Math.round((totalDocs / DatabaseService.SOFT_DOC_LIMIT) * 100);
   const usageHint = usagePercent >= 90
-    ? tr('Warning: nearing free-tier capacity.', 'ព្រមាន៖ កំពុងជិតដល់កម្រិត free-tier។')
-    : tr('Current usage is within free-tier allowance.', 'ការប្រើប្រាស់បច្ចុប្បន្ននៅក្នុងកម្រិត free-tier។');
+    ? t('ui.warningNearingFreeTierCap')
+    : t('ui.currentUsageIsWithinFreeT');
 
   const handleCardNavigate = (tab) => {
     if (tab) setActiveTab(tab);
@@ -140,32 +161,32 @@ const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, isFetching = fa
   return (
     <div className={"ui-stats-section"}>
       <h4 className={"ui-header"}>
-        <BarChart2 size={18} /> {tr('Storage Health', 'សុខភាពការផ្ទុកទិន្នន័យ')}
+        <BarChart2 size={18} /> {t('ui.storageHealth')}
         <span className={"ui-last-updated"}>
           {isFetching
-            ? tr('Refreshing counts...', 'កំពុងធ្វើបច្ចុប្បន្នភាពចំនួន...')
+            ? t('ui.refreshingCounts')
             : (dbHealth.lastUpdated
-              ? `${tr('Last checked:', 'ពិនិត្យចុងក្រោយ៖')} ${dbHealth.lastUpdated.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}`
-              : tr('Counting...', 'កំពុងរាប់...'))}
+              ? `${t('ui.lastChecked')} ${dbHealth.lastUpdated.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}`
+              : t('ui.counting'))}
         </span>
       </h4>
 
       <div className="ui-db-overview">
         <span className="ui-db-overview-pill ui-db-overview-pill--ok">
-          {healthyCount} {tr('healthy', 'ស្ថានភាពល្អ')}
+          {healthyCount} {t('ui.healthy')}
         </span>
         {failedCount > 0 && (
           <span className="ui-db-overview-pill ui-db-overview-pill--warn">
-            {failedCount} {tr('unavailable', 'មិនអាចប្រើបាន')}
+            {failedCount} {t('ui.unavailable')}
           </span>
         )}
         <span className="ui-db-overview-text">
-          {tr('Collection coverage:', 'គ្របដណ្តប់បណ្ដុំទិន្នន័យ:')} {localizedCollections.length} {tr('tracked groups', 'ក្រុមដែលតាមដាន')}
+          {t('ui.collectionCoverage')} {localizedCollections.length} {t('ui.trackedGroups')}
         </span>
       </div>
 
       <UsageBar
-        label={tr('Free Tier Document Usage (50k Limit Estimate)', 'ការប្រើប្រាស់ឯកសារកម្រិតឥតគិតថ្លៃ (ប៉ាន់ស្មានកម្រិត 50k)')}
+        label={t('ui.freeTierDocumentUsage50kL')}
         current={totalDocs}
         total={DatabaseService.SOFT_DOC_LIMIT}
         className="ui-database-usage"
@@ -189,10 +210,10 @@ const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, isFetching = fa
               onKeyDown={(event) => handleCardKeyDown(event, collection.tab)}
               role={isClickable ? 'button' : undefined}
               tabIndex={isClickable ? 0 : undefined}
-              description={isFailed ? tr('Unable to load right now', 'មិនអាចផ្ទុកបានឥឡូវនេះ') : collection.description}
+              description={isFailed ? t('ui.unableToLoadRightNow') : collection.description}
               className={`ui-db-stat-card ${isFailed ? 'ui-db-stat-card--error' : ''}`}
               style={{ '--stat-color': collection.color }}
-              title={isFailed ? `${tr('Failed to count', 'រាប់មិនបាន')} ${collection.label}` : collection.label}
+              title={isFailed ? `${t('ui.failedToCount')} ${collection.label}` : collection.label}
             />
           );
         })}

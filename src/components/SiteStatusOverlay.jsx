@@ -14,7 +14,7 @@ import { motion } from 'framer-motion';
  * based on the global settings configuration.
  */
 const SiteStatusOverlay = ({ config }) => {
-    const { language } = useTranslation();
+    const { language, t } = useTranslation();
     const location = useLocation();
     const [isAdminAuthed, setIsAdminAuthed] = useState(false);
 
@@ -145,8 +145,8 @@ const SiteStatusOverlay = ({ config }) => {
 
                             {feedbackUrl && (
                                 <a href={feedbackUrl} target="_blank" rel="noopener noreferrer" className={styles.actionBtn}>
-                                    <span className={styles.enTitle}>Submit Feedback / Bug Report</span>
-                                    <span className={styles.kmTitle}>បញ្ជូនមតិយោបល់ / រាយការណ៍បញ្ហា</span>
+                                    <span className={styles.enTitle}>{t('ui.overlay.feedbackButton')}</span>
+                                    <span className={styles.kmTitle}>{t('ui.overlay.feedbackButton')}</span>
                                 </a>
                             )}
                         </div>
@@ -166,7 +166,7 @@ const SiteStatusOverlay = ({ config }) => {
                                 animate={{ opacity: 1, scale: 1, rotate: -10 }}
                                 transition={{ delay: 0.8, type: 'spring' }}
                             >
-                                BETA
+                                {t('ui.overlay.betaBadge')}
                             </motion.div>
                         </div>
                     </motion.div>
@@ -222,8 +222,8 @@ const SiteStatusOverlay = ({ config }) => {
 
                         {contactUrl && (
                             <a href={contactUrl} target="_blank" rel="noopener noreferrer" className={styles.actionBtn}>
-                                <span className={styles.enTitle}>Contact for urgent inquiries</span>
-                                <span className={styles.kmTitle}>យើងខ្ញុំសម្រាប់សាកសួរ</span>
+                                <span className={styles.enTitle}>{t('ui.overlay.contactButton')}</span>
+                                <span className={styles.kmTitle}>{t('ui.overlay.contactButton')}</span>
                             </a>
                         )}
                     </div>

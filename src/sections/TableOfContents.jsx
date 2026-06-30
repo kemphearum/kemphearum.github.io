@@ -4,8 +4,7 @@ import styles from './TableOfContents.module.scss';
 import { useTranslation } from '../hooks/useTranslation';
 
 const TableOfContents = ({ content }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t } = useTranslation();
     const [activeId, setActiveId] = useState('');
 
     const headings = useMemo(() => {
@@ -85,7 +84,7 @@ const TableOfContents = ({ content }) => {
         <div className={styles.tocWrapper}>
             <div className={styles.tocHeader}>
                 <List size={16} />
-                <span>{tr('On This Page', 'មាតិកានៅទំព័រនេះ')}</span>
+                <span>{t('ui.onThisPage')}</span>
             </div>
             <nav className={styles.tocNav}>
                 <ul className={styles.tocList}>

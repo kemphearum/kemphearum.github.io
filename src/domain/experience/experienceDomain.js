@@ -1,18 +1,29 @@
 import { buildLocalizedFieldFromInput, getLocalizedField } from '../../utils/localization';
 
+export const getKhmerNumerals = (numStr) => {
+    const khmerDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+    return numStr.toString().replace(/[0-9]/g, (d) => khmerDigits[d]);
+};
+
 /**
  * Formats a YYYY-MM string to MMM YYYY (e.g., "2023-05" -> "May 2023").
  * @param {string} yyyyMm 
+ * @param {string} locale
  * @returns {string}
  */
-export const formatExperienceDate = (yyyyMm) => {
+export const formatExperienceDate = (yyyyMm, locale = 'en') => {
     if (!yyyyMm || typeof yyyyMm !== 'string' || !yyyyMm.includes('-')) return yyyyMm || '';
     const [year, month] = yyyyMm.split('-');
     const monthIndex = parseInt(month, 10) - 1;
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
     if (monthIndex < 0 || monthIndex > 11) return yyyyMm;
-    return `${months[monthIndex]} ${year}`;
+    
+    if (locale === 'km') {
+        const monthsKm = ['មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា', 'កក្កដា', 'សីហា', 'កញ្ញា', 'តុលា', 'វិច្ឆិកា', 'ធ្នូ'];
+        return `${monthsKm[monthIndex]} ${getKhmerNumerals(year)}`;
+    } else {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${months[monthIndex]} ${year}`;
+    }
 };
 
 /**
@@ -27,9 +38,9 @@ export const deriveYearsOfExperience = (experiences = []) => {
     let minYear = Infinity;
     let maxYear = 0;
     experiences.forEach((exp) => {
-        const period = typeof exp?.period === 'string' ? exp.period : '';
-        if (!period) return;
-        const years = period.match(/[12]\d{3}/g);
+        let periodStr = typeof exp?.period === 'string' ? exp.period : (exp?.period?.en || '');
+        if (!periodStr) return;
+        const years = periodStr.match(/[12]\d{3}/g);
         if (years) {
             years.forEach((y) => {
                 const n = Number(y);
@@ -37,7 +48,7 @@ export const deriveYearsOfExperience = (experiences = []) => {
                 if (n > maxYear) maxYear = n;
             });
         }
-        if (period.toLowerCase().includes('present')) {
+        if (periodStr.toLowerCase().includes('present') || periodStr.includes('បច្ចុប្បន្ន')) {
             maxYear = new Date().getFullYear();
         }
     });
@@ -51,8 +62,10 @@ export const deriveYearsOfExperience = (experiences = []) => {
  * @returns {Object} Normalized data
  */
 export const normalizeExperience = (data) => {
-    const startLabel = formatExperienceDate(data.startMonthYear);
-    const endLabel = data.current ? 'Present' : formatExperienceDate(data.endMonthYear);
+    const startLabelEn = formatExperienceDate(data.startMonthYear, 'en');
+    const startLabelKm = formatExperienceDate(data.startMonthYear, 'km');
+    const endLabelEn = data.current ? 'Present' : formatExperienceDate(data.endMonthYear, 'en');
+    const endLabelKm = data.current ? 'បច្ចុប្បន្ន' : formatExperienceDate(data.endMonthYear, 'km');
     const company = buildLocalizedFieldFromInput(data, 'company');
     const role = buildLocalizedFieldFromInput(data, 'role');
     const description = buildLocalizedFieldFromInput(data, 'description');
@@ -65,11 +78,14 @@ export const normalizeExperience = (data) => {
         companyLogoUrl: (data.companyLogoUrl || '').trim(),
         employmentType: (data.employmentType || '').trim(),
         location: (data.location || '').trim(),
-        startDate: startLabel,
+        startDate: { en: startLabelEn, km: startLabelKm },
         startMonthYear: data.startMonthYear || '',
-        endDate: endLabel,
+        endDate: { en: endLabelEn, km: endLabelKm },
         endMonthYear: data.current ? '' : (data.endMonthYear || ''),
-        period: `${startLabel} - ${endLabel}`,
+        period: { 
+            en: `${startLabelEn} - ${endLabelEn}`, 
+            km: `${startLabelKm} - ${endLabelKm}` 
+        },
         current: !!data.current,
         description,
         keyResponsibilities,

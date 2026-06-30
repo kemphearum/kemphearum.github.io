@@ -77,7 +77,7 @@ const Skills = ({ isStandalone = false }) => {
                                         <li key={skill.id} className={styles.skill}>
                                             <div className={styles.skillMain}>
                                                 {skill.iconUrl && (
-                                                    <img src={skill.iconUrl} alt="" className={styles.skillIcon} loading="lazy" />
+                                                    <img src={skill.iconUrl} alt={`${skill.name} icon`} className={styles.skillIcon} loading="lazy" width="20" height="20" />
                                                 )}
                                                 <div className={styles.skillInfo}>
                                                     <span className={styles.skillName}>{skill.name}</span>

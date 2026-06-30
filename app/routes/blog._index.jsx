@@ -24,13 +24,22 @@ export function meta({ data }) {
     const description = getLocalizedField(site.blogDescription || site.description, language)
         || tr("Latest thoughts, tutorials, and project updates.", "គំនិតថ្មីៗ មេរៀន និងបច្ចុប្បន្នភាពគម្រោងចុងក្រោយ។");
     
-    return generateMetaTags({
-        title: tr('Blog', 'ប្លុក'),
-        description,
-        siteTitle: getLocalizedField(site.title, language) || "Kem Phearum",
-        type: 'website',
-        image: site.ogImageUrl || "/og-image.png"
-    });
+    return [
+        ...generateMetaTags({
+            title: tr('Blog', 'ប្លុក'),
+            description,
+            siteTitle: getLocalizedField(site.title, language) || "Kem Phearum",
+            type: 'website',
+            image: site.ogImageUrl || "/og-image.png"
+        }),
+        {
+            tagName: "link",
+            rel: "alternate",
+            type: "application/rss+xml",
+            title: "Blog RSS Feed",
+            href: "/rss.xml"
+        }
+    ];
 }
 
 export default Blog;

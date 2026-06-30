@@ -1,14 +1,21 @@
 import { buildLocalizedFieldFromInput, getLocalizedField } from '../../utils/localization';
 
+export const getKhmerNumerals = (numStr) => {
+    const khmerDigits = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+    return numStr.toString().replace(/[0-9]/g, (d) => khmerDigits[d]);
+};
+
 /**
  * Formats a YYYY string or YYYY-MM string to YYYY.
  * Education typically just shows the year.
  * @param {string} dateStr 
+ * @param {string} locale
  * @returns {string}
  */
-export const formatEducationDate = (dateStr) => {
+export const formatEducationDate = (dateStr, locale = 'en') => {
     if (!dateStr || typeof dateStr !== 'string') return '';
-    return dateStr.substring(0, 4);
+    const yearStr = dateStr.substring(0, 4);
+    return locale === 'km' ? getKhmerNumerals(yearStr) : yearStr;
 };
 
 /**
@@ -17,32 +24,35 @@ export const formatEducationDate = (dateStr) => {
  * @returns {Object} Normalized data
  */
 export const normalizeEducation = (data) => {
-    const startLabel = formatEducationDate(data.startYear);
-    const endLabel = data.current ? 'Present' : formatEducationDate(data.endYear);
+    const startLabelEn = formatEducationDate(data.startYear, 'en');
+    const startLabelKm = formatEducationDate(data.startYear, 'km');
+    const endLabelEn = data.current ? 'Present' : formatEducationDate(data.endYear, 'en');
+    const endLabelKm = data.current ? 'បច្ចុប្បន្ន' : formatEducationDate(data.endYear, 'km');
     const school = buildLocalizedFieldFromInput(data, 'school');
     const degree = buildLocalizedFieldFromInput(data, 'degree');
     const fieldOfStudy = buildLocalizedFieldFromInput(data, 'fieldOfStudy');
     const description = buildLocalizedFieldFromInput(data, 'description');
 
-    let period = '';
-    if (startLabel && endLabel) {
-        period = startLabel === endLabel ? startLabel : `${startLabel} - ${endLabel}`;
-    } else if (startLabel) {
-        period = startLabel;
-    } else if (endLabel) {
-        period = endLabel;
-    }
+    const getPeriod = (start, end) => {
+        if (start && end) return start === end ? start : `${start} - ${end}`;
+        if (start) return start;
+        if (end) return end;
+        return '';
+    };
 
     return {
         type: (data.type || 'Degree').trim(),
         school,
         degree,
         fieldOfStudy,
-        startDate: startLabel,
+        startDate: { en: startLabelEn, km: startLabelKm },
         startYear: data.startYear || '',
-        endDate: endLabel,
+        endDate: { en: endLabelEn, km: endLabelKm },
         endYear: data.current ? '' : (data.endYear || ''),
-        period,
+        period: { 
+            en: getPeriod(startLabelEn, endLabelEn),
+            km: getPeriod(startLabelKm, endLabelKm)
+        },
         current: !!data.current,
         description,
         visible: data.visible !== false,

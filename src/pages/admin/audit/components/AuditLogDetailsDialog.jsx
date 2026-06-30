@@ -24,14 +24,13 @@ import styles from '../AuditLogsTab.module.scss';
 import { useTranslation } from '../../../../hooks/useTranslation';
 
 const AuditLogDetailsDialog = ({ log, open, onOpenChange }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { language, t } = useTranslation();
   const locale = language === 'km' ? 'km-KH' : 'en-US';
 
   if (!log) return null;
 
   const formatDate = (ts) => {
-    if (!ts) return tr('Unknown', 'មិនស្គាល់');
+    if (!ts) return t('admin.forms.unknown');
     const date = ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts);
     return date.toLocaleString(locale, {
       month: 'numeric',
@@ -46,33 +45,33 @@ const AuditLogDetailsDialog = ({ log, open, onOpenChange }) => {
   const localizeStatus = (value) => {
     const key = String(value || '').toLowerCase();
     const map = {
-      success: tr('Success', 'ជោគជ័យ'),
-      failure: tr('Failure', 'បរាជ័យ'),
-      enabled: tr('Enabled', 'បានបើក'),
-      disabled: tr('Disabled', 'បានបិទ')
+      success: t('admin.forms.success'),
+      failure: t('admin.forms.failure'),
+      enabled: t('admin.forms.enabled'),
+      disabled: t('admin.forms.disabled')
     };
-    return map[key] || value || tr('Unknown', 'មិនស្គាល់');
+    return map[key] || value || t('admin.forms.unknown');
   };
 
   const localizeDevice = (value) => {
     const key = String(value || '').toLowerCase();
-    if (key.includes('phone') || key.includes('mobile')) return tr('Mobile', 'ទូរស័ព្ទ');
-    if (key.includes('tablet') || key.includes('ipad')) return tr('Tablet', 'ថេប្លេត');
-    if (key.includes('desktop') || !key) return tr('Desktop', 'កុំព្យូទ័រ');
+    if (key.includes('phone') || key.includes('mobile')) return t('admin.forms.mobile');
+    if (key.includes('tablet') || key.includes('ipad')) return t('admin.forms.tablet');
+    if (key.includes('desktop') || !key) return t('admin.forms.desktop');
     return value;
   };
   const details = [
-    { label: tr('Event Status', 'ស្ថានភាពព្រឹត្តិការណ៍'), value: localizeStatus(log.status || 'success'), icon: Shield, color: log.status === 'failure' ? '#ef4444' : '#10b981' },
-    { label: tr('User Email', 'អ៊ីមែលអ្នកប្រើ'), value: log.user || log.email || tr('System', 'ប្រព័ន្ធ'), icon: Mail, color: '#38bdf8' },
-    { label: tr('IP Address', 'អាសយដ្ឋាន IP'), value: log.ipAddress || tr('Unknown', 'មិនស្គាល់'), icon: Globe, color: '#a78bfa' },
-    { label: tr('Device', 'ឧបករណ៍'), value: localizeDevice(log.device), icon: Monitor, color: '#fb923c', isDevice: true },
-    { label: tr('Session ID', 'លេខសម្គាល់សម័យ'), value: log.sessionId || tr('Unknown', 'មិនស្គាល់'), icon: Key, color: '#fbbf24' },
-    { label: tr('Timestamp', 'ពេលវេលា'), value: formatDate(log.time || log.timestamp), icon: Clock, color: '#64ffda', fullWidth: true },
-    { label: tr('User Agent', 'ព័ត៌មានកម្មវិធីរុករក'), value: log.userAgent || tr('Unknown', 'មិនស្គាល់'), icon: Monitor, color: '#94a3b8', fullWidth: true },
+    { label: t('admin.forms.eventStatus'), value: localizeStatus(log.status || 'success'), icon: Shield, color: log.status === 'failure' ? '#ef4444' : '#10b981' },
+    { label: t('admin.forms.userEmail'), value: log.user || log.email || t('admin.forms.system'), icon: Mail, color: '#38bdf8' },
+    { label: t('admin.forms.iPAddress'), value: log.ipAddress || t('admin.forms.unknown'), icon: Globe, color: '#a78bfa' },
+    { label: t('admin.forms.device'), value: localizeDevice(log.device), icon: Monitor, color: '#fb923c', isDevice: true },
+    { label: t('admin.forms.sessionID'), value: log.sessionId || t('admin.forms.unknown'), icon: Key, color: '#fbbf24' },
+    { label: t('admin.forms.timestamp'), value: formatDate(log.time || log.timestamp), icon: Clock, color: '#64ffda', fullWidth: true },
+    { label: t('admin.forms.userAgent'), value: log.userAgent || t('admin.forms.unknown'), icon: Monitor, color: '#94a3b8', fullWidth: true },
   ];
 
   if (log.reason) {
-    details.splice(1, 0, { label: tr('Failure Reason', 'មូលហេតុបរាជ័យ'), value: log.reason, icon: Shield, color: '#ef4444', fullWidth: true });
+    details.splice(1, 0, { label: t('admin.forms.failureReason'), value: log.reason, icon: Shield, color: '#ef4444', fullWidth: true });
   }
 
   return (
@@ -83,7 +82,7 @@ const AuditLogDetailsDialog = ({ log, open, onOpenChange }) => {
             <div className={styles.modalHeaderIcon}>
               <Shield size={20} />
             </div>
-            <DialogTitle>{tr('Audit Log Details', 'ព័ត៌មានលម្អិតកំណត់ហេតុសវនកម្ម')}</DialogTitle>
+            <DialogTitle>{t('admin.forms.auditLogDetails')}</DialogTitle>
           </div>
           <DialogClose />
         </DialogHeader>
@@ -116,7 +115,7 @@ const AuditLogDetailsDialog = ({ log, open, onOpenChange }) => {
 
           {log.details && (
             <div className={styles.payloadSection}>
-              <header>{tr('Event Payload', 'ទិន្នន័យព្រឹត្តិការណ៍')}</header>
+              <header>{t('admin.forms.eventPayload')}</header>
               <pre>{JSON.stringify(log.details, null, 2)}</pre>
             </div>
           )}
@@ -127,7 +126,7 @@ const AuditLogDetailsDialog = ({ log, open, onOpenChange }) => {
             className="ui-button ui-ghost" 
             onClick={() => onOpenChange(false)}
           >
-            {tr('Close', 'បិទ')}
+            {t('admin.forms.close')}
           </button>
         </DialogFooter>
       </DialogContent>

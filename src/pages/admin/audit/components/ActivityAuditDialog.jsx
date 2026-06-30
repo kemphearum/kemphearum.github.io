@@ -14,22 +14,21 @@ import { useTranslation } from '../../../../hooks/useTranslation';
 import { getLocalizedField } from '../../../../utils/localization';
 
 const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { language, t } = useTranslation();
   const [expandedRows, setExpandedRows] = useState(new Set());
   const locale = language === 'km' ? 'km-KH' : 'en-US';
 
   const localizeAction = (value) => {
     const key = String(value || '').toLowerCase();
     const map = {
-      read: tr('Read', 'អាន'),
-      write: tr('Write', 'សរសេរ'),
-      delete: tr('Delete', 'លុប'),
-      created: tr('Created', 'បានបង្កើត'),
-      updated: tr('Updated', 'បានកែប្រែ'),
-      deleted: tr('Deleted', 'បានលុប')
+      read: t('admin.forms.read'),
+      write: t('admin.forms.write'),
+      delete: t('admin.forms.delete'),
+      created: t('admin.forms.created'),
+      updated: t('admin.forms.updated'),
+      deleted: t('admin.forms.deleted')
     };
-    return map[key] || value || tr('Activity event', 'ព្រឹត្តិការណ៍សកម្មភាព');
+    return map[key] || value || t('admin.forms.activityEvent');
   };
 
   const resolveOperationLabel = (log) => {
@@ -53,40 +52,35 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
   };
 
   const getHeaderInfo = () => {
-    const now = new Date();
-    const dateStr = now.toLocaleDateString(locale, {
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
+    
+    
 
     switch (type) {
       case 'read':
         return {
-          title: tr('Reads Audit History', 'ប្រវត្តិសវនកម្មការអាន'),
-          description: tr(`Activity reports for ${dateStr}`, `របាយការណ៍សកម្មភាពសម្រាប់ ${dateStr}`),
+          title: t('admin.forms.readsAuditHistory'),
+          description: t('admin.forms.activityReportsForDa'),
           icon: Eye,
           color: '#38bdf8'
         };
       case 'write':
         return {
-          title: tr('Writes Audit History', 'ប្រវត្តិសវនកម្មការកែប្រែ'),
-          description: tr(`Activity reports for ${dateStr}`, `របាយការណ៍សកម្មភាពសម្រាប់ ${dateStr}`),
+          title: t('admin.forms.writesAuditHistory'),
+          description: t('admin.forms.activityReportsForDa'),
           icon: Edit3,
           color: '#a78bfa'
         };
       case 'delete':
         return {
-          title: tr('Deletes Audit History', 'ប្រវត្តិសវនកម្មការលុប'),
-          description: tr(`Activity reports for ${dateStr}`, `របាយការណ៍សកម្មភាពសម្រាប់ ${dateStr}`),
+          title: t('admin.forms.deletesAuditHistory'),
+          description: t('admin.forms.activityReportsForDa'),
           icon: Trash2,
           color: '#fb923c'
         };
       default:
         return {
-          title: tr('Activity History', 'ប្រវត្តិសកម្មភាព'),
-          description: tr(`Activity reports for ${dateStr}`, `របាយការណ៍សកម្មភាពសម្រាប់ ${dateStr}`),
+          title: t('admin.forms.activityHistory'),
+          description: t('admin.forms.activityReportsForDa'),
           icon: Hash,
           color: 'var(--primary-color)'
         };
@@ -156,17 +150,17 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
               </div>
             ) : logs.length === 0 ? (
               <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                {tr('No activity records found for this period.', 'មិនមានកំណត់ត្រាសកម្មភាពសម្រាប់រយៈពេលនេះទេ។')}
+                {t('admin.forms.noActivityRecordsFou')}
               </div>
             ) : (
               <table className={styles.activityTable} style={{ minWidth: '680px' }}>
                 <thead className={styles.activityHeader}>
                   <tr>
                     <th style={{ width: '40px' }}></th>
-                    <th>{tr('OPERATION & TARGET', 'សកម្មភាព និងគោលដៅ')}</th>
-                    <th style={{ width: '100px', textAlign: 'center' }}>{tr('COUNT', 'ចំនួន')}</th>
-                    <th>{tr('ORIGINATOR', 'អ្នកបង្កើត')}</th>
-                    <th style={{ width: '150px' }}>{tr('TIMESTAMP', 'ពេលវេលា')}</th>
+                    <th>{t('admin.forms.oPERATIONTARGET')}</th>
+                    <th style={{ width: '100px', textAlign: 'center' }}>{t('admin.forms.cOUNT')}</th>
+                    <th>{t('admin.forms.oRIGINATOR')}</th>
+                    <th style={{ width: '150px' }}>{t('admin.forms.tIMESTAMP')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -213,7 +207,7 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
                           <td className={styles.activityCell}>
                             <div className={styles.originator}>
                               <div className={styles.statusDot} style={{ background: info.color }} />
-                              <span style={{ fontSize: '0.85rem' }}>{log.user || tr('System', 'ប្រព័ន្ធ')}</span>
+                              <span style={{ fontSize: '0.85rem' }}>{log.user || t('admin.forms.system')}</span>
                             </div>
                           </td>
                           <td className={styles.activityCell}>
@@ -224,11 +218,11 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
                           <tr>
                             <td colSpan={5} style={{ padding: 0 }}>
                               <div className={styles.payloadDisplay}>
-                                <header>{tr('Event Payload', 'ទិន្នន័យព្រឹត្តិការណ៍')}</header>
+                                <header>{t('admin.forms.eventPayload')}</header>
                                 {(() => {
                                   const payloadHtml = highlightJSON(log.details || log.data || {});
                                   if (!payloadHtml) {
-                                    return <div className={styles.payloadEmpty}>{tr('No metadata recorded for this event.', 'មិនមានមេតាដាតាសម្រាប់ព្រឹត្តិការណ៍នេះទេ។')}</div>;
+                                    return <div className={styles.payloadEmpty}>{t('admin.forms.noMetadataRecordedFo')}</div>;
                                   }
                                   return <pre dangerouslySetInnerHTML={{ __html: payloadHtml }} />;
                                 })()}
@@ -247,15 +241,15 @@ const ActivityAuditDialog = ({ type, logs, loading, open, onOpenChange }) => {
 
         <DialogFooter style={{ background: 'rgba(0,0,0,0.1)', borderTop: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.85rem', color: 'var(--text-secondary)', marginRight: 'auto' }}>
-            <span style={{ opacity: 0.6 }}>{tr('Total Tracked:', 'សរុបដែលបានតាមដាន:')}</span>
-            <strong style={{ color: info.color }}>{logs.length} {tr('records', 'កំណត់ត្រា')}</strong>
+            <span style={{ opacity: 0.6 }}>{t('admin.forms.totalTracked')}</span>
+            <strong style={{ color: info.color }}>{logs.length} {t('admin.forms.records')}</strong>
           </div>
           <button 
             className="ui-button ui-ghost" 
             onClick={() => handleOpenChange(false)}
             style={{ fontSize: '0.85rem' }}
           >
-            {tr('Close', 'បិទ')}
+            {t('admin.forms.close')}
           </button>
         </DialogFooter>
       </DialogContent>

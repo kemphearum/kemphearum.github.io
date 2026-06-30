@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, Search, Sparkles } from 'lucide-react';
 import { Button, Input } from '../../../shared/components/ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 const AdminToolbar = ({
   onAdd,
@@ -9,14 +10,18 @@ const AdminToolbar = ({
   isSearching = false,
   canCreate = true,
   stats = [],
-  addLabel = 'Add',
-  searchPlaceholder = 'Search...',
+  addLabel,
+  searchPlaceholder,
   eyebrow,
   title,
   description,
   actions,
   footer
 }) => {
+  const { t } = useTranslation();
+  const defaultAddLabel = addLabel || t('admin.toolbar.add', 'Add');
+  const defaultSearchPlaceholder = searchPlaceholder || t('admin.toolbar.search', 'Search...');
+
   return (
     <section className="ui-admin-workspace">
       <div className="ui-admin-workspace__overview">
@@ -53,24 +58,24 @@ const AdminToolbar = ({
         )}
       </div>
 
-      <div className="ui-admin-toolbar admin-toolbar">
-        <div className="admin-search-wrapper ui-admin-toolbar__search">
-          {isSearching ? <div className="admin-search-spinner" /> : <Search size={18} />}
-          <Input
-            placeholder={searchPlaceholder}
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-          />
-        </div>
+        <div className="ui-admin-toolbar admin-toolbar">
+          <div className="admin-search-wrapper ui-admin-toolbar__search">
+            {isSearching ? <div className="admin-search-spinner" /> : <Search size={18} />}
+            <Input
+              placeholder={defaultSearchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+            />
+          </div>
 
-        <div className="ui-admin-toolbar__actions">
-          {actions}
-          {canCreate && (
-            <Button onClick={onAdd} className="ui-admin-toolbar__create">
-              <Plus size={18} /> {addLabel}
-            </Button>
-          )}
-        </div>
+          <div className="ui-admin-toolbar__actions">
+            {actions}
+            {canCreate && (
+              <Button onClick={onAdd} className="ui-admin-toolbar__create">
+                <Plus size={18} /> {defaultAddLabel}
+              </Button>
+            )}
+          </div>
       </div>
       {footer && (
         <div className="ui-admin-toolbar__foot">

@@ -18,7 +18,8 @@ const AboutSection = ({
 
     const { t } = useTranslation();
     const { watch } = useFormContext();
-    const skills = watch('skills') || '';
+    const skillsEn = watch('skillsEn') || '';
+    const skillsKm = watch('skillsKm') || '';
 
     return (
         <div className="ui-card">
@@ -86,20 +87,31 @@ const AboutSection = ({
                                 <p>{t('admin.general.sections.about.skillsSnapshot.description')}</p>
                             </div>
 
-                            <FormField
-                                label={t('admin.general.sections.about.fields.skills')}
-                                name="skills"
-                            >
-                                <FormInput
-                                    placeholder={t('admin.general.sections.about.fields.skillsPlaceholder')}
-                                    hint={t('admin.general.sections.about.fields.skillsHint')}
-                                />
-                            </FormField>
+                            <div className="ui-formGrid">
+                                <FormField
+                                    label={t('admin.general.sections.about.fields.skillsEn')}
+                                    name="skillsEn"
+                                >
+                                    <FormInput
+                                        placeholder={t('admin.general.sections.about.fields.skillsPlaceholder')}
+                                        hint={t('admin.general.sections.about.fields.skillsHint')}
+                                    />
+                                </FormField>
+                                <FormField
+                                    label={t('admin.general.sections.about.fields.skillsKm')}
+                                    name="skillsKm"
+                                >
+                                    <FormInput
+                                        placeholder={t('admin.general.sections.about.fields.skillsPlaceholder')}
+                                        hint={t('admin.general.sections.about.fields.skillsHint')}
+                                    />
+                                </FormField>
+                            </div>
 
-                            {skills && (
+                            {(skillsEn || skillsKm) && (
                                 <div className={'ui-skill-preview'}>
-                                    {skills.split(',').map((s, i) => s.trim() && (
-                                        <span key={`skill-${s.trim()}-${i}`} className={'ui-tech-tag'}>{s.trim()}</span>
+                                    {(skillsEn || skillsKm).split(',').map((skill, index) => (
+                                        skill.trim() && <span key={index} className={'ui-skill-badge'}>{skill.trim()}</span>
                                     ))}
                                 </div>
                             )}

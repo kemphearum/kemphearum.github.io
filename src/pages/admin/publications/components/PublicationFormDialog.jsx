@@ -86,13 +86,13 @@ const PublicationFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit
                         <div className="ui-blog-formLayout__sidebar">
                             <div className="ui-blog-formCard">
                                 <h3 className="ui-blog-formCard__title">{t('admin.publications.form.sections.details', 'Details')}</h3>
-                                
+
                                 <FormField label={t('admin.publications.form.fields.publishDate', 'Publish Date')} name="publishDate">
                                     <FormInput type="date" />
                                 </FormField>
 
                                 <FormField label={t('admin.publications.form.fields.link', 'URL / Link')} name="link">
-                                    <FormInput placeholder="https://..." />
+                                    <FormInput placeholder={t('admin.common.urlPlaceholder')} />
                                 </FormField>
                             </div>
 

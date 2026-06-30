@@ -72,7 +72,7 @@ const Certificates = ({ isStandalone = false }) => {
                             >
                                 <div className={styles.cardIcon}>
                                     {cert.badgeUrl ? (
-                                        <img src={cert.badgeUrl} alt="" className={styles.badgeImage} loading="lazy" />
+                                        <img src={cert.badgeUrl} alt={`${cert.name} badge`} className={styles.badgeImage} loading="lazy" width="48" height="48" />
                                     ) : (
                                         <Award size={22} />
                                     )}

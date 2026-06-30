@@ -31,7 +31,9 @@
   "experience": {
     "title": "បទពិសោធន៍ការងារ",
     "empty": "មិនទាន់មានបទពិសោធន៍នៅឡើយទេ",
-    "present": "បច្ចុប្បន្ន"
+    "present": "បច្ចុប្បន្ន",
+    "keyResponsibilities": "Key Responsibilities:",
+    "majorAchievements": "Major Achievements:"
   },
   "featuredProjects": {
     "title": "គម្រោងពិសេស",
@@ -89,8 +91,11 @@
     "telegram": "ជជែកតាម Telegram",
     "qr": {
       "label": "ស្កេនដើម្បីភ្ជាប់",
-      "caption": "ស្កេនដើម្បីជជែកតាម Telegram"
-    }
+      "caption": "ស្កេនដើម្បីជជែកតាម Telegram",
+      "imageAlt": "Telegram QR code — scan to open chat",
+      "svgAlt": "QR code linking to Telegram"
+    },
+    "copyEmail": "Copy email address"
   },
   "footer": {
     "siteMirrors": "តំណភ្ជាប់កញ្ចក់គេហទំព័រ"
@@ -265,7 +270,19 @@
       "visible": "អាចមើលឃើញ",
       "hidden": "លាក់",
       "featured": "លេចធ្លោ",
-      "viewHistory": "មើលប្រវត្តិ"
+      "viewHistory": "មើលប្រវត្តិ",
+      "enabled": "បើក",
+      "disabled": "បិទ",
+      "urlPlaceholder": "https://...",
+      "bulk": {
+        "show": "Show",
+        "hide": "Hide",
+        "feature": "Feature",
+        "unfeature": "Unfeature"
+      },
+      "cancel": "Cancel",
+      "create": "Create",
+      "saved": "Saved successfully"
     },
     "dashboard": {
       "title": "ផ្ទាំងគ្រប់គ្រង",
@@ -680,7 +697,20 @@
           "visibility": "ការបង្ហាញ",
           "visibilityDesc": "គ្រប់គ្រងថាតួនាទីនេះបង្ហាញជាសាធារណៈ ឬទុកសម្រាប់តែផ្ទាំងគ្រប់គ្រង",
           "optionVisible": "បង្ហាញលើទំព័រដើម",
-          "optionHidden": "លាក់ពីសាធារណៈ"
+          "optionHidden": "លាក់ពីសាធារណៈ",
+          "companyLogo": "ឡូហ្គោក្រុមហ៊ុន",
+          "uploadLogoPlaceholder": "ផ្ទុកឡើងឡូហ្គោក្រុមហ៊ុន",
+          "employmentType": "ប្រភេទការងារ",
+          "location": "ទីតាំង",
+          "locationPlaceholder": "ឧ. ពីចម្ងាយ ទីក្រុង",
+          "technologiesUsed": "បច្ចេកវិទ្យាដែលបានប្រើ",
+          "technologiesPlaceholder": "ឧ. react, nodejs",
+          "relatedProjects": "គម្រោងពាក់ព័ន្ធ",
+          "relatedProjectsPlaceholder": "ឧ. project-a, project-b",
+          "responsibilitiesPlaceholder": "រាយការទទួលខុសត្រូវសំខាន់ៗ...",
+          "achievementsPlaceholder": "រាយសមិទ្ធិផលសំខាន់ៗ...",
+          "relatedSkillsHint": "បញ្ជីឈ្មោះជំនាញ (បំបែកដោយសញ្ញាក្បៀស)",
+          "relatedProjectsHint": "បញ្ជីឈ្មោះគម្រោង (បំបែកដោយសញ្ញាក្បៀស)"
         },
         "sections": {
           "roleDetails": {
@@ -954,7 +984,14 @@
           "optionFeatured": "ពិសេស",
           "projectImage": "រូបភាពគម្រោង",
           "projectCover": "គម្របគម្រោង",
-          "projectCoverDesc": "ប្រើរូបភាពទូលាយដែលសមស្របសម្រាប់កាត និងទំព័រលម្អិត"
+          "projectCoverDesc": "ប្រើរូបភាពទូលាយដែលសមស្របសម្រាប់កាត និងទំព័រលម្អិត",
+          "galleryImageUrls": "តំណភ្ជាប់រូបភាព",
+          "galleryPlaceholder": "https://..., https://...",
+          "problemPlaceholder": "ពិពណ៌នាអំពីបញ្ហា ឬបញ្ហាប្រឈម...",
+          "solutionPlaceholder": "ពិពណ៌នាអំពីដំណោះស្រាយរបស់អ្នក...",
+          "architecturePlaceholder": "ពិពណ៌នាអំពីស្ថាបត្យកម្ម...",
+          "resultsPlaceholder": "ពិពណ៌នាអំពីលទ្ធផល និងឥទ្ធិពល...",
+          "galleryHint": "បញ្ជីតំណភ្ជាប់រូបភាពសម្រាប់វិចិត្រសាល (បំបែកដោយសញ្ញាក្បៀស)"
         },
         "sections": {
           "projectBasics": {
@@ -1213,7 +1250,7 @@
         },
         "communication": {
           "label": "ទំនាក់ទំនង",
-          "description": "ព័ត៌មានទំនាក់ទំនង តំណភ្ជាប់ និងប្រវត្តិរូបសង្ខេប"
+          "description": "ទម្រង់ទំនាក់ទំនង និងតំណភ្ជាប់"
         },
         "featureFlags": {
           "label": "ការបិទបើកមុខងារ",
@@ -1332,6 +1369,16 @@
             "maintenance": "របៀបថែទាំ",
             "watermark": "ផ្ទាំងទឹក (មិនរារាំង)",
             "dialog": "ផ្ទាំងពេញអេក្រង់ (រារាំង)"
+          },
+          "behaviorList": {
+            "live": "ធម្មតា៖",
+            "liveDesc": "ដំណើរការធម្មតា។",
+            "testing": "ការសាកល្បង៖",
+            "testingDesc": "បន្ថែមផ្ទាំងបង្ហាញពីលើ ប៉ុន្តែគេហទំព័រនៅតែអាចប្រើបាន។",
+            "maintenance": "ការថែទាំ៖",
+            "maintenanceDesc": "ផ្ទាំងوارធំមួយរារាំងការប្រើប្រាស់គេហទំព័រ (ប្រសិនបើកំណត់ជាប្រភេទ Dialog)។",
+            "admin": "សិទ្ធិអ្នកគ្រប់គ្រង៖",
+            "adminDesc": "ច្រកចូល /admin តែងតែអាចចូលបានជានិច្ច ដើម្បីឱ្យអ្នកអាចបិទមុខងារថែទាំបាន!"
           }
         },
         "identity": {
@@ -1780,6 +1827,10 @@
         "description": "បង្ហាញ ឬលាក់ផ្នែកសាធារណៈដោយមិនចាំបាច់ដាក់ឲ្យដំណើរការឡើងវិញ។",
         "contact": "ទំនាក់ទំនង",
         "showLabel": "បង្ហាញ {{label}}"
+      },
+      "communication": {
+        "title": "Communication & Contact",
+        "description": "Manage how visitors can reach you and what is displayed in the Get In Touch section."
       }
     },
     "profile": {
@@ -1961,6 +2012,52 @@
         "partialRestore": "បានបញ្ចប់ផ្នែកខ្លះ ({{completed}}/{{total}}) មានបញ្ហានៅ៖ {{collections}}",
         "restoreSuccess": "បានស្តារកំណត់ត្រា {{count}} ដោយជោគជ័យ!",
         "restoreFailedInvalidFormat": "បរាជ័យក្នុងការស្តារ ទម្រង់មិនត្រឹមត្រូវ?"
+      },
+      "stats": {
+        "posts": {
+          "label": "ប្លុក",
+          "desc": "មើល និងកែសម្រួលមាតិកា"
+        },
+        "projects": {
+          "label": "គម្រោង",
+          "desc": "ផតហ្វូលីយ៉ូគម្រោង"
+        },
+        "experience": {
+          "label": "បទពិសោធន៍",
+          "desc": "ប្រវត្តិការងារ"
+        },
+        "content": {
+          "label": "មាតិកា",
+          "desc": "ព័ត៌មានទូទៅគេហទំព័រ"
+        },
+        "messages": {
+          "label": "សារ",
+          "desc": "សំណួរពីអ្នកប្រើ"
+        },
+        "users": {
+          "label": "អ្នកប្រើ",
+          "desc": "សិទ្ធិអ្នកគ្រប់គ្រង"
+        },
+        "auditLogs": {
+          "label": "កំណត់ហេតុសវនកម្ម",
+          "desc": "កំណត់ត្រាព្រឹត្តិការណ៍សុវត្ថិភាព"
+        },
+        "visits": {
+          "label": "ការចូលមើល",
+          "desc": "កំណត់ត្រាចរាចរណ៍"
+        },
+        "dailyUsage": {
+          "label": "ការប្រើប្រាស់ប្រចាំថ្ងៃ",
+          "desc": "សង្ខេបម៉ែត្រប្រចាំថ្ងៃ"
+        },
+        "rolePermissions": {
+          "label": "ច្បាប់តួនាទី",
+          "desc": "ម៉ាទ្រីសសិទ្ធិ"
+        },
+        "settings": {
+          "label": "ការកំណត់",
+          "desc": "ការកំណត់ប្រព័ន្ធទូទៅ"
+        }
       }
     },
     "users": {
@@ -2091,7 +2188,15 @@
           "optionHidden": "លាក់",
           "featured": "លេចធ្លោ",
           "optionFeatured": "លេចធ្លោ",
-          "optionNotFeatured": "មិនលេចធ្លោ"
+          "optionNotFeatured": "មិនលេចធ្លោ",
+          "skillIcon": "រូបតំណាងជំនាញ",
+          "uploadIconPlaceholder": "ផ្ទុកឡើងរូបតំណាងបច្ចេកវិទ្យា",
+          "yearsOfExperience": "ចំនួនឆ្នាំបទពិសោធន៍",
+          "yearsPlaceholder": "ឧទាហរណ៍៖ 5",
+          "relatedCertifications": "វិញ្ញាបនបត្រពាក់ព័ន្ធ",
+          "relatedCertificationsPlaceholder": "ឧ. cert-a, cert-b",
+          "relatedProjectsHint": "បញ្ជីឈ្មោះគម្រោង (បំបែកដោយសញ្ញាក្បៀស)",
+          "relatedCertificationsHint": "បញ្ជីឈ្មោះវិញ្ញាបនបត្រ (បំបែកដោយសញ្ញាក្បៀស)"
         },
         "sections": {
           "details": {
@@ -2222,7 +2327,12 @@
           "optionHidden": "លាក់",
           "featured": "លេចធ្លោ",
           "optionFeatured": "លេចធ្លោ",
-          "optionNotFeatured": "មិនលេចធ្លោ"
+          "optionNotFeatured": "មិនលេចធ្លោ",
+          "skillsCovered": "ជំនាញដែលគ្របដណ្តប់",
+          "skillsCoveredHint": "ឈ្មោះជំនាញ (បំបែកដោយសញ្ញាក្បៀស)",
+          "skillsCoveredPlaceholder": "ឧទាហរណ៍៖ security, governance",
+          "credentialBadge": "ផ្លាកបញ្ជាក់សមត្ថភាព",
+          "uploadBadgePlaceholder": "ផ្ទុកឡើងផ្លាកបញ្ជាក់សមត្ថភាព"
         },
         "sections": {
           "details": {
@@ -2363,7 +2473,10 @@
           "endYearRequired": "End year is required",
           "visibility": "Visibility",
           "optionVisible": "Visible on Homepage",
-          "optionHidden": "Hidden from Public"
+          "optionHidden": "Hidden from Public",
+          "entryType": "ប្រភេទ",
+          "startYearPlaceholder": "YYYY",
+          "endYearPlaceholder": "YYYY"
         },
         "sections": {
           "degreeDetails": {
@@ -2443,7 +2556,8 @@
           "title": "រកមិនឃើញពានរង្វាន់ទេ",
           "description": "ចាប់ផ្តើមដោយការបង្កើតពានរង្វាន់ថ្មី។",
           "action": "បន្ថែមពានរង្វាន់"
-        }
+        },
+        "untitled": "Untitled Award"
       },
       "form": {
         "title": {
@@ -2459,7 +2573,51 @@
           "km": "ការពិពណ៌នា (ខ្មែរ)"
         },
         "issueDate": "កាលបរិច្ឆេទទទួលបាន",
-        "link": "តំណភ្ជាប់ខាងក្រៅ"
+        "link": "តំណភ្ជាប់ខាងក្រៅ",
+        "languages": {
+          "en": "English",
+          "km": "Khmer"
+        },
+        "fields": {
+          "title": "Title",
+          "titleRequired": "Title is required",
+          "titlePlaceholder": "e.g., Best Security Policy",
+          "organization": "Organization",
+          "organizationPlaceholder": "e.g., ISC2",
+          "description": "Description",
+          "descriptionPlaceholder": "Description...",
+          "issueDate": "Issue Date",
+          "link": "URL / Link"
+        },
+        "sections": {
+          "details": "Details"
+        },
+        "hints": {
+          "visible": "Show on public site",
+          "featured": "Highlight on main page"
+        }
+      },
+      "messages": {
+        "shown": "Award shown",
+        "hidden": "Award hidden",
+        "featured": "Award featured",
+        "unfeatured": "Award unfeatured",
+        "created": "Award created successfully",
+        "updated": "Award updated successfully",
+        "deleted": "Award deleted successfully"
+      },
+      "bulk": {
+        "showSelected": "Show selected",
+        "hideSelected": "Hide selected",
+        "featureSelected": "Feature selected",
+        "unfeatureSelected": "Unfeature selected",
+        "deleteSelected": "Delete selected"
+      },
+      "dialogs": {
+        "deleteTitle": "Delete Award",
+        "deleteManyTitle": "Delete Multiple Awards",
+        "createTitle": "Add Award",
+        "editTitle": "Edit Award"
       }
     },
     "publications": {
@@ -2485,7 +2643,8 @@
           "title": "រកមិនឃើញការបោះពុម្ពផ្សាយទេ",
           "description": "ចាប់ផ្តើមដោយការបង្កើតការបោះពុម្ពផ្សាយថ្មី។",
           "action": "បន្ថែមការបោះពុម្ពផ្សាយ"
-        }
+        },
+        "untitled": "Untitled Publication"
       },
       "form": {
         "title": {
@@ -2501,7 +2660,51 @@
           "km": "ការពិពណ៌នា (ខ្មែរ)"
         },
         "publishDate": "កាលបរិច្ឆេទ",
-        "link": "តំណភ្ជាប់ខាងក្រៅ"
+        "link": "តំណភ្ជាប់ខាងក្រៅ",
+        "languages": {
+          "en": "English",
+          "km": "Khmer"
+        },
+        "fields": {
+          "title": "Title",
+          "titleRequired": "Title is required",
+          "titlePlaceholder": "e.g., Guide to ISO 27001",
+          "publisher": "Publisher",
+          "publisherPlaceholder": "e.g., ISACA Journal",
+          "description": "Description",
+          "descriptionPlaceholder": "Summary of the publication...",
+          "publishDate": "Publish Date",
+          "link": "URL / Link"
+        },
+        "sections": {
+          "details": "Details"
+        },
+        "hints": {
+          "visible": "Show on public site",
+          "featured": "Highlight on main page"
+        }
+      },
+      "dialogs": {
+        "createTitle": "Add Publication",
+        "editTitle": "Edit Publication",
+        "deleteTitle": "Delete Publication",
+        "deleteManyTitle": "Delete Multiple Publications"
+      },
+      "messages": {
+        "shown": "Publication shown",
+        "hidden": "Publication hidden",
+        "featured": "Publication featured",
+        "unfeatured": "Publication unfeatured",
+        "created": "Publication created successfully",
+        "updated": "Publication updated successfully",
+        "deleted": "Publication deleted successfully"
+      },
+      "bulk": {
+        "showSelected": "Show selected",
+        "hideSelected": "Hide selected",
+        "featureSelected": "Feature selected",
+        "unfeatureSelected": "Unfeature selected",
+        "deleteSelected": "Delete selected"
       }
     },
     "speaking": {
@@ -2527,7 +2730,8 @@
           "title": "រកមិនឃើញការនិយាយទេ",
           "description": "ចាប់ផ្តើមដោយការបង្កើតព្រឹត្តិការណ៍ថ្មី។",
           "action": "បន្ថែមព្រឹត្តិការណ៍"
-        }
+        },
+        "untitled": "Untitled Event"
       },
       "form": {
         "title": {
@@ -2547,8 +2751,268 @@
           "km": "ការពិពណ៌នា (ខ្មែរ)"
         },
         "date": "កាលបរិច្ឆេទ",
-        "link": "តំណភ្ជាប់ខាងក្រៅ"
+        "link": "តំណភ្ជាប់ខាងក្រៅ",
+        "languages": {
+          "en": "English",
+          "km": "Khmer"
+        },
+        "fields": {
+          "title": "Topic/Title",
+          "titleRequired": "Title is required",
+          "titlePlaceholder": "e.g., Securing the Cloud",
+          "eventName": "Event Name",
+          "eventNamePlaceholder": "e.g., DEF CON 30",
+          "location": "Location",
+          "locationPlaceholder": "e.g., Las Vegas, NV",
+          "description": "Description",
+          "descriptionPlaceholder": "Summary of the talk...",
+          "date": "Event Date",
+          "link": "URL / Link"
+        },
+        "sections": {
+          "details": "Details"
+        },
+        "hints": {
+          "visible": "Show on public site",
+          "featured": "Highlight on main page"
+        }
+      },
+      "dialogs": {
+        "createTitle": "Add Speaking Event",
+        "editTitle": "Edit Speaking Event",
+        "deleteTitle": "Delete Event",
+        "deleteManyTitle": "Delete Multiple Events"
+      },
+      "messages": {
+        "shown": "Speaking event shown",
+        "hidden": "Speaking event hidden",
+        "featured": "Speaking event featured",
+        "unfeatured": "Speaking event unfeatured",
+        "created": "Speaking event created successfully",
+        "updated": "Speaking event updated successfully",
+        "deleted": "Speaking event deleted successfully"
+      },
+      "bulk": {
+        "showSelected": "Show selected",
+        "hideSelected": "Hide selected",
+        "featureSelected": "Feature selected",
+        "unfeatureSelected": "Unfeature selected",
+        "deleteSelected": "Delete selected"
       }
+    },
+    "forms": {
+      "pendingVerification": "រង់ចាំផ្ទៀងផ្ទាត់",
+      "contentEditor": "អ្នកកែសម្រួលមាតិកា",
+      "systemAdmin": "អ្នកគ្រប់គ្រងប្រព័ន្ធ",
+      "createNewUser": "បង្កើតអ្នកប្រើថ្មី",
+      "inviteATeammateWithA": "អញ្ជើញមិត្តរួមការងារ​ដោយប្រើពាក្យសម្ងាត់បណ្តោះអាសន្ន ហើយកំណត់តួនាទីដំបូងមុនពេលពួកគេចូល។",
+      "accountSetup": "ការរៀបចំគណនី",
+      "credentialsAndAccess": "ព័ត៌មានចូល និងសិទ្ធិ",
+      "emailAddress": "អាសយដ្ឋានអ៊ីមែល",
+      "emailIsRequired": "ត្រូវការអ៊ីមែល",
+      "enterAValidEmailAddr": "សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលត្រឹមត្រូវ",
+      "userExampleCom": "អ្នក@ឧទាហរណ៍.com",
+      "temporaryPassword": "ពាក្យសម្ងាត់បណ្តោះអាសន្ន",
+      "passwordIsRequired": "ត្រូវការពាក្យសម្ងាត់",
+      "passwordMustBeAtLeas": "ពាក្យសម្ងាត់ត្រូវយ៉ាងហោចណាស់ 6 តួអក្សរ",
+      "min6Characters": "យ៉ាងតិច 6 តួអក្សរ",
+      "initialRole": "តួនាទីដំបូង",
+      "roleIsRequired": "ត្រូវការតួនាទី",
+      "useARealEmail": "ប្រើអ៊ីមែលពិតប្រាកដ",
+      "theResetPasswordActi": "សកម្មភាពកំណត់ពាក្យសម្ងាត់ឡើងវិញ អាស្រ័យលើអ៊ីមែលដែលអ្នកប្រើអាចចូលប្រើបាន។",
+      "temporaryPassword1": "ពាក្យសម្ងាត់បណ្តោះអាសន្ន",
+      "keepItSimpleEnoughTo": "កំណត់ឲ្យងាយចែករំលែកម្តង ហើយស្នើឲ្យអ្នកប្រើប្តូរភ្លាមៗ។",
+      "recommendedStart": "ការចាប់ផ្ដើមណែនាំ",
+      "usePendingUnlessTheU": "ប្រើ `pending` លើកលែងតែអ្នកប្រើត្រូវការសិទ្ធិ editor ឬ admin ភ្លាមៗ។",
+      "cancel": "បោះបង់",
+      "creating": "កំពុងបង្កើត...",
+      "createUser": "បង្កើតអ្នកប្រើ",
+      "created": "បានបង្កើត",
+      "deleted": "បានលុប",
+      "updated": "បានកែប្រែ",
+      "unknown": "មិនស្គាល់",
+      "pending": "រង់ចាំ",
+      "editor": "អ្នកកែសម្រួល",
+      "admin": "អ្នកគ្រប់គ្រង",
+      "superAdmin": "អ្នកគ្រប់គ្រងកំពូល",
+      "userAccountProfile": "ប្រវត្តិរូបគណនីអ្នកប្រើ",
+      "reviewAccessAdjustTh": "ពិនិត្យសិទ្ធិ កែតួនាទីគ្រប់គ្រង និងមើលប្រវត្តិសវនកម្មសម្រាប់គណនីនេះ។",
+      "disabledAccount": "គណនីត្រូវបានបិទ",
+      "activeAccount": "គណនីសកម្ម",
+      "currentSession": "សម័យបច្ចុប្បន្ន",
+      "identity": "អត្តសញ្ញាណ",
+      "accountSummary": "សង្ខេបគណនី",
+      "authenticationEmail": "អ៊ីមែលផ្ទៀងផ្ទាត់",
+      "displayName": "ឈ្មោះបង្ហាញ",
+      "notSet": "មិនទាន់កំណត់",
+      "statusSecurity": "ស្ថានភាព និងសុវត្ថិភាព",
+      "disabledAccount1": "គណនីបានបិទ",
+      "activeAccount1": "គណនីសកម្ម",
+      "administrativeRole": "តួនាទីគ្រប់គ្រង",
+      "YOU": "(អ្នក)",
+      "metadata": "មេតាទិន្នន័យ",
+      "systemDetails": "ព័ត៌មានប្រព័ន្ធ",
+      "registrationDate": "ថ្ងៃចុះឈ្មោះ",
+      "systemUniversalID": "លេខសម្គាល់សកលប្រព័ន្ធ",
+      "sidebarIdentity": "អត្តសញ្ញាណ Sidebar",
+      "thisIsWhatTheAdminSh": "នេះជាអ្វីដែល Admin បង្ហាញ នៅពេលមានឈ្មោះបង្ហាញ។",
+      "audit": "សវនកម្ម",
+      "auditEditHistory": "ប្រវត្តិសវនកម្ម និងកែសម្រួល",
+      "loading": "កំពុងផ្ទុក...",
+      "loadingHistory": "កំពុងផ្ទុកប្រវត្តិ...",
+      "noEditHistoryRecorde": "មិនទាន់មានប្រវត្តិកែសម្រួលនៅឡើយ។",
+      "changesMadeToThisAcc": "ការផ្លាស់ប្តូរលើគណនីនេះ នឹងបង្ហាញនៅទីនេះ ពេលមានការកត់ត្រាសកម្មភាព។",
+      "pending1": "កំពុងរង់ចាំ...",
+      "account": "គណនី",
+      "by": "ដោយ",
+      "system": "ប្រព័ន្ធ",
+      "reEnableAccount": "បើកដំណើរការគណនីឡើងវិញ",
+      "disableAccount": "បិទដំណើរការគណនី",
+      "resetPassword": "កំណត់ពាក្យសម្ងាត់ឡើងវិញ",
+      "done": "រួចរាល់",
+      "restoreData": "ស្ដារទិន្នន័យ",
+      "jSONBackupFile": "ឯកសារ JSON backup",
+      "existingDatabaseDocu": "ឯកសារមូលដ្ឋានទិន្នន័យដែលមាន ID ដូចគ្នា នឹងត្រូវ",
+      "completelyOverwritte": "សរសេរជាន់ទាំងស្រុង",
+      "withTheBackupData": "ដោយទិន្នន័យបម្រុង។",
+      "warningThisActionCan": "ព្រមាន៖ សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។",
+      "areYouReadyToRestore": "តើអ្នករួចរាល់សម្រាប់ស្ដារទិន្នន័យទេ?",
+      "startRestore": "ចាប់ផ្តើមស្ដារ",
+      "securityAuthLogs": "កំណត់ហេតុសុវត្ថិភាព / ចូលប្រព័ន្ធ",
+      "failedLoginsAndAuthe": "ការចូលប្រើបរាជ័យ និងព្រឹត្តិការណ៍ផ្ទៀងផ្ទាត់។",
+      "systemLogs": "កំណត់ហេតុប្រព័ន្ធ",
+      "generalAdminAndSyste": "កំណត់ត្រាសវនកម្មទូទៅរបស់អ្នកគ្រប់គ្រង និងប្រព័ន្ធ។",
+      "activityFeedRecords": "កំណត់ត្រាសកម្មភាព",
+      "detailedReadWriteDel": "ប្រវត្តិសកម្មភាព read/write/delete លម្អិត។",
+      "draftTemporaryRecord": "ទិន្នន័យសាកល្បង / ព្រាង",
+      "hiddenPostsAndProjec": "ប្រកាស និងគម្រោងដែលលាក់ និងចាស់ជាងកំណត់។",
+      "dailyAnalyticsBreakd": "បំបែកស្ថិតិប្រចាំថ្ងៃ",
+      "dailyUsageTotalsAndR": "ចំនួនសរុបប្រចាំថ្ងៃ និងកំណត់ហេតុពាក់ព័ន្ធ។",
+      "visits": "ការចូលមើល",
+      "pageVisitRecordsAndT": "កំណត់ត្រាចូលមើលទំព័រ និងម៉ោង។",
+      "confirmArchive": "បញ្ជាក់ការប័ណ្ណសារ",
+      "youAreAboutToPermane": "អ្នកកំពុងត្រៀមបណ្ណសារ និងលុបចោលកំណត់ត្រាដែលបានជ្រើស ដែលចាស់ជាង",
+      "days": "ថ្ងៃ",
+      "recommended": "ណែនាំ៖",
+      "downloadFullJSONBack": "ទាញយក JSON Backup ពេញលេញ មុនពេលបន្ត។",
+      "permanent": "អចិន្ត្រៃយ៍៖",
+      "recordsWillBePermane": "កំណត់ត្រានឹងត្រូវដកចេញពី Firebase ជាអចិន្ត្រៃយ៍។",
+      "archiveScope": "វិសាលភាពបណ្ណសារ",
+      "selectAll": "ជ្រើសទាំងអស់",
+      "clearAll": "លុបទាំងអស់",
+      "areYouAbsolutelySure": "តើអ្នកប្រាកដទេ?",
+      "selectAtLeastOneArch": "សូមជ្រើសរើសយ៉ាងហោចណាស់មួយប្រភេទសម្រាប់បណ្ណសារមុនបន្ត។",
+      "archiveAndDelete": "ប័ណ្ណសារ និងលុប",
+      "success": "ជោគជ័យ",
+      "failure": "បរាជ័យ",
+      "enabled": "បានបើក",
+      "disabled": "បានបិទ",
+      "mobile": "ទូរស័ព្ទ",
+      "tablet": "ថេប្លេត",
+      "desktop": "កុំព្យូទ័រ",
+      "eventStatus": "ស្ថានភាពព្រឹត្តិការណ៍",
+      "userEmail": "អ៊ីមែលអ្នកប្រើ",
+      "iPAddress": "អាសយដ្ឋាន IP",
+      "device": "ឧបករណ៍",
+      "sessionID": "លេខសម្គាល់សម័យ",
+      "timestamp": "ពេលវេលា",
+      "userAgent": "ព័ត៌មានកម្មវិធីរុករក",
+      "failureReason": "មូលហេតុបរាជ័យ",
+      "auditLogDetails": "ព័ត៌មានលម្អិតកំណត់ហេតុសវនកម្ម",
+      "eventPayload": "ទិន្នន័យព្រឹត្តិការណ៍",
+      "close": "បិទ",
+      "read": "អាន",
+      "write": "សរសេរ",
+      "delete": "លុប",
+      "activityEvent": "ព្រឹត្តិការណ៍សកម្មភាព",
+      "readsAuditHistory": "ប្រវត្តិសវនកម្មការអាន",
+      "activityReportsForDa": "របាយការណ៍សកម្មភាពសម្រាប់ ${dateStr}",
+      "writesAuditHistory": "ប្រវត្តិសវនកម្មការកែប្រែ",
+      "deletesAuditHistory": "ប្រវត្តិសវនកម្មការលុប",
+      "activityHistory": "ប្រវត្តិសកម្មភាព",
+      "noActivityRecordsFou": "មិនមានកំណត់ត្រាសកម្មភាពសម្រាប់រយៈពេលនេះទេ។",
+      "oPERATIONTARGET": "សកម្មភាព និងគោលដៅ",
+      "cOUNT": "ចំនួន",
+      "oRIGINATOR": "អ្នកបង្កើត",
+      "tIMESTAMP": "ពេលវេលា",
+      "noMetadataRecordedFo": "មិនមានមេតាដាតាសម្រាប់ព្រឹត្តិការណ៍នេះទេ។",
+      "totalTracked": "សរុបដែលបានតាមដាន:",
+      "records": "កំណត់ត្រា"
+    },
+    "communication": {
+      "tabs": {
+        "contact": "ព័ត៌មានទំនាក់ទំនង",
+        "telegram": "តេឡេក្រាម",
+        "resume": "ប្រវត្តិរូបសង្ខេប",
+        "availability": "លទ្ធភាពទទួលការងារ"
+      },
+      "contact": {
+        "title": "ព័ត៌មានទំនាក់ទំនង",
+        "socialTitle": "បណ្ដាញសង្គម និងការទាក់ទងផ្ទាល់",
+        "socialDesc": "ព័ត៌មានលម្អិតទាំងនេះត្រូវបានបង្ហាញនៅលើផ្នែកទំនាក់ទំនង។",
+        "fields": {
+          "email": "អ៊ីមែលការងារ",
+          "secondaryEmail": "អ៊ីមែលបន្ទាប់បន្សំ",
+          "phone": "លេខទូរស័ព្ទ",
+          "whatsapp": "WhatsApp",
+          "linkedin": "តំណ LinkedIn",
+          "github": "តំណ GitHub",
+          "twitter": "តំណ X (Twitter)",
+          "website": "គេហទំព័រផ្ទាល់ខ្លួន"
+        },
+        "save": "រក្សាទុកព័ត៌មានទំនាក់ទំនង"
+      },
+      "telegram": {
+        "title": "ការគ្រប់គ្រងតេឡេក្រាម",
+        "fields": {
+          "enabled": "បើកតេឡេក្រាមនៅលើគេហទំព័រសាធារណៈ",
+          "username": "ឈ្មោះអ្នកប្រើប្រាស់តេឡេក្រាម",
+          "url": "តំណ Deep Link",
+          "qr": "រូបភាព QR Code (ជាជម្រើស)",
+          "qrHint": "បង្កើតដោយស្វ័យប្រវត្តិបើទទេរ។"
+        },
+        "save": "រក្សាទុកព័ត៌មានតេឡេក្រាម"
+      },
+      "resume": {
+        "title": "ការគ្រប់គ្រងប្រវត្តិរូបសង្ខេប",
+        "fields": {
+          "publicDownload": "អនុញ្ញាតឱ្យទាញយកជាសាធារណៈ",
+          "printRoute": "អនុញ្ញាតផ្លូវបោះពុម្ព",
+          "titleEn": "ចំណងជើង (EN)",
+          "titleKm": "ចំណងជើង (KM)",
+          "version": "កំណែ",
+          "versionPlaceholder": "ឧ. v2026.1",
+          "upload": "ផ្ទុកឡើងប្រវត្តិរូបសង្ខេប PDF",
+          "uploadHint": "អតិបរមា 700KB សម្រាប់រក្សាទុកជា base64។"
+        },
+        "preview": "មើលជាមុន/ទាញយកឯកសារបច្ចុប្បន្ន",
+        "delete": "លុប PDF",
+        "deleteConfirm": "តើអ្នកប្រាកដជាចង់លុបឯកសារ PDF ប្រវត្តិរូបសង្ខេបមែនទេ?",
+        "save": "រក្សាទុកប្រវត្តិរូបសង្ខេប"
+      },
+      "availability": {
+        "title": "លទ្ធភាពទទួលការងារ",
+        "fields": {
+          "status": "ស្ថានភាពលទ្ធភាព",
+          "statusSelect": "ជ្រើសរើស...",
+          "statusOpen": "មានពេលទទួលការងារ",
+          "statusFreelance": "ការងារក្រៅម៉ោង/ពិគ្រោះយោបល់",
+          "statusLimited": "មានពេលមានកំណត់",
+          "statusBusy": "រវល់ / មិនមានពេល",
+          "messageEn": "សារផ្ទាល់ខ្លួន (EN)",
+          "messageKm": "សារផ្ទាល់ខ្លួន (KM)",
+          "responseEn": "ពេលវេលាឆ្លើយតប (EN)",
+          "responseKm": "ពេលវេលាឆ្លើយតប (KM)",
+          "timeZone": "តំបន់ពេលវេលា",
+          "preferredContact": "វិធីសាស្ត្រទាក់ទងដែលពេញចិត្ត",
+          "preferredContactHint": "ខណ្ឌដោយសញ្ញាក្បៀស (ឧ. Telegram, Email)"
+        },
+        "save": "រក្សាទុកលទ្ធភាពទទួលការងារ"
+      }
+    },
+    "toolbar": {
+      "add": "បន្ថែម",
+      "search": "ស្វែងរក..."
     }
   },
   "skills": {
@@ -2592,7 +3056,8 @@
     "education": "ការអប់រំ",
     "projects": "គម្រោងដែលបានជ្រើសរើស",
     "languages": "ភាសា",
-    "generatedFrom": "បានបង្កើតពី"
+    "generatedFrom": "បានបង្កើតពី",
+    "backToAdmin": "Back to Admin"
   },
   "career": {
     "stats": {
@@ -2608,5 +3073,332 @@
     "awards": "ពានរង្វាន់ និងកិត្តិយស",
     "publications": "ការបោះពុម្ពផ្សាយ",
     "speaking": "ព្រឹត្តិការណ៍ថ្លែងសុន្ទរកថា"
+  },
+  "recruiter": {
+    "eyebrow": "ទិដ្ឋភាពសង្ខេប",
+    "title": "ព័ត៌មានត្រួសៗ",
+    "years": "បទពិសោធន៍ {{count}}+ ឆ្នាំ",
+    "availability": {
+      "open": "អាចទទួលការងារបាន",
+      "busy": "រវល់",
+      "closed": "មិនទាន់អាចទទួលការងារបាន",
+      "${availabilityStatus}": "Available"
+    },
+    "coreExpertise": "ជំនាញស្នូល",
+    "accomplishments": "សមិទ្ធផលថ្មីៗ",
+    "workTypes": "ប្រភេទការងារ",
+    "industries": "ជំនាញផ្នែកឧស្សាហកម្ម",
+    "statsYears": "ឆ្នាំ",
+    "statsCerts": "វិញ្ញាបនបត្រ",
+    "featured": "លេចធ្លោ៖",
+    "viewResume": "មើលប្រវត្តិរូប",
+    "getInTouch": "ទំនាក់ទំនង"
+  },
+  "ui": {
+    "noDataAvailableForSelecte": "មិនមានទិន្នន័យសម្រាប់រយៈពេលដែលបានជ្រើស។",
+    "noData": "គ្មានទិន្នន័យ",
+    "unknown": "មិនស្គាល់",
+    "other": "ផ្សេងទៀត",
+    "previous": "មុន",
+    "pagePageOfTotalPages": "ទំព័រ ${page} នៃ ${totalPages}",
+    "next": "បន្ទាប់",
+    "comprehensiveVisitActivit": "ប្រវត្តិសកម្មភាពចូលមើលលម្អិត",
+    "audienceGeographicDistrib": "ការចែកចាយភូមិសាស្ត្រអ្នកទស្សនា",
+    "technicalDeviceInfrastruc": "ហេដ្ឋារចនាសម្ព័ន្ធឧបករណ៍",
+    "contentPerformanceMetrics": "ម៉ែត្រការអនុវត្តខ្លឹមសារ",
+    "regionalEngagementBreakdo": "ការចូលរួមតាមតំបន់",
+    "acquisitionTrafficSources": "ប្រភពទទួលបាន និងចរាចរណ៍",
+    "audienceLoyaltyRetentionA": "វិភាគភាពស្មោះត្រង់ និងការត្រឡប់មកវិញ",
+    "detailedInsightsBasedOnAn": "ព័ត៌មានលម្អិតផ្អែកលើអន្តរកម្ម ${analyticsLogsTotal || analyticsLogs.length} ដែលបានតាមដាន",
+    "firestoreQuotaReachedShow": "បានដល់កំណត់ Firestore quota។ កំពុងបង្ហាញទិន្នន័យមួយផ្នែក។",
+    "aggregatingAnalyticsData": "កំពុងប្រមូលទិន្នន័យវិភាគ...",
+    "retrievedAnalyticsLogsLen": "បានទាញយកសម័យថ្មីៗ ${analyticsLogs.length}",
+    "pagePath": "ផ្លូវទំព័រ",
+    "region": "តំបន់",
+    "platform": "វេទិកា",
+    "iPAddress": "អាសយដ្ឋាន IP",
+    "dateTime": "កាលបរិច្ឆេទ និងម៉ោង",
+    "desktop": "កុំព្យូទ័រ",
+    "noVisitDataForThisRange": "មិនមានទិន្នន័យចូលមើលសម្រាប់រយៈពេលនេះទេ។",
+    "totalReturning": "សរុបត្រឡប់មកវិញ",
+    "uniqueReturnees": "អ្នកត្រឡប់មកវិញមិនស្ទួន",
+    "avgVisitsUser": "មធ្យមចូលមើល / អ្នកប្រើ",
+    "dailyRetentionTrends": "និន្នាការត្រឡប់មកវិញប្រចាំថ្ងៃ",
+    "newVisitors": "អ្នកទស្សនាថ្មី",
+    "returningVisitors": "អ្នកទស្សនាត្រឡប់មកវិញ",
+    "returningVisitorFrequency": "ភាពញឹកញាប់នៃអ្នកទស្សនាត្រឡប់មកវិញ",
+    "visitorIP": "IP អ្នកទស្សនា",
+    "location": "ទីតាំង",
+    "totalVisits": "ចំនួនចូលមើលសរុប",
+    "latestActivity": "សកម្មភាពចុងក្រោយ",
+    "recent": "ថ្មីៗ",
+    "noFrequentVisitorsIdentif": "មិនរកឃើញអ្នកទស្សនាញឹកញាប់ក្នុងរយៈពេលនេះទេ។",
+    "direct": "ផ្ទាល់",
+    "visits": "ចំនួនចូលមើល",
+    "country": "ប្រទេស",
+    "city": "ទីក្រុង",
+    "device": "ឧបករណ៍",
+    "source": "ប្រភព",
+    "browser": "កម្មវិធីរុករក",
+    "operatingSystem": "ប្រព័ន្ធប្រតិបត្តិការ",
+    "percentage": "ភាគរយ",
+    "close": "បិទ",
+    "selectADateRange": "ជ្រើសរើសចន្លោះកាលបរិច្ឆេទ",
+    "DayDiffDayDayDiff1S": "${dayDiff} ថ្ងៃ",
+    "custom": "ផ្ទាល់ខ្លួន",
+    "to": "ដល់",
+    "records": "កំណត់ត្រា",
+    "startDateMustBeBeforeEndD": "កាលបរិច្ឆេទចាប់ផ្តើមត្រូវតែមុនកាលបរិច្ឆេទបញ្ចប់។",
+    "today": "ថ្ងៃនេះ",
+    "all": "ទាំងអស់",
+    "startDate": "កាលបរិច្ឆេទចាប់ផ្តើម",
+    "endDate": "កាលបរិច្ឆេទបញ្ចប់",
+    "export": "នាំចេញ",
+    "wait": "រង់ចាំ...",
+    "refresh": "ធ្វើបច្ចុប្បន្នភាព",
+    "updated": "បានធ្វើបច្ចុប្បន្នភាព៖",
+    "read": "អាន",
+    "write": "សរសេរ",
+    "created": "បានបង្កើត",
+    "updated1": "បានកែប្រែ",
+    "deleted": "បានលុប",
+    "enabled": "បានបើក",
+    "disabled": "បានបិទ",
+    "success": "ជោគជ័យ",
+    "failure": "បរាជ័យ",
+    "blog": "ប្លុក",
+    "projects": "គម្រោង",
+    "experience": "បទពិសោធន៍",
+    "users": "អ្នកប្រើ",
+    "mobile": "ទូរស័ព្ទ",
+    "tablet": "ថេប្លេត",
+    "action": "សកម្មភាព",
+    "count": "ចំនួន",
+    "module": "ម៉ូឌុល",
+    "targetEntity": "ធាតុគោលដៅ",
+    "performer": "អ្នកអនុវត្ត",
+    "system": "ប្រព័ន្ធ",
+    "time": "ពេលវេលា",
+    "status": "ស្ថានភាព",
+    "userEmail": "អ៊ីមែលអ្នកប្រើ",
+    "userAgent": "ព័ត៌មានកម្មវិធីរុករក",
+    "timestamp": "ពេលវេលា",
+    "noSecurityLogsFound": "មិនមានកំណត់ហេតុសុវត្ថិភាព",
+    "noActivityLogsFound": "មិនមានកំណត់ហេតុសកម្មភាព",
+    "thereAreCurrentlyNoRecord": "បច្ចុប្បន្នមិនមានព្រឹត្តិការណ៍ដែលបានកត់ត្រាទេ។",
+    "searchByUserIPOrEntity": "ស្វែងរកតាមអ្នកប្រើ IP ឬធាតុ...",
+    "last7Days": "7 ថ្ងៃចុងក្រោយ",
+    "last30Days": "30 ថ្ងៃចុងក្រោយ",
+    "allTime": "គ្រប់ពេល",
+    "allSecurityEvents": "ព្រឹត្តិការណ៍សុវត្ថិភាពទាំងអស់",
+    "failedLogins": "ការចូលប្រើបរាជ័យ",
+    "successfulLogins": "ការចូលប្រើជោគជ័យ",
+    "allModules": "គ្រប់ម៉ូឌុល",
+    "allActions": "គ្រប់សកម្មភាព",
+    "reset": "កំណត់ឡើងវិញ",
+    "showing": "កំពុងបង្ហាញ",
+    "record": "កំណត់ត្រា",
+    "inThisView": "ក្នុងទិដ្ឋភាពនេះ",
+    "readOperations": "សកម្មភាពអាន",
+    "writeOperations": "សកម្មភាពសរសេរ",
+    "deleteOperations": "សកម្មភាពលុប",
+    "viewDetails": "មើលលម្អិត",
+    "logReadOperations": "កត់ត្រាសកម្មភាពអាន",
+    "trackWhenDocumentsAreFetc": "តាមដានពេលមានការទាញយកឯកសារ។",
+    "logWriteOperations": "កត់ត្រាសកម្មភាពសរសេរ",
+    "trackCreatesAndUpdates": "តាមដានការបង្កើត និងការកែប្រែ។",
+    "logDeleteOperations": "កត់ត្រាសកម្មភាពលុប",
+    "trackDocumentRemovals": "តាមដានការលុបឯកសារ។",
+    "logAnonymousActions": "កត់ត្រាសកម្មភាពអនាមិក",
+    "trackPublicVisitors": "តាមដានភ្ញៀវសាធារណៈ។",
+    "auditLogConfiguration": "ការកំណត់ Audit Log",
+    "masterAuditTracking": "ការតាមដាន Audit មេ",
+    "enableOrDisableAllDatabas": "បើក ឬបិទការកត់ត្រាសកម្មភាពមូលដ្ឋានទិន្នន័យទាំងមូល។ ផ្តល់អនុសាសន៍ខ្ពស់សម្រាប់ស្ថេរភាពប្រព័ន្ធពេលប្រើប្រាស់ពិត។",
+    "granularRulesEnabled": "ច្បាប់លម្អិតដែលបានបើក",
+    "toggleMasterAudit": "ប្ដូរ Master Audit",
+    "notAuthorized": "គ្មានសិទ្ធិ",
+    "trackingEnabled": "បានបើកការតាមដាន",
+    "trackingDisabled": "បានបិទការតាមដាន",
+    "toggleItemLabel": "ប្ដូរ ${item.label}",
+    "databaseActions": "សកម្មភាពមូលដ្ឋានទិន្នន័យ",
+    "fullJSONBackup": "បម្រុងទុក JSON ពេញលេញ",
+    "downloadAllDatabaseCollec": "ទាញយកបណ្ដុំទិន្នន័យទាំងអស់របស់មូលដ្ឋានទិន្នន័យជាឯកសារ JSON តែមួយ។ សមស្របសម្រាប់ការបម្រុងទុកដោយដៃ ឬការផ្លាស់ទីទិន្នន័យ។",
+    "backupDatabase": "បម្រុងទុកមូលដ្ឋានទិន្នន័យ",
+    "restoreFromBackup": "ស្តារពីឯកសារបម្រុងទុក",
+    "restoreYourDatabaseUsingA": "ស្តារមូលដ្ឋានទិន្នន័យរបស់អ្នកដោយប្រើឯកសារ JSON ដែលបានទាញយកពីមុន។",
+    "warning": "ព្រមាន៖",
+    "existingDataWillBeOverwri": "ទិន្នន័យដែលមានស្រាប់នឹងត្រូវបានសរសេរជាន់ពីលើ។",
+    "selectFile": "ជ្រើសឯកសារ",
+    "selectJSONFile": "ជ្រើសឯកសារ JSON",
+    "archiveOldRecords": "បណ្ណសារកំណត់ត្រាចាស់",
+    "clearAuditLogsVisitsAndDa": "សម្អាតកំណត់ហេតុសវនកម្ម ចំនួនចូលមើល និងទិន្នន័យប្រើប្រាស់ប្រចាំថ្ងៃ ដែលចាស់ជាងរយៈពេលកំណត់ ដើម្បីរក្សាប្រសិទ្ធភាព។",
+    "olderThan7Days1Week": "Older than 7 Days (1 Week)",
+    "olderThan30Days": "ចាស់ជាង 30 ថ្ងៃ",
+    "olderThan90Days": "ចាស់ជាង 90 ថ្ងៃ",
+    "olderThan6Months": "ចាស់ជាង 6 ខែ",
+    "olderThan1Year": "ចាស់ជាង 1 ឆ្នាំ",
+    "archiveNow": "បណ្ណសារឥឡូវនេះ",
+    "SuccessLabelCopied": "បានចម្លង ${successLabel} រួចរាល់។",
+    "failedToCopyCommand": "មិនអាចចម្លងពាក្យបញ្ជាបានទេ។",
+    "areYouSureYouWantToSeedSa": "តើអ្នកប្រាកដថាចង់បញ្ចូលទិន្នន័យគំរូឬទេ?",
+    "successfullySeededCreated": "បានបញ្ចូលទិន្នន័យចំនួន ${createdCount} ជោគជ័យ។",
+    "seedingFailed": "ការបញ្ចូលទិន្នន័យបានបរាជ័យ។",
+    "advancedWorkflow": "លំហូរការងារ​កម្រិត​ខ្ពស់",
+    "advancedSeeding": "ការបញ្ចូលទិន្នន័យកម្រិតខ្ពស់",
+    "useStandardHardResetOrFul": "ប្រើ Standard, Hard Reset ឬ Full Reset ពី seed-sample-data.mjs។",
+    "seeding": "កំពុងបញ្ចូល...",
+    "runSeedInBrowser": "បញ្ចូលទិន្នន័យទីនេះ",
+    "copyCLICommand": "ចម្លង CLI Command",
+    "cleanSettings": "សម្អាតការកំណត់",
+    "seedSettingsCjsIsConfigur": "seed-settings.cjs ត្រូវបានកំណត់ merge: false ដើម្បីសរសេរជំនួសពេញលេញ។",
+    "optimizedIndexes": "Indexes ដែលបានបង្កើនប្រសិទ្ធភាព",
+    "firestoreIndexesJsonIsPar": "firestore.indexes.json ជាផ្នែកនៃលំហូរការងារ។ Deploy indexes បន្ទាប់ពីមានការកែប្រែ។",
+    "copyDeployCommand": "ចម្លងពាក្យបញ្ជា Deploy",
+    "masterWalkthrough": "មគ្គុទ្ទេសក៍មេ",
+    "theCompleteEndToEndProces": "ដំណើរការពេញលេញពីដើមដល់ចប់ ត្រូវបានកត់ត្រាទុកក្នុង walkthrough.md។",
+    "warningNearingFreeTierCap": "ព្រមាន៖ កំពុងជិតដល់កម្រិត free-tier។",
+    "currentUsageIsWithinFreeT": "ការប្រើប្រាស់បច្ចុប្បន្ននៅក្នុងកម្រិត free-tier។",
+    "storageHealth": "សុខភាពការផ្ទុកទិន្នន័យ",
+    "refreshingCounts": "កំពុងធ្វើបច្ចុប្បន្នភាពចំនួន...",
+    "lastChecked": "ពិនិត្យចុងក្រោយ៖",
+    "counting": "កំពុងរាប់...",
+    "healthy": "ស្ថានភាពល្អ",
+    "unavailable": "មិនអាចប្រើបាន",
+    "collectionCoverage": "គ្របដណ្តប់បណ្ដុំទិន្នន័យ:",
+    "trackedGroups": "ក្រុមដែលតាមដាន",
+    "freeTierDocumentUsage50kL": "ការប្រើប្រាស់ឯកសារកម្រិតឥតគិតថ្លៃ (ប៉ាន់ស្មានកម្រិត 50k)",
+    "unableToLoadRightNow": "មិនអាចផ្ទុកបានឥឡូវនេះ",
+    "failedToCount": "រាប់មិនបាន",
+    "dispatchingSync": "កំពុងបញ្ជូនសមកាលកម្ម...",
+    "syncQueued": "សមកាលកម្មបានរៀបចំហើយ",
+    "syncFailed": "សមកាលកម្មបរាជ័យ",
+    "readyToSync": "រួចរាល់សម្រាប់សមកាលកម្ម",
+    "databaseSync": "សមកាលកម្មមូលដ្ឋានទិន្នន័យ",
+    "manualGitHubDispatch": "បញ្ជូន GitHub ដោយដៃ",
+    "dispatchTheBackupSyncWork": "បញ្ជូន workflow sync សំរាប់ backup ក្នុង GitHub Actions។ cron ស្វ័យប្រវត្តិត្រូវបានបិទ ដូច្នេះអ្នកអាចបើកដំណើរការដោយដៃបានគ្រប់គ្រាន់។",
+    "gitHubAccessIsHandledByAF": "ការចូលប្រើ GitHub ត្រូវបានគ្រប់គ្រងដោយ Firebase Function។ មិនរក្សាទុក token ផ្ទាល់ខ្លួនក្នុង browser នេះទេ។",
+    "runDatabaseSyncNow": "ដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យឥឡូវនេះ",
+    "runDatabaseSync": "ដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យ",
+    "requiresSuperAdminAccess": "ត្រូវការសិទ្ធិ super admin។",
+    "noSyncRequestSentYet": "មិនទាន់មានសំណើសមកាលកម្ម។",
+    "youDoNotHavePermissionToR": "អ្នកគ្មានសិទ្ធិដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យ។",
+    "workflowTargetGITHUBOWNER": "គោលដៅ workflow: ${GITHUB_OWNER}/${GITHUB_REPO} (manual_database_sync).",
+    "restoringDatabase": "កំពុងស្តារមូលដ្ឋានទិន្នន័យ...",
+    "recordsProcessed": "កំណត់ត្រាដែលបានដំណើរការ",
+    "runTheDatabaseSyncNowThis": "ដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យឥឡូវនេះទេ? វានឹងបញ្ជូន GitHub Actions workflow ដោយដៃ។",
+    "dispatchingDatabaseSync": "កំពុងបញ្ជូនសមកាលកម្មមូលដ្ឋានទិន្នន័យ...",
+    "failedToDispatchDatabaseS": "បរាជ័យក្នុងការបញ្ជូនសមកាលកម្មមូលដ្ឋានទិន្នន័យ។",
+    "superAdmin": "អ្នកគ្រប់គ្រងកំពូល",
+    "admin": "អ្នកគ្រប់គ្រង",
+    "editor": "អ្នកកែសម្រួល",
+    "pending": "រង់ចាំ",
+    "user": "អ្នកប្រើ",
+    "loginBlocked": "បានទប់ស្កាត់ការចូល",
+    "roleAssignment": "ការកំណត់តួនាទី",
+    "registered": "បានចុះឈ្មោះ",
+    "noTimestamp": "គ្មានពេលវេលា",
+    "actions": "សកម្មភាព",
+    "you": "អ្នក",
+    "editProfile": "កែសម្រួលប្រវត្តិរូប",
+    "sendPasswordReset": "ផ្ញើការកំណត់ពាក្យសម្ងាត់ឡើងវិញ",
+    "disableUser": "បិទអ្នកប្រើ",
+    "noMatchingUsers": "មិនមានអ្នកប្រើត្រូវគ្នា",
+    "noAccountsMatched": "មិនមានគណនីត្រូវគ្នា",
+    "tryAnotherEmailOrRoleFilt": "សូមសាកល្បងអ៊ីមែល ឬតម្រងតួនាទីផ្សេងទៀត។",
+    "clearSearch": "សម្អាតការស្វែងរក",
+    "noUsersYet": "មិនទាន់មានអ្នកប្រើ",
+    "inviteYourFirstTeammateTo": "អញ្ជើញមិត្តរួមការងារដំបូង ដើម្បីចាប់ផ្តើមកំណត់សិទ្ធិ និងតាមដានសកម្មភាពគណនី។",
+    "addUser": "បន្ថែមអ្នកប្រើ",
+    "userWorkspace": "ផ្ទៃការងារអ្នកប្រើ",
+    "manageAccessAndAccountRol": "គ្រប់គ្រងសិទ្ធិ និងតួនាទីគណនីពីកន្លែងតែមួយ។",
+    "searchByEmailOrRoleInspec": "ស្វែងរកតាមអ៊ីមែល ឬតួនាទី ពិនិត្យប្រវត្តិគណនី និងអញ្ជើញ admin ថ្មីដោយមិនចាកចេញពីតារាង។",
+    "searchUsers": "ស្វែងរកអ្នកប្រើប្រាស់...",
+    "inviteUser": "អញ្ជើញអ្នកប្រើ",
+    "latestThoughtsTutorialsAn": "គំនិតថ្មីៗ មេរៀន និងបច្ចុប្បន្នភាពគម្រោងចុងក្រោយ។",
+    "previousPage": "ទំព័រមុន",
+    "nextPage": "ទំព័របន្ទាប់",
+    "postNotFound": "រកមិនឃើញអត្ថបទ",
+    "postNotFound1": "រកមិនឃើញអត្ថបទ",
+    "failedToLoadPostDetails": "ផ្ទុកព័ត៌មានលម្អិតអត្ថបទបរាជ័យ",
+    "recentlyPublished": "ទើបបានបោះពុម្ព",
+    "backToBlog": "ត្រឡប់ទៅប្លុក",
+    "view": "មើល",
+    "thanksForReading": "អរគុណសម្រាប់ការអាន!",
+    "readMoreArticles": "អានអត្ថបទបន្ថែម",
+    "articleInfo": "ព័ត៌មានអត្ថបទ",
+    "published": "បានបោះពុម្ព",
+    "readTime": "ពេលអាន",
+    "tags": "ស្លាក",
+    "shareArticle": "ចែករំលែកអត្ថបទ",
+    "copyLink": "ចម្លងតំណ",
+    "copied": "បានចម្លង!",
+    "copyLink1": "ចម្លងតំណ",
+    "shareOnFacebook": "ចែករំលែកលើ Facebook",
+    "shareOnInstagram": "ចែករំលែកលើ Instagram",
+    "linkCopied": "បានចម្លងតំណ!",
+    "shareOnLinkedIn": "ចែករំលែកលើ LinkedIn",
+    "shareOnTelegram": "ចែករំលែកលើ Telegram",
+    "scrollToTop": "រមូរទៅកំពូល",
+    "404LostInSpace": "404 - រកផ្លូវមិនឃើញ",
+    "thePageYouAreLookingForMi": "ទំព័រដែលអ្នកកំពុងស្វែងរកអាចត្រូវបានលុប ប្តូរឈ្មោះ ឬមិនអាចប្រើបានជាបណ្តោះអាសន្ន។",
+    "projectNotFound": "រកមិនឃើញគម្រោង",
+    "projectDetailsAndTechnica": "ព័ត៌មានលម្អិតគម្រោង និងការអនុវត្តបច្ចេកទេស។",
+    "projectNotFound1": "រកមិនឃើញគម្រោង",
+    "failedToLoadProjectDetail": "ផ្ទុកព័ត៌មានលម្អិតគម្រោងបរាជ័យ",
+    "recentlyAdded": "ទើបបានបន្ថែម",
+    "backToProjects": "ត្រឡប់ទៅគម្រោង",
+    "problemStatement": "បញ្ហាប្រឈម",
+    "solution": "ដំណោះស្រាយ",
+    "architecture": "ស្ថាបត្យកម្ម",
+    "implementationDetails": "ព័ត៌មានលម្អិតអំពីការអនុវត្ត",
+    "noDetailedOverviewProvide": "មិនទាន់មានការពិពណ៌នាលម្អិតសម្រាប់គម្រោងនេះនៅឡើយទេ។",
+    "resultsImpact": "លទ្ធផល និងផលប៉ះពាល់",
+    "gallery": "វិចិត្រសាល",
+    "thanksForCheckingOutThisP": "អរគុណសម្រាប់ការមើលគម្រោងនេះ!",
+    "browseAllProjects": "មើលគម្រោងទាំងអស់",
+    "projectInfo": "ព័ត៌មានគម្រោង",
+    "date": "កាលបរិច្ឆេទ",
+    "live": "កំពុងដំណើរការ",
+    "openSource": "ប្រភពបើកចំហ",
+    "inProgress": "កំពុងអភិវឌ្ឍ",
+    "techStack": "បច្ចេកវិទ្យាប្រើប្រាស់",
+    "links": "តំណភ្ជាប់",
+    "liveDemo": "សាកល្បងផ្ទាល់",
+    "sourceCode": "កូដប្រភព",
+    "shareProject": "ចែករំលែកគម្រោង",
+    "exploreMyLatestProjectsAn": "ស្វែងយល់ពីគម្រោងចុងក្រោយ និងការងារបច្ចេកទេសរបស់ខ្ញុំ។",
+    "iCTSecurityITAuditProfess": "អ្នកជំនាញសន្តិសុខ ICT និងសវនកម្ម IT",
+    "gitHub": "GitHub",
+    "email": "អ៊ីមែល",
+    "C2026KemPhearumAllRightsR": "(c) 2026 កឹម ភារម្យ។ រក្សាសិទ្ធិគ្រប់យ៉ាង។",
+    "temporaryHiccup": "បញ្ហាបណ្តោះអាសន្ន",
+    "underMaintenance": "កំពុងថែទាំប្រព័ន្ធ",
+    "weEncounteredAnUnexpected": "មានកំហុសមិនបានរំពឹងទុកពេលរៀបចំទំព័រនេះ។ កុំបារម្ភ វាជាបញ្ហាបណ្តោះអាសន្ន។",
+    "weReCurrentlyFineTuningSo": "យើងកំពុងកែសម្រួលលម្អិតខ្លះៗ ដើម្បីផ្តល់បទពិសោធន៍ល្អបំផុត។ សូមត្រលប់មកវិញបន្តិចទៀត!",
+    "unknownError": "កំហុសមិនស្គាល់",
+    "backToHome": "ត្រឡប់ទៅទំព័រដើម",
+    "tryAgain": "សាកល្បងម្តងទៀត",
+    "technicalDetails": "ព័ត៌មានបច្ចេកទេស",
+    "copyCodeToClipboard": "ចម្លងកូដទៅក្តារចម្លង",
+    "copyCode": "ចម្លងកូដ",
+    "copy": "ចម្លង",
+    "contentImage": "រូបភាពមាតិកា",
+    "viewSource": "មើលកូដប្រភព",
+    "viewDetailsFor": "មើលព័ត៌មានលម្អិតសម្រាប់",
+    "viewDetails1": "មើលលម្អិត ->",
+    "onThisPage": "មាតិកានៅទំព័រនេះ",
+    "overlay": {
+      "feedbackButton": "ដាក់ស្នើមតិកែលម្អ / របាយការណ៍កំហុស",
+      "contactButton": "ទំនាក់ទំនងសម្រាប់សំណួរបន្ទាន់",
+      "betaBadge": "សាកល្បង (BETA)"
+    }
+  },
+  "node scripts/seed-sample-data": {
+    "mjs": "seed script"
+  },
+  "firebase deploy --only firestore:indexes": "indexes deploy",
+  "restricted": {
+    "title": "Access Restricted",
+    "description": "You do not have permission to view this content."
   }
 }

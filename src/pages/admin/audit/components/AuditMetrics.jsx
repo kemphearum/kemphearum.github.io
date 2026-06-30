@@ -5,14 +5,13 @@ import styles from '../AuditLogsTab.module.scss';
 import { useTranslation } from '../../../../hooks/useTranslation';
 
 const AuditMetrics = ({ stats, onViewReads, onViewWrites, onViewDeletes }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { language, t } = useTranslation();
   const { reads = 0, writes = 0, deletes = 0 } = stats || {};
 
   const metrics = [
     {
       key: 'reads',
-      label: tr('Read Operations', 'សកម្មភាពអាន'),
+      label: t('ui.readOperations'),
       current: reads,
       total: 50000,
       icon: Eye,
@@ -21,7 +20,7 @@ const AuditMetrics = ({ stats, onViewReads, onViewWrites, onViewDeletes }) => {
     },
     {
       key: 'writes',
-      label: tr('Write Operations', 'សកម្មភាពសរសេរ'),
+      label: t('ui.writeOperations'),
       current: writes,
       total: 20000,
       icon: Edit3,
@@ -30,7 +29,7 @@ const AuditMetrics = ({ stats, onViewReads, onViewWrites, onViewDeletes }) => {
     },
     {
       key: 'deletes',
-      label: tr('Delete Operations', 'សកម្មភាពលុប'),
+      label: t('ui.deleteOperations'),
       current: deletes,
       total: 20000,
       icon: Trash2,
@@ -57,7 +56,7 @@ const AuditMetrics = ({ stats, onViewReads, onViewWrites, onViewDeletes }) => {
                 onClick={metric.onDetails}
                 className={styles.viewDetailsBtn}
               >
-                {tr('View Details', 'មើលលម្អិត')}
+                {t('ui.viewDetails')}
               </button>
             </div>
 

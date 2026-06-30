@@ -51,3 +51,39 @@
         }
     }
 }
+
+.ui-select-wrapper {
+    position: relative;
+    display: inline-block;
+    width: auto;
+
+    &.w-full {
+        width: 100%;
+        display: block;
+    }
+
+    .ui-select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding-right: 2.5rem; /* Space for the icon */
+        cursor: pointer;
+    }
+
+    .ui-select-icon {
+        position: absolute;
+        top: 50%;
+        right: 0.75rem;
+        transform: translateY(-50%);
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        transition: color 0.2s ease;
+    }
+
+    &:hover .ui-select-icon {
+        color: var(--text-primary);
+    }
+}

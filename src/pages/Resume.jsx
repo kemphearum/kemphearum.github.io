@@ -49,17 +49,19 @@ const Resume = () => {
     const { language, t } = useTranslation();
     const navigate = useNavigate();
 
-    const { data: profileRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'profileInfo'], queryFn: () => ContentService.fetchSection('profileInfo') });
-    const { data: homeRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'home'], queryFn: () => ContentService.fetchSection('home') });
-    const { data: commRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'contact'], queryFn: () => CommunicationService.get() });
-    const { data: experienceRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['experience'], queryFn: () => ExperienceService.getAll() });
-    const { data: educationRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['education'], queryFn: () => EducationService.getAll() });
-    const { data: skillsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['skills'], queryFn: () => SkillService.getAll() });
-    const { data: certsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['certificates'], queryFn: () => CertificateService.getAll() });
-    const { data: projectsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['projects'], queryFn: () => ProjectService.getAll() });
-    const { data: awardsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['awards'], queryFn: () => AwardService.getAll() });
-    const { data: publicationsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['publications'], queryFn: () => PublicationService.getAll() });
-    const { data: speakingRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['speaking'], queryFn: () => SpeakingService.getAll() });
+    const { data: profileRaw, isLoading: l1 } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'profileInfo'], queryFn: () => ContentService.fetchSection('profileInfo') });
+    const { data: homeRaw, isLoading: l2 } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'home'], queryFn: () => ContentService.fetchSection('home') });
+    const { data: commRaw, isLoading: l3 } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'contact'], queryFn: () => CommunicationService.get() });
+    const { data: experienceRaw, isLoading: l4 } = useQuery({ ...QUERY_OPTS, queryKey: ['experience'], queryFn: () => ExperienceService.getAll() });
+    const { data: educationRaw, isLoading: l5 } = useQuery({ ...QUERY_OPTS, queryKey: ['education'], queryFn: () => EducationService.getAll() });
+    const { data: skillsRaw, isLoading: l6 } = useQuery({ ...QUERY_OPTS, queryKey: ['skills'], queryFn: () => SkillService.getAll() });
+    const { data: certsRaw, isLoading: l7 } = useQuery({ ...QUERY_OPTS, queryKey: ['certificates'], queryFn: () => CertificateService.getAll() });
+    const { data: projectsRaw, isLoading: l8 } = useQuery({ ...QUERY_OPTS, queryKey: ['projects'], queryFn: () => ProjectService.getAll() });
+    const { data: awardsRaw, isLoading: l9 } = useQuery({ ...QUERY_OPTS, queryKey: ['awards'], queryFn: () => AwardService.getAll() });
+    const { data: publicationsRaw, isLoading: l10 } = useQuery({ ...QUERY_OPTS, queryKey: ['publications'], queryFn: () => PublicationService.getAll() });
+    const { data: speakingRaw, isLoading: l11 } = useQuery({ ...QUERY_OPTS, queryKey: ['speaking'], queryFn: () => SpeakingService.getAll() });
+
+    const isDataLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7 || l8 || l9 || l10 || l11;
 
     const { data: userRecord } = useQuery({
         ...QUERY_OPTS,
@@ -135,9 +137,9 @@ const Resume = () => {
         .sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))), [speakingRaw, language]);
 
     const years = Number(profile.yearsExperienceOverride) || deriveYearsOfExperience(experiences);
-    const languages = Array.isArray(profile.languages) ? profile.languages : [];
-    const industries = Array.isArray(profile.industries) ? profile.industries : [];
-    const accomplishments = Array.isArray(profile.accomplishments) ? profile.accomplishments : [];
+    const languages = (Array.isArray(profile.languages) ? profile.languages : []).map(l => getLocalizedField(l, language) || getLocalizedField(l, 'en') || (typeof l === 'string' ? l : '')).filter(Boolean);
+    const industries = (Array.isArray(profile.industries) ? profile.industries : []).map(i => getLocalizedField(i, language) || getLocalizedField(i, 'en') || (typeof i === 'string' ? i : '')).filter(Boolean);
+    const accomplishments = (Array.isArray(profile.accomplishments) ? profile.accomplishments : []).map(a => getLocalizedField(a, language) || getLocalizedField(a, 'en') || (typeof a === 'string' ? a : '')).filter(Boolean);
 
     const portfolioUrl = getPortfolioUrl();
     const qrSvg = useMemo(() => generateQrSvg(portfolioUrl, { ecc: 'M', margin: 2 }), [portfolioUrl]);
@@ -181,17 +183,34 @@ const Resume = () => {
                     <ArrowLeft size={16} /> {t('resume.back', 'Back')}
                 </a>
                 <div className={styles.toolbarActions}>
-                    <button type="button" className={styles.toolbarBtn} onClick={handlePrint}>
+                    <button type="button" className={styles.toolbarBtn} onClick={handlePrint} disabled={isDataLoading}>
                         <Download size={16} /> {t('resume.download', 'Download PDF')}
                     </button>
-                    <button type="button" className={`${styles.toolbarBtn} ${styles.toolbarBtnPrimary}`} onClick={handlePrint}>
+                    <button type="button" className={`${styles.toolbarBtn} ${styles.toolbarBtnPrimary}`} onClick={handlePrint} disabled={isDataLoading}>
                         <Printer size={16} /> {t('resume.print', 'Print')}
                     </button>
                 </div>
             </div>
 
-            <article className={styles.sheet}>
-                <header className={styles.header}>
+            {isDataLoading ? (
+                <article className={styles.sheet}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '2rem' }}>
+                            <div style={{ width: '60%', height: '32px', backgroundColor: 'var(--surface-color)', borderRadius: '4px' }}></div>
+                            <div style={{ width: '40%', height: '24px', backgroundColor: 'var(--surface-color)', borderRadius: '4px' }}></div>
+                            <div style={{ width: '80%', height: '16px', backgroundColor: 'var(--surface-color)', borderRadius: '4px', marginTop: '1rem' }}></div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div style={{ width: '30%', height: '24px', backgroundColor: 'var(--surface-color)', borderRadius: '4px' }}></div>
+                            <div style={{ width: '100%', height: '16px', backgroundColor: 'var(--surface-color)', borderRadius: '4px' }}></div>
+                            <div style={{ width: '90%', height: '16px', backgroundColor: 'var(--surface-color)', borderRadius: '4px' }}></div>
+                            <div style={{ width: '95%', height: '16px', backgroundColor: 'var(--surface-color)', borderRadius: '4px' }}></div>
+                        </div>
+                    </div>
+                </article>
+            ) : (
+                <article className={styles.sheet} style={{ animation: 'fadeIn 0.5s ease-out' }}>
+                    <header className={styles.header}>
                     <div className={styles.headerMain}>
                         <h1 className={styles.name}>{name}</h1>
                         <p className={styles.headline}>{headline}</p>
@@ -371,6 +390,7 @@ const Resume = () => {
                     {t('resume.generatedFrom', 'Generated from')} <a href={portfolioUrl}>{portfolioUrl.replace(/^https?:\/\//, '')}</a>
                 </footer>
             </article>
+            )}
         </div>
     );
 };

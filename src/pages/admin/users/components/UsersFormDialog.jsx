@@ -8,17 +8,16 @@ import { useTranslation } from '../../../../hooks/useTranslation';
 import { formatRoleDisplayName, normalizeRole } from '../../../../utils/permissions';
 
 const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading, availableRoles = [] }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { t } = useTranslation();
   const roleOptions = Array.from(new Set(['pending', 'editor', 'admin', ...availableRoles.map((role) => normalizeRole(role)).filter(Boolean)]))
     .filter((role) => role && role !== 'superadmin')
     .map((role) => ({
       label: role === 'pending'
-        ? tr('Pending Verification', 'រង់ចាំផ្ទៀងផ្ទាត់')
+        ? t('admin.forms.pendingVerification')
         : role === 'editor'
-          ? tr('Content Editor', 'អ្នកកែសម្រួលមាតិកា')
+          ? t('admin.forms.contentEditor')
           : role === 'admin'
-            ? tr('System Admin', 'អ្នកគ្រប់គ្រងប្រព័ន្ធ')
+            ? t('admin.forms.systemAdmin')
             : formatRoleDisplayName(role),
       value: role
     }));
@@ -29,10 +28,10 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading, availableRoles
         <Dialog.Header className="ui-users-create-dialog__header">
           <div className="ui-users-create-dialog__titleWrap">
             <Dialog.Title className="ui-users-create-dialog__title">
-            <UserPlus size={22} className={"ui-primary-icon"} /> {tr('Create New User', 'បង្កើតអ្នកប្រើថ្មី')}
+            <UserPlus size={22} className={"ui-primary-icon"} /> {t('admin.forms.createNewUser')}
             </Dialog.Title>
             <Dialog.Description className="ui-users-create-dialog__description">
-              {tr('Invite a teammate with a temporary password and assign the starting role before they sign in.', 'អញ្ជើញមិត្តរួមការងារ​ដោយប្រើពាក្យសម្ងាត់បណ្តោះអាសន្ន ហើយកំណត់តួនាទីដំបូងមុនពេលពួកគេចូល។')}
+              {t('admin.forms.inviteATeammateWithA')}
             </Dialog.Description>
           </div>
           <Dialog.Close />
@@ -51,40 +50,40 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading, availableRoles
             <div className="ui-users-create-layout">
               <div className="ui-users-create-section">
                 <div className="ui-users-create-section__head">
-                  <span className="ui-users-create-section__eyebrow">{tr('Account Setup', 'ការរៀបចំគណនី')}</span>
-                  <h3>{tr('Credentials and access', 'ព័ត៌មានចូល និងសិទ្ធិ')}</h3>
+                  <span className="ui-users-create-section__eyebrow">{t('admin.forms.accountSetup')}</span>
+                  <h3>{t('admin.forms.credentialsAndAccess')}</h3>
                 </div>
 
                 <div className="ui-dialog-form-container">
                   <FormField
-                    label={tr('Email Address', 'អាសយដ្ឋានអ៊ីមែល')}
+                    label={t('admin.forms.emailAddress')}
                     name="email"
                     validation={{
-                      required: tr('Email is required', 'ត្រូវការអ៊ីមែល'),
+                      required: t('admin.forms.emailIsRequired'),
                       pattern: {
                         value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                        message: tr('Enter a valid email address', 'សូមបញ្ចូលអាសយដ្ឋានអ៊ីមែលត្រឹមត្រូវ')
+                        message: t('admin.forms.enterAValidEmailAddr')
                       }
                     }}
                   >
-                    <Input type="email" placeholder={tr('user@example.com', 'អ្នក@ឧទាហរណ៍.com')} />
+                    <Input type="email" placeholder={t('admin.forms.userExampleCom')} />
                   </FormField>
 
                   <FormField
-                    label={tr('Temporary Password', 'ពាក្យសម្ងាត់បណ្តោះអាសន្ន')}
+                    label={t('admin.forms.temporaryPassword')}
                     name="password"
                     validation={{
-                      required: tr('Password is required', 'ត្រូវការពាក្យសម្ងាត់'),
-                      minLength: { value: 6, message: tr('Password must be at least 6 characters', 'ពាក្យសម្ងាត់ត្រូវយ៉ាងហោចណាស់ 6 តួអក្សរ') }
+                      required: t('admin.forms.passwordIsRequired'),
+                      minLength: { value: 6, message: t('admin.forms.passwordMustBeAtLeas') }
                     }}
                   >
-                    <Input type="password" placeholder={tr('Min 6 characters', 'យ៉ាងតិច 6 តួអក្សរ')} />
+                    <Input type="password" placeholder={t('admin.forms.min6Characters')} />
                   </FormField>
 
                   <FormField
-                    label={tr('Initial Role', 'តួនាទីដំបូង')}
+                    label={t('admin.forms.initialRole')}
                     name="role"
-                    validation={{ required: tr('Role is required', 'ត្រូវការតួនាទី') }}
+                    validation={{ required: t('admin.forms.roleIsRequired') }}
                   >
                     <FormSelect
                       options={roleOptions}
@@ -99,8 +98,8 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading, availableRoles
                     <Mail size={16} />
                   </div>
                   <div>
-                    <strong>{tr('Use a real email', 'ប្រើអ៊ីមែលពិតប្រាកដ')}</strong>
-                    <p>{tr('The reset-password action depends on the address being reachable by the user.', 'សកម្មភាពកំណត់ពាក្យសម្ងាត់ឡើងវិញ អាស្រ័យលើអ៊ីមែលដែលអ្នកប្រើអាចចូលប្រើបាន។')}</p>
+                    <strong>{t('admin.forms.useARealEmail')}</strong>
+                    <p>{t('admin.forms.theResetPasswordActi')}</p>
                   </div>
                 </div>
 
@@ -109,8 +108,8 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading, availableRoles
                     <KeyRound size={16} />
                   </div>
                   <div>
-                    <strong>{tr('Temporary password', 'ពាក្យសម្ងាត់បណ្តោះអាសន្ន')}</strong>
-                    <p>{tr('Keep it simple enough to share once, then ask the user to rotate it immediately.', 'កំណត់ឲ្យងាយចែករំលែកម្តង ហើយស្នើឲ្យអ្នកប្រើប្តូរភ្លាមៗ។')}</p>
+                    <strong>{t('admin.forms.temporaryPassword1')}</strong>
+                    <p>{t('admin.forms.keepItSimpleEnoughTo')}</p>
                   </div>
                 </div>
 
@@ -119,8 +118,8 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading, availableRoles
                     <ShieldCheck size={16} />
                   </div>
                   <div>
-                    <strong>{tr('Recommended start', 'ការចាប់ផ្ដើមណែនាំ')}</strong>
-                    <p>{tr('Use `pending` unless the user needs editor or admin access right away.', 'ប្រើ `pending` លើកលែងតែអ្នកប្រើត្រូវការសិទ្ធិ editor ឬ admin ភ្លាមៗ។')}</p>
+                    <strong>{t('admin.forms.recommendedStart')}</strong>
+                    <p>{t('admin.forms.usePendingUnlessTheU')}</p>
                   </div>
                 </div>
               </aside>
@@ -129,10 +128,10 @@ const UsersFormDialog = ({ open, onOpenChange, onSubmit, loading, availableRoles
 
           <Dialog.Footer className="ui-users-create-dialog__footer">
             <Button variant="ghost" onClick={() => onOpenChange(false)} type="button">
-              {tr('Cancel', 'បោះបង់')}
+              {t('admin.forms.cancel')}
             </Button>
             <Button type="submit" isLoading={loading} className="ui-primary">
-              {loading ? tr('Creating...', 'កំពុងបង្កើត...') : tr('Create User', 'បង្កើតអ្នកប្រើ')}
+              {loading ? t('admin.forms.creating') : t('admin.forms.createUser')}
             </Button>
           </Dialog.Footer>
         </Form>

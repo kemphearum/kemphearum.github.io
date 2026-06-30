@@ -65,20 +65,45 @@ const GeneralTab = ({ homeData, aboutData, profileData, loading, saveSectionData
     };
 
     const handleSaveAbout = async (data) => {
-        const skillsArray = data.skills.split(',').map(s => s.trim()).filter(s => s);
+        const splitComma = (v) => (v || '').split(',').map((s) => s.trim());
+        const loc = (en, km) => ({ en: (en || '').trim(), km: (km || '').trim() });
+        const combineLoc = (enStr, kmStr, splitFn) => {
+            const enArr = splitFn(enStr);
+            const kmArr = splitFn(kmStr);
+            const maxLen = Math.max(enArr.length, kmArr.length);
+            const res = [];
+            for (let i = 0; i < maxLen; i++) {
+                if (enArr[i] || kmArr[i]) {
+                    res.push(loc(enArr[i], kmArr[i]));
+                }
+            }
+            return res;
+        };
         await saveSectionData('about', {
             bio: {
                 en: (data.bioEn || '').trim(),
                 km: (data.bioKm || '').trim()
             },
-            skills: skillsArray
+            skills: combineLoc(data.skillsEn, data.skillsKm, splitComma)
         });
     };
 
     const handleSaveProfile = async (data) => {
-        const splitComma = (v) => (v || '').split(',').map((s) => s.trim()).filter(Boolean);
-        const splitLines = (v) => (v || '').split('\n').map((s) => s.trim()).filter(Boolean);
+        const splitComma = (v) => (v || '').split(',').map((s) => s.trim());
+        const splitLines = (v) => (v || '').split('\n').map((s) => s.trim());
         const loc = (en, km) => ({ en: (en || '').trim(), km: (km || '').trim() });
+        const combineLoc = (enStr, kmStr, splitFn) => {
+            const enArr = splitFn(enStr);
+            const kmArr = splitFn(kmStr);
+            const maxLen = Math.max(enArr.length, kmArr.length);
+            const res = [];
+            for (let i = 0; i < maxLen; i++) {
+                if (enArr[i] || kmArr[i]) {
+                    res.push(loc(enArr[i], kmArr[i]));
+                }
+            }
+            return res;
+        };
         await saveSectionData('profileInfo', {
             summary: loc(data.summaryEn, data.summaryKm),
             currentRole: loc(data.currentRoleEn, data.currentRoleKm),
@@ -86,12 +111,12 @@ const GeneralTab = ({ homeData, aboutData, profileData, loading, saveSectionData
             clearance: loc(data.clearanceEn, data.clearanceKm),
             resumeHeadline: loc(data.resumeHeadlineEn, data.resumeHeadlineKm),
             yearsExperienceOverride: data.yearsExperienceOverride,
-            workTypes: splitComma(data.workTypes),
-            languages: splitComma(data.languages),
-            industries: splitComma(data.industries),
-            accomplishments: splitLines(data.accomplishments),
-            oss: splitLines(data.oss),
-            community: splitLines(data.community)
+            workTypes: combineLoc(data.workTypesEn, data.workTypesKm, splitComma),
+            languages: combineLoc(data.languagesEn, data.languagesKm, splitComma),
+            industries: combineLoc(data.industriesEn, data.industriesKm, splitComma),
+            accomplishments: combineLoc(data.accomplishmentsEn, data.accomplishmentsKm, splitLines),
+            oss: combineLoc(data.ossEn, data.ossKm, splitLines),
+            community: combineLoc(data.communityEn, data.communityKm, splitLines)
         });
     };
 
@@ -101,19 +126,19 @@ const GeneralTab = ({ homeData, aboutData, profileData, loading, saveSectionData
     };
 
     const homeFormKey = `home:${getLanguageValue(homeData.greeting, 'en', true)}:${getLanguageValue(homeData.greeting, 'km', false)}:${getLanguageValue(homeData.name, 'en', true)}:${getLanguageValue(homeData.name, 'km', false)}:${getLanguageValue(homeData.subtitle, 'en', true)}:${getLanguageValue(homeData.subtitle, 'km', false)}:${getLanguageValue(homeData.description, 'en', true)}:${getLanguageValue(homeData.description, 'km', false)}:${getLanguageValue(homeData.ctaText, 'en', true)}:${getLanguageValue(homeData.ctaText, 'km', false)}:${homeData.ctaLink || ''}:${homeData.profileImageUrl || ''}`;
-    const aboutFormKey = `about:${getLanguageValue(aboutData.bio, 'en', true)}:${getLanguageValue(aboutData.bio, 'km', false)}:${Array.isArray(aboutData.skills) ? aboutData.skills.join(',') : (aboutData.skills || '')}`;
+    const aboutFormKey = `about:${getLanguageValue(aboutData.bio, 'en', true)}:${getLanguageValue(aboutData.bio, 'km', false)}:${asCsv(aboutData.skills, 'en')}`;
     const profile = profileData || {};
-    const asCsv = (value) => (Array.isArray(value) ? value.join(', ') : (value || ''));
-    const asLines = (value) => (Array.isArray(value) ? value.join('\n') : (value || ''));
-    const profileFormKey = `profile:${getLanguageValue(profile.summary, 'en', true)}:${getLanguageValue(profile.currentRole, 'en', true)}:${profile.availabilityStatus || ''}:${asCsv(profile.languages)}:${(profile.accomplishments || []).length}`;
+    const asCsv = (value, lang = 'en') => (Array.isArray(value) ? value.map(item => getLanguageValue(item, lang, lang === 'en')).filter(Boolean).join(', ') : (value || ''));
+    const asLines = (value, lang = 'en') => (Array.isArray(value) ? value.map(item => getLanguageValue(item, lang, lang === 'en')).filter(Boolean).join('\n') : (value || ''));
+    const profileFormKey = `profile:${getLanguageValue(profile.summary, 'en', true)}:${getLanguageValue(profile.currentRole, 'en', true)}:${profile.availabilityStatus || ''}:${asCsv(profile.languages, 'en')}:${(profile.accomplishments || []).length}`;
     const profileFilled = [
         getLanguageValue(profile.summary, 'en', true),
         getLanguageValue(profile.currentRole, 'en', true),
         getLanguageValue(profile.location, 'en', true),
-        asCsv(profile.workTypes),
-        asCsv(profile.languages),
-        asCsv(profile.industries),
-        asLines(profile.accomplishments)
+        asCsv(profile.workTypes, 'en'),
+        asCsv(profile.languages, 'en'),
+        asCsv(profile.industries, 'en'),
+        asLines(profile.accomplishments, 'en')
     ].filter(Boolean).length;
     const homeFilled = [
         getLanguageValue(homeData.greeting, 'en', true),
@@ -246,7 +271,8 @@ const GeneralTab = ({ homeData, aboutData, profileData, loading, saveSectionData
                         defaultValues={{
                             bioEn: getLanguageValue(aboutData.bio, 'en', true),
                             bioKm: getLanguageValue(aboutData.bio, 'km', false),
-                            skills: Array.isArray(aboutData.skills) ? aboutData.skills.join(', ') : (aboutData.skills || '')
+                            skillsEn: asCsv(aboutData.skills, 'en'),
+                            skillsKm: asCsv(aboutData.skills, 'km')
                         }}
                     >
                         <AboutSection 
@@ -277,12 +303,18 @@ const GeneralTab = ({ homeData, aboutData, profileData, loading, saveSectionData
                             resumeHeadlineEn: getLanguageValue(profile.resumeHeadline, 'en', true),
                             resumeHeadlineKm: getLanguageValue(profile.resumeHeadline, 'km', false),
                             yearsExperienceOverride: profile.yearsExperienceOverride || '',
-                            workTypes: asCsv(profile.workTypes),
-                            languages: asCsv(profile.languages),
-                            industries: asCsv(profile.industries),
-                            accomplishments: asLines(profile.accomplishments),
-                            oss: asLines(profile.oss),
-                            community: asLines(profile.community)
+                            workTypesEn: asCsv(profile.workTypes, 'en'),
+                            workTypesKm: asCsv(profile.workTypes, 'km'),
+                            languagesEn: asCsv(profile.languages, 'en'),
+                            languagesKm: asCsv(profile.languages, 'km'),
+                            industriesEn: asCsv(profile.industries, 'en'),
+                            industriesKm: asCsv(profile.industries, 'km'),
+                            accomplishmentsEn: asLines(profile.accomplishments, 'en'),
+                            accomplishmentsKm: asLines(profile.accomplishments, 'km'),
+                            ossEn: asLines(profile.oss, 'en'),
+                            ossKm: asLines(profile.oss, 'km'),
+                            communityEn: asLines(profile.community, 'en'),
+                            communityKm: asLines(profile.community, 'km')
                         }}
                     >
                         <ProfileSection

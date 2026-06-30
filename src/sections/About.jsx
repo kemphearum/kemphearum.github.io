@@ -7,6 +7,8 @@ import { motion } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
+import SkillService from '../services/SkillService';
+import { filterPublished } from '../domain/shared/contentStatus';
 
 const About = () => {
     const { language, t } = useTranslation();
@@ -18,9 +20,16 @@ const About = () => {
         queryFn: () => ContentService.fetchSection('about')
     });
 
+    const { data: skillsData, isLoading: skillsLoading } = useQuery({
+        staleTime: 60000,
+        gcTime: 300000,
+        refetchOnWindowFocus: false,
+        queryKey: ['skills'],
+        queryFn: () => SkillService.getAll()
+    });
+
     const rawContent = data || {
-        bio: "",
-        skills: []
+        bio: ""
     };
 
     const content = {
@@ -76,30 +85,42 @@ const About = () => {
                                 <MarkdownRenderer content={content.bio} />
                             </div>
                             <p className={styles.subtext}>{t('about.skills')}</p>
-                            <motion.div
-                                className={styles.skillsList}
-                                variants={containerVariants}
-                                initial="hidden"
-                                whileInView="visible"
-                                viewport={{ once: true }}
-                            >
-                                {(() => {
-                                    const skills = Array.isArray(content.skills) 
-                                        ? content.skills 
-                                        : (typeof content.skills === 'string' ? content.skills.split(',').filter(Boolean).map(s => s.trim()) : []);
-                                    
-                                    return skills.map((skill, index) => (
-                                        <motion.span
-                                            key={index}
-                                            variants={itemVariants}
-                                            className={styles.skillTag}
-                                            whileHover={{ scale: 1.05, y: -3 }}
-                                        >
-                                            {skill}
-                                        </motion.span>
-                                    ));
-                                })()}
-                            </motion.div>
+                            {skillsLoading ? (
+                                <div className={styles.skeletonSkills}>
+                                    {[...Array(8)].map((_, i) => (
+                                        <div key={i} className={styles.skeletonPill} />
+                                    ))}
+                                </div>
+                            ) : (
+                                <motion.div
+                                    className={styles.skillsList}
+                                    variants={containerVariants}
+                                    initial="hidden"
+                                    whileInView="visible"
+                                    viewport={{ once: true }}
+                                >
+                                    {(() => {
+                                        const visible = filterPublished(skillsData || []);
+                                        const featured = visible.filter((s) => s.featured || s.level === 'expert' || s.level === 'advanced');
+                                        const skills = (featured.length ? featured : visible).slice(0, 15); // Show top 15
+                                        
+                                        return skills.map((skill) => {
+                                            const text = getLocalizedField(skill.name, language) || getLocalizedField(skill.name, 'en');
+                                            if (!text) return null;
+                                            return (
+                                                <motion.span
+                                                    key={skill.id}
+                                                    variants={itemVariants}
+                                                    className={styles.skillTag}
+                                                    whileHover={{ scale: 1.05, y: -3 }}
+                                                >
+                                                    {text}
+                                                </motion.span>
+                                            );
+                                        });
+                                    })()}
+                                </motion.div>
+                            )}
                         </motion.div>
                     )}
                 </div>

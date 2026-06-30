@@ -21,8 +21,7 @@ const AuditLogsTable = ({
   paginationVariant = 'cursor',
   onPageChange
 }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { language, t } = useTranslation();
 
   const getDeviceIcon = (device) => {
     const d = device?.toLowerCase() || '';
@@ -53,38 +52,38 @@ const AuditLogsTable = ({
   const localizeAction = (value) => {
     const key = String(value || '').toLowerCase();
     const map = {
-      read: tr('Read', 'អាន'),
-      write: tr('Write', 'សរសេរ'),
-      created: tr('Created', 'បានបង្កើត'),
-      create: tr('Created', 'បានបង្កើត'),
-      updated: tr('Updated', 'បានកែប្រែ'),
-      update: tr('Updated', 'បានកែប្រែ'),
-      deleted: tr('Deleted', 'បានលុប'),
-      delete: tr('Deleted', 'បានលុប'),
-      enabled: tr('Enabled', 'បានបើក'),
-      disabled: tr('Disabled', 'បានបិទ'),
-      success: tr('Success', 'ជោគជ័យ'),
-      failure: tr('Failure', 'បរាជ័យ')
+      read: t('ui.read'),
+      write: t('ui.write'),
+      created: t('ui.created'),
+      create: t('ui.created'),
+      updated: t('ui.updated1'),
+      update: t('ui.updated1'),
+      deleted: t('ui.deleted'),
+      delete: t('ui.deleted'),
+      enabled: t('ui.enabled'),
+      disabled: t('ui.disabled'),
+      success: t('ui.success'),
+      failure: t('ui.failure')
     };
-    return map[key] || value || tr('Unknown', 'មិនស្គាល់');
+    return map[key] || value || t('ui.unknown');
   };
 
   const localizeModule = (value) => {
     const key = String(value || '').toLowerCase();
     const map = {
-      blog: tr('Blog', 'ប្លុក'),
-      projects: tr('Projects', 'គម្រោង'),
-      experience: tr('Experience', 'បទពិសោធន៍'),
-      users: tr('Users', 'អ្នកប្រើ')
+      blog: t('ui.blog'),
+      projects: t('ui.projects'),
+      experience: t('ui.experience'),
+      users: t('ui.users')
     };
     return map[key] || value || '-';
   };
 
   const localizeDevice = (value) => {
     const key = String(value || '').toLowerCase();
-    if (key.includes('phone') || key.includes('mobile')) return tr('Mobile', 'ទូរស័ព្ទ');
-    if (key.includes('tablet') || key.includes('ipad')) return tr('Tablet', 'ថេប្លេត');
-    if (!key) return tr('Desktop', 'កុំព្យូទ័រ');
+    if (key.includes('phone') || key.includes('mobile')) return t('ui.mobile');
+    if (key.includes('tablet') || key.includes('ipad')) return t('ui.tablet');
+    if (!key) return t('ui.desktop');
     return value;
   };
 
@@ -105,7 +104,7 @@ const AuditLogsTable = ({
   const activityColumns = [
     {
       key: 'action',
-      header: tr('Action', 'សកម្មភាព'),
+      header: t('ui.action'),
       sortable: true,
       render: (row) => {
         const action = getLocalizedField(row.details?.action || row.type || 'read', language);
@@ -118,7 +117,7 @@ const AuditLogsTable = ({
     },
     {
       key: 'count',
-      header: tr('Count', 'ចំនួន'),
+      header: t('ui.count'),
       sortable: true,
       render: (row) => (
         <span className={styles.countBadge}>
@@ -128,7 +127,7 @@ const AuditLogsTable = ({
     },
     {
       key: 'module',
-      header: tr('Module', 'ម៉ូឌុល'),
+      header: t('ui.module'),
       sortable: true,
       render: (row) => {
         const module = getLocalizedField(row.details?.module, language);
@@ -142,7 +141,7 @@ const AuditLogsTable = ({
     },
     {
       key: 'entity',
-      header: tr('Target Entity', 'ធាតុគោលដៅ'),
+      header: t('ui.targetEntity'),
       render: (row) => {
         const entityName = getLocalizedField(row.details?.entityName || row.label, language);
         return (
@@ -154,18 +153,18 @@ const AuditLogsTable = ({
     },
     {
       key: 'user',
-      header: tr('Performer', 'អ្នកអនុវត្ត'),
+      header: t('ui.performer'),
       sortable: true,
       render: (row) => (
         <div className={styles.userCell}>
           <User size={12} />
-          {row.user || tr('System', 'ប្រព័ន្ធ')}
+          {row.user || t('ui.system')}
         </div>
       )
     },
     {
       key: 'timestamp',
-      header: tr('Time', 'ពេលវេលា'),
+      header: t('ui.time'),
       sortable: true,
       render: (row) => (
         <div className={styles.timeCell}>
@@ -179,7 +178,7 @@ const AuditLogsTable = ({
   const securityColumns = [
     {
       key: 'status',
-      header: tr('Status', 'ស្ថានភាព'),
+      header: t('ui.status'),
       render: (row) => (
         <span className={`${styles.badge} ${styles[`badge--${getBadgeVariant(row.status)}`]}`}>
           {localizeAction(row.status || 'success')}
@@ -188,17 +187,17 @@ const AuditLogsTable = ({
     },
     {
       key: 'user',
-      header: tr('User Email', 'អ៊ីមែលអ្នកប្រើ'),
+      header: t('ui.userEmail'),
       sortable: true,
       render: (row) => (
         <div className={styles.userCell}>
-          {row.user || row.email || tr('System', 'ប្រព័ន្ធ')}
+          {row.user || row.email || t('ui.system')}
         </div>
       )
     },
     {
       key: 'ipAddress',
-      header: tr('IP Address', 'អាសយដ្ឋាន IP'),
+      header: t('ui.iPAddress'),
       sortable: true,
       render: (row) => (
         <div className={styles.ipCell}>
@@ -209,7 +208,7 @@ const AuditLogsTable = ({
     },
     {
       key: 'device',
-      header: tr('Device', 'ឧបករណ៍'),
+      header: t('ui.device'),
       sortable: true,
       render: (row) => (
         <div className={styles.deviceCell}>
@@ -222,7 +221,7 @@ const AuditLogsTable = ({
     },
     {
       key: 'userAgent',
-      header: tr('User Agent', 'ព័ត៌មានកម្មវិធីរុករក'),
+      header: t('ui.userAgent'),
       render: (row) => (
         <div className={styles.userAgentCell} title={row.userAgent}>
           {row.userAgent || '-'}
@@ -231,7 +230,7 @@ const AuditLogsTable = ({
     },
     {
       key: 'timestamp',
-      header: tr('Timestamp', 'ពេលវេលា'),
+      header: t('ui.timestamp'),
       sortable: true,
       render: (row) => (
         <div className={styles.timeStrongCell}>
@@ -262,9 +261,9 @@ const AuditLogsTable = ({
       emptyState={{
         icon: view === 'security' ? Shield : Activity,
         title: view === 'security'
-          ? tr('No Security Logs Found', 'មិនមានកំណត់ហេតុសុវត្ថិភាព')
-          : tr('No Activity Logs Found', 'មិនមានកំណត់ហេតុសកម្មភាព'),
-        description: tr('There are currently no recorded events.', 'បច្ចុប្បន្នមិនមានព្រឹត្តិការណ៍ដែលបានកត់ត្រាទេ។')
+          ? t('ui.noSecurityLogsFound')
+          : t('ui.noActivityLogsFound'),
+        description: t('ui.thereAreCurrentlyNoRecord')
       }}
     />
   );

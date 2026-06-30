@@ -172,7 +172,19 @@
       "visible": "Visible",
       "hidden": "Hidden",
       "featured": "Featured",
-      "viewHistory": "View History"
+      "viewHistory": "View History",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "urlPlaceholder": "https://...",
+      "bulk": {
+        "show": "Show",
+        "hide": "Hide",
+        "feature": "Feature",
+        "unfeature": "Unfeature"
+      },
+      "cancel": "Cancel",
+      "create": "Create",
+      "saved": "Saved successfully"
     },
     "dashboard": {
       "title": "Dashboard",
@@ -587,7 +599,20 @@
           "visibility": "Visibility",
           "visibilityDesc": "Control whether this role appears publicly or remains admin-only.",
           "optionVisible": "Visible on Homepage",
-          "optionHidden": "Hidden from Public"
+          "optionHidden": "Hidden from Public",
+          "companyLogo": "Company Logo",
+          "uploadLogoPlaceholder": "Upload company logo",
+          "employmentType": "Employment Type",
+          "location": "Location",
+          "locationPlaceholder": "e.g. Remote, City",
+          "technologiesUsed": "Technologies Used",
+          "technologiesPlaceholder": "e.g. react, nodejs",
+          "relatedProjects": "Related Projects",
+          "relatedProjectsPlaceholder": "e.g. project-a, project-b",
+          "responsibilitiesPlaceholder": "List key responsibilities...",
+          "achievementsPlaceholder": "List major achievements...",
+          "relatedSkillsHint": "Comma-separated skill slugs",
+          "relatedProjectsHint": "Comma-separated project slugs"
         },
         "sections": {
           "roleDetails": {
@@ -861,7 +886,14 @@
           "optionFeatured": "Featured",
           "projectImage": "Project Image",
           "projectCover": "Project cover",
-          "projectCoverDesc": "Use a wide image that works in cards and detail pages."
+          "projectCoverDesc": "Use a wide image that works in cards and detail pages.",
+          "galleryImageUrls": "Gallery Image URLs",
+          "galleryPlaceholder": "https://..., https://...",
+          "problemPlaceholder": "Describe the problem or challenge...",
+          "solutionPlaceholder": "Describe your solution...",
+          "architecturePlaceholder": "Describe the architecture...",
+          "resultsPlaceholder": "Describe the results and impact...",
+          "galleryHint": "Comma-separated image URLs for gallery"
         },
         "sections": {
           "projectBasics": {
@@ -1120,7 +1152,7 @@
         },
         "communication": {
           "label": "Communication",
-          "description": "Contact info, links, and resume settings"
+          "description": "Contact forms & links"
         },
         "featureFlags": {
           "label": "Feature flags",
@@ -1240,6 +1272,16 @@
             "maintenance": "Maintenance Mode",
             "watermark": "Subtle Watermark (Non-blocking)",
             "dialog": "Full Screen Dialog (Blocking)"
+          },
+          "behaviorList": {
+            "live": "Live:",
+            "liveDesc": "Normal operation.",
+            "testing": "Testing:",
+            "testingDesc": "Adds an overlay but the site remains usable.",
+            "maintenance": "Maintenance:",
+            "maintenanceDesc": "A full-screen dialog blocks interaction with the site (if set to Dialog type).",
+            "admin": "Admin Access:",
+            "adminDesc": "The /admin portal is always exempt and accessible so you can disable maintenance mode!"
           }
         },
         "identity": {
@@ -1688,6 +1730,10 @@
         "description": "Show or hide public sections without redeploying.",
         "contact": "Contact",
         "showLabel": "Show {{label}}"
+      },
+      "communication": {
+        "title": "Communication & Contact",
+        "description": "Manage how visitors can reach you and what is displayed in the Get In Touch section."
       }
     },
     "profile": {
@@ -1869,6 +1915,52 @@
         "partialRestore": "Partially completed ({{completed}}/{{total}}). Issues on: {{collections}}",
         "restoreSuccess": "Successfully restored {{count}} records!",
         "restoreFailedInvalidFormat": "Failed to restore. Invalid format?"
+      },
+      "stats": {
+        "posts": {
+          "label": "Posts",
+          "desc": "View & Edit Content"
+        },
+        "projects": {
+          "label": "Projects",
+          "desc": "Project Portfolio"
+        },
+        "experience": {
+          "label": "Experience",
+          "desc": "Professional History"
+        },
+        "content": {
+          "label": "Content",
+          "desc": "General Site Info"
+        },
+        "messages": {
+          "label": "Messages",
+          "desc": "User Inquiries"
+        },
+        "users": {
+          "label": "Users",
+          "desc": "Admin Access"
+        },
+        "auditLogs": {
+          "label": "Audit Logs",
+          "desc": "Security event trail"
+        },
+        "visits": {
+          "label": "Visits",
+          "desc": "Traffic logs"
+        },
+        "dailyUsage": {
+          "label": "Daily Usage",
+          "desc": "Daily metric snapshots"
+        },
+        "rolePermissions": {
+          "label": "Role Rules",
+          "desc": "Permission matrix"
+        },
+        "settings": {
+          "label": "Settings",
+          "desc": "Global system config"
+        }
       }
     },
     "users": {
@@ -1999,7 +2091,15 @@
           "optionHidden": "Hidden",
           "featured": "Featured",
           "optionFeatured": "Featured",
-          "optionNotFeatured": "Not featured"
+          "optionNotFeatured": "Not featured",
+          "skillIcon": "Skill Icon",
+          "uploadIconPlaceholder": "Upload tech icon",
+          "yearsOfExperience": "Years of Experience",
+          "yearsPlaceholder": "e.g. 5",
+          "relatedCertifications": "Related Certifications",
+          "relatedCertificationsPlaceholder": "e.g. cert-a, cert-b",
+          "relatedProjectsHint": "Comma-separated project slugs",
+          "relatedCertificationsHint": "Comma-separated cert slugs"
         },
         "sections": {
           "details": {
@@ -2130,7 +2230,12 @@
           "optionHidden": "Hidden",
           "featured": "Featured",
           "optionFeatured": "Featured",
-          "optionNotFeatured": "Not featured"
+          "optionNotFeatured": "Not featured",
+          "skillsCovered": "Skills Covered",
+          "skillsCoveredHint": "Comma-separated skill slugs",
+          "skillsCoveredPlaceholder": "e.g. security, governance",
+          "credentialBadge": "Credential Badge",
+          "uploadBadgePlaceholder": "Upload credential badge"
         },
         "sections": {
           "details": {
@@ -2271,7 +2376,10 @@
           "endYearRequired": "End year is required",
           "visibility": "Visibility",
           "optionVisible": "Visible on Homepage",
-          "optionHidden": "Hidden from Public"
+          "optionHidden": "Hidden from Public",
+          "entryType": "Entry Type",
+          "startYearPlaceholder": "YYYY",
+          "endYearPlaceholder": "YYYY"
         },
         "sections": {
           "degreeDetails": {
@@ -2346,7 +2454,8 @@
           "title": "No awards found",
           "description": "Get started by creating a new award.",
           "action": "Add Award"
-        }
+        },
+        "untitled": "Untitled Award"
       },
       "form": {
         "title": {
@@ -2362,7 +2471,56 @@
           "km": "Khmer Description"
         },
         "issueDate": "Issue Date",
-        "link": "Link URL"
+        "link": "Link URL",
+        "languages": {
+          "en": "English",
+          "km": "Khmer"
+        },
+        "fields": {
+          "title": "Title",
+          "titleRequired": "Title is required",
+          "titlePlaceholder": "e.g., Best Security Policy",
+          "organization": "Organization",
+          "organizationPlaceholder": "e.g., ISC2",
+          "description": "Description",
+          "descriptionPlaceholder": "Description...",
+          "issueDate": "Issue Date",
+          "link": "URL / Link"
+        },
+        "sections": {
+          "details": "Details"
+        },
+        "hints": {
+          "visible": "Show on public site",
+          "featured": "Highlight on main page"
+        }
+      },
+      "messages": {
+        "shown": "Award shown",
+        "hidden": "Award hidden",
+        "featured": "Award featured",
+        "unfeatured": "Award unfeatured",
+        "created": "Award created successfully",
+        "updated": "Award updated successfully",
+        "deleted": "Award deleted successfully"
+      },
+      "workspace": {
+        "eyebrow": "Recognition",
+        "title": "Awards",
+        "description": "Manage professional awards and recognitions."
+      },
+      "bulk": {
+        "showSelected": "Show selected",
+        "hideSelected": "Hide selected",
+        "featureSelected": "Feature selected",
+        "unfeatureSelected": "Unfeature selected",
+        "deleteSelected": "Delete selected"
+      },
+      "dialogs": {
+        "deleteTitle": "Delete Award",
+        "deleteManyTitle": "Delete Multiple Awards",
+        "createTitle": "Add Award",
+        "editTitle": "Edit Award"
       }
     },
     "publications": {
@@ -2388,7 +2546,8 @@
           "title": "No publications found",
           "description": "Get started by creating a new publication.",
           "action": "Add Publication"
-        }
+        },
+        "untitled": "Untitled Publication"
       },
       "form": {
         "title": {
@@ -2404,7 +2563,51 @@
           "km": "Khmer Description"
         },
         "publishDate": "Publish Date",
-        "link": "Link URL"
+        "link": "Link URL",
+        "languages": {
+          "en": "English",
+          "km": "Khmer"
+        },
+        "fields": {
+          "title": "Title",
+          "titleRequired": "Title is required",
+          "titlePlaceholder": "e.g., Guide to ISO 27001",
+          "publisher": "Publisher",
+          "publisherPlaceholder": "e.g., ISACA Journal",
+          "description": "Description",
+          "descriptionPlaceholder": "Summary of the publication...",
+          "publishDate": "Publish Date",
+          "link": "URL / Link"
+        },
+        "sections": {
+          "details": "Details"
+        },
+        "hints": {
+          "visible": "Show on public site",
+          "featured": "Highlight on main page"
+        }
+      },
+      "dialogs": {
+        "createTitle": "Add Publication",
+        "editTitle": "Edit Publication",
+        "deleteTitle": "Delete Publication",
+        "deleteManyTitle": "Delete Multiple Publications"
+      },
+      "messages": {
+        "shown": "Publication shown",
+        "hidden": "Publication hidden",
+        "featured": "Publication featured",
+        "unfeatured": "Publication unfeatured",
+        "created": "Publication created successfully",
+        "updated": "Publication updated successfully",
+        "deleted": "Publication deleted successfully"
+      },
+      "bulk": {
+        "showSelected": "Show selected",
+        "hideSelected": "Hide selected",
+        "featureSelected": "Feature selected",
+        "unfeatureSelected": "Unfeature selected",
+        "deleteSelected": "Delete selected"
       }
     },
     "speaking": {
@@ -2425,7 +2628,8 @@
           "title": "No speaking events found",
           "description": "Get started by creating a new event.",
           "action": "Add Event"
-        }
+        },
+        "untitled": "Untitled Event"
       },
       "form": {
         "title": {
@@ -2445,8 +2649,273 @@
           "km": "Khmer Description"
         },
         "date": "Date",
-        "link": "Link URL"
+        "link": "Link URL",
+        "languages": {
+          "en": "English",
+          "km": "Khmer"
+        },
+        "fields": {
+          "title": "Topic/Title",
+          "titleRequired": "Title is required",
+          "titlePlaceholder": "e.g., Securing the Cloud",
+          "eventName": "Event Name",
+          "eventNamePlaceholder": "e.g., DEF CON 30",
+          "location": "Location",
+          "locationPlaceholder": "e.g., Las Vegas, NV",
+          "description": "Description",
+          "descriptionPlaceholder": "Summary of the talk...",
+          "date": "Event Date",
+          "link": "URL / Link"
+        },
+        "sections": {
+          "details": "Details"
+        },
+        "hints": {
+          "visible": "Show on public site",
+          "featured": "Highlight on main page"
+        }
+      },
+      "dialogs": {
+        "createTitle": "Add Speaking Event",
+        "editTitle": "Edit Speaking Event",
+        "deleteTitle": "Delete Event",
+        "deleteManyTitle": "Delete Multiple Events"
+      },
+      "messages": {
+        "shown": "Speaking event shown",
+        "hidden": "Speaking event hidden",
+        "featured": "Speaking event featured",
+        "unfeatured": "Speaking event unfeatured",
+        "created": "Speaking event created successfully",
+        "updated": "Speaking event updated successfully",
+        "deleted": "Speaking event deleted successfully"
+      },
+      "workspace": {
+        "eyebrow": "Public Engagements",
+        "title": "Speaking",
+        "description": "Manage speaking engagements and events."
+      },
+      "bulk": {
+        "showSelected": "Show selected",
+        "hideSelected": "Hide selected",
+        "featureSelected": "Feature selected",
+        "unfeatureSelected": "Unfeature selected",
+        "deleteSelected": "Delete selected"
       }
+    },
+    "forms": {
+      "pendingVerification": "Pending Verification",
+      "contentEditor": "Content Editor",
+      "systemAdmin": "System Admin",
+      "createNewUser": "Create New User",
+      "inviteATeammateWithA": "Invite a teammate with a temporary password and assign the starting role before they sign in.",
+      "accountSetup": "Account Setup",
+      "credentialsAndAccess": "Credentials and access",
+      "emailAddress": "Email Address",
+      "emailIsRequired": "Email is required",
+      "enterAValidEmailAddr": "Enter a valid email address",
+      "userExampleCom": "user@example.com",
+      "temporaryPassword": "Temporary Password",
+      "passwordIsRequired": "Password is required",
+      "passwordMustBeAtLeas": "Password must be at least 6 characters",
+      "min6Characters": "Min 6 characters",
+      "initialRole": "Initial Role",
+      "roleIsRequired": "Role is required",
+      "useARealEmail": "Use a real email",
+      "theResetPasswordActi": "The reset-password action depends on the address being reachable by the user.",
+      "temporaryPassword1": "Temporary password",
+      "keepItSimpleEnoughTo": "Keep it simple enough to share once, then ask the user to rotate it immediately.",
+      "recommendedStart": "Recommended start",
+      "usePendingUnlessTheU": "Use `pending` unless the user needs editor or admin access right away.",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createUser": "Create User",
+      "created": "Created",
+      "deleted": "Deleted",
+      "updated": "Updated",
+      "unknown": "Unknown",
+      "pending": "Pending",
+      "editor": "Editor",
+      "admin": "Admin",
+      "superAdmin": "Super Admin",
+      "userAccountProfile": "User Account Profile",
+      "reviewAccessAdjustTh": "Review access, adjust the administrative role, and inspect the audit trail for this account.",
+      "disabledAccount": "Disabled account",
+      "activeAccount": "Active account",
+      "currentSession": "Current session",
+      "identity": "Identity",
+      "accountSummary": "Account summary",
+      "authenticationEmail": "Authentication Email",
+      "displayName": "Display Name",
+      "notSet": "Not set",
+      "statusSecurity": "Status & Security",
+      "disabledAccount1": "Disabled Account",
+      "activeAccount1": "Active Account",
+      "administrativeRole": "Administrative Role",
+      "YOU": "(YOU)",
+      "metadata": "Metadata",
+      "systemDetails": "System details",
+      "registrationDate": "Registration Date",
+      "systemUniversalID": "System Universal ID",
+      "sidebarIdentity": "Sidebar identity",
+      "thisIsWhatTheAdminSh": "This is what the admin shell shows when a display name is available.",
+      "audit": "Audit",
+      "auditEditHistory": "Audit & Edit History",
+      "loading": "Loading...",
+      "loadingHistory": "Loading history...",
+      "noEditHistoryRecorde": "No edit history recorded yet.",
+      "changesMadeToThisAcc": "Changes made to this account will appear here once activity is captured.",
+      "pending1": "Pending...",
+      "account": "Account",
+      "by": "by",
+      "system": "System",
+      "reEnableAccount": "Re-enable Account",
+      "disableAccount": "Disable Account",
+      "resetPassword": "Reset Password",
+      "done": "Done",
+      "restoreData": "Restore Data",
+      "jSONBackupFile": "JSON backup file",
+      "existingDatabaseDocu": "Existing database documents with the same IDs will be",
+      "completelyOverwritte": "completely overwritten",
+      "withTheBackupData": "with the backup data.",
+      "warningThisActionCan": "Warning: This action cannot be undone.",
+      "areYouReadyToRestore": "Are you ready to restore?",
+      "startRestore": "Start Restore",
+      "securityAuthLogs": "Security / Auth Logs",
+      "failedLoginsAndAuthe": "Failed logins and authentication events.",
+      "systemLogs": "System Logs",
+      "generalAdminAndSyste": "General admin and system audit entries.",
+      "activityFeedRecords": "Activity Feed Records",
+      "detailedReadWriteDel": "Detailed read/write/delete activity history.",
+      "draftTemporaryRecord": "Draft / Temporary Records",
+      "hiddenPostsAndProjec": "Hidden posts and projects older than the cutoff.",
+      "dailyAnalyticsBreakd": "Daily Analytics Breakdown",
+      "dailyUsageTotalsAndR": "Daily usage totals and related logs.",
+      "visits": "Visits",
+      "pageVisitRecordsAndT": "Page visit records and timestamps.",
+      "confirmArchive": "Confirm Archive",
+      "youAreAboutToPermane": "You are about to permanently archive and delete the selected records older than",
+      "days": "days",
+      "recommended": "Recommended:",
+      "downloadFullJSONBack": "Download full JSON Backup before proceeding.",
+      "permanent": "Permanent:",
+      "recordsWillBePermane": "Records will be permanently removed from Firebase.",
+      "archiveScope": "Archive Scope",
+      "selectAll": "Select All",
+      "clearAll": "Clear All",
+      "areYouAbsolutelySure": "Are you absolutely sure?",
+      "selectAtLeastOneArch": "Select at least one archive category to continue.",
+      "archiveAndDelete": "Archive and Delete",
+      "success": "Success",
+      "failure": "Failure",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "mobile": "Mobile",
+      "tablet": "Tablet",
+      "desktop": "Desktop",
+      "eventStatus": "Event Status",
+      "userEmail": "User Email",
+      "iPAddress": "IP Address",
+      "device": "Device",
+      "sessionID": "Session ID",
+      "timestamp": "Timestamp",
+      "userAgent": "User Agent",
+      "failureReason": "Failure Reason",
+      "auditLogDetails": "Audit Log Details",
+      "eventPayload": "Event Payload",
+      "close": "Close",
+      "read": "Read",
+      "write": "Write",
+      "delete": "Delete",
+      "activityEvent": "Activity event",
+      "readsAuditHistory": "Reads Audit History",
+      "activityReportsForDa": "Activity reports for ${dateStr}",
+      "writesAuditHistory": "Writes Audit History",
+      "deletesAuditHistory": "Deletes Audit History",
+      "activityHistory": "Activity History",
+      "noActivityRecordsFou": "No activity records found for this period.",
+      "oPERATIONTARGET": "OPERATION & TARGET",
+      "cOUNT": "COUNT",
+      "oRIGINATOR": "ORIGINATOR",
+      "tIMESTAMP": "TIMESTAMP",
+      "noMetadataRecordedFo": "No metadata recorded for this event.",
+      "totalTracked": "Total Tracked:",
+      "records": "records"
+    },
+    "communication": {
+      "tabs": {
+        "contact": "Contact Info",
+        "telegram": "Telegram",
+        "resume": "Resume",
+        "availability": "Availability"
+      },
+      "contact": {
+        "title": "Contact Information",
+        "socialTitle": "Social Links & Direct Contact",
+        "socialDesc": "These details are displayed on the frontend contact section.",
+        "fields": {
+          "email": "Professional Email",
+          "secondaryEmail": "Secondary Email",
+          "phone": "Phone",
+          "whatsapp": "WhatsApp",
+          "linkedin": "LinkedIn URL",
+          "github": "GitHub URL",
+          "twitter": "X (Twitter) URL",
+          "website": "Personal Website"
+        },
+        "save": "Save Contact Info"
+      },
+      "telegram": {
+        "title": "Telegram Management",
+        "fields": {
+          "enabled": "Enable Telegram on Public Site",
+          "username": "Telegram Username",
+          "url": "Deep Link URL",
+          "qr": "QR Code Override (Optional)",
+          "qrHint": "Auto-generated if empty."
+        },
+        "save": "Save Telegram Info"
+      },
+      "resume": {
+        "title": "Resume Management",
+        "fields": {
+          "publicDownload": "Enable Public Download",
+          "printRoute": "Enable Print Route",
+          "titleEn": "Title (EN)",
+          "titleKm": "Title (KM)",
+          "version": "Version",
+          "versionPlaceholder": "e.g. v2026.1",
+          "upload": "Upload PDF Resume",
+          "uploadHint": "Max 700KB for base64 storage."
+        },
+        "preview": "Preview/Download Current",
+        "delete": "Delete PDF",
+        "deleteConfirm": "Are you sure you want to delete the uploaded resume PDF?",
+        "save": "Save Resume"
+      },
+      "availability": {
+        "title": "Availability",
+        "fields": {
+          "status": "Availability Status",
+          "statusSelect": "Select...",
+          "statusOpen": "Available for Work",
+          "statusFreelance": "Freelance/Consulting",
+          "statusLimited": "Limited Availability",
+          "statusBusy": "Busy / Not Available",
+          "messageEn": "Custom Message (EN)",
+          "messageKm": "Custom Message (KM)",
+          "responseEn": "Response Time (EN)",
+          "responseKm": "Response Time (KM)",
+          "timeZone": "Time Zone",
+          "preferredContact": "Preferred Contact Method",
+          "preferredContactHint": "Comma separated (e.g. Telegram, Email)"
+        },
+        "save": "Save Availability"
+      }
+    },
+    "toolbar": {
+      "add": "Add",
+      "search": "Search..."
     }
   },
   "nav": {
@@ -2473,7 +2942,9 @@
   "experience": {
     "title": "Work Experience",
     "empty": "No experience listed yet.",
-    "present": "Present"
+    "present": "Present",
+    "keyResponsibilities": "Key Responsibilities:",
+    "majorAchievements": "Major Achievements:"
   },
   "featuredProjects": {
     "title": "Featured Projects",
@@ -2586,7 +3057,8 @@
     "education": "Education",
     "projects": "Selected Projects",
     "languages": "Languages",
-    "generatedFrom": "Generated from"
+    "generatedFrom": "Generated from",
+    "backToAdmin": "Back to Admin"
   },
   "career": {
     "stats": {
@@ -2602,5 +3074,332 @@
     "awards": "Awards & Honors",
     "publications": "Publications",
     "speaking": "Speaking Events"
+  },
+  "recruiter": {
+    "eyebrow": "Recruiter quick view",
+    "title": "At a glance",
+    "years": "{{count}}+ years experience",
+    "availability": {
+      "open": "Available",
+      "busy": "Busy",
+      "closed": "Unavailable",
+      "${availabilityStatus}": "Available"
+    },
+    "coreExpertise": "Core expertise",
+    "accomplishments": "Recent accomplishments",
+    "workTypes": "Open to",
+    "industries": "Industry expertise",
+    "statsYears": "years",
+    "statsCerts": "certifications",
+    "featured": "Featured:",
+    "viewResume": "View résumé",
+    "getInTouch": "Get in touch"
+  },
+  "ui": {
+    "noDataAvailableForSelecte": "No data available for selected range",
+    "noData": "No Data",
+    "unknown": "Unknown",
+    "other": "Other",
+    "previous": "Previous",
+    "pagePageOfTotalPages": "Page ${page} of ${totalPages}",
+    "next": "Next",
+    "comprehensiveVisitActivit": "Comprehensive Visit Activity History",
+    "audienceGeographicDistrib": "Audience Geographic Distribution",
+    "technicalDeviceInfrastruc": "Technical Device Infrastructure",
+    "contentPerformanceMetrics": "Content Performance Metrics",
+    "regionalEngagementBreakdo": "Regional Engagement Breakdown",
+    "acquisitionTrafficSources": "Acquisition & Traffic Sources",
+    "audienceLoyaltyRetentionA": "Audience Loyalty & Retention Analysis",
+    "detailedInsightsBasedOnAn": "Detailed insights based on ${analyticsLogsTotal || analyticsLogs.length} tracked interactions",
+    "firestoreQuotaReachedShow": "Firestore quota reached. Showing partial or local data.",
+    "aggregatingAnalyticsData": "Aggregating Analytics Data...",
+    "retrievedAnalyticsLogsLen": "Retrieved ${analyticsLogs.length} recent sessions",
+    "pagePath": "Page Path",
+    "region": "Region",
+    "platform": "Platform",
+    "iPAddress": "IP Address",
+    "dateTime": "Date & Time",
+    "desktop": "Desktop",
+    "noVisitDataForThisRange": "No visit data for this range.",
+    "totalReturning": "Total Returning",
+    "uniqueReturnees": "Unique Returnees",
+    "avgVisitsUser": "Avg. Visits / User",
+    "dailyRetentionTrends": "Daily Retention Trends",
+    "newVisitors": "New Visitors",
+    "returningVisitors": "Returning Visitors",
+    "returningVisitorFrequency": "Returning Visitor Frequency",
+    "visitorIP": "Visitor IP",
+    "location": "Location",
+    "totalVisits": "Total Visits",
+    "latestActivity": "Latest Activity",
+    "recent": "Recent",
+    "noFrequentVisitorsIdentif": "No frequent visitors identified in this range.",
+    "direct": "Direct",
+    "visits": "Visits",
+    "country": "Country",
+    "city": "City",
+    "device": "Device",
+    "source": "Source",
+    "browser": "Browser",
+    "operatingSystem": "Operating System",
+    "percentage": "Percentage",
+    "close": "Close",
+    "selectADateRange": "Select a date range",
+    "DayDiffDayDayDiff1S": "${dayDiff} day${dayDiff > 1 ? 's' : ''}",
+    "custom": "Custom",
+    "to": "to",
+    "records": "records",
+    "startDateMustBeBeforeEndD": "Start date must be before end date.",
+    "today": "Today",
+    "all": "All",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "export": "Export",
+    "wait": "Wait...",
+    "refresh": "Refresh",
+    "updated": "Updated:",
+    "read": "Read",
+    "write": "Write",
+    "created": "Created",
+    "updated1": "Updated",
+    "deleted": "Deleted",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "success": "Success",
+    "failure": "Failure",
+    "blog": "Blog",
+    "projects": "Projects",
+    "experience": "Experience",
+    "users": "Users",
+    "mobile": "Mobile",
+    "tablet": "Tablet",
+    "action": "Action",
+    "count": "Count",
+    "module": "Module",
+    "targetEntity": "Target Entity",
+    "performer": "Performer",
+    "system": "System",
+    "time": "Time",
+    "status": "Status",
+    "userEmail": "User Email",
+    "userAgent": "User Agent",
+    "timestamp": "Timestamp",
+    "noSecurityLogsFound": "No Security Logs Found",
+    "noActivityLogsFound": "No Activity Logs Found",
+    "thereAreCurrentlyNoRecord": "There are currently no recorded events.",
+    "searchByUserIPOrEntity": "Search by user, IP or entity...",
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "allTime": "All Time",
+    "allSecurityEvents": "All Security Events",
+    "failedLogins": "Failed Logins",
+    "successfulLogins": "Successful Logins",
+    "allModules": "All Modules",
+    "allActions": "All Actions",
+    "reset": "Reset",
+    "showing": "Showing",
+    "record": "record",
+    "inThisView": "in this view",
+    "readOperations": "Read Operations",
+    "writeOperations": "Write Operations",
+    "deleteOperations": "Delete Operations",
+    "viewDetails": "View Details",
+    "logReadOperations": "Log Read Operations",
+    "trackWhenDocumentsAreFetc": "Track when documents are fetched.",
+    "logWriteOperations": "Log Write Operations",
+    "trackCreatesAndUpdates": "Track creates and updates.",
+    "logDeleteOperations": "Log Delete Operations",
+    "trackDocumentRemovals": "Track document removals.",
+    "logAnonymousActions": "Log Anonymous Actions",
+    "trackPublicVisitors": "Track public visitors.",
+    "auditLogConfiguration": "Audit Log Configuration",
+    "masterAuditTracking": "Master Audit Tracking",
+    "enableOrDisableAllDatabas": "Enable or disable all database activity logging globally. Highly recommended for production stability.",
+    "granularRulesEnabled": "granular rules enabled",
+    "toggleMasterAudit": "Toggle Master Audit",
+    "notAuthorized": "Not authorized",
+    "trackingEnabled": "Tracking Enabled",
+    "trackingDisabled": "Tracking Disabled",
+    "toggleItemLabel": "Toggle ${item.label}",
+    "databaseActions": "Database Actions",
+    "fullJSONBackup": "Full JSON Backup",
+    "downloadAllDatabaseCollec": "Download all database collections in a single JSON file. Perfect for manual backups or data migration.",
+    "backupDatabase": "Backup Database",
+    "restoreFromBackup": "Restore from Backup",
+    "restoreYourDatabaseUsingA": "Restore your database using a previously downloaded JSON file.",
+    "warning": "Warning:",
+    "existingDataWillBeOverwri": "Existing data will be overwritten.",
+    "selectFile": "Select File",
+    "selectJSONFile": "Select JSON File",
+    "archiveOldRecords": "Archive Old Records",
+    "clearAuditLogsVisitsAndDa": "Clear audit logs, visits, and daily usage records older than a specified period to maintain performance.",
+    "olderThan7Days1Week": "Older than 7 Days (1 Week)",
+    "olderThan30Days": "Older than 30 Days",
+    "olderThan90Days": "Older than 90 Days",
+    "olderThan6Months": "Older than 6 Months",
+    "olderThan1Year": "Older than 1 Year",
+    "archiveNow": "Archive Now",
+    "SuccessLabelCopied": "${successLabel} copied.",
+    "failedToCopyCommand": "Failed to copy command.",
+    "areYouSureYouWantToSeedSa": "Are you sure you want to seed sample data?",
+    "successfullySeededCreated": "Successfully seeded ${createdCount} items.",
+    "seedingFailed": "Seeding failed.",
+    "advancedWorkflow": "Advanced Workflow",
+    "advancedSeeding": "Advanced Seeding",
+    "useStandardHardResetOrFul": "Use standard, hard-reset, or full-reset modes from seed-sample-data.mjs.",
+    "seeding": "Seeding...",
+    "runSeedInBrowser": "Run Seed in Browser",
+    "copyCLICommand": "Copy CLI Command",
+    "cleanSettings": "Clean Settings",
+    "seedSettingsCjsIsConfigur": "seed-settings.cjs is configured with merge: false for full replacement.",
+    "optimizedIndexes": "Optimized Indexes",
+    "firestoreIndexesJsonIsPar": "firestore.indexes.json is part of the workflow. Deploy indexes after changes.",
+    "copyDeployCommand": "Copy Deploy Command",
+    "masterWalkthrough": "Master Walkthrough",
+    "theCompleteEndToEndProces": "The complete end-to-end process is documented in walkthrough.md.",
+    "warningNearingFreeTierCap": "Warning: nearing free-tier capacity.",
+    "currentUsageIsWithinFreeT": "Current usage is within free-tier allowance.",
+    "storageHealth": "Storage Health",
+    "refreshingCounts": "Refreshing counts...",
+    "lastChecked": "Last checked:",
+    "counting": "Counting...",
+    "healthy": "healthy",
+    "unavailable": "unavailable",
+    "collectionCoverage": "Collection coverage:",
+    "trackedGroups": "tracked groups",
+    "freeTierDocumentUsage50kL": "Free Tier Document Usage (50k Limit Estimate)",
+    "unableToLoadRightNow": "Unable to load right now",
+    "failedToCount": "Failed to count",
+    "dispatchingSync": "Dispatching sync...",
+    "syncQueued": "Sync queued",
+    "syncFailed": "Sync failed",
+    "readyToSync": "Ready to sync",
+    "databaseSync": "Database Sync",
+    "manualGitHubDispatch": "Manual GitHub Dispatch",
+    "dispatchTheBackupSyncWork": "Dispatch the backup sync workflow in GitHub Actions. The scheduled cron is disabled, so this gives you a controlled manual run.",
+    "gitHubAccessIsHandledByAF": "GitHub access is handled by a Firebase Function. No personal token is stored in this browser.",
+    "runDatabaseSyncNow": "Run database sync now",
+    "runDatabaseSync": "Run Database Sync",
+    "requiresSuperAdminAccess": "Requires super admin access.",
+    "noSyncRequestSentYet": "No sync request sent yet.",
+    "youDoNotHavePermissionToR": "You do not have permission to run database sync.",
+    "workflowTargetGITHUBOWNER": "Workflow target: ${GITHUB_OWNER}/${GITHUB_REPO} (manual_database_sync).",
+    "restoringDatabase": "Restoring Database...",
+    "recordsProcessed": "records processed",
+    "runTheDatabaseSyncNowThis": "Run the database sync now? This will dispatch the GitHub Actions workflow through the backend.",
+    "dispatchingDatabaseSync": "Dispatching database sync...",
+    "failedToDispatchDatabaseS": "Failed to dispatch database sync.",
+    "superAdmin": "Super Admin",
+    "admin": "Admin",
+    "editor": "Editor",
+    "pending": "Pending",
+    "user": "User",
+    "loginBlocked": "Login blocked",
+    "roleAssignment": "Role assignment",
+    "registered": "Registered",
+    "noTimestamp": "No timestamp",
+    "actions": "Actions",
+    "you": "You",
+    "editProfile": "Edit Profile",
+    "sendPasswordReset": "Send Password Reset",
+    "disableUser": "Disable User",
+    "noMatchingUsers": "No matching users",
+    "noAccountsMatched": "No accounts matched",
+    "tryAnotherEmailOrRoleFilt": "Try another email or role filter.",
+    "clearSearch": "Clear Search",
+    "noUsersYet": "No users yet",
+    "inviteYourFirstTeammateTo": "Invite your first teammate to start assigning access and tracking account activity.",
+    "addUser": "Add User",
+    "userWorkspace": "User workspace",
+    "manageAccessAndAccountRol": "Manage access and account roles from one place.",
+    "searchByEmailOrRoleInspec": "Search by email or role, inspect account history, and invite new admins without leaving the table.",
+    "searchUsers": "Search users...",
+    "inviteUser": "Invite User",
+    "latestThoughtsTutorialsAn": "Latest thoughts, tutorials, and project updates.",
+    "previousPage": "Previous Page",
+    "nextPage": "Next Page",
+    "postNotFound": "Post Not Found",
+    "postNotFound1": "Post not found",
+    "failedToLoadPostDetails": "Failed to load post details",
+    "recentlyPublished": "Recently Published",
+    "backToBlog": "Back to Blog",
+    "view": "View",
+    "thanksForReading": "Thanks for reading!",
+    "readMoreArticles": "Read More Articles",
+    "articleInfo": "Article Info",
+    "published": "Published",
+    "readTime": "Read Time",
+    "tags": "Tags",
+    "shareArticle": "Share Article",
+    "copyLink": "Copy link",
+    "copied": "Copied!",
+    "copyLink1": "Copy Link",
+    "shareOnFacebook": "Share on Facebook",
+    "shareOnInstagram": "Share on Instagram",
+    "linkCopied": "Link Copied!",
+    "shareOnLinkedIn": "Share on LinkedIn",
+    "shareOnTelegram": "Share on Telegram",
+    "scrollToTop": "Scroll to top",
+    "404LostInSpace": "404 - Lost in Space",
+    "thePageYouAreLookingForMi": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "projectNotFound": "Project Not Found",
+    "projectDetailsAndTechnica": "Project details and technical implementation.",
+    "projectNotFound1": "Project not found",
+    "failedToLoadProjectDetail": "Failed to load project details",
+    "recentlyAdded": "Recently Added",
+    "backToProjects": "Back to Projects",
+    "problemStatement": "Problem Statement",
+    "solution": "Solution",
+    "architecture": "Architecture",
+    "implementationDetails": "Implementation Details",
+    "noDetailedOverviewProvide": "No detailed overview provided for this project yet.",
+    "resultsImpact": "Results & Impact",
+    "gallery": "Gallery",
+    "thanksForCheckingOutThisP": "Thanks for checking out this project!",
+    "browseAllProjects": "Browse All Projects",
+    "projectInfo": "Project Info",
+    "date": "Date",
+    "live": "Live",
+    "openSource": "Open Source",
+    "inProgress": "In Progress",
+    "techStack": "Tech Stack",
+    "links": "Links",
+    "liveDemo": "Live Demo",
+    "sourceCode": "Source Code",
+    "shareProject": "Share Project",
+    "exploreMyLatestProjectsAn": "Explore my latest projects and technical work.",
+    "iCTSecurityITAuditProfess": "ICT Security & IT Audit Professional",
+    "gitHub": "GitHub",
+    "email": "Email",
+    "C2026KemPhearumAllRightsR": "(c) 2026 Kem Phearum. All Rights Reserved.",
+    "temporaryHiccup": "Temporary Hiccup",
+    "underMaintenance": "Under Maintenance",
+    "weEncounteredAnUnexpected": "We encountered an unexpected error while preparing this page. Don't worry, it's usually temporary.",
+    "weReCurrentlyFineTuningSo": "We're currently fine-tuning some details to bring you the best experience. Please check back in a moment!",
+    "unknownError": "Unknown error",
+    "backToHome": "Back to Home",
+    "tryAgain": "Try Again",
+    "technicalDetails": "Technical Details",
+    "copyCodeToClipboard": "Copy code to clipboard",
+    "copyCode": "Copy code",
+    "copy": "Copy",
+    "contentImage": "Content image",
+    "viewSource": "View Source",
+    "viewDetailsFor": "View details for",
+    "viewDetails1": "View Details ->",
+    "onThisPage": "On This Page",
+    "overlay": {
+      "feedbackButton": "Submit Feedback / Bug Report",
+      "contactButton": "Contact for urgent inquiries",
+      "betaBadge": "BETA"
+    }
+  },
+  "node scripts/seed-sample-data": {
+    "mjs": "seed script"
+  },
+  "firebase deploy --only firestore:indexes": "indexes deploy",
+  "restricted": {
+    "title": "Access Restricted",
+    "description": "You do not have permission to view this content."
   }
 }

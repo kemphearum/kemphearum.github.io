@@ -48,6 +48,13 @@ export function meta({ data }) {
     }),
     {
       "script:ld+json": generatePersonSchema(site, language, profile)
+    },
+    {
+      tagName: "link",
+      rel: "alternate",
+      type: "application/rss+xml",
+      title: "Blog RSS Feed",
+      href: "/rss.xml"
     }
   ];
 }

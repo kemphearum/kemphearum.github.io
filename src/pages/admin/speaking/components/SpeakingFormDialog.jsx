@@ -103,7 +103,7 @@ const SpeakingFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, l
                                 </FormField>
 
                                 <FormField label={t('admin.speaking.form.fields.link', 'URL / Link')} name="link">
-                                    <FormInput placeholder="https://..." />
+                                    <FormInput placeholder={t('admin.common.urlPlaceholder')} />
                                 </FormField>
                             </div>
 

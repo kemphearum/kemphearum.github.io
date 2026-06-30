@@ -22,9 +22,8 @@ const AuditLogsToolbar = ({
   placeholder = '',
   isSearching = false
 }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
-  const resolvedPlaceholder = placeholder || tr('Search by user, IP or entity...', 'ស្វែងរកតាមអ្នកប្រើ IP ឬធាតុ...');
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder || t('ui.searchByUserIPOrEntity');
 
   const hasFilters = Boolean(
     searchQuery
@@ -56,10 +55,10 @@ const AuditLogsToolbar = ({
             value={dateRange}
             onChange={(e) => onDateRangeChange(e.target.value)}
             options={[
-              { value: 'today', label: tr('Today', 'ថ្ងៃនេះ') },
-              { value: '7d', label: tr('Last 7 Days', '7 ថ្ងៃចុងក្រោយ') },
-              { value: '30d', label: tr('Last 30 Days', '30 ថ្ងៃចុងក្រោយ') },
-              { value: 'all', label: tr('All Time', 'គ្រប់ពេល') }
+              { value: 'today', label: t('ui.today') },
+              { value: '7d', label: t('ui.last7Days') },
+              { value: '30d', label: t('ui.last30Days') },
+              { value: 'all', label: t('ui.allTime') }
             ]}
           />
         </div>
@@ -72,9 +71,9 @@ const AuditLogsToolbar = ({
               value={statusFilter}
               onChange={(e) => onStatusFilterChange(e.target.value)}
               options={[
-                { value: 'all', label: tr('All Security Events', 'ព្រឹត្តិការណ៍សុវត្ថិភាពទាំងអស់') },
-                { value: 'failed-logins', label: tr('Failed Logins', 'ការចូលប្រើបរាជ័យ') },
-                { value: 'success-logins', label: tr('Successful Logins', 'ការចូលប្រើជោគជ័យ') }
+                { value: 'all', label: t('ui.allSecurityEvents') },
+                { value: 'failed-logins', label: t('ui.failedLogins') },
+                { value: 'success-logins', label: t('ui.successfulLogins') }
               ]}
             />
           </div>
@@ -89,11 +88,11 @@ const AuditLogsToolbar = ({
                 value={filters.module}
                 onChange={(e) => onFilterChange('module', e.target.value)}
                 options={[
-                  { value: 'all', label: tr('All Modules', 'គ្រប់ម៉ូឌុល') },
-                  { value: 'blog', label: tr('Blog', 'ប្លុក') },
-                  { value: 'projects', label: tr('Projects', 'គម្រោង') },
-                  { value: 'experience', label: tr('Experience', 'បទពិសោធន៍') },
-                  { value: 'users', label: tr('Users', 'អ្នកប្រើ') }
+                  { value: 'all', label: t('ui.allModules') },
+                  { value: 'blog', label: t('ui.blog') },
+                  { value: 'projects', label: t('ui.projects') },
+                  { value: 'experience', label: t('ui.experience') },
+                  { value: 'users', label: t('ui.users') }
                 ]}
               />
             </div>
@@ -105,12 +104,12 @@ const AuditLogsToolbar = ({
                 value={filters.action}
                 onChange={(e) => onFilterChange('action', e.target.value)}
                 options={[
-                  { value: 'all', label: tr('All Actions', 'គ្រប់សកម្មភាព') },
-                  { value: 'created', label: tr('Created', 'បានបង្កើត') },
-                  { value: 'updated', label: tr('Updated', 'បានកែប្រែ') },
-                  { value: 'deleted', label: tr('Deleted', 'បានលុប') },
-                  { value: 'disabled', label: tr('Disabled', 'បានបិទ') },
-                  { value: 'enabled', label: tr('Enabled', 'បានបើក') }
+                  { value: 'all', label: t('ui.allActions') },
+                  { value: 'created', label: t('ui.created') },
+                  { value: 'updated', label: t('ui.updated1') },
+                  { value: 'deleted', label: t('ui.deleted') },
+                  { value: 'disabled', label: t('ui.disabled') },
+                  { value: 'enabled', label: t('ui.enabled') }
                 ]}
               />
             </div>
@@ -125,7 +124,7 @@ const AuditLogsToolbar = ({
             disabled={!hasFilters}
           >
             <RotateCcw size={14} />
-            {tr('Reset', 'កំណត់ឡើងវិញ')}
+            {t('ui.reset')}
           </button>
           <button 
             type="button"
@@ -134,16 +133,16 @@ const AuditLogsToolbar = ({
             disabled={isExportDisabled}
           >
             <Download size={14} />
-            {tr('Export', 'នាំចេញ')}
+            {t('ui.export')}
           </button>
         </div>
       </div>
       
       <div className={styles.searchMeta}>
         <span>
-          {tr('Showing', 'កំពុងបង្ហាញ')} <strong>{totalItems || 0}</strong>{' '}
-          {totalItems === 1 ? tr('record', 'កំណត់ត្រា') : tr('records', 'កំណត់ត្រា')}
-          {searchQuery ? ` ${tr('in this view', 'ក្នុងទិដ្ឋភាពនេះ')}` : ''}.
+          {t('ui.showing')} <strong>{totalItems || 0}</strong>{' '}
+          {totalItems === 1 ? t('ui.record') : t('ui.records')}
+          {searchQuery ? ` ${t('ui.inThisView')}` : ''}.
         </span>
         {searchHint && <span className={styles.searchHint}>{searchHint}</span>}
       </div>

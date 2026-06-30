@@ -85,13 +85,22 @@ const ProfileSection = ({
                                 </FormField>
                             </div>
 
-                            <FormField
-                                label={t('admin.general.sections.profile.fields.accomplishments')}
-                                name="accomplishments"
-                                hint={t('admin.general.sections.profile.fields.accomplishmentsHint')}
-                            >
-                                <FormInput isTextArea rows={4} placeholder={t('admin.general.sections.profile.fields.accomplishmentsPlaceholder')} />
-                            </FormField>
+                            <div className="ui-formGrid">
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.accomplishments') + ' (EN)'}
+                                    name="accomplishmentsEn"
+                                    hint={t('admin.general.sections.profile.fields.accomplishmentsHint')}
+                                >
+                                    <FormInput isTextArea rows={4} placeholder={t('admin.general.sections.profile.fields.accomplishmentsPlaceholder')} />
+                                </FormField>
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.accomplishments') + ' (KM)'}
+                                    name="accomplishmentsKm"
+                                    hint={t('admin.general.sections.profile.fields.accomplishmentsHint')}
+                                >
+                                    <FormInput isTextArea rows={4} placeholder={t('admin.general.sections.profile.fields.accomplishmentsPlaceholder')} />
+                                </FormField>
+                            </div>
                         </div>
                     </div>
 
@@ -110,31 +119,58 @@ const ProfileSection = ({
                                 <FormInput type="number" min="0" placeholder="0" />
                             </FormField>
 
-                            <FormField
-                                label={t('admin.general.sections.profile.fields.workTypes')}
-                                name="workTypes"
-                                hint={t('admin.general.sections.profile.fields.workTypesHint')}
-                            >
-                                <FormInput placeholder={t('admin.general.sections.profile.fields.workTypesPlaceholder')} />
-                            </FormField>
+                            <div className="ui-formGrid">
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.workTypes') + ' (EN)'}
+                                    name="workTypesEn"
+                                    hint={t('admin.general.sections.profile.fields.workTypesHint')}
+                                >
+                                    <FormInput placeholder={t('admin.general.sections.profile.fields.workTypesPlaceholder')} />
+                                </FormField>
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.workTypes') + ' (KM)'}
+                                    name="workTypesKm"
+                                    hint={t('admin.general.sections.profile.fields.workTypesHint')}
+                                >
+                                    <FormInput placeholder={t('admin.general.sections.profile.fields.workTypesPlaceholder')} />
+                                </FormField>
+                            </div>
 
 
 
-                            <FormField
-                                label={t('admin.general.sections.profile.fields.languages')}
-                                name="languages"
-                                hint={t('admin.general.sections.profile.fields.languagesHint')}
-                            >
-                                <FormInput placeholder={t('admin.general.sections.profile.fields.languagesPlaceholder')} />
-                            </FormField>
+                            <div className="ui-formGrid">
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.languages') + ' (EN)'}
+                                    name="languagesEn"
+                                    hint={t('admin.general.sections.profile.fields.languagesHint')}
+                                >
+                                    <FormInput placeholder={t('admin.general.sections.profile.fields.languagesPlaceholder')} />
+                                </FormField>
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.languages') + ' (KM)'}
+                                    name="languagesKm"
+                                    hint={t('admin.general.sections.profile.fields.languagesHint')}
+                                >
+                                    <FormInput placeholder={t('admin.general.sections.profile.fields.languagesPlaceholder')} />
+                                </FormField>
+                            </div>
 
-                            <FormField
-                                label={t('admin.general.sections.profile.fields.industries')}
-                                name="industries"
-                                hint={t('admin.general.sections.profile.fields.industriesHint')}
-                            >
-                                <FormInput placeholder={t('admin.general.sections.profile.fields.industriesPlaceholder')} />
-                            </FormField>
+                            <div className="ui-formGrid">
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.industries') + ' (EN)'}
+                                    name="industriesEn"
+                                    hint={t('admin.general.sections.profile.fields.industriesHint')}
+                                >
+                                    <FormInput placeholder={t('admin.general.sections.profile.fields.industriesPlaceholder')} />
+                                </FormField>
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.industries') + ' (KM)'}
+                                    name="industriesKm"
+                                    hint={t('admin.general.sections.profile.fields.industriesHint')}
+                                >
+                                    <FormInput placeholder={t('admin.general.sections.profile.fields.industriesPlaceholder')} />
+                                </FormField>
+                            </div>
 
                             <div className="ui-formGrid">
                                 <FormField label={t('admin.general.sections.profile.fields.clearanceEn')} name="clearanceEn">
@@ -154,21 +190,39 @@ const ProfileSection = ({
                                 </FormField>
                             </div>
 
-                            <FormField
-                                label={t('admin.general.sections.profile.fields.oss')}
-                                name="oss"
-                                hint={t('admin.general.sections.profile.fields.ossHint')}
-                            >
-                                <FormInput isTextArea rows={3} placeholder={t('admin.general.sections.profile.fields.ossPlaceholder')} />
-                            </FormField>
+                            <div className="ui-formGrid">
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.oss') + ' (EN)'}
+                                    name="ossEn"
+                                    hint={t('admin.general.sections.profile.fields.ossHint')}
+                                >
+                                    <FormInput isTextArea rows={3} placeholder={t('admin.general.sections.profile.fields.ossPlaceholder')} />
+                                </FormField>
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.oss') + ' (KM)'}
+                                    name="ossKm"
+                                    hint={t('admin.general.sections.profile.fields.ossHint')}
+                                >
+                                    <FormInput isTextArea rows={3} placeholder={t('admin.general.sections.profile.fields.ossPlaceholder')} />
+                                </FormField>
+                            </div>
 
-                            <FormField
-                                label={t('admin.general.sections.profile.fields.community')}
-                                name="community"
-                                hint={t('admin.general.sections.profile.fields.communityHint')}
-                            >
-                                <FormInput isTextArea rows={3} placeholder={t('admin.general.sections.profile.fields.communityPlaceholder')} />
-                            </FormField>
+                            <div className="ui-formGrid">
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.community') + ' (EN)'}
+                                    name="communityEn"
+                                    hint={t('admin.general.sections.profile.fields.communityHint')}
+                                >
+                                    <FormInput isTextArea rows={3} placeholder={t('admin.general.sections.profile.fields.communityPlaceholder')} />
+                                </FormField>
+                                <FormField
+                                    label={t('admin.general.sections.profile.fields.community') + ' (KM)'}
+                                    name="communityKm"
+                                    hint={t('admin.general.sections.profile.fields.communityHint')}
+                                >
+                                    <FormInput isTextArea rows={3} placeholder={t('admin.general.sections.profile.fields.communityPlaceholder')} />
+                                </FormField>
+                            </div>
                         </div>
                     </aside>
                 </div>

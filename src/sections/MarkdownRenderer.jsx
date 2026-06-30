@@ -58,8 +58,7 @@ const SyntaxHighlighter = lazy(async () => {
 });
 
 const CodeBlock = ({ inline, className, children, ...props }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t } = useTranslation();
     const match = /language-(\w+)/.exec(className || '');
     const codeString = String(children).replace(/\n$/, '');
     const [copied, setCopied] = useState(false);
@@ -85,11 +84,11 @@ const CodeBlock = ({ inline, className, children, ...props }) => {
                 <button
                     className={styles.copyButton}
                     onClick={handleCopy}
-                    aria-label={tr('Copy code to clipboard', 'ចម្លងកូដទៅក្តារចម្លង')}
-                    title={tr('Copy code', 'ចម្លងកូដ')}
+                    aria-label={t('ui.copyCodeToClipboard')}
+                    title={t('ui.copyCode')}
                 >
                     {copied ? <Check size={16} className={styles.checkIcon} /> : <Copy size={16} />}
-                    <span>{copied ? tr('Copied!', 'បានចម្លង!') : tr('Copy', 'ចម្លង')}</span>
+                    <span>{copied ? t('ui.copied') : t('ui.copy')}</span>
                 </button>
             </div>
             <Suspense fallback={<pre className={styles.codeBlock}><code>{codeString}</code></pre>}>
@@ -110,8 +109,7 @@ const CodeBlock = ({ inline, className, children, ...props }) => {
 };
 
 const MarkdownRenderer = ({ content }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { t } = useTranslation();
     const safeContent = typeof content === 'string' ? content : '';
 
     return (
@@ -129,7 +127,7 @@ const MarkdownRenderer = ({ content }) => {
                     },
                     img: ({ ...props }) => {
                         if (!props.src) return null;
-                        return <img {...props} loading="lazy" alt={props.alt || tr('Content image', 'រូបភាពមាតិកា')} />;
+                        return <img {...props} loading="lazy" alt={props.alt || t('ui.contentImage')} />;
                     },
                     a: ({ ...props }) => {
                         const url = props.href;

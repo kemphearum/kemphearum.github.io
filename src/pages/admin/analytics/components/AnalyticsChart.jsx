@@ -56,10 +56,9 @@ const AnalyticsChart = ({
     onViewDetails,
     emptyMessage
 }) => {
-    const { language } = useTranslation();
-    const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+    const { language, t } = useTranslation();
     const dateLocale = language === 'km' ? 'km-KH' : 'en-US';
-    const normalizedEmptyMessage = emptyMessage || tr('No data available for selected range', 'មិនមានទិន្នន័យសម្រាប់រយៈពេលដែលបានជ្រើស។');
+    const normalizedEmptyMessage = emptyMessage || t('ui.noDataAvailableForSelecte');
     const hasData = data && data.length > 0;
     const enableAnimation = shouldAnimateCharts();
 
@@ -77,7 +76,7 @@ const AnalyticsChart = ({
             return (
                 <EmptyState 
                     icon={Icon}
-                    title={tr('No Data', 'គ្មានទិន្នន័យ')}
+                    title={t('ui.noData')}
                     description={normalizedEmptyMessage}
                     className="admin-chart-empty"
                 />

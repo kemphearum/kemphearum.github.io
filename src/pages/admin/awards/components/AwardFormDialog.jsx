@@ -92,7 +92,7 @@ const AwardFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, load
                                 </FormField>
 
                                 <FormField label={t('admin.awards.form.fields.link', 'URL / Link')} name="link">
-                                    <FormInput placeholder="https://..." />
+                                    <FormInput placeholder={t('admin.common.urlPlaceholder')} />
                                 </FormField>
                             </div>
 

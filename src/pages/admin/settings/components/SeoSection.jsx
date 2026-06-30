@@ -32,7 +32,7 @@ const SeoSection = ({ settingsData, setSettingsData, onSave, loading }) => {
 
             <label className={styles.field}>
                 <span>{t('admin.settings.seo.ogImage')}</span>
-                <input type="text" value={seo.ogImage || ''} onChange={(e) => update('ogImage', e.target.value)} placeholder="https://..." />
+                <input type="text" value={seo.ogImage || ''} onChange={(e) => update('ogImage', e.target.value)} placeholder={t('admin.common.urlPlaceholder')} />
             </label>
 
             <label className={styles.field}>

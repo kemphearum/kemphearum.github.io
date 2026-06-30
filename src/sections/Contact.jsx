@@ -316,6 +316,9 @@ const Contact = () => {
                                     src={communication.telegramQrCodeImage}
                                     alt={t('contact.qr.imageAlt', 'Telegram QR code — scan to open chat')}
                                     className={styles.qrImage}
+                                    loading="lazy"
+                                    width="150"
+                                    height="150"
                                 />
                             ) : (
                                 <div

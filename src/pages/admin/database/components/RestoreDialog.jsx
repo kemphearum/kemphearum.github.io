@@ -10,8 +10,7 @@ const RestoreDialog = ({
   onConfirm,
   loading
 }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { t } = useTranslation();
 
   if (!restoreFile) return null;
 
@@ -21,7 +20,7 @@ const RestoreDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <Dialog.Content maxWidth="460px">
         <Dialog.Header
-          title={tr('Restore Data', 'ស្ដារទិន្នន័យ')}
+          title={t('admin.forms.restoreData')}
           icon={Upload}
           variant="primary"
         />
@@ -35,27 +34,27 @@ const RestoreDialog = ({
               <div className="ui-file-name">{restoreFile.name}</div>
               <div className="ui-file-meta">
                 <div className="ui-dot-indicator"></div>
-                {sizeKb} KB - {tr('JSON backup file', 'ឯកសារ JSON backup')}
+                {sizeKb} KB - {t('admin.forms.jSONBackupFile')}
               </div>
             </div>
           </div>
 
           <p className="ui-text-secondary ui-text-center ui-mt-large ui-lh-relaxed">
-            {tr('Existing database documents with the same IDs will be', 'ឯកសារមូលដ្ឋានទិន្នន័យដែលមាន ID ដូចគ្នា នឹងត្រូវ')} <strong>{tr('completely overwritten', 'សរសេរជាន់ទាំងស្រុង')}</strong> {tr('with the backup data.', 'ដោយទិន្នន័យបម្រុង។')}
+            {t('admin.forms.existingDatabaseDocu')} <strong>{t('admin.forms.completelyOverwritte')}</strong> {t('admin.forms.withTheBackupData')}
           </p>
 
           <div className="ui-warning-box ui-mt-medium">
-            <AlertTriangle size={18} /> {tr('Warning: This action cannot be undone.', 'ព្រមាន៖ សកម្មភាពនេះមិនអាចត្រឡប់វិញបានទេ។')}
+            <AlertTriangle size={18} /> {t('admin.forms.warningThisActionCan')}
           </div>
 
           <p className="ui-text-primary ui-font-bold ui-text-center ui-mt-large">
-            {tr('Are you ready to restore?', 'តើអ្នករួចរាល់សម្រាប់ស្ដារទិន្នន័យទេ?')}
+            {t('admin.forms.areYouReadyToRestore')}
           </p>
         </Dialog.Body>
 
         <Dialog.Footer>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {tr('Cancel', 'បោះបង់')}
+            {t('admin.forms.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -63,7 +62,7 @@ const RestoreDialog = ({
             isLoading={loading}
             icon={Upload}
           >
-            {tr('Start Restore', 'ចាប់ផ្តើមស្ដារ')}
+            {t('admin.forms.startRestore')}
           </Button>
         </Dialog.Footer>
       </Dialog.Content>

@@ -11,6 +11,7 @@ import { useTranslation } from '../../../../hooks/useTranslation';
 import { SKILL_LEVELS } from '../../../../domain/skill/skillDomain';
 
 const SkillIconField = () => {
+    const { t } = useTranslation();
     const { control, setValue, watch } = useFormContext();
     const activeImage = watch('iconUrl');
 
@@ -29,7 +30,7 @@ const SkillIconField = () => {
                     }}
                     currentImageUrl={activeImage}
                     onClearExisting={() => setValue('iconUrl', '', { shouldDirty: true })}
-                    placeholder="Upload tech icon"
+                    placeholder={t('admin.skills.form.fields.uploadIconPlaceholder')}
                     circular={true}
                 />
             )}
@@ -138,19 +139,19 @@ const SkillsFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit, loa
                                         />
                                     </FormField>
 
-                                    <FormField label="Years of Experience" name="yearsOfExperience">
-                                        <FormInput type="number" min="0" step="0.5" placeholder="e.g. 5" />
+                                    <FormField label={t('admin.skills.form.fields.yearsOfExperience')} name="yearsOfExperience">
+                                        <FormInput type="number" min="0" step="0.5" placeholder={t('admin.skills.form.fields.yearsPlaceholder')} />
                                     </FormField>
 
-                                    <FormField label="Related Projects" name="relatedProjects" hint="Comma-separated project slugs">
-                                        <FormInput placeholder="e.g. project-a, project-b" />
+                                    <FormField label={t('admin.experience.form.fields.relatedProjects')} name="relatedProjects" hint={t('admin.skills.form.fields.relatedProjectsHint')}>
+                                        <FormInput placeholder={t('admin.experience.form.fields.relatedProjectsPlaceholder')} />
                                     </FormField>
 
-                                    <FormField label="Related Certifications" name="relatedCertifications" hint="Comma-separated cert slugs">
-                                        <FormInput placeholder="e.g. cert-a, cert-b" />
+                                    <FormField label={t('admin.skills.form.fields.relatedCertifications')} name="relatedCertifications" hint={t('admin.skills.form.fields.relatedCertificationsHint')}>
+                                        <FormInput placeholder={t('admin.skills.form.fields.relatedCertificationsPlaceholder')} />
                                     </FormField>
 
-                                    <FormField label="Skill Icon">
+                                    <FormField label={t('admin.skills.form.fields.skillIcon')}>
                                         <SkillIconField />
                                     </FormField>
 

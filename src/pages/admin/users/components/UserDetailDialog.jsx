@@ -1,4 +1,4 @@
-
+import React, { useState } from 'react';
 import {
   Users,
   Trash2,
@@ -35,16 +35,17 @@ const UserDetailDialog = ({
   canDisableUsers = true,
   availableRoles = []
 }) => {
-  const { language } = useTranslation();
-  const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
+  const { t } = useTranslation();
+  const [visibleCount, setVisibleCount] = useState(10);
+  
   const getActionLabel = (action) => {
     switch (action) {
       case 'created':
-        return tr('Created', 'បានបង្កើត');
+        return t('admin.forms.created');
       case 'deleted':
-        return tr('Deleted', 'បានលុប');
+        return t('admin.forms.deleted');
       case 'updated':
-        return tr('Updated', 'បានកែប្រែ');
+        return t('admin.forms.updated');
       default:
         return action;
     }
@@ -56,7 +57,7 @@ const UserDetailDialog = ({
   const normalizedCurrentRole = normalizeRole(user.role) || 'pending';
   const registeredAt = user.createdAt?.seconds
     ? new Date(user.createdAt.seconds * 1000).toLocaleString()
-    : tr('Unknown', 'មិនស្គាល់');
+    : t('admin.forms.unknown');
   const userInitials = (user.displayName || user.email || 'US')
     .split(/[@.\s]/)
     .filter(Boolean)
@@ -65,10 +66,10 @@ const UserDetailDialog = ({
     .join('')
     .toUpperCase();
   const roleLabels = {
-    pending: tr('Pending', 'រង់ចាំ'),
-    editor: tr('Editor', 'អ្នកកែសម្រួល'),
-    admin: tr('Admin', 'អ្នកគ្រប់គ្រង'),
-    superadmin: tr('Super Admin', 'អ្នកគ្រប់គ្រងកំពូល'),
+    pending: t('admin.forms.pending'),
+    editor: t('admin.forms.editor'),
+    admin: t('admin.forms.admin'),
+    superadmin: t('admin.forms.superAdmin'),
   };
   const assignableRoles = Array.from(new Set(['pending', 'editor', 'admin', 'superadmin', ...availableRoles.map((role) => normalizeRole(role)).filter(Boolean)]));
   const roleOptions = assignableRoles.map((role) => ({
@@ -84,20 +85,20 @@ const UserDetailDialog = ({
             <div className="ui-user-profile-hero__avatar">{userInitials}</div>
             <div className="ui-user-profile-hero__copy">
               <Dialog.Title className="ui-user-profile-dialog__title">
-                <Users size={20} className="ui-primary-icon" /> {tr('User Account Profile', 'ប្រវត្តិរូបគណនីអ្នកប្រើ')}
+                <Users size={20} className="ui-primary-icon" /> {t('admin.forms.userAccountProfile')}
               </Dialog.Title>
               <Dialog.Description className="ui-user-profile-dialog__description">
-                {tr('Review access, adjust the administrative role, and inspect the audit trail for this account.', 'ពិនិត្យសិទ្ធិ កែតួនាទីគ្រប់គ្រង និងមើលប្រវត្តិសវនកម្មសម្រាប់គណនីនេះ។')}
+                {t('admin.forms.reviewAccessAdjustTh')}
               </Dialog.Description>
               <div className="ui-user-profile-hero__meta">
                 <Badge variant={isUserDisabled ? 'ghost' : 'success'}>
-                  {isUserDisabled ? tr('Disabled account', 'គណនីត្រូវបានបិទ') : tr('Active account', 'គណនីសកម្ម')}
+                  {isUserDisabled ? t('admin.forms.disabledAccount') : t('admin.forms.activeAccount')}
                 </Badge>
                 <Badge variant={ROLE_VARIANTS[normalizedCurrentRole] || 'default'}>
                   {roleLabels[normalizedCurrentRole] || formatRoleDisplayName(normalizedCurrentRole)}
                 </Badge>
                 {user.email === currentUser?.email && (
-                  <Badge variant="primary">{tr('Current session', 'សម័យបច្ចុប្បន្ន')}</Badge>
+                  <Badge variant="primary">{t('admin.forms.currentSession')}</Badge>
                 )}
               </div>
             </div>
@@ -109,42 +110,42 @@ const UserDetailDialog = ({
           <div className="ui-user-profile-layout">
             <section className="ui-user-profile-panel ui-user-profile-panel--summary">
               <div className="ui-user-profile-sectionHead">
-                <span className="ui-user-profile-sectionEyebrow">{tr('Identity', 'អត្តសញ្ញាណ')}</span>
-                <h3>{tr('Account summary', 'សង្ខេបគណនី')}</h3>
+                <span className="ui-user-profile-sectionEyebrow">{t('admin.forms.identity')}</span>
+                <h3>{t('admin.forms.accountSummary')}</h3>
               </div>
 
               <div className="ui-detail-grid">
                 <div className="ui-detail-item ui-detail-full">
                   <span className="ui-detail-label">
-                    <Mail size={14} /> {tr('Authentication Email', 'អ៊ីមែលផ្ទៀងផ្ទាត់')}
+                    <Mail size={14} /> {t('admin.forms.authenticationEmail')}
                   </span>
                   <span className="ui-detail-value ui-detail-value-large">{user.email}</span>
                 </div>
 
                 <div className="ui-detail-item ui-detail-half">
-                  <span className="ui-detail-label">{tr('Display Name', 'ឈ្មោះបង្ហាញ')}</span>
+                  <span className="ui-detail-label">{t('admin.forms.displayName')}</span>
                   <span className="ui-detail-value">
-                    {user.displayName || <span className="ui-empty-label">{tr('Not set', 'មិនទាន់កំណត់')}</span>}
+                    {user.displayName || <span className="ui-empty-label">{t('admin.forms.notSet')}</span>}
                   </span>
                 </div>
 
                 <div className="ui-detail-item ui-detail-half">
                   <span className="ui-detail-label">
-                    <Shield size={14} /> {tr('Status & Security', 'ស្ថានភាព និងសុវត្ថិភាព')}
+                    <Shield size={14} /> {t('admin.forms.statusSecurity')}
                   </span>
                   <span className="ui-detail-value ui-status-container">
                     <span className={isUserDisabled ? 'ui-status-disabled' : 'ui-status-active'}>
-                      {isUserDisabled ? tr('Disabled Account', 'គណនីបានបិទ') : tr('Active Account', 'គណនីសកម្ម')}
+                      {isUserDisabled ? t('admin.forms.disabledAccount1') : t('admin.forms.activeAccount1')}
                     </span>
                   </span>
                 </div>
 
                 <div className="ui-detail-item ui-detail-full">
-                  <span className="ui-detail-label">{tr('Administrative Role', 'តួនាទីគ្រប់គ្រង')}</span>
+                  <span className="ui-detail-label">{t('admin.forms.administrativeRole')}</span>
                   {user.email === currentUser?.email ? (
                     <div className="ui-role-badge-container">
                       <Badge variant="success">
-                        {(roleLabels[normalizedCurrentRole] || formatRoleDisplayName(normalizedCurrentRole)).toUpperCase()} {tr('(YOU)', '(អ្នក)')}
+                        {(roleLabels[normalizedCurrentRole] || formatRoleDisplayName(normalizedCurrentRole)).toUpperCase()} {t('admin.forms.YOU')}
                       </Badge>
                     </div>
                   ) : (
@@ -163,32 +164,32 @@ const UserDetailDialog = ({
 
             <aside className="ui-user-profile-panel ui-user-profile-panel--meta">
               <div className="ui-user-profile-sectionHead">
-                <span className="ui-user-profile-sectionEyebrow">{tr('Metadata', 'មេតាទិន្នន័យ')}</span>
-                <h3>{tr('System details', 'ព័ត៌មានប្រព័ន្ធ')}</h3>
+                <span className="ui-user-profile-sectionEyebrow">{t('admin.forms.metadata')}</span>
+                <h3>{t('admin.forms.systemDetails')}</h3>
               </div>
 
               <div className="ui-user-meta-stack">
                 <div className="ui-user-meta-card">
                   <span className="ui-user-meta-card__label">
-                    <CalendarDays size={14} /> {tr('Registration Date', 'ថ្ងៃចុះឈ្មោះ')}
+                    <CalendarDays size={14} /> {t('admin.forms.registrationDate')}
                   </span>
                   <span className="ui-user-meta-card__value">{registeredAt}</span>
                 </div>
 
                 <div className="ui-user-meta-card">
                   <span className="ui-user-meta-card__label">
-                    <Fingerprint size={14} /> {tr('System Universal ID', 'លេខសម្គាល់សកលប្រព័ន្ធ')}
+                    <Fingerprint size={14} /> {t('admin.forms.systemUniversalID')}
                   </span>
                   <span className="ui-mono-id">{user.id}</span>
                 </div>
 
                 <div className="ui-user-meta-card">
-                  <span className="ui-user-meta-card__label">{tr('Sidebar identity', 'អត្តសញ្ញាណ Sidebar')}</span>
+                  <span className="ui-user-meta-card__label">{t('admin.forms.sidebarIdentity')}</span>
                   <span className="ui-user-meta-card__value">
                     {user.displayName || user.email}
                   </span>
                   <span className="ui-user-meta-card__hint">
-                    {tr('This is what the admin shell shows when a display name is available.', 'នេះជាអ្វីដែល Admin បង្ហាញ នៅពេលមានឈ្មោះបង្ហាញ។')}
+                    {t('admin.forms.thisIsWhatTheAdminSh')}
                   </span>
                 </div>
               </div>
@@ -198,29 +199,29 @@ const UserDetailDialog = ({
           <section className="ui-history-section">
             <div className="ui-history-section__head">
               <div>
-                <span className="ui-user-profile-sectionEyebrow">{tr('Audit', 'សវនកម្ម')}</span>
+                <span className="ui-user-profile-sectionEyebrow">{t('admin.forms.audit')}</span>
                 <h4 className="ui-history-title">
-                  <History size={18} className="ui-primary-icon" /> {tr('Audit & Edit History', 'ប្រវត្តិសវនកម្ម និងកែសម្រួល')}
+                  <History size={18} className="ui-primary-icon" /> {t('admin.forms.auditEditHistory')}
                 </h4>
               </div>
               <span className="ui-history-section__count">
-                {historyLoading ? tr('Loading...', 'កំពុងផ្ទុក...') : `${history.length} ${tr(history.length === 1 ? 'event' : 'events', 'ព្រឹត្តិការណ៍')}`}
+                {historyLoading ? t('admin.forms.loading') : `${history.length} ${t('admin.forms.events')}`}
               </span>
             </div>
 
             {historyLoading ? (
-              <div className="ui-history-loading">{tr('Loading history...', 'កំពុងផ្ទុកប្រវត្តិ...')}</div>
+              <div className="ui-history-loading">{t('admin.forms.loadingHistory')}</div>
             ) : history.length === 0 ? (
               <div className="ui-empty-history">
                 <History size={18} />
                 <div>
-                  <strong>{tr('No edit history recorded yet.', 'មិនទាន់មានប្រវត្តិកែសម្រួលនៅឡើយ។')}</strong>
-                  <span>{tr('Changes made to this account will appear here once activity is captured.', 'ការផ្លាស់ប្តូរលើគណនីនេះ នឹងបង្ហាញនៅទីនេះ ពេលមានការកត់ត្រាសកម្មភាព។')}</span>
+                  <strong>{t('admin.forms.noEditHistoryRecorde')}</strong>
+                  <span>{t('admin.forms.changesMadeToThisAcc')}</span>
                 </div>
               </div>
             ) : (
               <div className="ui-history-container">
-                {history.map((entry, index) => (
+                {history.slice(0, visibleCount).map((entry, index) => (
                   <div key={entry.id || `history-${index}`} className="ui-history-item">
                     <div className="ui-history-header">
                       <Badge
@@ -238,7 +239,7 @@ const UserDetailDialog = ({
                         <Clock size={12} />
                         {entry.timestamp?.seconds
                           ? new Date(entry.timestamp.seconds * 1000).toLocaleString()
-                          : tr('Pending...', 'កំពុងរង់ចាំ...')}
+                          : t('admin.forms.pending1')}
                       </span>
                     </div>
 
@@ -255,15 +256,22 @@ const UserDetailDialog = ({
                           ))}
                         </div>
                       ) : (
-                        <span>{tr('Account', 'គណនី')} {getActionLabel(entry.action)}</span>
+                        <span>{t('admin.forms.account')} {getActionLabel(entry.action)}</span>
                       )}
                     </div>
 
                     <div className="ui-history-user">
-                      {tr('by', 'ដោយ')} <span className="ui-history-user-name">{entry.user || tr('System', 'ប្រព័ន្ធ')}</span>
+                      {t('admin.forms.by')} <span className="ui-history-user-name">{entry.user || t('admin.forms.system')}</span>
                     </div>
                   </div>
                 ))}
+                {history.length > visibleCount && (
+                  <div className="ui-history-load-more" style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+                    <Button variant="ghost" onClick={() => setVisibleCount(prev => prev + 10)}>
+                      {t('admin.forms.loadMore', 'Load More')}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </section>
@@ -274,16 +282,16 @@ const UserDetailDialog = ({
             <div className="ui-footer-actions-left">
               {user.email !== currentUser?.email && (
                 <Button variant="danger" disabled={!canDisableUsers} onClick={() => onDisable(user)}>
-                  <Trash2 size={16} /> {isUserDisabled ? tr('Re-enable Account', 'បើកដំណើរការគណនីឡើងវិញ') : tr('Disable Account', 'បិទដំណើរការគណនី')}
+                  <Trash2 size={16} /> {isUserDisabled ? t('admin.forms.reEnableAccount') : t('admin.forms.disableAccount')}
                 </Button>
               )}
             </div>
             <div className="ui-footer-actions-right">
               <Button variant="ghost" disabled={!canEditUsers} onClick={() => onResetPassword(user)}>
-                <Key size={16} /> {tr('Reset Password', 'កំណត់ពាក្យសម្ងាត់ឡើងវិញ')}
+                <Key size={16} /> {t('admin.forms.resetPassword')}
               </Button>
               <Button onClick={onClose} className="ui-primary">
-                {tr('Done', 'រួចរាល់')}
+                {t('admin.forms.done')}
               </Button>
             </div>
           </div>

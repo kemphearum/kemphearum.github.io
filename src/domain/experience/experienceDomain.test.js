@@ -27,9 +27,9 @@ describe('experienceDomain', () => {
 
             expect(result.company).toEqual({ en: 'Google', km: '' });
             expect(result.role).toEqual({ en: 'Dev', km: '' });
-            expect(result.startDate).toBe('Jan 2020');
-            expect(result.endDate).toBe('Jan 2021');
-            expect(result.period).toBe('Jan 2020 - Jan 2021');
+            expect(result.startDate).toEqual({ en: 'Jan 2020', km: 'មករា ២០២០' });
+            expect(result.endDate).toEqual({ en: 'Jan 2021', km: 'មករា ២០២១' });
+            expect(result.period).toEqual({ en: 'Jan 2020 - Jan 2021', km: 'មករា ២០២០ - មករា ២០២១' });
         });
 
         it('should handle current=true correctly', () => {
@@ -39,9 +39,9 @@ describe('experienceDomain', () => {
             };
             const result = normalizeExperience(rawData);
 
-            expect(result.endDate).toBe('Present');
+            expect(result.endDate).toEqual({ en: 'Present', km: 'បច្ចុប្បន្ន' });
             expect(result.endMonthYear).toBe('');
-            expect(result.period).toBe('Jan 2020 - Present');
+            expect(result.period).toEqual({ en: 'Jan 2020 - Present', km: 'មករា ២០២០ - បច្ចុប្បន្ន' });
         });
 
         it('should default order to 0', () => {

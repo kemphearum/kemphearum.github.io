@@ -188,20 +188,16 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     }, [queryClient]);
 
     const handleTriggerDatabaseSync = useCallback(async () => {
-        const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
 
         const confirmed = window.confirm(
-            tr(
-                'Run the database sync now? This will dispatch the GitHub Actions workflow through the backend.',
-                'ដំណើរការសមកាលកម្មមូលដ្ឋានទិន្នន័យឥឡូវនេះទេ? វានឹងបញ្ជូន GitHub Actions workflow ដោយដៃ។'
-            )
+            t('ui.runTheDatabaseSyncNowThis')
         );
 
         if (!confirmed) return;
 
         setSyncStatus({
             state: 'loading',
-            message: tr('Dispatching database sync...', 'កំពុងបញ្ជូនសមកាលកម្មមូលដ្ឋានទិន្នន័យ...'),
+            message: t('ui.dispatchingDatabaseSync'),
             requestedAt: null
         });
 
@@ -240,10 +236,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
         }
 
         const error = result.error;
-        let errorMessage = tr(
-            'Failed to dispatch database sync.',
-            'បរាជ័យក្នុងការបញ្ជូនសមកាលកម្មមូលដ្ឋានទិន្នន័យ។'
-        );
+        let errorMessage = t('ui.failedToDispatchDatabaseS');
 
         if (error?.message) {
             errorMessage = error.message;
@@ -255,7 +248,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
             requestedAt: null
         });
         showToast(errorMessage, 'error');
-    }, [executeDatabaseSync, language, showToast, userEmail]);
+    }, [executeDatabaseSync, language, showToast, userEmail, t]);
 
     const handleUpdateAuditSetting = async (key, value) => {
         if (!canEditAudit) {

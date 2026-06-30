@@ -119,7 +119,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
     };
 
     const handleDeleteResume = () => {
-        if (!confirm('Are you sure you want to delete the uploaded resume PDF?')) return;
+        if (!confirm(t('admin.communication.resume.deleteConfirm'))) return;
         updateResumeMutation.mutate({ pdfBase64: '' });
     };
 
@@ -133,26 +133,26 @@ const CommunicationTab = ({ isActionAllowed }) => {
                 <Tabs.List className={tabStyles.subtabsList}>
                     <Tabs.Trigger value="contact" className={tabStyles.subTabTrigger}>
                         <span className={tabStyles.triggerIcon}><Mail size={18} /></span>
-                        <span className={tabStyles.triggerBody}><strong>Contact Info</strong></span>
+                        <span className={tabStyles.triggerBody}><strong>{t('admin.communication.tabs.contact')}</strong></span>
                     </Tabs.Trigger>
                     <Tabs.Trigger value="telegram" className={tabStyles.subTabTrigger}>
                         <span className={tabStyles.triggerIcon}><MessageSquare size={18} /></span>
-                        <span className={tabStyles.triggerBody}><strong>Telegram</strong></span>
+                        <span className={tabStyles.triggerBody}><strong>{t('admin.communication.tabs.telegram')}</strong></span>
                     </Tabs.Trigger>
                     <Tabs.Trigger value="resume" className={tabStyles.subTabTrigger}>
                         <span className={tabStyles.triggerIcon}><FileText size={18} /></span>
-                        <span className={tabStyles.triggerBody}><strong>Resume</strong></span>
+                        <span className={tabStyles.triggerBody}><strong>{t('admin.communication.tabs.resume')}</strong></span>
                     </Tabs.Trigger>
                     <Tabs.Trigger value="availability" className={tabStyles.subTabTrigger}>
                         <span className={tabStyles.triggerIcon}><Clock size={18} /></span>
-                        <span className={tabStyles.triggerBody}><strong>Availability</strong></span>
+                        <span className={tabStyles.triggerBody}><strong>{t('admin.communication.tabs.availability')}</strong></span>
                     </Tabs.Trigger>
                 </Tabs.List>
 
                 <Tabs.Content value="contact" className={tabStyles.tabPanel}>
                     <div className="ui-card">
                         <div className="ui-cardHeader">
-                            <h3>Contact Information</h3>
+                            <h3>{t('admin.communication.contact.title')}</h3>
                         </div>
                         <Form onSubmit={handleSaveContact} defaultValues={{
                             ...commData,
@@ -207,29 +207,29 @@ const CommunicationTab = ({ isActionAllowed }) => {
 
                                 <div className="ui-generalAsideCard mb-6">
                                     <div className="ui-generalAsideCard__head">
-                                        <h4>Social Links & Direct Contact</h4>
-                                        <p>These details are displayed on the frontend contact section.</p>
+                                        <h4>{t('admin.communication.contact.socialTitle')}</h4>
+                                        <p>{t('admin.communication.contact.socialDesc')}</p>
                                     </div>
                                     <div className="ui-formGrid">
-                                        <FormField label="Professional Email" name="email"><FormInput /></FormField>
-                                        <FormField label="Secondary Email" name="secondaryEmail"><FormInput /></FormField>
+                                        <FormField label={t('admin.communication.contact.fields.email')} name="email"><FormInput /></FormField>
+                                        <FormField label={t('admin.communication.contact.fields.secondaryEmail')} name="secondaryEmail"><FormInput /></FormField>
                                     </div>
                                 <div className="ui-formGrid">
-                                    <FormField label="Phone" name="phone"><FormInput /></FormField>
-                                    <FormField label="WhatsApp" name="whatsapp"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.contact.fields.phone')} name="phone"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.contact.fields.whatsapp')} name="whatsapp"><FormInput /></FormField>
                                 </div>
                                 <div className="ui-formGrid">
-                                    <FormField label="LinkedIn URL" name="linkedin"><FormInput /></FormField>
-                                    <FormField label="GitHub URL" name="github"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.contact.fields.linkedin')} name="linkedin"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.contact.fields.github')} name="github"><FormInput /></FormField>
                                 </div>
                                 <div className="ui-formGrid">
-                                    <FormField label="X (Twitter) URL" name="twitter"><FormInput /></FormField>
-                                    <FormField label="Personal Website" name="website"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.contact.fields.twitter')} name="twitter"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.contact.fields.website')} name="website"><FormInput /></FormField>
                                 </div>
                                 </div>
 
                                 <Button type="submit" disabled={!canEditCommunication} isLoading={updateCommMutation.isPending}>
-                                    <Save size={16}/> Save Contact Info
+                                    <Save size={16}/> {t('admin.communication.contact.save')}
                                 </Button>
                             </div>
                         </Form>
@@ -239,7 +239,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
                 <Tabs.Content value="telegram" className={tabStyles.tabPanel}>
                     <div className="ui-card">
                         <div className="ui-cardHeader">
-                            <h3>Telegram Management</h3>
+                            <h3>{t('admin.communication.telegram.title')}</h3>
                         </div>
                         <Form onSubmit={handleSaveTelegram} defaultValues={{
                             telegramUsername: commData.telegramUsername || '',
@@ -248,17 +248,17 @@ const CommunicationTab = ({ isActionAllowed }) => {
                             qrCodeImageFile: null
                         }}>
                             <div className="ui-form p-4">
-                                <FormField label="Enable Telegram on Public Site" name="telegramEnabled">
+                                <FormField label={t('admin.communication.telegram.fields.enabled')} name="telegramEnabled">
                                     <select disabled={!canPublishCommunication}>
-                                        <option value="true">Enabled</option>
-                                        <option value="false">Disabled</option>
+                                        <option value="true">{t('admin.common.enabled')}</option>
+                                        <option value="false">{t('admin.common.disabled')}</option>
                                     </select>
                                 </FormField>
                                 <div className="ui-formGrid">
-                                    <FormField label="Telegram Username" name="telegramUsername"><FormInput /></FormField>
-                                    <FormField label="Deep Link URL" name="telegramUrl"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.telegram.fields.username')} name="telegramUsername"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.telegram.fields.url')} name="telegramUrl"><FormInput /></FormField>
                                 </div>
-                                <FormField label="QR Code Override (Optional)" name="qrCodeImageFile" hint="Auto-generated if empty.">
+                                <FormField label={t('admin.communication.telegram.fields.qr')} name="qrCodeImageFile" hint={t('admin.communication.telegram.fields.qrHint')}>
                                     <FormInput type="file" accept="image/*" />
                                 </FormField>
                                 {commData.telegramQrCodeImage && (
@@ -267,7 +267,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
                                     </div>
                                 )}
                                 <Button type="submit" disabled={!canEditCommunication} isLoading={updateCommMutation.isPending}>
-                                    <Save size={16}/> Save Telegram Info
+                                    <Save size={16}/> {t('admin.communication.telegram.save')}
                                 </Button>
                             </div>
                         </Form>
@@ -277,7 +277,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
                 <Tabs.Content value="resume" className={tabStyles.tabPanel}>
                     <div className="ui-card">
                         <div className="ui-cardHeader">
-                            <h3>Resume Management</h3>
+                            <h3>{t('admin.communication.resume.title')}</h3>
                         </div>
                         <Form onSubmit={handleSaveResume} defaultValues={{
                             titleEn: loc(resumeData.title, 'en'),
@@ -290,42 +290,42 @@ const CommunicationTab = ({ isActionAllowed }) => {
                             resumeFile: null
                         }}>
                             <div className="ui-form p-4">
-                                <FormField label="Enable Public Download" name="publicDownloadEnabled">
+                                <FormField label={t('admin.communication.resume.fields.publicDownload')} name="publicDownloadEnabled">
                                     <select disabled={!canPublishResume}>
-                                        <option value="true">Enabled</option>
-                                        <option value="false">Disabled</option>
+                                        <option value="true">{t('admin.common.enabled')}</option>
+                                        <option value="false">{t('admin.common.disabled')}</option>
                                     </select>
                                 </FormField>
-                                <FormField label="Enable Print Route" name="printRouteEnabled">
+                                <FormField label={t('admin.communication.resume.fields.printRoute')} name="printRouteEnabled">
                                     <select disabled={!canPublishResume}>
-                                        <option value="true">Enabled</option>
-                                        <option value="false">Disabled</option>
+                                        <option value="true">{t('admin.common.enabled')}</option>
+                                        <option value="false">{t('admin.common.disabled')}</option>
                                     </select>
                                 </FormField>
                                 <div className="ui-formGrid">
-                                    <FormField label="Title (EN)" name="titleEn"><FormInput /></FormField>
-                                    <FormField label="Title (KM)" name="titleKm"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.resume.fields.titleEn')} name="titleEn"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.resume.fields.titleKm')} name="titleKm"><FormInput /></FormField>
                                 </div>
                                 <div className="ui-formGrid">
-                                    <FormField label="Version" name="version"><FormInput placeholder="e.g. v2026.1" /></FormField>
+                                    <FormField label={t('admin.communication.resume.fields.version')} name="version"><FormInput placeholder={t('admin.communication.resume.fields.versionPlaceholder')} /></FormField>
                                 </div>
-                                <FormField label="Upload PDF Resume" name="resumeFile" hint="Max 700KB for base64 storage.">
+                                <FormField label={t('admin.communication.resume.fields.upload')} name="resumeFile" hint={t('admin.communication.resume.fields.uploadHint')}>
                                     <FormInput type="file" accept="application/pdf" disabled={!canUploadResume} />
                                 </FormField>
                                 {resumeData.pdfBase64 && (
                                     <div style={{marginBottom:'1rem', display:'flex', gap:'1rem'}}>
                                         <a href={resumeData.pdfBase64} download="Resume.pdf">
-                                            <Button type="button" variant="outline"><FileText size={16}/> Preview/Download Current</Button>
+                                            <Button type="button" variant="outline"><FileText size={16}/> {t('admin.communication.resume.preview')}</Button>
                                         </a>
                                         {canDeleteResume && (
                                             <Button type="button" variant="ghost" onClick={handleDeleteResume} className="text-red">
-                                                <Trash size={16}/> Delete PDF
+                                                <Trash size={16}/> {t('admin.communication.resume.delete')}
                                             </Button>
                                         )}
                                     </div>
                                 )}
                                 <Button type="submit" disabled={!canUploadResume && !canPublishResume} isLoading={updateResumeMutation.isPending}>
-                                    <Save size={16}/> Save Resume
+                                    <Save size={16}/> {t('admin.communication.resume.save')}
                                 </Button>
                             </div>
                         </Form>
@@ -335,7 +335,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
                 <Tabs.Content value="availability" className={tabStyles.tabPanel}>
                     <div className="ui-card">
                         <div className="ui-cardHeader">
-                            <h3>Availability</h3>
+                            <h3>{t('admin.communication.availability.title')}</h3>
                         </div>
                         <Form onSubmit={handleSaveAvailability} defaultValues={{
                             availabilityStatus: commData.availabilityStatus || '',
@@ -349,29 +349,29 @@ const CommunicationTab = ({ isActionAllowed }) => {
                             preferredContact: (commData.preferredContact || []).join(', ')
                         }}>
                             <div className="ui-form p-4">
-                                <FormField label="Availability Status" name="availabilityStatus">
+                                <FormField label={t('admin.communication.availability.fields.status')} name="availabilityStatus">
                                     <select disabled={!canPublishCommunication}>
-                                        <option value="">Select...</option>
-                                        <option value="open">Available for Work</option>
-                                        <option value="freelance">Freelance/Consulting</option>
-                                        <option value="limited">Limited Availability</option>
-                                        <option value="busy">Busy / Not Available</option>
+                                        <option value="">{t('admin.communication.availability.fields.statusSelect')}</option>
+                                        <option value="open">{t('admin.communication.availability.fields.statusOpen')}</option>
+                                        <option value="freelance">{t('admin.communication.availability.fields.statusFreelance')}</option>
+                                        <option value="limited">{t('admin.communication.availability.fields.statusLimited')}</option>
+                                        <option value="busy">{t('admin.communication.availability.fields.statusBusy')}</option>
                                     </select>
                                 </FormField>
                                 <div className="ui-formGrid">
-                                    <FormField label="Custom Message (EN)" name="availabilityMessageEn"><FormInput disabled={!canPublishCommunication} /></FormField>
-                                    <FormField label="Custom Message (KM)" name="availabilityMessageKm"><FormInput disabled={!canPublishCommunication} /></FormField>
+                                    <FormField label={t('admin.communication.availability.fields.messageEn')} name="availabilityMessageEn"><FormInput disabled={!canPublishCommunication} /></FormField>
+                                    <FormField label={t('admin.communication.availability.fields.messageKm')} name="availabilityMessageKm"><FormInput disabled={!canPublishCommunication} /></FormField>
                                 </div>
                                 <div className="ui-formGrid">
-                                    <FormField label="Response Time (EN)" name="responseTimeEn"><FormInput /></FormField>
-                                    <FormField label="Response Time (KM)" name="responseTimeKm"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.availability.fields.responseEn')} name="responseTimeEn"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.availability.fields.responseKm')} name="responseTimeKm"><FormInput /></FormField>
                                 </div>
                                 <div className="ui-formGrid">
-                                    <FormField label="Time Zone" name="timeZone"><FormInput /></FormField>
-                                    <FormField label="Preferred Contact Method" name="preferredContact" hint="Comma separated (e.g. Telegram, Email)"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.availability.fields.timeZone')} name="timeZone"><FormInput /></FormField>
+                                    <FormField label={t('admin.communication.availability.fields.preferredContact')} name="preferredContact" hint={t('admin.communication.availability.fields.preferredContactHint')}><FormInput /></FormField>
                                 </div>
                                 <Button type="submit" disabled={!canEditCommunication} isLoading={updateCommMutation.isPending}>
-                                    <Save size={16}/> Save Availability
+                                    <Save size={16}/> {t('admin.communication.availability.save')}
                                 </Button>
                             </div>
                         </Form>

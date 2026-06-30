@@ -231,10 +231,10 @@ const StatusSection = ({ settingsData, setSettingsData, onSave, loading }) => {
                                 <div className="ui-generalAsideCard__head">
                                     <h4><ShieldAlert size={16} className="inline mr-2"/> {t('admin.settings.sections.status.behaviorTitle', 'Behavior Notes')}</h4>
                                     <ul className="text-sm mt-2 text-foreground/80 space-y-2 list-disc pl-4">
-                                        <li><strong>Live:</strong> Normal operation.</li>
-                                        <li><strong>Testing:</strong> Adds an overlay but the site remains usable.</li>
-                                        <li><strong>Maintenance:</strong> A full-screen dialog blocks interaction with the site (if set to Dialog type).</li>
-                                        <li><strong>Admin Access:</strong> The <code>/admin</code> portal is always exempt and accessible so you can disable maintenance mode!</li>
+                                        <li><strong>{t('admin.settings.sections.status.behaviorList.live')}</strong> {t('admin.settings.sections.status.behaviorList.liveDesc')}</li>
+                                        <li><strong>{t('admin.settings.sections.status.behaviorList.testing')}</strong> {t('admin.settings.sections.status.behaviorList.testingDesc')}</li>
+                                        <li><strong>{t('admin.settings.sections.status.behaviorList.maintenance')}</strong> {t('admin.settings.sections.status.behaviorList.maintenanceDesc')}</li>
+                                        <li><strong>{t('admin.settings.sections.status.behaviorList.admin')}</strong> {t('admin.settings.sections.status.behaviorList.adminDesc')}</li>
                                     </ul>
                                 </div>
                             </div>

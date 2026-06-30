@@ -12,6 +12,7 @@ import { getLanguageValue } from '../../../../utils/localization';
 import { useTranslation } from '../../../../hooks/useTranslation';
 
 const CompanyLogoField = () => {
+    const { t } = useTranslation();
     const { control, setValue, watch } = useFormContext();
     const activeImage = watch('companyLogoUrl');
 
@@ -30,7 +31,7 @@ const CompanyLogoField = () => {
                     }}
                     currentImageUrl={activeImage}
                     onClearExisting={() => setValue('companyLogoUrl', '', { shouldDirty: true })}
-                    placeholder="Upload company logo"
+                    placeholder={t('admin.experience.form.fields.uploadLogoPlaceholder')}
                     circular={true}
                 />
             )}
@@ -86,26 +87,26 @@ const ExperienceLocalizedFields = ({ activeLanguage, setActiveLanguage }) => {
             </FormField>
 
             <FormField
-                label={`Key Responsibilities (${languageLabel})`}
+                label={`${t('admin.experience.form.fields.keyResponsibilities', 'Key Responsibilities')} (${languageLabel})`}
                 name={activeLanguage === 'en' ? 'keyResponsibilitiesEn' : 'keyResponsibilitiesKm'}
             >
                 <FormMarkdownEditor
                     id={`experience-responsibilities-${activeLanguage}`}
                     rows={5}
                     fullWidth={false}
-                    placeholder="List key responsibilities..."
+                    placeholder={t('admin.experience.form.fields.responsibilitiesPlaceholder')}
                 />
             </FormField>
 
             <FormField
-                label={`Major Achievements (${languageLabel})`}
+                label={`${t('admin.experience.form.fields.majorAchievements', 'Major Achievements')} (${languageLabel})`}
                 name={activeLanguage === 'en' ? 'majorAchievementsEn' : 'majorAchievementsKm'}
             >
                 <FormMarkdownEditor
                     id={`experience-achievements-${activeLanguage}`}
                     rows={5}
                     fullWidth={false}
-                    placeholder="List major achievements..."
+                    placeholder={t('admin.experience.form.fields.achievementsPlaceholder')}
                 />
             </FormField>
         </>
@@ -183,7 +184,7 @@ const ExperienceFormFields = ({ activeLanguage, setActiveLanguage }) => {
                         <FormInput type="month" disabled={isPresent} />
                     </FormField>
 
-                    <FormField label="Employment Type" name="employmentType">
+                    <FormField label={t('admin.experience.form.fields.employmentType')} name="employmentType">
                         <FormSelect
                             options={[
                                 { label: 'Full-time', value: 'Full-time' },
@@ -194,19 +195,19 @@ const ExperienceFormFields = ({ activeLanguage, setActiveLanguage }) => {
                         />
                     </FormField>
 
-                    <FormField label="Location" name="location">
-                        <FormInput placeholder="e.g. Remote, City" />
+                    <FormField label={t('admin.experience.form.fields.location')} name="location">
+                        <FormInput placeholder={t('admin.experience.form.fields.locationPlaceholder')} />
                     </FormField>
 
-                    <FormField label="Technologies Used" name="technologiesUsed" hint="Comma-separated skill slugs">
-                        <FormInput placeholder="e.g. react, nodejs" />
+                    <FormField label={t('admin.experience.form.fields.technologiesUsed')} name="technologiesUsed" hint={t('admin.experience.form.fields.relatedSkillsHint')}>
+                        <FormInput placeholder={t('admin.experience.form.fields.technologiesPlaceholder')} />
                     </FormField>
 
-                    <FormField label="Related Projects" name="relatedProjects" hint="Comma-separated project slugs">
-                        <FormInput placeholder="e.g. project-a, project-b" />
+                    <FormField label={t('admin.experience.form.fields.relatedProjects')} name="relatedProjects" hint={t('admin.experience.form.fields.relatedProjectsHint')}>
+                        <FormInput placeholder={t('admin.experience.form.fields.relatedProjectsPlaceholder')} />
                     </FormField>
 
-                    <FormField label="Company Logo">
+                    <FormField label={t('admin.experience.form.fields.companyLogo')}>
                         <CompanyLogoField />
                     </FormField>
                 </div>

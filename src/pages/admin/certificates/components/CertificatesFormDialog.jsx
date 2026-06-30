@@ -10,6 +10,7 @@ import { getLanguageValue } from '../../../../utils/localization';
 import { useTranslation } from '../../../../hooks/useTranslation';
 
 const CertificateBadgeField = () => {
+    const { t } = useTranslation();
     const { control, setValue, watch } = useFormContext();
     const activeImage = watch('badgeUrl');
 
@@ -28,7 +29,7 @@ const CertificateBadgeField = () => {
                     }}
                     currentImageUrl={activeImage}
                     onClearExisting={() => setValue('badgeUrl', '', { shouldDirty: true })}
-                    placeholder="Upload credential badge"
+                    placeholder={t('admin.certificates.form.fields.uploadBadgePlaceholder')}
                     circular={true}
                 />
             )}
@@ -149,11 +150,11 @@ const CertificatesFormDialog = ({ open, onOpenChange, mode, initialData, onSubmi
                                         <FormInput placeholder={t('admin.certificates.form.fields.urlPlaceholder')} />
                                     </FormField>
 
-                                    <FormField label="Skills Covered" name="skillsCovered" hint="Comma-separated skill slugs">
-                                        <FormInput placeholder="e.g. security, governance" />
+                                    <FormField label={t('admin.certificates.form.fields.skillsCovered')} name="skillsCovered" hint={t('admin.certificates.form.fields.skillsCoveredHint')}>
+                                        <FormInput placeholder={t('admin.certificates.form.fields.skillsCoveredPlaceholder')} />
                                     </FormField>
 
-                                    <FormField label="Credential Badge">
+                                    <FormField label={t('admin.certificates.form.fields.credentialBadge')}>
                                         <CertificateBadgeField />
                                     </FormField>
 
