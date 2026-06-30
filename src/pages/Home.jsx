@@ -111,25 +111,11 @@ export default function Home() {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Check if we need to restore scroll position or scroll to hash
-    const isReload = window.performance &&
-      window.performance.getEntriesByType("navigation").length > 0 &&
-      window.performance.getEntriesByType("navigation")[0].type === "reload";
-
-    if (!window.location.hash && isReload) {
-      const savedSection = sessionStorage.getItem('activeHomeSection');
-      if (savedSection && savedSection !== 'home') {
-        pendingScrollStopRef.current?.();
-        pendingScrollStopRef.current = queueSectionScroll(savedSection, 'auto');
-      }
-    }
-
     return () => {
       window.removeEventListener('scroll', handleScroll);
       clearTimeout(timeout);
-      pendingScrollStopRef.current?.();
     };
-  }, [queueSectionScroll]);
+  }, []);
 
   useEffect(() => {
     const hash = (location.hash || '').replace(/^#/, '');
