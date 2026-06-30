@@ -13,6 +13,7 @@ export default [
   route("api/db-sync", "routes/api.dbSync.jsx", { id: "api-db-sync" }),
   route("api/migrate", "routes/api.migrate.jsx", { id: "api-migrate" }),
   route("sitemap.xml", "routes/sitemap[.]xml.jsx"),
+  route("rss.xml", "routes/rss[.]xml.jsx"),
   route("resume", "routes/resume.jsx", { id: "resume" }),
   route(":section", "routes/section-redirect.jsx", { id: "section-redirect" }),
   route("*", "routes/$.jsx", { id: "not-found" }),
