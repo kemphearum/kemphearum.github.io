@@ -22,7 +22,7 @@
         span {
             font-size: 5rem;
             font-weight: 800;
-            color: #ffffff;
+            color: inherit;
             margin: 2rem 4rem;
             text-transform: uppercase;
             white-space: nowrap;
@@ -37,9 +37,9 @@
     left: 0;
     right: 0;
     z-index: 9999;
-    background: #0f172a; // dark slate
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: var(--bg-color, #0f172a);
+    border-top: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
+    color: var(--text-primary, #fff);
     display: flex;
     justify-content: space-between;
     align-items: center;

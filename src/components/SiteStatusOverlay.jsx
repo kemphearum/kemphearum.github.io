@@ -239,7 +239,7 @@ const SiteStatusOverlay = ({ config }) => {
     return (
         <>
             <div className={styles.watermarkOverlay}>
-                <div className={styles.watermarkText} style={{ color: isMaintenance ? 'rgba(239, 68, 68, 0.03)' : 'rgba(255, 255, 255, 0.03)' }}>
+                <div className={styles.watermarkText} style={{ color: isMaintenance ? '#ef4444' : 'var(--text-primary)' }}>
                     {Array.from({ length: 50 }).map((_, i) => (
                         <span key={i}>{repeatText}</span>
                     ))}
