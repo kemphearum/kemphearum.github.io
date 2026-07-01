@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useLoaderData } from 'react-router';
 import { motion } from 'framer-motion';
 import { toPng } from 'html-to-image';
@@ -15,7 +15,23 @@ export default function CardPage() {
     const { settings, profile, communication } = useLoaderData();
     const { language, t } = useTranslation();
     const cardRef = useRef(null);
+    const wrapperRef = useRef(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [scale, setScale] = useState(1);
+
+    // Calculate scale factor so the 1050x600 card always fits the container
+    const updateScale = useCallback(() => {
+        if (!wrapperRef.current) return;
+        const available = wrapperRef.current.getBoundingClientRect().width;
+        setScale(Math.min(1, available / 1050));
+    }, []);
+
+    useEffect(() => {
+        updateScale();
+        const ro = new ResizeObserver(updateScale);
+        if (wrapperRef.current) ro.observe(wrapperRef.current);
+        return () => ro.disconnect();
+    }, [updateScale]);
 
     const site = settings?.site || {};
     const social = communication || {};
@@ -94,8 +110,14 @@ export default function CardPage() {
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             >
                 {/* Card — scales to fit viewport on mobile, full 1050x600 on desktop */}
-                <div className={styles.cardWrapper}>
-                    <div ref={cardRef} className={styles.cardInner}>
+                <div
+                    ref={wrapperRef}
+                    style={{ width: '100%', maxWidth: '1050px', height: `${Math.round(600 * scale)}px` }}
+                >
+                    <div
+                        ref={cardRef}
+                        style={{ width: '1050px', height: '600px', transformOrigin: 'top left', transform: `scale(${scale})` }}
+                    >
                         <DigitalCard 
                             name={name}
                             title={title}
