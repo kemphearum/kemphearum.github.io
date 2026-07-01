@@ -20,11 +20,11 @@
 
 ```
 src/
-├── sections/           # Page sections (Hero, About, Footer) — NOT reusable widgets
-├── shared/components/  # App-wide reusable UI (DataTable, Dialog, FormField)
-│   ├── dialog/
-│   ├── form/
-│   └── ui/
+├── components/         # Root-level global components (e.g., SiteStatusOverlay)
+├── context/            # React Context providers
+├── domain/             # Data normalization and pure logic (e.g., content models)
+├── hooks/              # Custom React hooks
+├── i18n/               # Localization files (en.json, km.json)
 ├── pages/
 │   └── admin/
 │       ├── blog/
@@ -32,14 +32,19 @@ src/
 │       │   └── components/   # Used ONLY by BlogTab
 │       ├── components/       # Shared across 2+ admin tabs
 │       └── ...
-├── services/           # Firebase business logic (one per domain)
-├── hooks/              # Custom React hooks
-├── context/            # React Context providers
-├── utils/              # Pure utility functions (no side effects)
+├── registry/           # Registry-driven admin config (nav, search, content types)
+├── sections/           # Page sections (Hero, About, Footer) — NOT reusable widgets
+├── server/             # Backend-only logic (contact, auth-log, geo, db-sync)
+├── services/           # Firestore/API access and business logic
+├── shared/components/  # App-wide reusable UI (DataTable, Dialog, FormField)
+│   ├── dialog/
+│   ├── form/
+│   └── ui/
 ├── styles/
 │   ├── global.scss
 │   ├── variables.scss
 │   └── components/     # Global UI class partials (_admin-ui.scss)
+├── utils/              # Pure utility functions (no side effects)
 └── assets/             # Static images, icons
 ```
 
@@ -73,24 +78,36 @@ These two systems **must not overlap**. A class is either `.ui-*` (app-wide) or 
 
 ---
 
-## 4. Data Flow
+## 4. Architecture & Data Flow
 
 ```
-Component → Hook → Service → Firebase
+Component → Hook → Service/Domain → Firebase
 ```
 
 | Layer | Responsibility |
 | ----- | -------------- |
+| **Page / Section** | Route-level composition, presentation (no raw queries) |
 | **Component** | Renders UI, calls hooks, dispatches user actions |
 | **Hook** | Manages state, side effects, and loading/error states |
-| **Service** | Contains ALL Firebase/API logic |
-| **Firebase** | Data storage (never accessed directly by components) |
+| **Domain** | Data normalization, pure logic, validation (e.g., `experienceDomain.js`) |
+| **Service** | Contains ALL Firestore/API access (`DatabaseService`, `*Service`) |
+| **Server** | Backend-only logic (contact, auth-log, geo, db-sync) |
 
 ### ❌ Do NOT
 
 - Call Firebase directly from a component
 - Put business logic inside a component
 - Import `firebase/firestore` in any file except `services/`
+- Collapse layers together (e.g., placing raw queries in presentational components)
+
+---
+
+## 4.1 Admin Panel Architecture
+
+The admin panel is **registry-driven** and uses shared CRUD machinery:
+- **Registry (`src/registry/`)**: Define content types, navigation, search, and dashboard widgets by registering descriptors, rather than editing multiple UI files.
+- **Shared CRUD**: Admin tabs (blog, projects, experience, skills) share list/selection/mutation logic via `src/pages/admin/hooks/useAdminCrud.js`, `adminCrudIO.js`, and `BulkActionsBar.jsx`.
+- **Rule**: Build new admin tabs on these hooks rather than duplicating tab logic.
 
 ---
 
@@ -179,6 +196,9 @@ Use relative imports only for same-directory or direct-parent references.
 | Reusable admin widget | `pages/admin/components/` |
 | App-wide UI component | `shared/components/ui/` |
 | Page section (Home) | `sections/` |
+| Data normalization / logic | `domain/` |
+| Backend-only logic | `server/` |
+| Admin config (nav, search) | `registry/` |
 | Firebase logic | `services/<Domain>Service.js` |
 | React state logic | `hooks/use<Name>.js` |
 | Pure helper function | `utils/<name>.js` |
@@ -211,3 +231,5 @@ try {
 | Mix `.module.scss` + global classes on same element | Pick one approach per element |
 | Raw `console.log` in production code | Use structured error handling |
 | Offset-based pagination | Use cursor-based via `useCursorPagination` |
+| Add paid APIs, Cloud Functions, Storage | Follow **Zero-cost constraint** (GitHub Free, Firebase Spark, Vercel Hobby) |
+| Hardcode copy in CMS-backed sections | Use content models and `useTranslation`/`getLocalizedField` |

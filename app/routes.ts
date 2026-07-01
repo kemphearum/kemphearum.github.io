@@ -15,6 +15,7 @@ export default [
   route("sitemap.xml", "routes/sitemap[.]xml.jsx"),
   route("rss.xml", "routes/rss[.]xml.jsx"),
   route("resume", "routes/resume.jsx", { id: "resume" }),
+  route("card", "routes/card.jsx", { id: "card" }),
   route(":section", "routes/section-redirect.jsx", { id: "section-redirect" }),
   route("*", "routes/$.jsx", { id: "not-found" }),
 ] satisfies RouteConfig;

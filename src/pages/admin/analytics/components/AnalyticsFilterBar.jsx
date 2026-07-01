@@ -50,7 +50,7 @@ const AnalyticsFilterBar = ({
             : t('ui.custom');
 
         return `${startText} ${t('ui.to')} ${endText} (${daysText})`;
-    }, [dateLocale, range.end, range.start, t]);
+    }, [dateLocale, range.end, range.start, t, language]);
 
     const handlePresetClick = (preset) => {
         const end = new Date();

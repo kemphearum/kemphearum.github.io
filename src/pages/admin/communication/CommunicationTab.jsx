@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Mail, MessageSquare, FileText, Clock, Save, Upload, Trash } from 'lucide-react';
+import { Mail, MessageSquare, FileText, Clock, Save, Upload, Trash, UserPlus, Copy, ExternalLink, ImageDown, Phone, Share2, Link, Printer } from 'lucide-react';
 import { Tabs, Button } from '@/shared/components/ui';
 import Form from '../components/Form';
 import FormField from '../components/FormField';
@@ -10,16 +10,22 @@ import { useTranslation } from '../../../hooks/useTranslation';
 import CommunicationService from '../../../services/CommunicationService';
 import ResumeService from '../../../services/ResumeService';
 import { ACTIONS, MODULES } from '../../../utils/permissions';
-import { getLanguageValue } from '../../../utils/localization';
+import { getLanguageValue, getLocalizedField } from '../../../utils/localization';
 import { useNotifications } from '../../../context/NotificationContextValue';
 import tabStyles from '../general/GeneralTab.module.scss';
 import ImageProcessingService from '../../../services/ImageProcessingService';
+import ContentService from '../../../services/ContentService';
+import SettingsService from '../../../services/SettingsService';
+import DigitalCard from '../../card/components/DigitalCard';
+import { toPng, toJpeg } from 'html-to-image';
+import { generateVCard, downloadVCard } from '../../card/utils/VCardGenerator';
 
 const CommunicationTab = ({ isActionAllowed }) => {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
     const { record: showNotification } = useNotifications();
     const [activeSection, setActiveSection] = useState('contact');
+    const exportRef = useRef(null);
     const [contactPreview, setContactPreview] = useState(false);
 
     const canEditCommunication = isActionAllowed(ACTIONS.EDIT, MODULES.COMMUNICATION);
@@ -37,6 +43,54 @@ const CommunicationTab = ({ isActionAllowed }) => {
         queryKey: ['resume'],
         queryFn: () => ResumeService.get()
     });
+    
+    const { data: profileData = {} } = useQuery({
+        queryKey: ['content', 'profileInfo'],
+        queryFn: () => ContentService.fetchSection('profileInfo')
+    });
+
+    const { data: homeData = {} } = useQuery({
+        queryKey: ['content', 'home'],
+        queryFn: () => ContentService.fetchSection('home')
+    });
+
+    const { data: settingsData = {} } = useQuery({
+        queryKey: ['settings'],
+        queryFn: () => SettingsService.fetchGlobalSettings()
+    });
+
+    const { language } = useTranslation();
+    const site = settingsData?.site || {};
+    const portfolioUrl = site.canonicalUrl || window.location.origin;
+    const cardUrl = `${portfolioUrl}/card`;
+    
+    const cardName = homeData?.name ? getLocalizedField(homeData.name, language) : (profileData?.name ? getLocalizedField(profileData.name, language) : '');
+    const cardTitle = profileData?.currentRole ? getLocalizedField(profileData.currentRole, language) : '';
+    const cardCompany = homeData?.subtitle ? getLocalizedField(homeData.subtitle, language) : (profileData?.company ? getLocalizedField(profileData.company, language) : '');
+    const cardPhotoUrl = homeData?.profileImageUrl || profileData?.profileImageUrl || site.ogImageUrl || '';
+    const cardLocation = profileData?.location ? getLocalizedField(profileData.location, language) : '';
+
+    const handleDownloadVCard = () => {
+        const vCardData = generateVCard(profileData || {}, commData, portfolioUrl);
+        downloadVCard(vCardData, `${cardName.replace(/\s+/g, '_') || 'contact'}.vcf`);
+    };
+
+    const handleDownloadImage = async (format = 'png') => {
+        if (!exportRef.current) return;
+        try {
+            const dataUrl = format === 'png'
+                ? await toPng(exportRef.current, { backgroundColor: '#ffffff', pixelRatio: 3 })
+                : await toJpeg(exportRef.current, { backgroundColor: '#ffffff', quality: 0.95, pixelRatio: 3 });
+            
+            const link = document.createElement('a');
+            link.download = `namecard_${cardName.replace(/\s+/g, '_') || 'contact'}.${format}`;
+            link.href = dataUrl;
+            link.click();
+        } catch (error) {
+            console.error('Error generating image:', error);
+            showNotification(t('admin.common.error', 'Error'), 'error');
+        }
+    };
 
     const updateCommMutation = useMutation({
         mutationFn: (data) => CommunicationService.update(data),
@@ -142,6 +196,10 @@ const CommunicationTab = ({ isActionAllowed }) => {
                     <Tabs.Trigger value="resume" className={tabStyles.subTabTrigger}>
                         <span className={tabStyles.triggerIcon}><FileText size={18} /></span>
                         <span className={tabStyles.triggerBody}><strong>{t('admin.communication.tabs.resume')}</strong></span>
+                    </Tabs.Trigger>
+                    <Tabs.Trigger value="namecard" className={tabStyles.subTabTrigger}>
+                        <span className={tabStyles.triggerIcon}><UserPlus size={18} /></span>
+                        <span className={tabStyles.triggerBody}><strong>{t('admin.communication.tabs.namecard', 'Name Card')}</strong></span>
                     </Tabs.Trigger>
                     <Tabs.Trigger value="availability" className={tabStyles.subTabTrigger}>
                         <span className={tabStyles.triggerIcon}><Clock size={18} /></span>
@@ -271,6 +329,84 @@ const CommunicationTab = ({ isActionAllowed }) => {
                                 </Button>
                             </div>
                         </Form>
+                    </div>
+                </Tabs.Content>
+
+                <Tabs.Content value="namecard" className={tabStyles.tabPanel}>
+                    <div className="ui-card">
+                        <div className="ui-cardHeader">
+                            <h3>{t('admin.communication.tabs.namecard', 'Digital Name Card')}</h3>
+                        </div>
+                        <div className="ui-form p-4">
+                            <p className="mb-4">
+                                {t('admin.communication.namecard.desc', 'Your Digital Name Card is automatically generated from your Profile and Contact info.')}
+                            </p>
+                            <div className="ui-generalSectionGrid mb-6">
+                                <div className="ui-generalPrimary">
+                                    <div className="ui-generalAsideCard">
+                                        <div className="ui-generalAsideCard__head">
+                                            <h4>{t('admin.communication.namecard.preview', 'Live Preview & QR')}</h4>
+                                        </div>
+                                        <div className="flex flex-col gap-4">
+                                            {/* Hidden clone for export */}
+                                            <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
+                                                <div ref={exportRef} style={{ width: '1050px', height: '600px', display: 'flex' }}>
+                                                    <DigitalCard 
+                                                        name={cardName}
+                                                        title={cardTitle}
+                                                        company={cardCompany}
+                                                        photoUrl={cardPhotoUrl}
+                                                        location={cardLocation}
+                                                        social={commData}
+                                                        portfolioUrl={portfolioUrl}
+                                                        cardUrl={cardUrl}
+                                                        onDownloadVCard={() => {}}
+                                                        onShare={() => {}}
+                                                        exportMode={true}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="w-full flex flex-col items-center mt-8 mb-12">
+                                                <div className="w-full flex justify-center" style={{ position: 'relative' }}>
+                                                    <div style={{ width: '630px', height: '360px', position: 'relative' }}>
+                                                        <div style={{ position: 'absolute', top: 0, left: 0, width: '1050px', height: '600px', transform: 'scale(0.6)', transformOrigin: 'top left' }}>
+                                                            <DigitalCard 
+                                                                name={cardName}
+                                                                title={cardTitle}
+                                                                company={cardCompany}
+                                                                photoUrl={cardPhotoUrl}
+                                                                location={cardLocation}
+                                                                social={commData}
+                                                                portfolioUrl={portfolioUrl}
+                                                                cardUrl={cardUrl}
+                                                                onDownloadVCard={handleDownloadVCard}
+                                                                onShare={() => {}}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0', marginTop: '32px', width: '100%', maxWidth: '630px' }}>
+                                                    <button type="button" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '14px', fontWeight: '600', transition: 'all 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.color='#0f172a'} onMouseLeave={e => e.currentTarget.style.color='#64748b'}>
+                                                        <Link size={18} />
+                                                        <span>{t('card.actions.share', 'Share Card')}</span>
+                                                    </button>
+                                                    <button type="button" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '14px', fontWeight: '600', transition: 'all 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.color='#0f172a'} onMouseLeave={e => e.currentTarget.style.color='#64748b'}>
+                                                        <Printer size={18} />
+                                                        <span>{t('card.print', 'Print Card')}</span>
+                                                    </button>
+                                                    <button type="button" onClick={() => handleDownloadImage('png')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px 16px', background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '14px', fontWeight: '600', transition: 'all 0.2s ease' }} onMouseEnter={e => e.currentTarget.style.color='#0f172a'} onMouseLeave={e => e.currentTarget.style.color='#64748b'}>
+                                                        <ImageDown size={18} />
+                                                        <span>{t('card.saveImage', 'Save as Image')}</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </Tabs.Content>
 
