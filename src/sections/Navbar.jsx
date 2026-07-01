@@ -32,7 +32,6 @@ const Navbar = () => {
         { key: 'certificates', type: 'section', label: t('nav.certificates') },
         { key: 'projects', type: 'route', to: '/projects', label: t('nav.projects') },
         { key: 'blog', type: 'route', to: '/blog', label: t('nav.blog') },
-        { key: 'card', type: 'route', to: '/card', label: t('nav.card', 'Card') },
         { key: 'contact', type: 'section', label: t('nav.contact') }
     ];
 
