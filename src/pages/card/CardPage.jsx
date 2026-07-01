@@ -81,18 +81,48 @@ export default function CardPage() {
         if (!cardRef.current || isSaving) return;
         setIsSaving(true);
         try {
+            const filename = `${(name || 'namecard').replace(/\s+/g, '_')}_Card.png`;
             const opts = {
                 cacheBust: true,
                 pixelRatio: 2,
                 width: 1050,
                 height: 600,
-                style: { borderRadius: '0', transform: 'none' },
+                style: { 
+                    borderRadius: '0', 
+                    transform: 'none',
+                    backfaceVisibility: 'visible',
+                    WebkitBackfaceVisibility: 'visible',
+                    willChange: 'auto'
+                },
             };
+            
             // First pass primes the image cache (needed for cross-origin images)
             await toPng(cardRef.current, opts);
             const dataUrl = await toPng(cardRef.current, opts);
+
+            // iOS Safari blocks a.click() downloads. Native share sheet is the reliable way.
+            if (canNativeShare && navigator.canShare) {
+                try {
+                    const res = await fetch(dataUrl);
+                    const blob = await res.blob();
+                    const file = new File([blob], filename, { type: 'image/png' });
+                    
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Digital Name Card',
+                        });
+                        setIsSaving(false);
+                        return; // Done using native share sheet
+                    }
+                } catch (shareErr) {
+                    if (shareErr.name !== 'AbortError') console.warn('Share API failed, falling back...', shareErr);
+                }
+            }
+
+            // Fallback for Desktop or browsers without File sharing
             const link = document.createElement('a');
-            link.download = `${(name || 'namecard').replace(/\s+/g, '_')}_Card.png`;
+            link.download = filename;
             link.href = dataUrl;
             link.click();
         } catch (err) {
