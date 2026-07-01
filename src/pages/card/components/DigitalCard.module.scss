@@ -20,8 +20,8 @@
 
 .mainContent {
     display: flex;
-    flex-direction: column;
     flex-grow: 1;
+    flex-direction: row;
     
     &.exportMode {
         box-shadow: none !important;
@@ -34,10 +34,6 @@
             border-radius: 0 !important;
         }
     }
-
-    @media (min-width: 800px), print {
-        flex-direction: row;
-    }
 }
 
 // ==========================================
@@ -48,35 +44,27 @@
     background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 2px, transparent 2px);
     background-size: 16px 16px;
     color: white;
-    padding: 48px 32px;
     display: flex;
     flex-direction: column;
     position: relative;
     z-index: 2;
-
-    @media (min-width: 800px), print {
-        width: 33%;
-        max-width: 360px;
-        flex-shrink: 0;
-        padding: 40px 32px 40px 48px;
-    }
+    width: 33%;
+    max-width: 360px;
+    flex-shrink: 0;
+    padding: 40px 32px 40px 48px;
 }
 
 .waveSeparator {
-    display: none;
-    
-    @media (min-width: 800px), print {
-        display: block;
-        position: absolute;
-        top: 0;
-        right: -59px;
-        width: 60px;
-        height: 100%;
-        background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 60 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 C60,200 60,400 0,600 L0,600 L0,0 Z" fill="%2305162d"/><path d="M0,0 C60,200 60,400 0,600" fill="none" stroke="%23cba052" stroke-width="6" vector-effect="non-scaling-stroke"/></svg>');
-        background-size: 100% 100%;
-        z-index: 10;
-        pointer-events: none;
-    }
+    display: block;
+    position: absolute;
+    top: 0;
+    right: -59px;
+    width: 60px;
+    height: 100%;
+    background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 60 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 C60,200 60,400 0,600 L0,600 L0,0 Z" fill="%2305162d"/><path d="M0,0 C60,200 60,400 0,600" fill="none" stroke="%23cba052" stroke-width="6" vector-effect="non-scaling-stroke"/></svg>');
+    background-size: 100% 100%;
+    z-index: 10;
+    pointer-events: none;
 }
 
 .leftPanelContent {
@@ -201,33 +189,6 @@
     }
 }
 
-.portfolioBtn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    background: rgba(255,255,255,0.05);
-    color: white;
-    font-weight: 500;
-    font-size: 0.9rem;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    align-self: center;
-
-    @media (min-width: 800px), print {
-        align-self: flex-start;
-    }
-
-    &:hover {
-        background: rgba(255,255,255,0.1);
-        border-color: rgba(255,255,255,0.3);
-        transform: translateX(4px);
-    }
-}
-
 
 // ==========================================
 // RIGHT PANEL
@@ -238,28 +199,20 @@
 .rightPanel {
     flex-grow: 1;
     background: white;
-    padding: 32px 32px 24px 32px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    
-    @media (min-width: 800px), print {
-        padding: 48px 48px 24px 96px;
-    }
+    padding: 48px 48px 24px 96px;
 }
 
 // Contact & QR Row
 .contactAndQrRow {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
     gap: 24px;
     margin-bottom: 24px;
-
-    @media (min-width: 800px), print {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: flex-start;
-    }
 }
 
 .contactList {
@@ -308,14 +261,11 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    
-    @media (min-width: 800px), print {
-        width: 180px;
-        flex-shrink: 0;
-        border-left: 1px solid rgba(0, 0, 0, 0.1);
-        padding-left: 32px;
-        margin-left: 16px;
-    }
+    width: 180px;
+    flex-shrink: 0;
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    padding-left: 32px;
+    margin-left: 16px;
 }
 
 .qrScaleWrapper {
@@ -413,86 +363,6 @@
 }
 
 
-// Actions Section
-.actionButtons {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-
-    @media (min-width: 600px) {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-.actionBtn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 8px 6px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    background: white;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    transition: all 0.2s ease;
-    text-align: center;
-    width: 100%;
-
-    &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0,0,0,0.06);
-    }
-    
-    :global(body.dark-mode) & {
-        background: rgba(255,255,255,0.03);
-        border-color: rgba(255,255,255,0.1);
-        color: #e2e8f0;
-    }
-
-    .btnText {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        line-height: 1.2;
-    }
-
-    .btnSubtext {
-        font-size: 0.7rem;
-        font-weight: 500;
-        opacity: 0.8;
-    }
-}
-
-.actionSave {
-    color: #2563eb;
-    border-color: rgba(37, 99, 235, 0.2);
-    &:hover { border-color: #2563eb; }
-}
-
-.actionCall {
-    color: #16a34a;
-    border-color: rgba(22, 163, 74, 0.2);
-    text-decoration: none;
-    &:hover { border-color: #16a34a; }
-}
-
-.actionEmail {
-    color: #9333ea;
-    border-color: rgba(147, 51, 234, 0.2);
-    text-decoration: none;
-    &:hover { border-color: #9333ea; }
-}
-
-.actionShare {
-    color: #ea580c;
-    border-color: rgba(234, 88, 12, 0.2);
-    &:hover { border-color: #ea580c; }
-}
-
-// Print Styles
 @media print {
     .digitalCard {
         box-shadow: none;
@@ -502,8 +372,5 @@
         background: #0f172a !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
-    }
-    .actionsSection, .portfolioBtn {
-        display: none;
     }
 }
