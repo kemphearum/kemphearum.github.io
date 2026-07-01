@@ -109,7 +109,15 @@ export default function CardPage() {
     // to avoid a flash of the full 1050px layout on mobile
     const cardStyle = scale === null
         ? { visibility: 'hidden', width: '1050px', height: '600px' }
-        : { width: '1050px', height: '600px', transformOrigin: 'top left', transform: `scale(${scale})` };
+        : { 
+            width: '1050px', 
+            height: '600px', 
+            transformOrigin: 'top left', 
+            transform: `scale(${scale}) translateZ(0)`,
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            willChange: 'transform'
+        };
 
     const wrapperHeight = scale === null ? '0px' : `${Math.round(600 * scale)}px`;
 
