@@ -1,8 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useLoaderData } from 'react-router';
 import { motion } from 'framer-motion';
-import { toPng, toJpeg } from 'html-to-image';
-import { Printer, ImageDown, UserPlus, Phone, Mail, Share2, Link } from 'lucide-react';
+import { toPng } from 'html-to-image';
+import { Printer, ImageDown, UserPlus, Phone, Mail, Share2, Link, ExternalLink, Loader } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { getLocalizedField } from '../../utils/localization';
 import { DEFAULT_SITE_URL } from '../../utils/SeoHelper';
@@ -14,7 +14,8 @@ import styles from './CardPage.module.scss';
 export default function CardPage() {
     const { settings, profile, communication } = useLoaderData();
     const { language, t } = useTranslation();
-    const exportRef = useRef(null);
+    const cardRef = useRef(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const site = settings?.site || {};
     const social = communication || {};
@@ -51,21 +52,31 @@ export default function CardPage() {
         }
     };
 
-    // Export as Image
-    const handleDownloadImage = async (format = 'png') => {
-        if (!exportRef.current) return;
+    // Export as Image — renders the hidden full-size card clone at 1050x600
+    const handleDownloadImage = async () => {
+        if (!cardRef.current || isSaving) return;
+        setIsSaving(true);
         try {
-            const dataUrl = format === 'png'
-                ? await toPng(exportRef.current, { backgroundColor: '#ffffff', pixelRatio: 3 })
-                : await toJpeg(exportRef.current, { backgroundColor: '#ffffff', quality: 0.95, pixelRatio: 3 });
-                
+            // Run toPng twice: first call primes the image cache, second call captures cleanly
+            const opts = {
+                cacheBust: true,
+                pixelRatio: 2,
+                width: 1050,
+                height: 600,
+                style: { borderRadius: '0' },
+            };
+            await toPng(cardRef.current, opts);
+            const dataUrl = await toPng(cardRef.current, opts);
+
             const link = document.createElement('a');
-            link.download = `${name.replace(/\s+/g, '_')}_Card.${format}`;
+            link.download = `${(name || 'namecard').replace(/\s+/g, '_')}_Card.png`;
             link.href = dataUrl;
             link.click();
         } catch (err) {
             console.error('Failed to download image', err);
             alert('Failed to save image. Please try again.');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -82,8 +93,8 @@ export default function CardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             >
-                
-                <div>
+                {/* Visible card (also used for image export via ref) */}
+                <div ref={cardRef} style={{ width: '1050px', height: '600px', flexShrink: 0 }}>
                     <DigitalCard 
                         name={name}
                         title={title}
@@ -95,26 +106,8 @@ export default function CardPage() {
                         cardUrl={cardUrl}
                         onDownloadVCard={handleDownloadVCard}
                         onShare={handleShare}
+                        exportMode={true}
                     />
-                </div>
-
-                {/* Hidden clone specifically designed for clean exporting */}
-                <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
-                    <div ref={exportRef} style={{ width: '1050px', height: '600px', display: 'flex' }}>
-                        <DigitalCard 
-                            name={name}
-                            title={title}
-                            company={company}
-                            photoUrl={photoUrl}
-                            location={location}
-                            social={social}
-                            portfolioUrl={portfolioUrl}
-                            cardUrl={cardUrl}
-                            onDownloadVCard={() => {}}
-                            onShare={() => {}}
-                            exportMode={true}
-                        />
-                    </div>
                 </div>
 
                 {/* External Action Buttons */}
@@ -154,13 +147,21 @@ export default function CardPage() {
                         {navigator.share ? <Share2 size={18} /> : <Link size={18} />}
                         <span>{t('card.actions.share', 'Share Card')}</span>
                     </button>
+                    <a href={portfolioUrl} className={styles.actionBtn}>
+                        <ExternalLink size={18} />
+                        <span>{t('card.actions.portfolio', 'View Portfolio')}</span>
+                    </a>
                     <button onClick={handlePrint} className={styles.actionBtn}>
                         <Printer size={18} />
                         <span>{t('card.print', 'Print Card')}</span>
                     </button>
-                    <button onClick={() => handleDownloadImage('png')} className={styles.actionBtn}>
-                        <ImageDown size={18} />
-                        <span>{t('card.saveImage', 'Save as Image')}</span>
+                    <button 
+                        onClick={handleDownloadImage} 
+                        className={styles.actionBtn}
+                        disabled={isSaving}
+                    >
+                        {isSaving ? <Loader size={18} className={styles.spinning} /> : <ImageDown size={18} />}
+                        <span>{isSaving ? t('card.saving', 'Saving…') : t('card.saveImage', 'Save as Image')}</span>
                     </button>
                 </div>
             </motion.div>
