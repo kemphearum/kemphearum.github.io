@@ -83,7 +83,6 @@ export default function CardPage() {
         try {
             const filename = `${(name || 'namecard').replace(/\s+/g, '_')}_Card.png`;
             const opts = {
-                cacheBust: true,
                 pixelRatio: 2,
                 width: 1050,
                 height: 600,
@@ -92,13 +91,28 @@ export default function CardPage() {
                     transform: 'none',
                     backfaceVisibility: 'visible',
                     WebkitBackfaceVisibility: 'visible',
+                    backdropFilter: 'none',
+                    WebkitBackdropFilter: 'none',
                     willChange: 'auto'
                 },
             };
             
-            // First pass primes the image cache (needed for cross-origin images)
-            await toPng(cardRef.current, opts);
-            const dataUrl = await toPng(cardRef.current, opts);
+            const renderWithTimeout = (promise, ms = 8000) => 
+                Promise.race([
+                    promise, 
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Render timeout')), ms))
+                ]);
+
+            // First pass primes the image cache, second pass captures it
+            // Wrapped in timeout so it never hangs infinitely on mobile
+            try {
+                await renderWithTimeout(toPng(cardRef.current, opts), 4000);
+            } catch (e) {
+                // Ignore first pass timeout, might just be slow
+                console.warn('First render pass timed out or failed', e);
+            }
+            
+            const dataUrl = await renderWithTimeout(toPng(cardRef.current, opts), 8000);
 
             // iOS Safari blocks a.click() downloads. Native share sheet is the reliable way.
             if (canNativeShare && navigator.canShare) {
