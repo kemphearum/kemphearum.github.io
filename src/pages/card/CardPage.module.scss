@@ -18,9 +18,33 @@
     align-items: center;
     gap: 24px;
     padding-bottom: 24px;
-    overflow-x: auto; // allow horizontal scroll on small screens
 }
 
+// Responsive card scaling — the card is always 1050x600 internally (for export fidelity)
+// but the wrapper shrinks its layout footprint to match the scaled visual size.
+.cardWrapper {
+    width: 100%;
+    max-width: 1050px;
+    // On mobile: scale down so card fits screen width (leave 24px padding each side)
+    --card-scale: calc((100vw - 48px) / 1050);
+    height: calc(600px * var(--card-scale));
+
+    @media (min-width: 1098px) {
+        --card-scale: 1;
+        height: 600px;
+    }
+}
+
+.cardInner {
+    width: 1050px;
+    height: 600px;
+    transform-origin: top left;
+    transform: scale(var(--card-scale, 1));
+
+    @media (min-width: 1098px) {
+        transform: none;
+    }
+}
 
 
 .externalActions {
@@ -117,12 +141,19 @@
     }
     
     .container {
-        max-width: 1050px !important;
-        width: 1050px !important;
-        height: 600px !important;
         margin: 0 !important;
         padding: 0 !important;
-        /* Let the browser handle scale to fit the page */
+        gap: 0 !important;
+    }
+
+    .cardWrapper {
+        width: 1050px !important;
+        height: 600px !important;
+        --card-scale: 1 !important;
+    }
+
+    .cardInner {
+        transform: none !important;
     }
     
     .utilityBar, .externalActions, .footer {

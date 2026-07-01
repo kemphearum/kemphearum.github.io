@@ -93,21 +93,23 @@ export default function CardPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             >
-                {/* Visible card (also used for image export via ref) */}
-                <div ref={cardRef} style={{ width: '1050px', height: '600px', flexShrink: 0 }}>
-                    <DigitalCard 
-                        name={name}
-                        title={title}
-                        company={company}
-                        photoUrl={photoUrl}
-                        location={location}
-                        social={social}
-                        portfolioUrl={portfolioUrl}
-                        cardUrl={cardUrl}
-                        onDownloadVCard={handleDownloadVCard}
-                        onShare={handleShare}
-                        exportMode={true}
-                    />
+                {/* Card — scales to fit viewport on mobile, full 1050x600 on desktop */}
+                <div className={styles.cardWrapper}>
+                    <div ref={cardRef} className={styles.cardInner}>
+                        <DigitalCard 
+                            name={name}
+                            title={title}
+                            company={company}
+                            photoUrl={photoUrl}
+                            location={location}
+                            social={social}
+                            portfolioUrl={portfolioUrl}
+                            cardUrl={cardUrl}
+                            onDownloadVCard={handleDownloadVCard}
+                            onShare={handleShare}
+                            exportMode={true}
+                        />
+                    </div>
                 </div>
 
                 {/* External Action Buttons */}
