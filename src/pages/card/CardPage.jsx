@@ -11,19 +11,24 @@ import { generateVCard, downloadVCard } from './utils/VCardGenerator';
 import DigitalCard from './components/DigitalCard';
 import styles from './CardPage.module.scss';
 
+// Safe check for navigator.share — guards against SSR context
+const canNativeShare = typeof navigator !== 'undefined' && !!navigator.share;
+
 export default function CardPage() {
     const { settings, profile, communication } = useLoaderData();
     const { language, t } = useTranslation();
     const cardRef = useRef(null);
     const wrapperRef = useRef(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [scale, setScale] = useState(1);
+    // Initialize to null — we render the card only after the scale is known
+    const [scale, setScale] = useState(null);
 
-    // Calculate scale factor so the 1050x600 card always fits the container
     const updateScale = useCallback(() => {
         if (!wrapperRef.current) return;
         const available = wrapperRef.current.getBoundingClientRect().width;
-        setScale(Math.min(1, available / 1050));
+        if (available > 0) {
+            setScale(Math.min(1, available / 1050));
+        }
     }, []);
 
     useEffect(() => {
@@ -41,18 +46,18 @@ export default function CardPage() {
     const name = profile?.name ? getLocalizedField(profile.name, language) : '';
     const title = profile?.currentRole ? getLocalizedField(profile.currentRole, language) : '';
     const location = profile?.location ? getLocalizedField(profile.location, language) : '';
-    const company = profile?.subtitle ? getLocalizedField(profile.subtitle, language) : (profile?.company ? getLocalizedField(profile.company, language) : '');
+    const company = profile?.subtitle
+        ? getLocalizedField(profile.subtitle, language)
+        : (profile?.company ? getLocalizedField(profile.company, language) : '');
     const photoUrl = profile?.profileImageUrl || site.ogImageUrl || '';
 
-    // VCard Download Handler
     const handleDownloadVCard = () => {
         const vCardData = generateVCard(profile || {}, social, portfolioUrl);
-        downloadVCard(vCardData, `${name.replace(/\s+/g, '_')}.vcf`);
+        downloadVCard(vCardData, `${(name || 'contact').replace(/\s+/g, '_')}.vcf`);
     };
 
-    // Share Handler
     const handleShare = async () => {
-        if (navigator.share) {
+        if (canNativeShare) {
             try {
                 await navigator.share({
                     title: `${name} - Digital Name Card`,
@@ -60,30 +65,32 @@ export default function CardPage() {
                     url: cardUrl,
                 });
             } catch (err) {
-                console.error('Error sharing:', err);
+                if (err.name !== 'AbortError') console.error('Error sharing:', err);
             }
         } else {
-            navigator.clipboard.writeText(cardUrl);
-            alert(t('card.copied', 'URL copied to clipboard!'));
+            try {
+                await navigator.clipboard.writeText(cardUrl);
+                alert(t('card.copied', 'URL copied to clipboard!'));
+            } catch {
+                alert(`Share this URL: ${cardUrl}`);
+            }
         }
     };
 
-    // Export as Image — renders the hidden full-size card clone at 1050x600
     const handleDownloadImage = async () => {
         if (!cardRef.current || isSaving) return;
         setIsSaving(true);
         try {
-            // Run toPng twice: first call primes the image cache, second call captures cleanly
             const opts = {
                 cacheBust: true,
                 pixelRatio: 2,
                 width: 1050,
                 height: 600,
-                style: { borderRadius: '0' },
+                style: { borderRadius: '0', transform: 'none' },
             };
+            // First pass primes the image cache (needed for cross-origin images)
             await toPng(cardRef.current, opts);
             const dataUrl = await toPng(cardRef.current, opts);
-
             const link = document.createElement('a');
             link.download = `${(name || 'namecard').replace(/\s+/g, '_')}_Card.png`;
             link.href = dataUrl;
@@ -96,29 +103,31 @@ export default function CardPage() {
         }
     };
 
-    // Print Handler
-    const handlePrint = () => {
-        window.print();
-    };
+    const handlePrint = () => window.print();
+
+    // Scale is null until ResizeObserver fires — keep wrapper visible but card hidden
+    // to avoid a flash of the full 1050px layout on mobile
+    const cardStyle = scale === null
+        ? { visibility: 'hidden', width: '1050px', height: '600px' }
+        : { width: '1050px', height: '600px', transformOrigin: 'top left', transform: `scale(${scale})` };
+
+    const wrapperHeight = scale === null ? '0px' : `${Math.round(600 * scale)}px`;
 
     return (
         <main className={styles.cardPage}>
-            <motion.div 
+            <motion.div
                 className={styles.container}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             >
-                {/* Card — scales to fit viewport on mobile, full 1050x600 on desktop */}
+                {/* Measurement anchor — always full width, height collapses to match visual card */}
                 <div
                     ref={wrapperRef}
-                    style={{ width: '100%', maxWidth: '1050px', height: `${Math.round(600 * scale)}px` }}
+                    style={{ width: '100%', maxWidth: '1050px', height: wrapperHeight, overflow: 'visible' }}
                 >
-                    <div
-                        ref={cardRef}
-                        style={{ width: '1050px', height: '600px', transformOrigin: 'top left', transform: `scale(${scale})` }}
-                    >
-                        <DigitalCard 
+                    <div ref={cardRef} style={cardStyle}>
+                        <DigitalCard
                             name={name}
                             title={title}
                             company={company}
@@ -134,12 +143,9 @@ export default function CardPage() {
                     </div>
                 </div>
 
-                {/* External Action Buttons */}
+                {/* Action Buttons */}
                 <div className={styles.externalActions}>
-                    <button 
-                        onClick={handleDownloadVCard} 
-                        className={styles.actionBtn}
-                    >
+                    <button onClick={handleDownloadVCard} className={styles.actionBtn}>
                         <UserPlus size={18} />
                         <div className={styles.btnText}>
                             <span>{t('card.actions.saveMain', 'Save Contact')}</span>
@@ -147,28 +153,19 @@ export default function CardPage() {
                         </div>
                     </button>
                     {social?.phone && (
-                        <a 
-                            href={`tel:${social.phone}`} 
-                            className={styles.actionBtn}
-                        >
+                        <a href={`tel:${social.phone}`} className={styles.actionBtn}>
                             <Phone size={18} />
                             <span>{t('card.actions.call', 'Call Me')}</span>
                         </a>
                     )}
                     {social?.email && (
-                        <a 
-                            href={`mailto:${social.email}`} 
-                            className={styles.actionBtn}
-                        >
+                        <a href={`mailto:${social.email}`} className={styles.actionBtn}>
                             <Mail size={18} />
                             <span>{t('card.actions.email', 'Email Me')}</span>
                         </a>
                     )}
-                    <button 
-                        onClick={handleShare} 
-                        className={styles.actionBtn}
-                    >
-                        {navigator.share ? <Share2 size={18} /> : <Link size={18} />}
+                    <button onClick={handleShare} className={styles.actionBtn}>
+                        {canNativeShare ? <Share2 size={18} /> : <Link size={18} />}
                         <span>{t('card.actions.share', 'Share Card')}</span>
                     </button>
                     <a href={portfolioUrl} className={styles.actionBtn}>
@@ -179,12 +176,15 @@ export default function CardPage() {
                         <Printer size={18} />
                         <span>{t('card.print', 'Print Card')}</span>
                     </button>
-                    <button 
-                        onClick={handleDownloadImage} 
+                    <button
+                        onClick={handleDownloadImage}
                         className={styles.actionBtn}
                         disabled={isSaving}
                     >
-                        {isSaving ? <Loader size={18} className={styles.spinning} /> : <ImageDown size={18} />}
+                        {isSaving
+                            ? <Loader size={18} className={styles.spinning} />
+                            : <ImageDown size={18} />
+                        }
                         <span>{isSaving ? t('card.saving', 'Saving…') : t('card.saveImage', 'Save as Image')}</span>
                     </button>
                 </div>
