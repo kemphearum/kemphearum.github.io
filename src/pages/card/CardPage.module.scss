@@ -21,22 +21,30 @@
     padding-bottom: 24px;
 }
 
-// Action buttons — flexible wrap so odd counts (5, 6, 7) still look balanced
+// Action buttons — structured grid on mobile, inline flex row on desktop
 .externalActions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 8px;
     width: 100%;
     max-width: 1050px;
+    padding: 0 16px;
+    
+    @media (min-width: 800px) {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px 16px;
+        padding: 0;
+    }
 }
 
 .actionBtn {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 12px 20px;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
     font-weight: 600;
     font-size: 13px;
     text-decoration: none;
@@ -45,7 +53,21 @@
     cursor: pointer;
     color: #64748b;
     transition: color 0.2s ease, transform 0.2s ease;
-    white-space: nowrap;
+
+    // Balance the grid: if the last button is odd, it spans the full width
+    &:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+        justify-content: center;
+    }
+
+    @media (min-width: 800px) {
+        justify-content: center;
+        padding: 12px 20px;
+        white-space: nowrap;
+        &:last-child:nth-child(odd) {
+            grid-column: auto;
+        }
+    }
 
     &:hover {
         color: #0f172a;
