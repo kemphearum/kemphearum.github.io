@@ -5,11 +5,20 @@ import { getAuth } from 'firebase/auth';
 import { getAnalytics } from "firebase/analytics";
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
-// Polyfill/Patch fetch for SSR (GitHub Actions/Vercel) so Firebase Client SDK 
+// Polyfill/Patch fetch for SSR (GitHub Actions/Vercel) so Firebase Client SDK
 // doesn't get blocked by HTTP Referrer restrictions on the API Key.
+// Scoped to Google/Firebase hosts only so other server-side fetches
+// (GitHub dispatch, geo lookup, ...) are not silently rewritten.
 if (typeof window === 'undefined' && typeof globalThis.fetch === 'function') {
   const originalFetch = globalThis.fetch;
+  const isFirebaseRequest = (target) => (
+    /https:\/\/[^/]*\.(googleapis\.com|firebaseio\.com|firebaseapp\.com)\//i.test(target)
+  );
   globalThis.fetch = function (url, options = {}) {
+    const target = typeof url === 'string' ? url : (url && url.url) || '';
+    if (!isFirebaseRequest(target)) {
+      return originalFetch(url, options);
+    }
     const newOptions = { ...options };
     const headers = new Headers(newOptions.headers || {});
     if (!headers.has('Referer')) {

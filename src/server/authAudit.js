@@ -16,10 +16,16 @@ const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
  * If an Authorization: Bearer <idToken> header is present it is verified, and
  * the logged email must match the token — so authenticated callers cannot
  * spoof another user's events.
+ *
+ * Unverified callers cannot record 'success': without this, anyone could
+ * forge successful-login entries for any email and pollute the audit trail.
+ * The only legitimate unauthenticated success is a magic-link request, which
+ * is anonymously triggerable from the login form anyway, so it stays allowed
+ * (its flow label makes it distinguishable from a login).
  */
 export const processAuthEvent = async ({ payload, headers, authToken }) => {
     const data = payload && typeof payload === 'object' ? payload : {};
-    const status = data.status === 'failure' ? 'failure' : 'success';
+    const claimedStatus = data.status === 'failure' ? 'failure' : 'success';
     const email = normalizeEmail(data.email);
 
     if (!email || !isValidEmail(email)) {
@@ -30,16 +36,23 @@ export const processAuthEvent = async ({ payload, headers, authToken }) => {
         const db = getDb();
 
         // If a token is supplied, it must belong to the email being logged.
+        let verified = false;
         if (authToken) {
             try {
                 const decoded = await getAdminAuth().verifyIdToken(authToken);
                 if (normalizeEmail(decoded.email) !== email) {
                     return { status: 403, body: { success: false, error: { code: 'FORBIDDEN', message: 'Email does not match the authenticated user.' } } };
                 }
+                verified = true;
             } catch {
                 return { status: 401, body: { success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid authentication token.' } } };
             }
         }
+
+        const flow = typeof data.details?.flow === 'string' ? data.details.flow : '';
+        const status = (verified || claimedStatus === 'failure' || flow === 'magic_link_request')
+            ? claimedStatus
+            : 'failure';
 
         const ip = getClientIp(headers);
         await enforceRateLimit(db, RATE_LIMIT_COLLECTION, ip, { perMinute: 10, perDay: 100 });

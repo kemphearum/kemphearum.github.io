@@ -1,7 +1,7 @@
 import ProjectDetail from "../../src/pages/ProjectDetail";
 import ProjectService from "../../src/services/ProjectService";
 import { getLocalizedField } from "../../src/utils/localization";
-import { generateMetaTags } from "../../src/utils/SeoHelper";
+import { generateMetaTags, DEFAULT_SITE_URL } from "../../src/utils/SeoHelper";
 
 const getMetaLanguage = () => {
     if (typeof window === 'undefined') return 'en';
@@ -17,7 +17,7 @@ export async function loader({ params }) {
     }
 }
 
-export function meta({ data }) {
+export function meta({ data, params }) {
     const language = getMetaLanguage();
     const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     if (!data) return [{ title: `${tr('Project Not Found', 'រកមិនឃើញគម្រោង')} | Kem Phearum` }];
@@ -29,7 +29,8 @@ export function meta({ data }) {
         title,
         description: description || tr('Project details and technical implementation.', 'ព័ត៌មានលម្អិតគម្រោង និងការអនុវត្តបច្ចេកទេស។'),
         image: data.imageUrl,
-        type: 'article'
+        type: 'article',
+        url: `${DEFAULT_SITE_URL}/projects/${params.slug}`
     });
 }
 

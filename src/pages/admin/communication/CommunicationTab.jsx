@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Mail, MessageSquare, FileText, Clock, Save, Upload, Trash, UserPlus, Copy, ExternalLink, ImageDown, Phone, Share2, Link, Printer } from 'lucide-react';
 import { Tabs, Button, Select } from '@/shared/components/ui';
@@ -58,7 +58,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
     });
 
     const { language } = useTranslation();
-    const [base64Photo, setBase64Photo] = useState(null);
+    const [fetchedPhoto, setFetchedPhoto] = useState(null);
     const site = settingsData?.site || {};
     const portfolioUrl = site.canonicalUrl || window.location.origin;
     const cardUrl = `${portfolioUrl}/card`;
@@ -69,11 +69,11 @@ const CommunicationTab = ({ isActionAllowed }) => {
     const cardPhotoUrl = homeData?.profileImageUrl || profileData?.profileImageUrl || site.ogImageUrl || '';
     const cardLocation = profileData?.location ? getLocalizedField(profileData.location, language) : '';
 
+    const photoNeedsFetch = !!cardPhotoUrl && !cardPhotoUrl.startsWith('data:');
+    const base64Photo = photoNeedsFetch && fetchedPhoto?.source === cardPhotoUrl ? fetchedPhoto.dataUrl : null;
+
     useEffect(() => {
-        if (!cardPhotoUrl || cardPhotoUrl.startsWith('data:')) {
-            setBase64Photo(cardPhotoUrl);
-            return;
-        }
+        if (!photoNeedsFetch) return undefined;
         let isMounted = true;
         const fetchAsBase64 = async () => {
             try {
@@ -81,17 +81,17 @@ const CommunicationTab = ({ isActionAllowed }) => {
                 const blob = await res.blob();
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    if (isMounted) setBase64Photo(reader.result);
+                    if (isMounted) setFetchedPhoto({ source: cardPhotoUrl, dataUrl: reader.result });
                 };
                 reader.readAsDataURL(blob);
             } catch (err) {
                 console.warn('Failed to pre-fetch photo as base64, falling back to url:', err);
-                if (isMounted) setBase64Photo(cardPhotoUrl);
+                if (isMounted) setFetchedPhoto({ source: cardPhotoUrl, dataUrl: cardPhotoUrl });
             }
         };
         fetchAsBase64();
         return () => { isMounted = false; };
-    }, [cardPhotoUrl]);
+    }, [cardPhotoUrl, photoNeedsFetch]);
 
     const handleDownloadImage = async (format = 'png') => {
         if (!exportRef.current) return;

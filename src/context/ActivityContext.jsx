@@ -100,6 +100,13 @@ export const ActivityProvider = ({ children }) => {
         const { reads, writes, deletes, logs } = { ...pendingRef.current };
         if (reads === 0 && writes === 0 && deletes === 0 && logs.length === 0) return;
 
+        // Firestore rules only allow staff to write dailyUsage; flushing while
+        // signed out is guaranteed permission-denied, so drop the pending batch.
+        if (!auth.currentUser) {
+            pendingRef.current = { reads: 0, writes: 0, deletes: 0, logs: [] };
+            return;
+        }
+
         isFlushing.current = true;
         const dateKey = getTodayDateKey();
 

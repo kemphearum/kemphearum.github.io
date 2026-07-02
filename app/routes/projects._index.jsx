@@ -1,7 +1,7 @@
 import ProjectsPage from "../../src/pages/ProjectsPage";
 import SettingsService from "../../src/services/SettingsService";
 import { getLocalizedField } from "../../src/utils/localization";
-import { generateMetaTags } from "../../src/utils/SeoHelper";
+import { generateMetaTags, DEFAULT_SITE_URL } from "../../src/utils/SeoHelper";
 
 const getMetaLanguage = () => {
     if (typeof window === 'undefined') return 'en';
@@ -29,7 +29,8 @@ export function meta({ data }) {
         description,
         siteTitle: getLocalizedField(site.title, language) || "Kem Phearum",
         type: 'website',
-        image: site.ogImageUrl || "/og-image.png"
+        image: site.ogImageUrl || "/og-image.png",
+        url: `${site.canonicalUrl || DEFAULT_SITE_URL}/projects`
     });
 }
 
