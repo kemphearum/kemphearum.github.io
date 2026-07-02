@@ -55,7 +55,7 @@ jobs:
         continue-on-error: true
         run: npm audit --omit=dev || true
 
-      - name: Build
+      - name: Build Primary (Prod)
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
@@ -67,6 +67,22 @@ jobs:
         run: |
           npm run build
           cp build/client/index.html build/client/404.html
+          mv build/client build-primary
+
+      - name: Build Backup (Dev)
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY_BACKUP }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN_BACKUP }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID_BACKUP }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET_BACKUP }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_BACKUP }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID_BACKUP }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_BACKUP }}
+        run: |
+          npm run build
+          cp build/client/index.html build/client/404.html
+          mv build/client build-backup
+
       - name: Clean up existing github-pages artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,16 +94,22 @@ jobs:
             gh api --method DELETE repos/${{ github.repository }}/actions/artifacts/$id || true
           done
 
-      - name: Upload artifact
+      - name: Upload artifact for GitHub Pages (Primary)
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./build/client
+          path: ./build-primary
 
-      - name: Upload dist for Firebase
+      - name: Upload dist for Firebase Primary
         uses: actions/upload-artifact@v4
         with:
-          name: build-output
-          path: ./build/client
+          name: build-output-primary
+          path: ./build-primary
+
+      - name: Upload dist for Firebase Backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output-backup
+          path: ./build-backup
 
   deploy-github-pages:
     environment:
@@ -114,11 +136,17 @@ jobs:
         with:
           node-version: 20
 
-      - name: Download build-output
+      - name: Download build-output primary
         uses: actions/download-artifact@v4
         with:
-          name: build-output
-          path: ./build/client
+          name: build-output-primary
+          path: ./build-primary
+
+      - name: Download build-output backup
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output-backup
+          path: ./build-backup
 
       - name: Authenticate to Primary Firebase
         id: auth-primary
@@ -129,7 +157,11 @@ jobs:
           export_environment_variables: true
 
       - name: Deploy to Primary Firebase Hosting
-        run: npx --yes firebase-tools deploy --only hosting --project phearum-info --non-interactive --debug
+        run: |
+          mkdir -p build
+          cp -r ./build-primary build/client
+          npx --yes firebase-tools deploy --only hosting --project phearum-info --non-interactive --debug
+          rm -rf build/client
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-primary.outputs.credentials_file_path }}
 
@@ -143,6 +175,10 @@ jobs:
 
       - name: Deploy to Backup Firebase Hosting
         continue-on-error: true
-        run: npx --yes firebase-tools deploy --only hosting --project kem-phearum --non-interactive --debug
+        run: |
+          mkdir -p build
+          cp -r ./build-backup build/client
+          npx --yes firebase-tools deploy --only hosting --project kem-phearum --non-interactive --debug
+          rm -rf build/client
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-backup.outputs.credentials_file_path }}
