@@ -9,6 +9,7 @@ import { DEFAULT_SITE_URL } from '../../utils/SeoHelper';
 import { generateVCard, downloadVCard } from './utils/VCardGenerator';
 
 import DigitalCard from './components/DigitalCard';
+import LanguageSwitcher from '../../shared/components/LanguageSwitcher';
 import styles from './CardPage.module.scss';
 
 // Safe check for navigator.share — guards against SSR context
@@ -31,6 +32,8 @@ export default function CardPage() {
         }
     }, []);
 
+    const [base64Photo, setBase64Photo] = useState(null);
+
     useEffect(() => {
         updateScale();
         const ro = new ResizeObserver(updateScale);
@@ -50,6 +53,33 @@ export default function CardPage() {
         ? getLocalizedField(profile.subtitle, language)
         : (profile?.company ? getLocalizedField(profile.company, language) : '');
     const photoUrl = profile?.profileImageUrl || site.ogImageUrl || '';
+
+    // Pre-fetch the image as Base64 to prevent html-to-image from hanging on iOS Safari
+    // Safari's canvas engine often crashes when it tries to fetch cross-origin images from inside an SVG foreignObject.
+    useEffect(() => {
+        if (!photoUrl || photoUrl.startsWith('data:')) {
+            setBase64Photo(photoUrl);
+            return;
+        }
+        let isMounted = true;
+        const fetchAsBase64 = async () => {
+            try {
+                // Fetch with no-cache to guarantee we get CORS headers (bypassing disk cache without CORS)
+                const res = await fetch(photoUrl, { cache: 'no-cache' });
+                const blob = await res.blob();
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    if (isMounted) setBase64Photo(reader.result);
+                };
+                reader.readAsDataURL(blob);
+            } catch (err) {
+                console.warn('Failed to pre-fetch photo as base64, falling back to url:', err);
+                if (isMounted) setBase64Photo(photoUrl);
+            }
+        };
+        fetchAsBase64();
+        return () => { isMounted = false; };
+    }, [photoUrl]);
 
     const handleDownloadVCard = () => {
         const vCardData = generateVCard(profile || {}, social, portfolioUrl);
@@ -83,6 +113,7 @@ export default function CardPage() {
         try {
             const filename = `${(name || 'namecard').replace(/\s+/g, '_')}_Card.png`;
             const opts = {
+                cacheBust: true,
                 pixelRatio: 2,
                 width: 1050,
                 height: 600,
@@ -167,6 +198,10 @@ export default function CardPage() {
 
     return (
         <main className={styles.cardPage}>
+            <div className={styles.topControls}>
+                <LanguageSwitcher />
+            </div>
+
             <motion.div
                 className={styles.container}
                 initial={{ opacity: 0, y: 30 }}
@@ -183,7 +218,7 @@ export default function CardPage() {
                             name={name}
                             title={title}
                             company={company}
-                            photoUrl={photoUrl}
+                            photoUrl={base64Photo || photoUrl}
                             location={location}
                             social={social}
                             portfolioUrl={portfolioUrl}

@@ -5,9 +5,21 @@
     flex-direction: column;
     background: #f8fafc;
     padding: 48px 24px;
+    position: relative;
 
     :global(body.dark-mode) & {
         background: #0f172a;
+    }
+}
+
+.topControls {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    z-index: 10;
+
+    @media print {
+        display: none;
     }
 }
 
