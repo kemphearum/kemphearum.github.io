@@ -28,9 +28,10 @@ export function meta({ data }) {
   // Backward compatible with the legacy loader shape (raw settings doc).
   const settings = data?.settings ?? data;
   const site = settings?.site || settings || {};
+  const seo = settings?.seo || {};
   const profile = data?.profile || null;
-  const title = buildBrowserTitle(site, language);
-  const desc = getLocalizedField(site.tagline, language) || (
+  const title = seo.metaTitle || buildBrowserTitle(site, language);
+  const desc = seo.metaDescription || getLocalizedField(site.tagline, language) || (
     language === 'km'
       ? 'អ្នកជំនាញសន្តិសុខ ICT និងសវនកម្ម IT'
       : 'ICT Security & IT Audit Professional'
@@ -41,10 +42,11 @@ export function meta({ data }) {
     ...generateMetaTags({
       title,
       description: desc,
+      keywords: seo.keywords,
       siteTitle: 'Kem Phearum',
       type: 'website',
       url,
-      image: site.ogImageUrl || '/og-image.png'
+      image: seo.ogImage || site.ogImageUrl || '/og-image.png'
     }),
     {
       "script:ld+json": generatePersonSchema(site, language, profile)

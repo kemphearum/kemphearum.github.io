@@ -4,13 +4,14 @@ export const DEFAULT_SITE_URL = 'https://phearum-info.web.app';
 const DEFAULT_PERSON_NAME = 'Kem Phearum';
 const DEFAULT_JOB_TITLE = 'ICT Security & IT Audit Professional';
 
-export const generateMetaTags = ({ title, description, image, type = 'website', url, siteTitle = 'Kem Phearum' }) => {
+export const generateMetaTags = ({ title, description, image, type = 'website', url, siteTitle = 'Kem Phearum', keywords }) => {
     const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
     const metaDescription = description || 'Kem Phearum Portfolio - ICT Security & IT Audit Professional';
 
     const tags = [
         { title: fullTitle },
         { name: "description", content: metaDescription },
+        ...(keywords ? [{ name: "keywords", content: keywords }] : []),
 
         // Open Graph
         { property: "og:title", content: fullTitle },

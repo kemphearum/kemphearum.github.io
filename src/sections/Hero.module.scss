@@ -58,6 +58,22 @@
 .content {
     flex: 1;
     max-width: 620px;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 140%;
+        height: 140%;
+        background: radial-gradient(circle, rgba($primary-color, 0.15) 0%, transparent 60%);
+        z-index: -1;
+        pointer-events: none;
+        border-radius: 50%;
+        filter: blur(40px);
+    }
 }
 
 // Skeleton loading

@@ -11,9 +11,11 @@
     position: relative;
 
     &:hover {
+        transform: translateY(-4px);
         box-shadow:
             0 24px 48px rgba(0, 0, 0, var(--shadow-alpha)),
-            0 0 0 1px rgba($primary-color, 0.2);
+            0 0 0 1px rgba($primary-color, 0.3),
+            0 0 20px rgba($primary-color, 0.1);
         border-color: rgba($primary-color, 0.4);
 
         .imageOverlay {

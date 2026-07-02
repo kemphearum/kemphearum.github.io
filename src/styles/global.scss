@@ -330,6 +330,7 @@ h1 {
     color: $accent-color;
     line-height: 1.2;
     margin-bottom: 1rem;
+    letter-spacing: -0.02em;
 }
  h1 {
     font-size: calc(var(--font-size-heading) * 1.8);
@@ -343,6 +344,7 @@ h2 {
     color: $accent-color;
     line-height: 1.2;
     margin-bottom: 1rem;
+    letter-spacing: -0.015em;
 }
 
 h3,

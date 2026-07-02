@@ -107,8 +107,8 @@
 
     &:hover {
         transform: translateY(-4px) translateX(4px);
-        box-shadow: 0 8px 30px rgba($primary-color, 0.1);
-        border-color: rgba($primary-color, 0.2);
+        box-shadow: 0 16px 40px rgba($primary-color, 0.15), 0 0 0 1px rgba($primary-color, 0.3);
+        border-color: rgba($primary-color, 0.4);
     }
 
     @media (max-width: 768px) {
