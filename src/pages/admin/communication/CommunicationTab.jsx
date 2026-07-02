@@ -58,6 +58,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
     });
 
     const { language } = useTranslation();
+    const [base64Photo, setBase64Photo] = useState(null);
     const site = settingsData?.site || {};
     const portfolioUrl = site.canonicalUrl || window.location.origin;
     const cardUrl = `${portfolioUrl}/card`;
@@ -68,12 +69,36 @@ const CommunicationTab = ({ isActionAllowed }) => {
     const cardPhotoUrl = homeData?.profileImageUrl || profileData?.profileImageUrl || site.ogImageUrl || '';
     const cardLocation = profileData?.location ? getLocalizedField(profileData.location, language) : '';
 
+    useEffect(() => {
+        if (!cardPhotoUrl || cardPhotoUrl.startsWith('data:')) {
+            setBase64Photo(cardPhotoUrl);
+            return;
+        }
+        let isMounted = true;
+        const fetchAsBase64 = async () => {
+            try {
+                const res = await fetch(cardPhotoUrl, { cache: 'no-cache' });
+                const blob = await res.blob();
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    if (isMounted) setBase64Photo(reader.result);
+                };
+                reader.readAsDataURL(blob);
+            } catch (err) {
+                console.warn('Failed to pre-fetch photo as base64, falling back to url:', err);
+                if (isMounted) setBase64Photo(cardPhotoUrl);
+            }
+        };
+        fetchAsBase64();
+        return () => { isMounted = false; };
+    }, [cardPhotoUrl]);
+
     const handleDownloadImage = async (format = 'png') => {
         if (!exportRef.current) return;
         try {
             const dataUrl = format === 'png'
-                ? await toPng(exportRef.current, { backgroundColor: '#ffffff', pixelRatio: 3 })
-                : await toJpeg(exportRef.current, { backgroundColor: '#ffffff', quality: 0.95, pixelRatio: 3 });
+                ? await toPng(exportRef.current, { backgroundColor: '#ffffff', pixelRatio: 3, skipFonts: true })
+                : await toJpeg(exportRef.current, { backgroundColor: '#ffffff', quality: 0.95, pixelRatio: 3, skipFonts: true });
             
             const link = document.createElement('a');
             link.download = `namecard_${cardName.replace(/\s+/g, '_') || 'contact'}.${format}`;
@@ -376,7 +401,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
                                                                 name={cardName}
                                                                 title={cardTitle}
                                                                 company={cardCompany}
-                                                                photoUrl={cardPhotoUrl}
+                                                                photoUrl={base64Photo || cardPhotoUrl}
                                                                 location={cardLocation}
                                                                 social={commData}
                                                                 portfolioUrl={portfolioUrl}

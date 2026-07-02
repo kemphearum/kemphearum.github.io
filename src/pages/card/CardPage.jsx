@@ -114,13 +114,14 @@ export default function CardPage() {
         try {
             const filename = `${(name || 'namecard').replace(/\s+/g, '_')}_Card.png`;
             const opts = {
-                cacheBust: true,
                 pixelRatio: 2,
                 width: 1050,
                 height: 600,
+                skipFonts: true, // Bypass font embedding timeouts
                 style: { 
                     borderRadius: '0', 
-                    transform: 'none',
+                    transform: 'scale(1)',
+                    transformOrigin: 'top left',
                     backfaceVisibility: 'visible',
                     WebkitBackfaceVisibility: 'visible',
                     backdropFilter: 'none',

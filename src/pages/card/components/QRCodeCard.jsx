@@ -18,8 +18,8 @@ const QRCodeCard = memo(({ url, logoUrl, compact = false, exportMode = false }) 
         if (!qrRef.current) return;
         try {
             const dataUrl = format === 'png' 
-                ? await toPng(qrRef.current, { backgroundColor: '#ffffff', pixelRatio: 3 })
-                : await toSvg(qrRef.current, { backgroundColor: '#ffffff' });
+                ? await toPng(qrRef.current, { backgroundColor: '#ffffff', pixelRatio: 3, skipFonts: true })
+                : await toSvg(qrRef.current, { backgroundColor: '#ffffff', skipFonts: true });
                 
             const link = document.createElement('a');
             link.download = `qrcode.${format}`;
