@@ -8,8 +8,8 @@
  * rules, so run it with credentials:
  *
  *   # Option A — service account file
- *   set GOOGLE_APPLICATION_CREDENTIALS=C:\path\to\serviceAccountKey.json   (PowerShell: $env:GOOGLE_APPLICATION_CREDENTIALS="...")
- *   node scripts/seed-sample-data.mjs
+ *   set GOOGLE_APPLICATION_CREDENTIALS=C:\path\to\sa-backup.json   (PowerShell: $env:GOOGLE_APPLICATION_CREDENTIALS="...")
+ *   node scripts/seed-sample-data.mjs --project kem-phearum
  *
  *   # Option B — gcloud application-default credentials
  *   gcloud auth application-default login
@@ -26,10 +26,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    const saPath = path.resolve(__dirname, '../serviceAccountKey.json');
+    const saPath = path.resolve(__dirname, '../sa-backup.json');
     if (fs.existsSync(saPath)) {
         process.env.GOOGLE_APPLICATION_CREDENTIALS = saPath;
-        console.log('✅ Auto-detected serviceAccountKey.json');
+        console.log('✅ Auto-detected sa-backup.json (Development DB)');
     }
 }
 
@@ -80,6 +80,13 @@ const DATA = {
                     { name: 'Vercel Production', url: 'https://kemphearum.vercel.app/' },
                     { name: 'Firebase Primary', url: 'https://phearum-info.web.app/' }
                 ]
+            },
+            seo: {
+                metaTitle: 'KEM PHEARUM | Information Security Portfolio',
+                metaDescription: 'Information Security & Compliance Portfolio showcasing ISO 27001 implementation, risk management, and security architecture.',
+                keywords: 'information security, cybersecurity, ISO 27001, ISMS, risk management, compliance, portfolio',
+                ogImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1200&h=630',
+                twitterHandle: '@kemphearum'
             },
             system: {
                 notificationsEnabled: true,
