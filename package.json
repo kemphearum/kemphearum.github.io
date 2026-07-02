@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "node scripts/seed-sample-data.mjs --project phearum-info",
+    "seed:backup": "node scripts/seed-sample-data.mjs --project kem-phearum",
     "deploy:firebase:hosting": "npx firebase-tools deploy --only hosting",
     "deploy:firebase:rules": "npx firebase-tools deploy --only firestore:rules",
     "deploy:firebase:backend": "npx firebase-tools deploy --only \"functions,firestore:rules\""
