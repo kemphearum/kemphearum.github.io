@@ -50,7 +50,7 @@ export const clientLoader = async ({ serverLoader }) => {
     try {
       const globalSettings = await SettingsService.fetchGlobalSettings();
       return globalSettings || {};
-    } catch (e) {
+    } catch {
       return {};
     }
   }
@@ -70,7 +70,6 @@ export function Layout({ children }) {
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <Meta />
         <Links />
-        <link rel="canonical" href={PRIMARY_ORIGIN} />
         <script
           dangerouslySetInnerHTML={{
             __html: `

@@ -45,7 +45,7 @@ const normalizeText = (value, maxLength = 5000) => (
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-const enforceRateLimit = async (db, identifier) => {
+const enforceRateLimit = async (db, identifier, { perMinute, perDay }) => {
     const now = Date.now();
     const minuteMs = 60 * 1000;
     const dayMs = 24 * 60 * 60 * 1000;
@@ -66,13 +66,13 @@ const enforceRateLimit = async (db, identifier) => {
         const nextMinuteCount = inMinuteWindow ? minuteCount + 1 : 1;
         const nextDayCount = inDayWindow ? dayCount + 1 : 1;
 
-        if (nextMinuteCount > 1) {
+        if (nextMinuteCount > perMinute) {
             const error = new Error('Too many requests. Please wait a minute.');
             error.code = 'RATE_LIMITED_MINUTE';
             throw error;
         }
 
-        if (nextDayCount > 5) {
+        if (nextDayCount > perDay) {
             const error = new Error('Daily request limit reached. Please try tomorrow.');
             error.code = 'RATE_LIMITED_DAY';
             throw error;
@@ -135,9 +135,12 @@ export const processContactSubmission = async ({ payload, clientIp }) => {
 
     try {
         const db = getDb();
-        const identifier = `${normalizeText(clientIp, 100)}:${email}`.toLowerCase();
+        const ip = normalizeText(clientIp, 100).toLowerCase();
+        const identifier = `${ip}:${email}`.toLowerCase();
 
-        await enforceRateLimit(db, identifier);
+        // Per-IP cap first: rotating the email must not grant a fresh quota.
+        await enforceRateLimit(db, `ip:${ip}`, { perMinute: 3, perDay: 10 });
+        await enforceRateLimit(db, identifier, { perMinute: 1, perDay: 5 });
         await db.collection(MESSAGE_COLLECTION).add({
             name,
             email,

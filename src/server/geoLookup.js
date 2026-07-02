@@ -24,13 +24,24 @@ export const processGeoLookup = async ({ headers }) => {
             return { status: 200, body: fallback };
         }
         const d = await response.json();
+        // ipify's location.country is the ISO alpha-2 code; resolve the
+        // human-readable name from it rather than echoing the code twice.
+        const countryCode = (d.location && d.location.country) || '';
+        let countryName = 'Unknown';
+        if (countryCode) {
+            try {
+                countryName = new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode) || countryCode;
+            } catch {
+                countryName = countryCode;
+            }
+        }
         return {
             status: 200,
             body: {
-                country_name: (d.location && d.location.country) || 'Unknown',
+                country_name: countryName,
                 city: (d.location && d.location.city) || 'Unknown',
                 ip: d.ip || fallback.ip,
-                country_code: (d.location && d.location.country) || 'UN'
+                country_code: countryCode || 'UN'
             }
         };
     } catch (error) {

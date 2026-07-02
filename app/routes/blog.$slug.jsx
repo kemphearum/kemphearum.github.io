@@ -1,7 +1,7 @@
 import BlogPost from "../../src/pages/BlogPost";
 import BlogService from "../../src/services/BlogService";
 import { getLocalizedField } from "../../src/utils/localization";
-import { generateMetaTags } from "../../src/utils/SeoHelper";
+import { generateMetaTags, DEFAULT_SITE_URL } from "../../src/utils/SeoHelper";
 
 const getMetaLanguage = () => {
     if (typeof window === 'undefined') return 'en';
@@ -17,7 +17,7 @@ export async function loader({ params }) {
     }
 }
 
-export function meta({ data }) {
+export function meta({ data, params }) {
     const language = getMetaLanguage();
     const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     if (!data) return [{ title: `${tr('Post Not Found', 'រកមិនឃើញអត្ថបទ')} | Kem Phearum` }];
@@ -30,7 +30,8 @@ export function meta({ data }) {
         title,
         description: excerpt || content?.substring(0, 160).replace(/[#*`]/g, '') + '...',
         image: data.coverImage,
-        type: 'article'
+        type: 'article',
+        url: `${DEFAULT_SITE_URL}/blog/${params.slug}`
     });
 }
 

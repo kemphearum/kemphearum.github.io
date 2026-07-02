@@ -1,5 +1,6 @@
 import BlogService from '../../src/services/BlogService';
 import SettingsService from '../../src/services/SettingsService';
+import { filterPublished } from '../../src/domain/shared/contentStatus';
 import { getLocalizedField } from '../../src/utils/localization';
 
 const DEFAULT_BASE_URL = 'https://phearum-info.web.app';
@@ -59,8 +60,7 @@ export async function loader({ request }) {
 
     try {
         const posts = await BlogService.getAll();
-        const publishedPosts = posts
-            .filter(post => post.visible !== false)
+        const publishedPosts = filterPublished(posts)
             .sort((a, b) => {
                 const dateA = a.publishedAt?.seconds || 0;
                 const dateB = b.publishedAt?.seconds || 0;

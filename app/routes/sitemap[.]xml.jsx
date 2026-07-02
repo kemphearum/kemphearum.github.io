@@ -1,5 +1,6 @@
 import BlogService from '../../src/services/BlogService';
 import ProjectService from '../../src/services/ProjectService';
+import { filterPublished } from '../../src/domain/shared/contentStatus';
 
 const DEFAULT_BASE_URL = 'https://phearum-info.web.app';
 
@@ -43,29 +44,26 @@ export async function loader({ request }) {
     ];
 
     try {
+        const seen = new Set();
+        const pushUnique = (loc, lastmod) => {
+            if (seen.has(loc)) return;
+            seen.add(loc);
+            urls.push({ loc, priority: '0.6', lastmod });
+        };
+
         // Fetch published Blog Posts
         const posts = await BlogService.getAll();
-        const publishedPosts = posts.filter(post => post.visible !== false);
-        publishedPosts.forEach(post => {
+        filterPublished(posts).forEach(post => {
             if (post.slug) {
-                urls.push({ 
-                    loc: `${baseUrl}/blog/${post.slug}`, 
-                    priority: '0.6',
-                    lastmod: formatDate(post.updatedAt || post.createdAt)
-                });
+                pushUnique(`${baseUrl}/blog/${post.slug}`, formatDate(post.updatedAt || post.createdAt));
             }
         });
 
         // Fetch published Projects
         const projects = await ProjectService.getAll();
-        const publishedProjects = projects.filter(project => project.visible !== false);
-        publishedProjects.forEach(project => {
+        filterPublished(projects).forEach(project => {
             if (project.slug) {
-                urls.push({ 
-                    loc: `${baseUrl}/projects/${project.slug}`, 
-                    priority: '0.6',
-                    lastmod: formatDate(project.updatedAt || project.createdAt)
-                });
+                pushUnique(`${baseUrl}/projects/${project.slug}`, formatDate(project.updatedAt || project.createdAt));
             }
         });
     } catch (e) {

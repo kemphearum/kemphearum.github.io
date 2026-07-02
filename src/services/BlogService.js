@@ -2,6 +2,7 @@ import BaseService from './BaseService';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, getCountFromServer } from 'firebase/firestore';
 import { normalizePost, validatePost } from '../domain/blog/blogDomain';
+import { isEffectivelyPublished } from '../domain/shared/contentStatus';
 import { getLanguageFromStorage, localizeEntityFields } from '../utils/localization';
 import { ACTIONS } from '../utils/permissionConstants';
 
@@ -111,7 +112,7 @@ class BlogService extends BaseService {
 
         if (!querySnapshot.empty) {
             const docData = querySnapshot.docs[0].data();
-            if (!includeHidden && docData.visible === false) return null;
+            if (!includeHidden && !isEffectivelyPublished(docData)) return null;
             const post = { id: querySnapshot.docs[0].id, ...docData };
             return options.localized ? this.localizePost(post, options.lang) : post;
         }
@@ -119,7 +120,7 @@ class BlogService extends BaseService {
         // Fallback: Check if the slug is actually an ID
         const docById = await this.getById(slug);
         if (docById) {
-            if (!includeHidden && docById.visible === false) return null;
+            if (!includeHidden && !isEffectivelyPublished(docById)) return null;
             return options.localized ? this.localizePost(docById, options.lang) : docById;
         }
 

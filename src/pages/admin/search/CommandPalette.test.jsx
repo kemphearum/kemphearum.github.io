@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import CommandPalette from './CommandPalette';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -70,12 +70,14 @@ describe('CommandPalette', () => {
         expect(screen.getByPlaceholderText('admin.palette.placeholder')).toBeInTheDocument();
     }, 10000);
 
-    it('closes on overlay click', () => {
+    it('closes on pointer down outside the palette', async () => {
         const onClose = vi.fn();
         renderComponent({ onClose });
-        
-        fireEvent.mouseDown(screen.getByRole('presentation'));
-        expect(onClose).toHaveBeenCalled();
+
+        // Radix attaches its outside-pointerdown listener asynchronously.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        fireEvent.pointerDown(document.body);
+        await waitFor(() => expect(onClose).toHaveBeenCalled());
     });
 
     it('does not close when clicking inside the palette', () => {
