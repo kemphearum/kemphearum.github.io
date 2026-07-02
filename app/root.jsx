@@ -270,7 +270,7 @@ function SettingsApplier({ children, initialSettings }) {
     "@context": "https://schema.org",
     "@type": "Person",
     "name": "Kem Phearum",
-    "url": "https://kemphearum.com",
+    "url": "https://phearum-info.web.app",
     "jobTitle": "Security Consultant",
     "worksFor": {
       "@type": "Organization",
