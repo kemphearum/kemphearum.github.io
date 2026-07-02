@@ -7,7 +7,6 @@ on:
       - "app/**"
       - "src/**"
       - "public/**"
-      - "functions/**"
       - ".github/workflows/deploy.yml"
       - "package.json"
       - "package-lock.json"

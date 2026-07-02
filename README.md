@@ -182,8 +182,6 @@ src/
   i18n/                  translation dictionaries
   context/               app-wide providers
   utils/                 shared utilities (incl. apiBase.js, permissions.js)
-functions/               optional Firebase Cloud Functions (Blaze only; unused
-                         on the free plan — see Backend below)
 ```
 
 ## Backend (Free-tier serverless)
@@ -201,8 +199,6 @@ as React Router resource routes (`app/routes/api.*`), with shared logic in
 | `POST /api/auth-log` | Records login attempts (esp. failures) to `auditLogs` via Admin SDK, rate-limited per IP | public/optional token |
 | `POST /api/db-sync` | Dispatches the GitHub Actions DB-sync workflow | Firebase ID token, superadmin only |
 
-`functions/index.js` keeps an equivalent Cloud Functions implementation for
-teams that prefer Blaze, but it is not used by the free-tier deployment.
 
 ## Security
 
