@@ -5,6 +5,22 @@ import { getAuth } from 'firebase/auth';
 import { getAnalytics } from "firebase/analytics";
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
+// Polyfill/Patch fetch for SSR (GitHub Actions/Vercel) so Firebase Client SDK 
+// doesn't get blocked by HTTP Referrer restrictions on the API Key.
+if (typeof window === 'undefined' && typeof globalThis.fetch === 'function') {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = function (url, options = {}) {
+    const newOptions = { ...options };
+    const headers = new Headers(newOptions.headers || {});
+    if (!headers.has('Referer')) {
+      // Use the prod domain or a valid localhost to bypass restrictions
+      headers.set('Referer', 'https://phearum-info.web.app/');
+    }
+    newOptions.headers = headers;
+    return originalFetch(url, newOptions);
+  };
+}
+
 const getEnv = (key) => {
   if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
     return import.meta.env[key];
