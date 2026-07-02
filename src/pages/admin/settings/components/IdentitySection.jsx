@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ImagePlus, Save, Upload } from 'lucide-react';
-import { Button } from '../../../../shared/components/ui';
+import { Button, Tabs } from '../../../../shared/components/ui';
 import FormField from '../../components/FormField';
 import FormInput from '../../components/FormInput';
 import FormRow from '../../components/FormRow';
@@ -79,9 +79,10 @@ const IdentitySection = ({
     loading
 }) => {
     const { language, t } = useTranslation();
+    const [editingLang, setEditingLang] = useState(language);
     const getInputText = (value, fallback = '') => {
         if (isLocalizedObject(value)) {
-            return getLanguageValue(value, language, false);
+            return getLanguageValue(value, editingLang, false);
         }
         if (typeof value === 'string') return value;
         if (typeof value === 'number' || typeof value === 'boolean') return String(value);
@@ -90,7 +91,7 @@ const IdentitySection = ({
 
     const getPreviewText = (value, fallback = '') => {
         if (isLocalizedObject(value)) {
-            const localized = getLocalizedField(value, language);
+            const localized = getLocalizedField(value, editingLang);
             return localized || fallback;
         }
         if (typeof value === 'string') return value;
@@ -111,7 +112,7 @@ const IdentitySection = ({
                 ...settingsData,
                 [key]: {
                     ...currentObj,
-                    [language]: value
+                    [editingLang]: value
                 }
             });
             return;
@@ -131,7 +132,7 @@ const IdentitySection = ({
     const previewLogoTextText = getPreviewText(settingsData.logoText);
     const previewTaglineText = getPreviewText(settingsData.tagline);
     const previewFooterText = getPreviewText(settingsData.footerText);
-    const browserTitlePreview = buildBrowserTitle(settingsData, language);
+    const browserTitlePreview = buildBrowserTitle(settingsData, editingLang);
     const hasFavicon = Boolean(settingsFavicon || faviconText || previewBase64);
     const [projectManualInput, setProjectManualInput] = useState('');
     const [blogManualInput, setBlogManualInput] = useState('');
@@ -222,6 +223,15 @@ const IdentitySection = ({
                             <span className={tabStyles.surfaceMetaHint}>{t('admin.settings.sections.identity.filterSetsHint')}</span>
                         </div>
                     </div>
+                </div>
+
+                <div style={{ padding: '0 2rem 1.5rem 2rem', display: 'flex', justifyContent: 'flex-end' }}>
+                    <Tabs value={editingLang} onValueChange={setEditingLang} className="ui-inlineLangTabs">
+                        <Tabs.List>
+                            <Tabs.Trigger value="en">EN</Tabs.Trigger>
+                            <Tabs.Trigger value="km">KM</Tabs.Trigger>
+                        </Tabs.List>
+                    </Tabs>
                 </div>
 
                 <div className={tabStyles.settingsSectionGrid}>
