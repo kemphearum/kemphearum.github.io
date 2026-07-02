@@ -134,38 +134,14 @@ export default function CardPage() {
                     new Promise((_, reject) => setTimeout(() => reject(new Error('Render timeout')), ms))
                 ]);
 
-            // First pass primes the image cache, second pass captures it
-            // Wrapped in timeout so it never hangs infinitely on mobile
             try {
                 await renderWithTimeout(toPng(cardRef.current, opts), 4000);
             } catch (e) {
-                // Ignore first pass timeout, might just be slow
                 console.warn('First render pass timed out or failed', e);
             }
             
             const dataUrl = await renderWithTimeout(toPng(cardRef.current, opts), 8000);
 
-            // iOS Safari blocks a.click() downloads. Native share sheet is the reliable way.
-            if (canNativeShare && navigator.canShare) {
-                try {
-                    const res = await fetch(dataUrl);
-                    const blob = await res.blob();
-                    const file = new File([blob], filename, { type: 'image/png' });
-                    
-                    if (navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            files: [file],
-                            title: 'Digital Name Card',
-                        });
-                        setIsSaving(false);
-                        return; // Done using native share sheet
-                    }
-                } catch (shareErr) {
-                    if (shareErr.name !== 'AbortError') console.warn('Share API failed, falling back...', shareErr);
-                }
-            }
-
-            // Fallback for Desktop or browsers without File sharing
             const link = document.createElement('a');
             link.download = filename;
             link.href = dataUrl;
