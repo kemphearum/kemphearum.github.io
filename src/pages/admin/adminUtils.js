@@ -82,6 +82,8 @@ export const formatAuthErrorMessage = (error, t, language = 'en', fallback) => {
             return t('admin.auth.errors.magicLinkInvalid');
         case 'auth/expired-action-code':
             return t('admin.auth.errors.magicLinkExpired');
+        case 'auth/internal-error':
+            return t('admin.auth.errors.internalError');
         default:
             break;
     }

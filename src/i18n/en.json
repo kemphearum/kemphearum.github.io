@@ -322,7 +322,8 @@
         "popupBlocked": "Sign-in popup was blocked. Please allow popups and try again.",
         "accountExistsDifferentCredential": "An account already exists with this email using a different sign-in method.",
         "magicLinkInvalid": "This sign-in link is invalid. Please request a new one.",
-        "magicLinkExpired": "This sign-in link has expired. Please request a new one."
+        "magicLinkExpired": "This sign-in link has expired. Please request a new one.",
+        "internalError": "Authentication configuration error. Please check your Firebase Support Email and Authorized Domains."
       }
     },
     "rolePermissions": {
@@ -403,8 +404,8 @@
             "nameEn": "Full Name (EN)",
             "nameKm": "Full Name (KM)",
             "namePlaceholder": "Your professional name",
-            "subtitleEn": "Professional Subtitle (EN)",
-            "subtitleKm": "Professional Subtitle (KM)",
+            "subtitleEn": "Hero Subtitle (EN)",
+            "subtitleKm": "Hero Subtitle (KM)",
             "subtitlePlaceholder": "e.g. Senior Software Engineer",
             "descriptionEn": "Hero Description (EN)",
             "descriptionKm": "Hero Description (KM)",
@@ -1305,11 +1306,11 @@
           "fields": {
             "pageTitle": "Page Title (Browser Tab)",
             "pageTitlePlaceholder": "Kem Phearum | Portfolio",
-            "siteTagline": "Site Tagline",
+            "siteTagline": "Site Tagline (Footer & SEO)",
             "siteTaglinePlaceholder": "ICT Security & IT Audit Professional",
-            "logoPrefix": "Logo Prefix",
+            "logoPrefix": "Navbar Logo Prefix",
             "logoPrefixPlaceholder": "Kem",
-            "logoSuffix": "Logo Suffix",
+            "logoSuffix": "Navbar Logo Suffix",
             "logoSuffixPlaceholder": "Phearum",
             "footerCopyright": "Footer Copyright Text",
             "footerCopyrightPlaceholder": "(c) 2026 Your Name. All Rights Reserved."

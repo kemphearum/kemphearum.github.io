@@ -420,7 +420,8 @@
         "popupBlocked": "បង្អួចចូលប្រព័ន្ធត្រូវបានរារាំង។ សូមអនុញ្ញាតបង្អួចលេចឡើង ហើយសាកល្បងម្ដងទៀត",
         "accountExistsDifferentCredential": "មានគណនីរួចហើយជាមួយអ៊ីមែលនេះ ដោយប្រើវិធីចូលប្រព័ន្ធផ្សេង",
         "magicLinkInvalid": "តំណចូលប្រព័ន្ធនេះមិនត្រឹមត្រូវ។ សូមស្នើសុំតំណថ្មី",
-        "magicLinkExpired": "តំណចូលប្រព័ន្ធនេះផុតកំណត់ហើយ។ សូមស្នើសុំតំណថ្មី"
+        "magicLinkExpired": "តំណចូលប្រព័ន្ធនេះផុតកំណត់ហើយ។ សូមស្នើសុំតំណថ្មី",
+        "internalError": "កំហុសការកំណត់ការផ្ទៀងផ្ទាត់។ សូមប្រាកដថា Support Email និង Authorized Domains ត្រូវបានកំណត់នៅក្នុង Firebase។"
       }
     },
     "rolePermissions": {
@@ -501,8 +502,8 @@
             "nameEn": "ឈ្មោះពេញ (EN)",
             "nameKm": "ឈ្មោះពេញ (KM)",
             "namePlaceholder": "ឈ្មោះវិជ្ជាជីវៈរបស់អ្នក",
-            "subtitleEn": "ចំណងជើងវិជ្ជាជីវៈ (EN)",
-            "subtitleKm": "ចំណងជើងវិជ្ជាជីវៈ (KM)",
+            "subtitleEn": "ចំណងជើង Hero (EN)",
+            "subtitleKm": "ចំណងជើង Hero (KM)",
             "subtitlePlaceholder": "ឧ. វិស្វករកម្មវិធីជាន់ខ្ពស់",
             "descriptionEn": "ការពិពណ៌នា Hero (EN)",
             "descriptionKm": "ការពិពណ៌នា Hero (KM)",
