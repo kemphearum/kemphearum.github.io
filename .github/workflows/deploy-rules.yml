@@ -45,7 +45,7 @@ jobs:
 
       - name: Deploy Firestore Rules to Primary
         if: ${{ github.event_name == 'push' || github.event.inputs.project == 'phearum-info' }}
-        run: npx firebase deploy --only firestore:rules --project phearum-info
+        run: npx --yes firebase-tools deploy --only firestore:rules --project phearum-info
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-primary.outputs.credentials_file_path }}
 
@@ -61,6 +61,6 @@ jobs:
       - name: Deploy Firestore Rules to Backup
         if: ${{ github.event_name == 'push' || github.event.inputs.project == 'kem-phearum' }}
         continue-on-error: true
-        run: npx firebase deploy --only firestore:rules --project kem-phearum
+        run: npx --yes firebase-tools deploy --only firestore:rules --project kem-phearum
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-backup.outputs.credentials_file_path }}
