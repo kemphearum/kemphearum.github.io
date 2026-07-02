@@ -270,7 +270,7 @@ function SettingsApplier({ children, initialSettings }) {
     "@context": "https://schema.org",
     "@type": "Person",
     "name": "Kem Phearum",
-    "url": typeof window !== 'undefined' ? window.location.origin : "https://kemphearum.com",
+    "url": "https://kemphearum.com",
     "jobTitle": "Security Consultant",
     "worksFor": {
       "@type": "Organization",
@@ -286,8 +286,10 @@ function SettingsApplier({ children, initialSettings }) {
     <>
       <script
         type="application/ld+json"
+        suppressHydrationWarning
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+
       <AnimatedBackground
         density={bgDensity}
         speed={bgSpeed}
