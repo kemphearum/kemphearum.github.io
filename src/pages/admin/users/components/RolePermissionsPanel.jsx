@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { tabLabels } from '../../components/constants';
-import { Button } from '../../../../shared/components/ui';
+import { Button, Select } from '../../../../shared/components/ui';
 import DeleteConfirmDialog from '../../../../shared/components/dialog/DeleteConfirmDialog';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { formatRoleDisplayName, normalizeRole, normalizeRolePermissionEntry, ACTIONS, MODULE_ACTIONS, isActionAllowed } from '../../../../utils/permissions';
@@ -329,17 +329,15 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
               }}
               placeholder={getLocalizedLabel('admin.rolePermissions.newRolePlaceholder', 'new_role')}
             />
-            <select
-              className="ui-select ui-role-create__select"
+            <Select
+              className="ui-role-create__select"
               value={newRoleBase}
               onChange={(event) => setNewRoleBase(event.target.value)}
-            >
-              {BASE_ROLE_OPTIONS.map((baseRole) => (
-                <option key={baseRole} value={baseRole}>
-                  {getLocalizedLabel(`admin.roles.${baseRole}`, baseRole)} {getLocalizedLabel('admin.rolePermissions.baseSuffix', 'base')}
-                </option>
-              ))}
-            </select>
+              options={BASE_ROLE_OPTIONS.map((baseRole) => ({
+                value: baseRole,
+                label: `${getLocalizedLabel(`admin.roles.${baseRole}`, baseRole)} ${getLocalizedLabel('admin.rolePermissions.baseSuffix', 'base')}`
+              }))}
+            />
             <Button
               type="button"
               size="sm"
@@ -391,18 +389,16 @@ const RolePermissionsPanel = ({ rolePermissions, onSave, onRemoveRole, available
             <p className="ui-role-panel-desc ui-role-panel-desc--compact">
               {getLocalizedLabel('admin.rolePermissions.baseRoleLabel', 'Base role')}:
               {' '}
-              <select
-                className="ui-select ui-role-create__select"
+              <Select
+                className="ui-role-create__select"
                 value={baseByRole[role] || roleEntryMap[role]?.baseRole || role}
                 onChange={(event) => handleBaseRoleChange(role, event.target.value)}
                 disabled={savingRole === role}
-              >
-                {BASE_ROLE_OPTIONS.map((baseRole) => (
-                  <option key={`${role}-${baseRole}`} value={baseRole}>
-                    {getLocalizedLabel(`admin.roles.${baseRole}`, baseRole)}
-                  </option>
-                ))}
-              </select>
+                options={BASE_ROLE_OPTIONS.map((baseRole) => ({
+                  value: baseRole,
+                  label: getLocalizedLabel(`admin.roles.${baseRole}`, baseRole)
+                }))}
+              />
             </p>
 
             <div className="ui-role-quickActions">

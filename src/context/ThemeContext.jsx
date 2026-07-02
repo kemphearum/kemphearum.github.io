@@ -31,7 +31,6 @@ export const ThemeProvider = ({ children }) => {
         const actualTheme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setTheme(actualTheme);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsMounted(true);
     }, []);
 

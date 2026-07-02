@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
-import { Search, CornerDownLeft, ArrowUp, ArrowDown, Plus, Clock } from 'lucide-react';
+import * as Dialog from '@radix-ui/react-dialog';
+import { Search, CornerDownLeft, ArrowUp, ArrowDown, Plus, Clock, SearchX } from 'lucide-react';
 import BaseService from '../../../services/BaseService';
 import HighlightText from '@/shared/components/ui/HighlightText';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -23,6 +24,7 @@ const CommandPalette = ({ open, onClose, onNavigate, isActionAllowed, canViewTab
   const [recent, setRecent] = useState([]);
   const inputRef = useRef(null);
   const listRef = useRef(null);
+  const lastMousePos = useRef({ x: 0, y: 0 });
 
   const providers = useMemo(
     () => getSearchProviders().filter((provider) => isActionAllowed(ACTIONS.VIEW, provider.module)),
@@ -145,7 +147,10 @@ const CommandPalette = ({ open, onClose, onNavigate, isActionAllowed, canViewTab
         label,
         subtitle: t('admin.palette.groups.create'),
         icon: Plus,
-        run: () => runNavigate(provider.key)
+        run: () => {
+          window.location.hash = '#new';
+          runNavigate(provider.key);
+        }
       }));
     if (createCommands.length > 0) {
       result.push({ id: 'create', title: t('admin.palette.groups.create'), commands: createCommands });
@@ -180,18 +185,28 @@ const CommandPalette = ({ open, onClose, onNavigate, isActionAllowed, canViewTab
     }
   };
 
+  const handlePointerMove = (event, index) => {
+    if (event.clientX === lastMousePos.current.x && event.clientY === lastMousePos.current.y) {
+      return;
+    }
+    lastMousePos.current = { x: event.clientX, y: event.clientY };
+    setSelectedIndex(index);
+  };
+
   let flatIndex = -1;
 
   return (
-    <div className={styles.overlay} onMouseDown={onClose} role="presentation">
-      <div
-        className={styles.palette}
-        onMouseDown={(event) => event.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('admin.palette.ariaLabel')}
-      >
-        <div className={styles.searchRow}>
+    <Dialog.Root open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className={styles.overlay} />
+        <Dialog.Content
+          className={styles.palette}
+          aria-label={t('admin.palette.ariaLabel')}
+        >
+          <Dialog.Title style={{ display: 'none' }}>{t('admin.palette.ariaLabel')}</Dialog.Title>
+          <Dialog.Description style={{ display: 'none' }}>Command Palette</Dialog.Description>
+          
+          <div className={styles.searchRow}>
           <Search size={18} className={styles.searchIcon} />
           <input
             ref={inputRef}
@@ -207,7 +222,10 @@ const CommandPalette = ({ open, onClose, onNavigate, isActionAllowed, canViewTab
 
         <div className={styles.results} ref={listRef}>
           {flatCommands.length === 0 ? (
-            <div className={styles.empty}>{t('admin.palette.empty')}</div>
+            <div className={styles.empty}>
+              <SearchX size={32} className={styles.emptyIcon} />
+              <span>{t('admin.palette.empty')}</span>
+            </div>
           ) : (
             groups.map((group) => (
               <div key={group.id} className={styles.group}>
@@ -223,7 +241,7 @@ const CommandPalette = ({ open, onClose, onNavigate, isActionAllowed, canViewTab
                       type="button"
                       data-index={index}
                       className={`${styles.item} ${active ? styles['item--active'] : ''}`}
-                      onMouseMove={() => setSelectedIndex(index)}
+                      onPointerMove={(e) => handlePointerMove(e, index)}
                       onClick={() => command.run()}
                     >
                       {Icon && <Icon size={16} className={styles.itemIcon} />}
@@ -243,8 +261,9 @@ const CommandPalette = ({ open, onClose, onNavigate, isActionAllowed, canViewTab
           <span><ArrowUp size={12} /><ArrowDown size={12} /> {t('admin.palette.hintNavigate')}</span>
           <span><CornerDownLeft size={12} /> {t('admin.palette.hintSelect')}</span>
         </div>
-      </div>
-    </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 };
 

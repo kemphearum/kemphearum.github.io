@@ -25,6 +25,20 @@ Live sites:
 - Audit logs, analytics, and message management
 - Database maintenance tools (backup, restore, archive)
 
+### Keyboard Shortcuts
+- **Global Navigation**
+  - `Cmd+K` / `Ctrl+K`: Open the Command Palette to search or navigate anywhere.
+  - `Arrow Up` / `Arrow Down`: Navigate through items in the Command Palette.
+  - `Enter`: Execute the selected command in the palette.
+  - `Esc`: Close the Command Palette, dialogs, or dropdown menus.
+- **Markdown Editor (Blog, Projects, etc.)**
+  - `Cmd+B` / `Ctrl+B`: Bold selected text.
+  - `Cmd+I` / `Ctrl+I`: Italicize selected text.
+  - `Cmd+K` / `Ctrl+K`: Insert a markdown link.
+  - `Tab`: Inserts 2 spaces for indentation.
+- **System Actions (Hidden)**
+  - `Alt+Shift+A` (or `Ctrl+Shift+L`): Quickly navigate from the public site to the Admin login/dashboard.
+
 ## Admin Database Maintenance
 
 The Database tab includes three operational tools:

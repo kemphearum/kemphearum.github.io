@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { useActivity } from '../../../hooks/useActivity';
 import { useAsyncAction } from '../../../hooks/useAsyncAction';
@@ -66,6 +66,19 @@ export const useAdminCrud = ({
     const [historyItem, setHistoryItem] = useState(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+    useEffect(() => {
+        const checkHash = () => {
+            if (window.location.hash === '#new') {
+                setIsFormOpen(true);
+                window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        };
+        
+        checkHash();
+        window.addEventListener('hashchange', checkHash);
+        return () => window.removeEventListener('hashchange', checkHash);
+    }, []);
 
     // ----- Permission guard -----
     const ensurePermission = useCallback((action) => {

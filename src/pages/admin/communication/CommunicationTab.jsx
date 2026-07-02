@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Mail, MessageSquare, FileText, Clock, Save, Upload, Trash, UserPlus, Copy, ExternalLink, ImageDown, Phone, Share2, Link, Printer } from 'lucide-react';
-import { Tabs, Button } from '@/shared/components/ui';
+import { Tabs, Button, Select } from '@/shared/components/ui';
 import Form from '../components/Form';
 import FormField from '../components/FormField';
 import FormInput from '../components/FormInput';
@@ -18,8 +18,6 @@ import ContentService from '../../../services/ContentService';
 import SettingsService from '../../../services/SettingsService';
 import DigitalCard from '../../card/components/DigitalCard';
 import { toPng, toJpeg } from 'html-to-image';
-import { generateVCard, downloadVCard } from '../../card/utils/VCardGenerator';
-
 const CommunicationTab = ({ isActionAllowed }) => {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
@@ -70,11 +68,6 @@ const CommunicationTab = ({ isActionAllowed }) => {
     const cardPhotoUrl = homeData?.profileImageUrl || profileData?.profileImageUrl || site.ogImageUrl || '';
     const cardLocation = profileData?.location ? getLocalizedField(profileData.location, language) : '';
 
-    const handleDownloadVCard = () => {
-        const vCardData = generateVCard(profileData || {}, commData, portfolioUrl);
-        downloadVCard(vCardData, `${cardName.replace(/\s+/g, '_') || 'contact'}.vcf`);
-    };
-
     const handleDownloadImage = async (format = 'png') => {
         if (!exportRef.current) return;
         try {
@@ -122,6 +115,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
             facebook: data.facebook,
             twitter: data.twitter,
             website: data.website,
+            calendly: data.calendly,
             introText: { en: data.introTextEn, km: data.introTextKm }
         });
     };
@@ -284,6 +278,10 @@ const CommunicationTab = ({ isActionAllowed }) => {
                                     <FormField label={t('admin.communication.contact.fields.twitter')} name="twitter"><FormInput /></FormField>
                                     <FormField label={t('admin.communication.contact.fields.website')} name="website"><FormInput /></FormField>
                                 </div>
+                                <div className="ui-formGrid">
+                                    <FormField label={t('admin.communication.contact.fields.calendly', 'Calendly')} name="calendly"><FormInput /></FormField>
+                                    <div></div>
+                                </div>
                                 </div>
 
                                 <Button type="submit" disabled={!canEditCommunication} isLoading={updateCommMutation.isPending}>
@@ -306,19 +304,24 @@ const CommunicationTab = ({ isActionAllowed }) => {
                             qrCodeImageFile: null
                         }}>
                             <div className="ui-form p-4">
-                                <FormField label={t('admin.communication.telegram.fields.enabled')} name="telegramEnabled">
-                                    <select disabled={!canPublishCommunication}>
-                                        <option value="true">{t('admin.common.enabled')}</option>
-                                        <option value="false">{t('admin.common.disabled')}</option>
-                                    </select>
-                                </FormField>
+                                <div className="ui-formGrid">
+                                    <FormField label={t('admin.communication.telegram.fields.enabled')} name="telegramEnabled">
+                                        <Select 
+                                            disabled={!canPublishCommunication}
+                                            options={[
+                                                { value: 'true', label: t('admin.common.enabled') },
+                                                { value: 'false', label: t('admin.common.disabled') }
+                                            ]}
+                                        />
+                                    </FormField>
+                                    <FormField label={t('admin.communication.telegram.fields.qr')} name="qrCodeImageFile" hint={t('admin.communication.telegram.fields.qrHint')}>
+                                        <FormInput type="file" accept="image/*" />
+                                    </FormField>
+                                </div>
                                 <div className="ui-formGrid">
                                     <FormField label={t('admin.communication.telegram.fields.username')} name="telegramUsername"><FormInput /></FormField>
                                     <FormField label={t('admin.communication.telegram.fields.url')} name="telegramUrl"><FormInput /></FormField>
                                 </div>
-                                <FormField label={t('admin.communication.telegram.fields.qr')} name="qrCodeImageFile" hint={t('admin.communication.telegram.fields.qrHint')}>
-                                    <FormInput type="file" accept="image/*" />
-                                </FormField>
                                 {commData.telegramQrCodeImage && (
                                     <div style={{marginBottom:'1rem'}}>
                                         <img src={commData.telegramQrCodeImage} alt="QR" width="100"/>
@@ -360,8 +363,6 @@ const CommunicationTab = ({ isActionAllowed }) => {
                                                         social={commData}
                                                         portfolioUrl={portfolioUrl}
                                                         cardUrl={cardUrl}
-                                                        onDownloadVCard={() => {}}
-                                                        onShare={() => {}}
                                                         exportMode={true}
                                                     />
                                                 </div>
@@ -380,8 +381,6 @@ const CommunicationTab = ({ isActionAllowed }) => {
                                                                 social={commData}
                                                                 portfolioUrl={portfolioUrl}
                                                                 cardUrl={cardUrl}
-                                                                onDownloadVCard={handleDownloadVCard}
-                                                                onShare={() => {}}
                                                             />
                                                         </div>
                                                     </div>
@@ -426,28 +425,36 @@ const CommunicationTab = ({ isActionAllowed }) => {
                             resumeFile: null
                         }}>
                             <div className="ui-form p-4">
-                                <FormField label={t('admin.communication.resume.fields.publicDownload')} name="publicDownloadEnabled">
-                                    <select disabled={!canPublishResume}>
-                                        <option value="true">{t('admin.common.enabled')}</option>
-                                        <option value="false">{t('admin.common.disabled')}</option>
-                                    </select>
-                                </FormField>
-                                <FormField label={t('admin.communication.resume.fields.printRoute')} name="printRouteEnabled">
-                                    <select disabled={!canPublishResume}>
-                                        <option value="true">{t('admin.common.enabled')}</option>
-                                        <option value="false">{t('admin.common.disabled')}</option>
-                                    </select>
-                                </FormField>
+                                <div className="ui-formGrid">
+                                    <FormField label={t('admin.communication.resume.fields.publicDownload')} name="publicDownloadEnabled">
+                                        <Select 
+                                            disabled={!canPublishResume}
+                                            options={[
+                                                { value: 'true', label: t('admin.common.enabled') },
+                                                { value: 'false', label: t('admin.common.disabled') }
+                                            ]}
+                                        />
+                                    </FormField>
+                                    <FormField label={t('admin.communication.resume.fields.printRoute')} name="printRouteEnabled">
+                                        <Select 
+                                            disabled={!canPublishResume}
+                                            options={[
+                                                { value: 'true', label: t('admin.common.enabled') },
+                                                { value: 'false', label: t('admin.common.disabled') }
+                                            ]}
+                                        />
+                                    </FormField>
+                                </div>
                                 <div className="ui-formGrid">
                                     <FormField label={t('admin.communication.resume.fields.titleEn')} name="titleEn"><FormInput /></FormField>
                                     <FormField label={t('admin.communication.resume.fields.titleKm')} name="titleKm"><FormInput /></FormField>
                                 </div>
                                 <div className="ui-formGrid">
                                     <FormField label={t('admin.communication.resume.fields.version')} name="version"><FormInput placeholder={t('admin.communication.resume.fields.versionPlaceholder')} /></FormField>
+                                    <FormField label={t('admin.communication.resume.fields.upload')} name="resumeFile" hint={t('admin.communication.resume.fields.uploadHint')}>
+                                        <FormInput type="file" accept="application/pdf" disabled={!canUploadResume} />
+                                    </FormField>
                                 </div>
-                                <FormField label={t('admin.communication.resume.fields.upload')} name="resumeFile" hint={t('admin.communication.resume.fields.uploadHint')}>
-                                    <FormInput type="file" accept="application/pdf" disabled={!canUploadResume} />
-                                </FormField>
                                 {resumeData.pdfBase64 && (
                                     <div style={{marginBottom:'1rem', display:'flex', gap:'1rem'}}>
                                         <a href={resumeData.pdfBase64} download="Resume.pdf">
@@ -486,13 +493,16 @@ const CommunicationTab = ({ isActionAllowed }) => {
                         }}>
                             <div className="ui-form p-4">
                                 <FormField label={t('admin.communication.availability.fields.status')} name="availabilityStatus">
-                                    <select disabled={!canPublishCommunication}>
-                                        <option value="">{t('admin.communication.availability.fields.statusSelect')}</option>
-                                        <option value="open">{t('admin.communication.availability.fields.statusOpen')}</option>
-                                        <option value="freelance">{t('admin.communication.availability.fields.statusFreelance')}</option>
-                                        <option value="limited">{t('admin.communication.availability.fields.statusLimited')}</option>
-                                        <option value="busy">{t('admin.communication.availability.fields.statusBusy')}</option>
-                                    </select>
+                                    <Select 
+                                        disabled={!canPublishCommunication}
+                                        options={[
+                                            { value: '', label: t('admin.communication.availability.fields.statusSelect') },
+                                            { value: 'open', label: t('admin.communication.availability.fields.statusOpen') },
+                                            { value: 'freelance', label: t('admin.communication.availability.fields.statusFreelance') },
+                                            { value: 'limited', label: t('admin.communication.availability.fields.statusLimited') },
+                                            { value: 'busy', label: t('admin.communication.availability.fields.statusBusy') }
+                                        ]}
+                                    />
                                 </FormField>
                                 <div className="ui-formGrid">
                                     <FormField label={t('admin.communication.availability.fields.messageEn')} name="availabilityMessageEn"><FormInput disabled={!canPublishCommunication} /></FormField>

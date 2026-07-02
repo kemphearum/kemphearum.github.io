@@ -34,13 +34,6 @@ export const settingsFeature = {
             descriptionKey: 'admin.settings.subTabs.featureFlags.description',
             icon: ToggleLeft,
             component: React.lazy(() => import('../../pages/admin/settings/components/FeatureFlagsSection'))
-        },
-        {
-            id: 'communication',
-            labelKey: 'admin.settings.subTabs.communication.label',
-            descriptionKey: 'admin.settings.subTabs.communication.description',
-            icon: MessageSquare,
-            component: React.lazy(() => import('../../pages/admin/settings/components/CommunicationSection'))
         }
     ]
 };

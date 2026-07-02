@@ -9,6 +9,7 @@ import {
     User, Search, Server, BadgeCheck
 } from 'lucide-react';
 
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import QRCodeCard from './QRCodeCard';
 import { businessCardConfig } from '../data/businessCard';
@@ -23,8 +24,6 @@ const DigitalCard = memo(({
     social,
     portfolioUrl,
     cardUrl,
-    onDownloadVCard,
-    onShare,
     exportMode = false
 }) => {
     const { t } = useTranslation();

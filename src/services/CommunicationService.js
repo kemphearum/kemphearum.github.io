@@ -26,6 +26,7 @@ class CommunicationService extends BaseService {
             facebook: '',
             twitter: '',
             website: '',
+            calendly: '',
             
             availabilityStatus: '',
             availabilityMessage: { en: '', km: '' },

@@ -29,7 +29,10 @@ const SiteStatusOverlay = ({ config }) => {
 
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l') {
+            const isCtrlShiftL = e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'l';
+            const isAltShiftA = e.altKey && e.shiftKey && e.key.toLowerCase() === 'a';
+            
+            if (isCtrlShiftL || isAltShiftA) {
                 e.preventDefault();
                 navigate('/admin');
             }

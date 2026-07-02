@@ -2861,7 +2861,8 @@
           "linkedin": "LinkedIn URL",
           "github": "GitHub URL",
           "twitter": "X (Twitter) URL",
-          "website": "Personal Website"
+          "website": "Personal Website",
+          "calendly": "Calendly"
         },
         "save": "Save Contact Info"
       },

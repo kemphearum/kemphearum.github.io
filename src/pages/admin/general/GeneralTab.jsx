@@ -126,9 +126,10 @@ const GeneralTab = ({ homeData, aboutData, profileData, loading, saveSectionData
     };
 
     const homeFormKey = `home:${getLanguageValue(homeData.greeting, 'en', true)}:${getLanguageValue(homeData.greeting, 'km', false)}:${getLanguageValue(homeData.name, 'en', true)}:${getLanguageValue(homeData.name, 'km', false)}:${getLanguageValue(homeData.subtitle, 'en', true)}:${getLanguageValue(homeData.subtitle, 'km', false)}:${getLanguageValue(homeData.description, 'en', true)}:${getLanguageValue(homeData.description, 'km', false)}:${getLanguageValue(homeData.ctaText, 'en', true)}:${getLanguageValue(homeData.ctaText, 'km', false)}:${homeData.ctaLink || ''}:${homeData.profileImageUrl || ''}`;
+    const asCsv = (value, lang = 'en') => (Array.isArray(value) ? value.map(item => getLanguageValue(item, lang, lang === 'en')).filter(Boolean).join(', ') : (value || ''));
+
     const aboutFormKey = `about:${getLanguageValue(aboutData.bio, 'en', true)}:${getLanguageValue(aboutData.bio, 'km', false)}:${asCsv(aboutData.skills, 'en')}`;
     const profile = profileData || {};
-    const asCsv = (value, lang = 'en') => (Array.isArray(value) ? value.map(item => getLanguageValue(item, lang, lang === 'en')).filter(Boolean).join(', ') : (value || ''));
     const asLines = (value, lang = 'en') => (Array.isArray(value) ? value.map(item => getLanguageValue(item, lang, lang === 'en')).filter(Boolean).join('\n') : (value || ''));
     const profileFormKey = `profile:${getLanguageValue(profile.summary, 'en', true)}:${getLanguageValue(profile.currentRole, 'en', true)}:${profile.availabilityStatus || ''}:${asCsv(profile.languages, 'en')}:${(profile.accomplishments || []).length}`;
     const profileFilled = [
