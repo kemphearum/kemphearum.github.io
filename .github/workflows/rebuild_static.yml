@@ -31,12 +31,12 @@ jobs:
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Build and Prerender
+      - name: Build Primary (Prod)
         run: |
           npm run build
           cp build/client/index.html build/client/404.html
+          mv build/client build-primary
         env:
-          # If your app needs any build-time environment variables, add them here
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
           VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
           VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
@@ -44,6 +44,20 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+
+      - name: Build Backup (Dev)
+        run: |
+          npm run build
+          cp build/client/index.html build/client/404.html
+          mv build/client build-backup
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY_BACKUP }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN_BACKUP }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID_BACKUP }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET_BACKUP }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_BACKUP }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID_BACKUP }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_BACKUP }}
 
       - name: Clean up existing github-pages artifacts
         env:
@@ -59,7 +73,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./build/client
+          path: ./build-primary
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
@@ -73,7 +87,11 @@ jobs:
           export_environment_variables: true
 
       - name: Deploy to Primary Firebase Hosting
-        run: npx --yes firebase-tools deploy --only hosting --project phearum-info --non-interactive
+        run: |
+          rm -rf build/client
+          cp -r ./build-primary build/client
+          npx --yes firebase-tools deploy --only hosting --project phearum-info --non-interactive
+          rm -rf build/client
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-primary.outputs.credentials_file_path }}
 
@@ -87,6 +105,10 @@ jobs:
 
       - name: Deploy to Backup Firebase Hosting
         continue-on-error: true
-        run: npx --yes firebase-tools deploy --only hosting --project kem-phearum --non-interactive
+        run: |
+          rm -rf build/client
+          cp -r ./build-backup build/client
+          npx --yes firebase-tools deploy --only hosting --project kem-phearum --non-interactive
+          rm -rf build/client
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-backup.outputs.credentials_file_path }}
