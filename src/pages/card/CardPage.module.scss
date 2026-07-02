@@ -13,9 +13,11 @@
 }
 
 .topControls {
-    position: absolute;
-    top: 24px;
-    right: 24px;
+    width: 100%;
+    max-width: 1050px;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: -8px; // Offset the container gap slightly
     z-index: 10;
 
     @media print {

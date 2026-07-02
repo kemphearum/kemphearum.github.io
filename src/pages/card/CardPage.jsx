@@ -174,16 +174,16 @@ export default function CardPage() {
 
     return (
         <main className={styles.cardPage}>
-            <div className={styles.topControls}>
-                <LanguageSwitcher />
-            </div>
-
             <motion.div
                 className={styles.container}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ duration: 0.5 }}
             >
+                <div className={styles.topControls}>
+                    <LanguageSwitcher />
+                </div>
+
                 {/* Measurement anchor — always full width, height collapses to match visual card */}
                 <div
                     ref={wrapperRef}
