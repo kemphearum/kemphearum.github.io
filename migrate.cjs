@@ -10,6 +10,9 @@ const DEFAULT_MAX_DELAY_MS = Number(process.env.MIGRATE_RETRY_MAX_DELAY_MS || 20
 
 const RETRYABLE_ERROR_CODES = new Set([4, 8, 10, 14, 'aborted', 'deadline-exceeded', 'resource-exhausted', 'unavailable']);
 
+const FLAT_COLLECTIONS = new Set(['auditLogs', 'authLogRateLimits', 'dailyUsage', 'messages', 'content', 'projects', 'experience', 'skills']);
+const IGNORE_COLLECTIONS = new Set(['auditLogs', 'authLogRateLimits', 'dailyUsage']);
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function parseServiceAccount(rawValue, envName) {
@@ -121,13 +124,17 @@ async function copyCollection(sourceCollectionRef, state) {
       return;
     }
 
+    const isFlat = FLAT_COLLECTIONS.has(sourceCollectionRef.id);
+
     for (const sourceDocSnapshot of snapshot.docs) {
       const targetDocRef = state.db.doc(sourceDocSnapshot.ref.path);
       await queueWrite(state, targetDocRef, sourceDocSnapshot.data());
 
-      const subcollections = await withRetry(() => sourceDocSnapshot.ref.listCollections(), `list subcollections for ${sourceDocSnapshot.ref.path}`);
-      for (const subcollection of subcollections) {
-        await copyCollection(subcollection, state);
+      if (!isFlat) {
+        const subcollections = await withRetry(() => sourceDocSnapshot.ref.listCollections(), `list subcollections for ${sourceDocSnapshot.ref.path}`);
+        for (const subcollection of subcollections) {
+          await copyCollection(subcollection, state);
+        }
       }
     }
 
@@ -164,6 +171,10 @@ async function run() {
   );
 
   for (const collection of rootCollections) {
+    if (IGNORE_COLLECTIONS.has(collection.id)) {
+      console.log(`Skipping ignored collection: ${collection.path}`);
+      continue;
+    }
     console.log(`Syncing collection: ${collection.path}`);
     await copyCollection(collection, state);
   }
