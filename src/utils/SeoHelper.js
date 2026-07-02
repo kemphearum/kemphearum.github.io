@@ -47,7 +47,7 @@ export const generateMetaTags = ({ title, description, image, type = 'website', 
  */
 export const generatePersonSchema = (siteData, language = 'en', profile = null) => {
     const communication = siteData?.communication || {};
-    const social = { ...(siteData?.social || siteData?.socialLinks || {}), ...communication };
+    const social = { ...communication };
     
     const sameAs = [
         social.github, 

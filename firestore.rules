@@ -76,9 +76,12 @@ service cloud.firestore {
 
     function isStaff() {
       return isSignedIn()
-        && roleName() != 'anonymous'
-        && roleName() != 'pending'
-        && roleName() != '';
+        && (
+          isBootstrapSuperAdminEmail(request.auth.token.email)
+          || (roleName() != 'anonymous'
+             && roleName() != 'pending'
+             && roleName() != '')
+        );
     }
 
     function isEditor() {

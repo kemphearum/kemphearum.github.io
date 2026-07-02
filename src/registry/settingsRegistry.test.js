@@ -4,7 +4,7 @@ import { listSettingsSections } from './settingsRegistry';
 describe('settingsRegistry', () => {
     it('registers the domain sections with uniform shape', () => {
         const ids = listSettingsSections().map((section) => section.id);
-        expect(ids).toEqual(expect.arrayContaining(['seo', 'social', 'featureFlags']));
+        expect(ids).toEqual(expect.arrayContaining(['seo', 'featureFlags']));
     });
 
     it('each section exposes a component + i18n keys + icon', () => {

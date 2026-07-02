@@ -42,6 +42,22 @@ export async function loader() {
   }
 }
 
+export const clientLoader = async ({ serverLoader }) => {
+  try {
+    return await serverLoader();
+  } catch (error) {
+    console.warn("Client fallback for root loader:", error);
+    try {
+      const globalSettings = await SettingsService.fetchGlobalSettings();
+      return globalSettings || {};
+    } catch (e) {
+      return {};
+    }
+  }
+};
+clientLoader.hydrate = true;
+
+
 export function Layout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>

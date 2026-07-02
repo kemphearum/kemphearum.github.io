@@ -121,6 +121,12 @@ const SettingsTab = ({ settingsData, setSettingsData, loading, saveSectionData, 
                 siteStatus: settingsData.siteStatus || 'live',
                 siteStatusType: settingsData.siteStatusType || 'watermark',
                 siteStatusMessage: settingsData.siteStatusMessage || { en: '', km: '' },
+                testingProgress: settingsData.testingProgress !== undefined ? Number(settingsData.testingProgress) : 85,
+                testingEndDate: settingsData.testingEndDate || '',
+                testingFeedbackUrl: settingsData.testingFeedbackUrl || '',
+                maintenanceProgress: settingsData.maintenanceProgress !== undefined ? Number(settingsData.maintenanceProgress) : 0,
+                maintenanceEndDate: settingsData.maintenanceEndDate || '',
+                maintenanceContactUrl: settingsData.maintenanceContactUrl || '',
                 sidebarPersistent
             };
 

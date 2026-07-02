@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Search, Share2, ToggleLeft, MessageSquare } from 'lucide-react';
+import { Settings, Search, ToggleLeft, MessageSquare } from 'lucide-react';
 import { ACTIONS } from '../../utils/permissionConstants';
 
 export const settingsFeature = {
@@ -20,13 +20,6 @@ export const settingsFeature = {
             descriptionKey: 'admin.settings.subTabs.seo.description',
             icon: Search,
             component: React.lazy(() => import('../../pages/admin/settings/components/SeoSection'))
-        },
-        {
-            id: 'social',
-            labelKey: 'admin.settings.subTabs.social.label',
-            descriptionKey: 'admin.settings.subTabs.social.description',
-            icon: Share2,
-            component: React.lazy(() => import('../../pages/admin/settings/components/SocialSection'))
         },
         {
             id: 'featureFlags',
