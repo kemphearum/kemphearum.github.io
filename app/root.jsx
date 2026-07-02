@@ -76,7 +76,7 @@ export function Layout({ children }) {
                     <NotificationProvider>
                       <ComponentErrorBoundary>
                       {children}
-                      {typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname) && <Analytics />}
+                      {typeof window !== 'undefined' && window.location.hostname.includes('vercel') && !['localhost', '127.0.0.1'].includes(window.location.hostname) && <Analytics />}
                       </ComponentErrorBoundary>
                     </NotificationProvider>
                   </ActivityProvider>
