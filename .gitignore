@@ -45,11 +45,11 @@ check_actions.cjs
 .firebase/
 .env*.local
 
-# Local seed/workflow artifacts
-seed/
-seeds/
-workflow/
-workflows/
+# Local seed/workflow artifacts (root-level only; must not match .github/workflows)
+/seed/
+/seeds/
+/workflow/
+/workflows/
 workflow=walkthrough.md
 walkthrough.md
 scripts/seed-*.cjs

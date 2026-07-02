@@ -65,9 +65,9 @@ class AuditLogService extends BaseService {
     }
 
     /**
-     * Record an auth event through the backend Cloud Function. Required for
-     * FAILED logins: the client is not authenticated at that point, so a
-     * direct Firestore write is denied by the security rules. The function
+     * Record an auth event through the backend /api/auth-log route. Required
+     * for FAILED logins: the client is not authenticated at that point, so a
+     * direct Firestore write is denied by the security rules. The route
      * writes via the Admin SDK (rules-bypassing) and rate-limits per IP.
      * @param {Object} logData
      * @param {string} status - 'success' | 'failure'

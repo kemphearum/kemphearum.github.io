@@ -27,14 +27,6 @@ const getPrimaryContactEndpoint = () => {
     return `${origin.replace(/\/$/, '')}/api/contact`;
 };
 
-const getFirebaseContactEndpoint = () => {
-    const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-    if (projectId) {
-        return `https://us-central1-${projectId}.cloudfunctions.net/submitContact`;
-    }
-    return 'https://us-central1-phearum-info.cloudfunctions.net/submitContact';
-};
-
 const getContactEndpoints = () => {
     const endpoints = [];
     const configured = getConfiguredContactEndpoint();
@@ -51,8 +43,6 @@ const getContactEndpoints = () => {
         // On GitHub Pages/Firebase mirrors, target primary Vercel API directly.
         endpoints.push(getPrimaryContactEndpoint());
     }
-
-    endpoints.push(getFirebaseContactEndpoint());
 
     return Array.from(new Set(endpoints));
 };
