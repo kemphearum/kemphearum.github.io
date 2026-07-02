@@ -30,13 +30,14 @@ import { Analytics } from "@vercel/analytics/react";
 import { useTranslation } from '../src/hooks/useTranslation';
 import { buildBrowserTitle } from '../src/utils/browserTitle';
 
+const PRIMARY_ORIGIN = 'https://phearum-info.web.app';
+
 export async function loader() {
   try {
     const globalSettings = await SettingsService.fetchGlobalSettings();
     return globalSettings || {};
   } catch (error) {
     console.error("Vercel Root Loader Error:", error);
-    // Return empty settings to avoid crashing the whole server
     return {};
   }
 }
@@ -53,6 +54,7 @@ export function Layout({ children }) {
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <Meta />
         <Links />
+        <link rel="canonical" href={PRIMARY_ORIGIN} />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -270,7 +272,7 @@ function SettingsApplier({ children, initialSettings }) {
     "@context": "https://schema.org",
     "@type": "Person",
     "name": "Kem Phearum",
-    "url": "https://phearum-info.web.app",
+    "url": siteConfig.canonicalUrl || PRIMARY_ORIGIN,
     "jobTitle": "Security Consultant",
     "worksFor": {
       "@type": "Organization",
