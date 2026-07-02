@@ -1,5 +1,5 @@
 rules_version = '2';
-// Trigger rules deployment for both primary and backup environments
+// Trigger rules deployment for both primary and backup environments (testing IAM fix)
 service cloud.firestore {
   match /databases/{database}/documents {
     // Helper functions
