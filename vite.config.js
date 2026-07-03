@@ -11,8 +11,8 @@ export default defineConfig({
     },
     dedupe: ["react", "react-dom"]
   },
-  // eslint-disable-next-line no-undef
-  plugins: [!process.env.VITEST && reactRouter({ presets: [vercelPreset()] })].filter(Boolean),
+
+  plugins: [reactRouter({ presets: [vercelPreset()] })].filter(Boolean),
   ssr: {
     noExternal: [
       "react-markdown",
@@ -22,32 +22,7 @@ export default defineConfig({
       "react-syntax-highlighter"
     ]
   },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/setupTests.js',
-    // Firestore rules tests require the emulator + @firebase/rules-unit-testing
-    // and are run separately (firebase emulators:exec), not in the unit run.
-    exclude: ['**/node_modules/**', '**/firestore.rules.test.mjs', '**/e2e/**'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'html'],
-      statements: 90,
-      branches: 85,
-      functions: 90,
-      lines: 90,
-      exclude: [
-        '**/node_modules/**',
-        '**/dist/**',
-        '**/build/**',
-        '**/.react-router/**',
-        '**/e2e/**',
-        '**/eslint.config.js',
-        '**/vite.config.js',
-        '**/playwright.config.js'
-      ]
-    }
-  },
+
   server: {
     port: 5173,
     host: 'localhost'

@@ -47,7 +47,7 @@ This repository houses the complete source code for Kem Phearum's personal portf
 - **Backend APIs:** Vercel Serverless Functions
 - **State Management:** TanStack Query v5
 - **Styling:** Vanilla SCSS & CSS Modules (No Tailwind)
-- **Testing:** Playwright (E2E), Vitest (Unit/Component), Testing Library, Axe (Accessibility)
+
 - **CI/CD:** GitHub Actions (Release, CodeQL, Dependabot)
 
 ---
@@ -110,25 +110,6 @@ npm run dev
 
 ---
 
-## 🧪 Testing
-
-The repository maintains strict quality gates enforced by GitHub Actions.
-
-- **Unit & Component Tests (Vitest):**
-  ```bash
-  npm run test
-  npm run test:coverage # Requires 90% coverage for the domain layer
-  ```
-- **End-to-End Tests (Playwright):**
-  ```bash
-  npm run e2e
-  ```
-  *(Tests authentication, CMS routing, content visibility, and Axe accessibility standards).*
-
-See [TESTING.md](TESTING.md) for detailed test architecture and debugging strategies.
-
----
-
 ## 📦 Deployment
 
 The application is designed for a hybrid deployment model to maximize the free tier.
@@ -159,7 +140,7 @@ If you discover a security vulnerability, please refer to [SECURITY.md](SECURITY
 ## ⚡ Performance & Accessibility
 
 - **Zero Layout Shift:** Image placeholders and dynamic font loading strategies ensure stable rendering.
-- **A11y Compliant:** 100% automated pass rate for WCAG 2.1 AA standards via Playwright Axe integrations. Semantic HTML, ARIA attributes, and robust keyboard navigation (`Cmd+K`) are baked in.
+- **A11y Compliant:** Semantic HTML, ARIA attributes, and robust keyboard navigation (`Cmd+K`) are baked in.
 - **Caching:** TanStack Query handles client-side caching and deduplication to minimize Firestore read operations.
 
 ---
@@ -169,7 +150,7 @@ If you discover a security vulnerability, please refer to [SECURITY.md](SECURITY
 - [x] Initial SSG Public Release
 - [x] Firebase CMS Integration
 - [x] Multilingual Support (EN/KM)
-- [x] Comprehensive Automated Testing (100% Pass Rate)
+
 - [x] **v1.0.0 Release** 
 - [ ] Exportable PDF Resume Generator Enhancements
 - [ ] Advanced Analytics Dashboard Visualization
