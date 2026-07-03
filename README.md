@@ -48,7 +48,7 @@ This repository houses the complete source code for Kem Phearum's personal portf
 - **State Management:** TanStack Query v5
 - **Styling:** Vanilla SCSS & CSS Modules (No Tailwind)
 
-- **CI/CD:** GitHub Actions (Release, CodeQL, Dependabot)
+- **CI/CD:** GitHub Actions (lint on push/PR, Vercel auto-deploy)
 
 ---
 
@@ -131,7 +131,7 @@ Security is deeply integrated into the architecture:
 - **Server-enforced RBAC:** Client-side permissions are advisory; `firestore.rules` is the final authority, resolving custom roles against `rolePermissions` documents.
 - **Immutable Audit Logs:** Failed logins and operational changes are recorded via server-side APIs to prevent client tampering.
 - **Secret Management:** Sensitive API keys (e.g., Geolocation) are never bundled to the client. They are kept in Vercel environment variables and proxied through internal `/api` endpoints.
-- **Automated Scanning:** Dependabot is configured via GitHub Actions to proactively identify vulnerable dependencies.
+- **Dependency Management:** Dependencies are reviewed and updated manually using `npm outdated` / `npm update` to avoid automated PRs causing version conflicts.
 
 If you discover a security vulnerability, please refer to [SECURITY.md](SECURITY.md).
 

@@ -35,7 +35,7 @@ React Router 7 + Vite + Firebase personal portfolio. These rules govern how Clau
 
 ## Quality Gates
 
-- Run `npm run lint` and the relevant `npm run test` subset after any change touching `src/` or `app/`.
+- Run `npm run lint` after any change touching `src/` or `app/`.
 - Verify responsive behavior at desktop, tablet, and mobile breakpoints for any UI change.
 - Check accessibility (semantic HTML, landmarks, alt text, focus order, contrast) and SEO metadata for any new or changed section/page.
 - Confirm no broken routes, links, images, or Firebase reads/writes before calling a change complete — check both signed-out and signed-in/admin states where relevant.
@@ -61,14 +61,13 @@ React Router 7 + Vite + Firebase personal portfolio. These rules govern how Clau
 - JS/JSX only (no TS migration) — type hints come from `@types/react` and `jsconfig.json`, not TypeScript files.
 - Follow the existing ESLint config (`eslint.config.js`) — flat config, `react-hooks` + `react-refresh` recommended rules, `no-unused-vars` with `^[A-Z_]` ignore pattern. Run `npm run lint` after non-trivial changes.
 - Routing is React Router 7 (`app/routes.ts`, `app/routes/`) — use existing route patterns, not raw `react-router-dom` APIs unless already used that way in this repo.
-- Firebase: never hand-edit generated/build artifacts (`build/`, `dist/`, `.firebase/`, `.react-router/`). Firestore rules changes go in `firestore.rules` and must stay consistent with `firestore.rules.test.mjs`.
+- Firestore rules changes go in `firestore.rules`.
 - Firebase CI/CD: When deploying via GitHub Actions using `google-github-actions/auth@v2` and `firebase-tools`, always use Node 20 (`node-version: 20`) to avoid the Node 22 native fetch `Premature close` bug, and explicitly pass the credentials path to `GOOGLE_APPLICATION_CREDENTIALS` (e.g. `env: GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}`).
-- Tests use Vitest + Testing Library (`@testing-library/react`, `jsdom`). New components/utilities with logic should get a colocated test unless told otherwise.
 
 ## Working Style
 
 - Make minimal, targeted diffs. Don't refactor unrelated code while fixing something else.
 - Prefer editing existing files over creating new ones.
 - Don't add new env vars, scripts, or config without flagging it first — `.env`, `.env.local`, `.env.example`, `firebase.json`, `vite.config.js`, `react-router.config.ts` are sensitive to drift.
-- Before declaring a task done: run `npm run lint` and `npm run test` (or the relevant subset) if the change touches `src/` or `app/`.
+- Before declaring a task done: run `npm run lint` if the change touches `src/` or `app/`.
 

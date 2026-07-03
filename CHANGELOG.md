@@ -15,12 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Command palette for rapid keyboard navigation (`Cmd+K`).
 - Markdown editor with live preview for blog posts and projects.
 - Analytics, visitor geolocation, and immutable audit logging.
-- Automated E2E testing suite (Playwright) and unit tests (Vitest).
 - CI/CD pipelines via GitHub Actions and Vercel.
 - Database maintenance utilities (Backup, Restore, Archive).
 
 ### Security
-- Configured GitHub Actions for CodeQL and Dependabot.
 - Server-enforced Firebase Firestore security rules for RBAC.
 - Hidden backend serverless proxy for geolocation API keys.
 

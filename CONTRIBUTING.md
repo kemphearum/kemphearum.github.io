@@ -46,10 +46,10 @@ If you have been granted access to contribute code directly, please follow these
 
 ## Pull Request Process
 
-1. Ensure any changes are thoroughly tested (unit, component, and E2E).
+1. Ensure any changes work correctly and are manually verified.
 2. Follow the existing code style and naming conventions.
 3. Keep pull requests focused on a single issue or feature.
-4. Run `npm run lint` and `npm run test` before submitting.
+4. Run `npm run lint` before submitting.
 5. Provide a clear description in your Pull Request explaining the changes and their impact.
 
 ## Code of Conduct
