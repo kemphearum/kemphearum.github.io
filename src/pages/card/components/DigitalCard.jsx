@@ -42,6 +42,7 @@ const DigitalCard = memo(({
             case 'facebook': return <Facebook size={size} strokeWidth={1.5} color="white" />;
             case 'telegram': return <Send size={size} strokeWidth={1.5} color="white" />;
             case 'whatsapp': return <MessageCircle size={size} strokeWidth={1.5} color="white" />;
+            case 'twitter':
             case 'x': return <span style={{ color: 'white', fontWeight: 'bold', fontSize: '18px' }}>X</span>;
             default: return null;
         }
@@ -54,6 +55,7 @@ const DigitalCard = memo(({
             case 'facebook': return 'Facebook';
             case 'telegram': return 'Telegram';
             case 'whatsapp': return 'WhatsApp';
+            case 'twitter':
             case 'x': return 'X';
             default: return key;
         }
@@ -170,12 +172,12 @@ const DigitalCard = memo(({
                         {/* Social Section */}
                         <div className={styles.socialSection}>
                             <div className={styles.socialGrid}>
-                                {['linkedin', 'github', 'telegram', 'whatsapp', 'facebook', 'x'].map(key => {
-                                    if (social?.[key] || key === 'x') { // Mocking 'x' for the reference match if needed, but rely on real social config
+                                {['linkedin', 'github', 'telegram', 'whatsapp', 'facebook', 'twitter'].map(key => {
+                                    if (social?.[key]) {
                                         return (
                                             <motion.a 
                                                 key={key}
-                                                href={social[key] || '#'}
+                                                href={social[key]}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className={styles.socialBtn}

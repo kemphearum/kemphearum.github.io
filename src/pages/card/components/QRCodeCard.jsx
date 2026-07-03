@@ -46,8 +46,8 @@ const QRCodeCard = memo(({ url, logoUrl, compact = false, exportMode = false }) 
                     level="Q" // Higher error correction for logo
                     imageSettings={logoUrl ? {
                         src: logoUrl,
-                        height: 48,
-                        width: 48,
+                        height: 24,
+                        width: 24,
                         excavate: true, // Creates white border around logo
                     } : undefined}
                 />

@@ -83,7 +83,7 @@ export default function CardPage() {
     }, [photoUrl]);
 
     const handleDownloadVCard = () => {
-        const vCardData = generateVCard(profile || {}, social, portfolioUrl);
+        const vCardData = generateVCard({ name, currentRole: title, company }, social, portfolioUrl);
         downloadVCard(vCardData, `${(name || 'contact').replace(/\s+/g, '_')}.vcf`);
     };
 

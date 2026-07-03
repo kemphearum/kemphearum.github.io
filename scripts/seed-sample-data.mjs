@@ -69,7 +69,7 @@ const DATA = {
                 glassOpacity: 0.82,
                 glassBlur: 12,
                 glassColor: '#0b1527',
-                siteStatus: 'live',
+                siteStatus: 'testing',
                 siteStatusType: 'watermark',
                 siteStatusMessage: {
                     en: "We're currently performing scheduled maintenance. Please check back soon.",
@@ -110,6 +110,46 @@ const DATA = {
                 fontAdminMenu: 'kantumruy-pro',
                 fontAdminTab: 'kantumruy-pro'
             }
+        }
+    ],
+    rolePermissions: [
+        {
+            id: 'admin',
+            baseRole: 'admin',
+            allowedTabs: ['dashboard', 'projects', 'blog', 'experience', 'skills', 'certificates', 'education', 'messages', 'communication', 'resume', 'testimonials', 'awards', 'publications', 'speaking', 'database'],
+            allowedActions: {}
+        },
+        {
+            id: 'editor',
+            baseRole: 'editor',
+            allowedTabs: ['dashboard', 'projects', 'blog', 'skills', 'certificates', 'communication'],
+            allowedActions: {}
+        }
+    ],
+    users: [
+        {
+            id: 'bootstrap-superadmin',
+            email: 'kem.phearum@gmail.com',
+            displayName: 'Kem Phearum',
+            role: 'superadmin',
+            isActive: true,
+            photoURL: ''
+        },
+        {
+            id: 'sample-admin',
+            email: 'admin@example.com',
+            displayName: 'Admin User',
+            role: 'admin',
+            isActive: true,
+            photoURL: ''
+        },
+        {
+            id: 'sample-editor',
+            email: 'editor@example.com',
+            displayName: 'Editor User',
+            role: 'editor',
+            isActive: true,
+            photoURL: ''
         }
     ],
     projects: [
@@ -317,14 +357,22 @@ const run = async () => {
     for (const [collection, docs] of Object.entries(DATA)) {
         for (const { id, ...data } of docs) {
             const isContent = collection === 'projects' || collection === 'posts';
-            await db.collection(collection).doc(id).set({
+            const isSystem = collection === 'settings' || collection === 'rolePermissions' || collection === 'users';
+            
+            const payload = isSystem ? {
                 ...data,
-                visible: true,
+                createdAt: now,
+                updatedAt: now
+            } : {
+                ...data,
+                visible: data.visible ?? true,
                 featured: data.featured ?? false,
                 ...(isContent ? publishFields : {}),
                 createdAt: now,
                 updatedAt: now
-            }, { merge: true });
+            };
+            
+            await db.collection(collection).doc(id).set(payload, { merge: true });
             total += 1;
         }
         console.log(`Seeded ${docs.length} ${collection}`);
