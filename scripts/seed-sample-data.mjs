@@ -77,7 +77,7 @@ const DATA = {
                 },
                 mirrors: [
                     { name: 'GitHub Pages', url: 'https://kemphearum.github.io/' },
-                    { name: 'Vercel Production', url: 'https://kemphearum.vercel.app/' },
+                    { name: 'Vercel Production', url: 'https://phearum-info.vercel.app/' },
                     { name: 'Firebase Primary', url: 'https://phearum-info.web.app/' }
                 ]
             },
