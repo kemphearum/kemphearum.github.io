@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import ProjectService from '../services/ProjectService';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import ProjectCard from './ProjectCard';
 import styles from './RelatedProjects.module.scss';

@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import ExperienceService from '../services/ExperienceService';
 import styles from './Experience.module.scss';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
 import { useTranslation } from '../hooks/useTranslation';

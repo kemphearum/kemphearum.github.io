@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Award, BookOpen, Mic } from 'lucide-react';

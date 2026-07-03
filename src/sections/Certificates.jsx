@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import { Award, ExternalLink, Building2, Calendar } from 'lucide-react';
 import CertificateService from '../services/CertificateService';

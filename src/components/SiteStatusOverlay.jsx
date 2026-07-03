@@ -6,7 +6,7 @@ import MarkdownRenderer from '@/sections/MarkdownRenderer';
 import { AlertCircle, Beaker, Settings, Wrench, Clock } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router';
 import styles from './SiteStatusOverlay.module.scss';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 
 /**

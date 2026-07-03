@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import { Briefcase, Award, FolderGit2, ShieldCheck } from 'lucide-react';
 import styles from './CareerHighlights.module.scss';

@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import BlogService from '../services/BlogService';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import styles from './RelatedArticles.module.scss'; // Reuse blog card styles where possible or create new
 import { useTranslation } from '../hooks/useTranslation';

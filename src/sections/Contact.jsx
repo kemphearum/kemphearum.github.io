@@ -7,7 +7,7 @@ import CommunicationService from '../services/CommunicationService';
 import ResumeService from '../services/ResumeService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Contact.module.scss';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion, AnimatePresence } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
 import { useTranslation } from '../hooks/useTranslation';
@@ -271,7 +271,7 @@ const Contact = () => {
 
                         {socialLinks.length > 0 && (
                             <nav className={styles.socials} aria-label="Social links">
-                                {/* eslint-disable-next-line no-unused-vars */}
+                                { }
                                 {socialLinks.map(({ key, url, label, Icon }) => (
                                     <a key={key} href={url} target="_blank" rel="noopener noreferrer" className={styles.socialBtn} aria-label={label} title={label}>
                                         <Icon size={18} aria-hidden="true" />

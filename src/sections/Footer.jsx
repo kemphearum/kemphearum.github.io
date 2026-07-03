@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import SettingsService from '../services/SettingsService';
 import { Github, Globe, Cloud, Activity, Terminal, Triangle, Flame } from 'lucide-react';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import styles from './Footer.module.scss';
 import { useTranslation } from '../hooks/useTranslation';

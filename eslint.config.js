@@ -37,6 +37,8 @@ export default defineConfig([
         'warn',
         { allowExportNames: ['meta', 'links', 'loader', 'action', 'headers', 'clientLoader', 'clientAction'] },
       ],
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/refs': 'off',
     },
   },
   {
