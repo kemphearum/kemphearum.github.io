@@ -242,7 +242,7 @@ const Contact = () => {
                             </div>
                         )}
 
-                        <div className={styles.metaFacts} aria-label="Contact details">
+                        <div className={styles.metaFacts} role="group" aria-label="Contact details">
                             {responseTime && (
                                 <span className={styles.metaFact}><Clock size={14} aria-hidden="true" /> {t('contact.responseTime', 'Typical response:')} {responseTime}</span>
                             )}

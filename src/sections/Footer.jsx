@@ -72,7 +72,7 @@ const Footer = () => {
                     </div>
 
                     <div className={styles.mirrorsSection}>
-                        <h5 className={styles.sectionTitle}>{t('footer.siteMirrors')}</h5>
+                        <h2 className={styles.sectionTitle}>{t('footer.siteMirrors')}</h2>
                         <div className={styles.mirrorsList}>
                             {mirrors.map((mirror, index) => (
                                 <motion.a 

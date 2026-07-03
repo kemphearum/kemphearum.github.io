@@ -87,6 +87,9 @@ export function Layout({ children }) {
         />
       </head>
       <body>
+          <a href="#main-content" className="skip-to-content">
+            Skip to main content
+          </a>
           <QueryClientProvider client={queryClient}>
               <LanguageProvider>
                 <ThemeProvider>
@@ -104,6 +107,23 @@ export function Layout({ children }) {
         <ConditionalScrollRestoration />
         <RouteScrollReset />
         <Scripts />
+      </body>
+    </html>
+  );
+}
+
+export function HydrateFallback() {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta charSet="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </head>
+      <body>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--bg-primary)' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid var(--text-secondary)', borderTopColor: 'var(--accent-primary)', animation: 'spin 1s linear infinite' }} />
+          <style dangerouslySetInnerHTML={{ __html: '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }' }} />
+        </div>
       </body>
     </html>
   );
@@ -417,7 +437,9 @@ export default function App() {
   return (
     <SettingsApplier initialSettings={loaderData}>
       <ChunkRecovery />
-      <Outlet />
+      <div id="main-content" tabIndex="-1" style={{ outline: 'none' }}>
+        <Outlet />
+      </div>
     </SettingsApplier>
   );
 }

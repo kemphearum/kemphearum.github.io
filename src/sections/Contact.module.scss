@@ -361,7 +361,7 @@
     font-weight: 600;
     text-decoration: none;
     color: #fff;
-    background: #229ED9;
+    background: #0077b5; // Darker blue for contrast
     border: none;
     cursor: pointer;
     transition: background 0.15s ease, transform 0.15s ease;
@@ -369,7 +369,7 @@
     min-height: 44px;
 
     &:hover {
-        background: #1a8bc0;
+        background: #005f92;
         transform: translateY(-1px);
     }
 

@@ -28,29 +28,19 @@
     background: #fff; // Should be white as per user's image
     border-radius: 25px;
     z-index: 1;
-}
 
-// Light theme adjustment for the indicator
-:global([data-theme='light']) {
-    .activeIndicator {
-        background: $primary-color; // Or another theme-appropriate color
+    :global([data-theme='light']) & {
+        background: $primary-color;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    
-    .active .buttonText {
-        color: #fff !important;
+
+    :global([data-theme='dark']) & {
+        background: #fff;
     }
 }
 
-:global([data-theme='dark']) {
-    .activeIndicator {
-        background: #fff;
-    }
-    
-    .active .buttonText {
-        color: #000 !important;
-    }
-}
+// Themes are handled by nesting with :global
+
 
 .langButton {
     position: relative;
@@ -75,7 +65,21 @@
 
 .active {
     .buttonText {
-        // Handled by dynamic color nesting above
+        color: #000000 !important; // Default (dark mode / :root)
+        :global([data-theme='light']) & {
+            color: #ffffff !important;
+        }
+        :global([data-theme='dark']) & {
+            color: #000000 !important;
+        }
+    }
+}
+
+.langButton:not(.active) {
+    .buttonText {
+        :global([data-theme='light']) & {
+            color: #4a5568 !important;
+        }
     }
 }
 

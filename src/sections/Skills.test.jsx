@@ -32,9 +32,9 @@ describe('Skills section', () => {
     it('groups visible skills by category', async () => {
         useFeatureFlag.mockReturnValue(true);
         SkillService.getAll.mockResolvedValue([
-            { id: '1', name: { en: 'Risk Assessment' }, category: 'Governance', level: 'expert', visible: true },
-            { id: '2', name: { en: 'SIEM' }, category: 'Security', level: 'advanced', visible: true },
-            { id: '3', name: { en: 'Hidden' }, category: 'Security', level: 'beginner', visible: false }
+            { id: '1', name: { en: 'Risk Assessment' }, category: 'Governance', level: 'expert', status: 'published' },
+            { id: '2', name: { en: 'SIEM' }, category: 'Security', level: 'advanced', status: 'published' },
+            { id: '3', name: { en: 'Hidden' }, category: 'Security', level: 'beginner', status: 'draft' }
         ]);
 
         renderSkills();
@@ -48,7 +48,7 @@ describe('Skills section', () => {
 
     it('renders nothing when the feature flag is disabled', async () => {
         useFeatureFlag.mockReturnValue(false);
-        SkillService.getAll.mockResolvedValue([{ id: '1', name: { en: 'X' }, category: 'A', visible: true }]);
+        SkillService.getAll.mockResolvedValue([{ id: '1', name: { en: 'X' }, category: 'A', status: 'published' }]);
 
         const { container } = renderSkills();
         // The flag gate returns null even after data resolves.
@@ -59,7 +59,7 @@ describe('Skills section', () => {
 
     it('renders nothing when there are no visible skills', async () => {
         useFeatureFlag.mockReturnValue(true);
-        SkillService.getAll.mockResolvedValue([{ id: '1', name: { en: 'X' }, visible: false }]);
+        SkillService.getAll.mockResolvedValue([{ id: '1', name: { en: 'X' }, status: 'draft' }]);
 
         const { container } = renderSkills();
         await waitFor(() => expect(SkillService.getAll).toHaveBeenCalled());

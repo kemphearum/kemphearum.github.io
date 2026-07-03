@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { LayoutTemplate, FileText, BriefcaseBusiness, Mail, Users } from 'lucide-react';
+import { Skeleton } from '@/shared/components/ui';
 import StatCard from '../../components/StatCard';
 import BaseService from '../../../../services/BaseService';
 import BlogService from '../../../../services/BlogService';
@@ -16,26 +17,28 @@ const QUERY_OPTS = { staleTime: 60000, gcTime: 300000, refetchOnWindowFocus: fal
 const OverviewWidget = ({ ctx }) => {
   const { can, go, userRole, t, language } = ctx;
 
-  const { data: projectStats = { total: 0, published: 0 } } = useQuery({
+  const { data: projectStats = { total: 0, published: 0 }, isLoading: pL } = useQuery({
     queryKey: ['projects', 'stats'], enabled: can(MODULES.PROJECTS), ...QUERY_OPTS,
     queryFn: async () => { const { data, error } = await BaseService.safe(() => ProjectService.fetchStats()); return error ? { total: 0, published: 0 } : data; }
   });
-  const { data: blogStats = { total: 0, drafts: 0 } } = useQuery({
+  const { data: blogStats = { total: 0, drafts: 0 }, isLoading: bL } = useQuery({
     queryKey: ['posts', 'stats'], enabled: can(MODULES.BLOG), ...QUERY_OPTS,
     queryFn: async () => { const { data, error } = await BaseService.safe(() => BlogService.fetchStats()); return error ? { total: 0, drafts: 0 } : data; }
   });
-  const { data: experienceStats = { total: 0, currentRoles: 0 } } = useQuery({
+  const { data: experienceStats = { total: 0, currentRoles: 0 }, isLoading: eL } = useQuery({
     queryKey: ['experience', 'stats', language], enabled: can(MODULES.EXPERIENCE), ...QUERY_OPTS,
     queryFn: async () => { const { data, error } = await BaseService.safe(() => ExperienceService.fetchStats(language)); return error ? { total: 0, currentRoles: 0 } : data; }
   });
-  const { data: unreadCount = 0 } = useQuery({
+  const { data: unreadCount = 0, isLoading: mL } = useQuery({
     queryKey: ['messages', 'unreadCount'], enabled: can(MODULES.MESSAGES), ...QUERY_OPTS,
     queryFn: async () => { const { data, error } = await BaseService.safe(() => MessageService.getUnreadCount()); return error ? 0 : data; }
   });
-  const { data: userStats = { total: 0 } } = useQuery({
+  const { data: userStats = { total: 0 }, isLoading: uL } = useQuery({
     queryKey: ['users', 'stats'], enabled: can(MODULES.USERS), ...QUERY_OPTS,
     queryFn: async () => { const { data, error } = await BaseService.safe(() => UserService.fetchStats(userRole)); return error ? { total: 0 } : data; }
   });
+  
+  const isLoading = pL || bL || eL || mL || uL;
 
   const cards = [
     can(MODULES.PROJECTS) && { icon: LayoutTemplate, color: '#2f6df6', tab: 'projects', value: projectStats.total, label: t('admin.dashboard.cards.projects'), description: t('admin.dashboard.cards.publishedCount', { count: projectStats.published ?? 0 }) },
@@ -49,9 +52,15 @@ const OverviewWidget = ({ ctx }) => {
 
   return (
     <div className={styles.statGrid}>
-      {cards.map((card) => (
-        <StatCard key={card.label} icon={card.icon} color={card.color} value={card.value ?? 0} label={card.label} description={card.description} onClick={() => go(card.tab)} />
-      ))}
+      {isLoading ? (
+        Array.from({ length: cards.length || 4 }).map((_, i) => (
+          <Skeleton key={i} width="100%" height="114px" borderRadius="20px" />
+        ))
+      ) : (
+        cards.map((card) => (
+          <StatCard key={card.label} icon={card.icon} color={card.color} value={card.value ?? 0} label={card.label} description={card.description} onClick={() => go(card.tab)} />
+        ))
+      )}
     </div>
   );
 };

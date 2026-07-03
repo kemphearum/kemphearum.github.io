@@ -31,7 +31,7 @@ const parseServiceAccount = () => {
             parsed.private_key = String(parsed.private_key).replace(/\\n/g, '\n');
         }
         return parsed;
-    } catch (_e) {
+    } catch {
         if (globalThis.process?.env?.NODE_ENV === 'development') {
             console.warn('⚠️ Invalid FIREBASE_SERVICE_ACCOUNT_JSON format in development. Admin SDK disabled for Contact.');
             return null;

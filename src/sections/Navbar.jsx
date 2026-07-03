@@ -214,6 +214,7 @@ const Navbar = () => {
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                             }
                         }}
+                        aria-label={t('nav.home')}
                     >
                         {logoHighlight}<span className={styles.highlight}>{logoText}</span>
                     </Link>

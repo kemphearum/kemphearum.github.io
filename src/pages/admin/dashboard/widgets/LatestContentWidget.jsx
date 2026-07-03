@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight } from 'lucide-react';
-import { Card, Spinner, EmptyState } from '@/shared/components/ui';
+import { Card, Spinner, EmptyState, Skeleton } from '@/shared/components/ui';
 import BaseService from '../../../../services/BaseService';
 import BlogService from '../../../../services/BlogService';
 import ProjectService from '../../../../services/ProjectService';
@@ -29,7 +29,9 @@ const LatestPanel = ({ titleKey, items, loading, type, ctx }) => {
         </button>
       </div>
       {loading ? (
-        <div className={styles.listLoading}><Spinner size="md" /></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} width="100%" height="32px" borderRadius="8px" />)}
+        </div>
       ) : !items.length ? (
         <EmptyState title={t('admin.dashboard.empty')} />
       ) : (

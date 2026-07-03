@@ -21,6 +21,14 @@ const StatCard = ({
             className={`ui-statCard ${onClick ? 'ui-clickableStat' : ''} ${className}`}
             onClick={onClick}
             style={style}
+            role={onClick ? 'button' : undefined}
+            tabIndex={onClick ? 0 : undefined}
+            onKeyDown={onClick ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onClick(e);
+                }
+            } : undefined}
             {...props}
         >
             <div className="ui-statIcon" style={{ background: `${color}15`, color: color }}>

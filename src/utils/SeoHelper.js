@@ -151,3 +151,70 @@ export const generateSpeakingEventSchema = (event, speakerName = DEFAULT_PERSON_
         "name": speakerName
     }
 });
+
+export const generateArticleSchema = (post, language, url, siteData) => {
+    const title = getLocalizedField(post.title, language);
+    const description = getLocalizedField(post.excerpt, language) || getLocalizedField(post.content, language)?.substring(0, 160).replace(/[#*`]/g, '') + '...';
+    
+    return {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": title,
+        "description": description,
+        "image": post.coverImage ? [post.coverImage] : undefined,
+        "datePublished": post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000).toISOString() : undefined,
+        "dateModified": post.updatedAt?.seconds ? new Date(post.updatedAt.seconds * 1000).toISOString() : undefined,
+        "author": {
+            "@type": "Person",
+            "name": post.author || siteData?.siteName || DEFAULT_PERSON_NAME,
+            "url": siteData?.canonicalUrl || DEFAULT_SITE_URL
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": siteData?.siteName || DEFAULT_PERSON_NAME,
+            "logo": siteData?.ogImageUrl ? {
+                "@type": "ImageObject",
+                "url": siteData.ogImageUrl
+            } : undefined
+        },
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": url
+        }
+    };
+};
+
+export const generateProjectSchema = (project, language, url, siteData) => {
+    const title = getLocalizedField(project.title, language);
+    const description = getLocalizedField(project.description, language);
+    
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": "CreativeWork",
+        "name": title,
+        "description": description,
+        "url": url,
+        "author": {
+            "@type": "Person",
+            "name": siteData?.siteName || DEFAULT_PERSON_NAME
+        }
+    };
+    
+    if (project.imageUrl) {
+        schema.image = project.imageUrl;
+    }
+    
+    if (project.createdAt?.seconds) {
+        schema.dateCreated = new Date(project.createdAt.seconds * 1000).toISOString();
+    }
+    
+    if (project.updatedAt?.seconds) {
+        schema.dateModified = new Date(project.updatedAt.seconds * 1000).toISOString();
+    }
+    
+    if (project.techStack && Array.isArray(project.techStack)) {
+        schema.keywords = project.techStack.join(', ');
+    }
+    
+    return schema;
+};
