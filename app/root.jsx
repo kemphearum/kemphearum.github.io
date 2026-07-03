@@ -9,6 +9,7 @@ import {
   isRouteErrorResponse,
   useRouteError,
   useLocation,
+  useNavigate,
   useNavigationType,
 } from "react-router";
 import MaintenancePage from '@/sections/MaintenancePage';
@@ -371,11 +372,29 @@ export function ErrorBoundary() {
 export default function App() {
   const loaderData = useLoaderData();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Clear the preload error flag on successful load
     if (typeof window !== 'undefined') {
       window.sessionStorage.removeItem('rr:preload-error-reloaded');
+    }
+
+    // Static mirrors serve public/404.html for unknown paths; it stores the
+    // requested URL and redirects to "/" so hydration happens against
+    // matching HTML. Resume the intended navigation client-side.
+    if (typeof window !== 'undefined') {
+      try {
+        const savedPath = window.sessionStorage.getItem('rr:spa-fallback-path');
+        if (savedPath) {
+          window.sessionStorage.removeItem('rr:spa-fallback-path');
+          const current = window.location.pathname + window.location.search + window.location.hash;
+          if (savedPath !== current) {
+            navigate(savedPath, { replace: true });
+            return;
+          }
+        }
+      } catch { /* storage unavailable */ }
     }
 
     // Redirect hash-based URLs from the old HashRouter (e.g., #/projects) to new clean URLs
@@ -393,7 +412,7 @@ export default function App() {
         window.location.replace(cleanPath);
       }
     }
-  }, [location.pathname, location.hash]);
+  }, [location.pathname, location.hash, navigate]);
 
   return (
     <SettingsApplier initialSettings={loaderData}>

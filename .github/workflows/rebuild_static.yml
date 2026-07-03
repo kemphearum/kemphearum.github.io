@@ -34,7 +34,6 @@ jobs:
       - name: Build Primary (Prod)
         run: |
           npm run build
-          cp build/client/index.html build/client/404.html
           mv build/client build-primary
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
@@ -48,7 +47,6 @@ jobs:
       - name: Build Backup (Dev)
         run: |
           npm run build
-          cp build/client/index.html build/client/404.html
           mv build/client build-backup
         env:
           VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY_BACKUP }}
