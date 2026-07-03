@@ -228,8 +228,8 @@ const IdentitySection = ({
                 <div style={{ padding: '0 2rem 1.5rem 2rem', display: 'flex', justifyContent: 'flex-end' }}>
                     <Tabs value={editingLang} onValueChange={setEditingLang} className="ui-inlineLangTabs">
                         <Tabs.List>
-                            <Tabs.Trigger value="en">EN</Tabs.Trigger>
-                            <Tabs.Trigger value="km">KM</Tabs.Trigger>
+                            <Tabs.Trigger value="en">{t('admin.common.langEn', 'EN')}</Tabs.Trigger>
+                            <Tabs.Trigger value="km">{t('admin.common.langKm', 'KM')}</Tabs.Trigger>
                         </Tabs.List>
                     </Tabs>
                 </div>

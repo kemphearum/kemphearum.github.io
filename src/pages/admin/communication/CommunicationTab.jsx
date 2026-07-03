@@ -16,6 +16,10 @@ import tabStyles from '../general/GeneralTab.module.scss';
 import ImageProcessingService from '../../../services/ImageProcessingService';
 import ContentService from '../../../services/ContentService';
 import SettingsService from '../../../services/SettingsService';
+import ExperienceService from '../../../services/ExperienceService';
+import EducationService from '../../../services/EducationService';
+import SkillService from '../../../services/SkillService';
+import ProjectService from '../../../services/ProjectService';
 import DigitalCard from '../../card/components/DigitalCard';
 import { toPng, toJpeg } from 'html-to-image';
 const CommunicationTab = ({ isActionAllowed }) => {
@@ -25,6 +29,7 @@ const CommunicationTab = ({ isActionAllowed }) => {
     const [activeSection, setActiveSection] = useState('contact');
     const exportRef = useRef(null);
     const [contactPreview, setContactPreview] = useState(false);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
     const canEditCommunication = isActionAllowed(ACTIONS.EDIT, MODULES.COMMUNICATION);
     const canPublishCommunication = isActionAllowed(ACTIONS.PUBLISH, MODULES.COMMUNICATION);
@@ -158,7 +163,37 @@ const CommunicationTab = ({ isActionAllowed }) => {
         });
     };
 
-    const handleSaveAvailability = (data) => {
+    const handleGeneratePdf = async (lang) => {
+        setIsGeneratingPdf(true);
+        try {
+            const { generateResumePdf } = await import('../../../utils/resumePdfGenerator');
+            
+            const [experiences, educations, skills, projects] = await Promise.all([
+                ExperienceService.getAll(),
+                EducationService.getAll(),
+                SkillService.getAll(),
+                ProjectService.getAll()
+            ]);
+
+            const resumeExportData = {
+                profile: profileData || {},
+                experiences: experiences || [],
+                educations: educations || [],
+                skills: skills || [],
+                projects: projects || []
+            };
+
+            await generateResumePdf(resumeExportData, lang);
+            showNotification(t('admin.common.success', 'Success'), 'PDF generated successfully!', 'success');
+        } catch (err) {
+            console.error('Failed to generate PDF:', err);
+            showNotification(t('admin.common.error', 'Error'), 'Failed to generate PDF.', 'error');
+        } finally {
+            setIsGeneratingPdf(false);
+        }
+    };
+
+    const handleSaveAvailability = async (data) => {
         updateCommMutation.mutate({
             availabilityStatus: data.availabilityStatus,
             availabilityMessage: { en: data.availabilityMessageEn, km: data.availabilityMessageKm },
@@ -492,6 +527,15 @@ const CommunicationTab = ({ isActionAllowed }) => {
                                         )}
                                     </div>
                                 )}
+                                
+                                <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
+                                    <Button type="button" variant="outline" onClick={() => handleGeneratePdf('en')} isLoading={isGeneratingPdf}>
+                                        <Printer size={16}/> {t('admin.communication.resume.generateEn', 'Generate PDF (EN)')}
+                                    </Button>
+                                    <Button type="button" variant="outline" onClick={() => handleGeneratePdf('km')} isLoading={isGeneratingPdf}>
+                                        <Printer size={16}/> {t('admin.communication.resume.generateKm', 'Generate PDF (KM)')}
+                                    </Button>
+                                </div>
                                 <Button type="submit" disabled={!canUploadResume && !canPublishResume} isLoading={updateResumeMutation.isPending}>
                                     <Save size={16}/> {t('admin.communication.resume.save')}
                                 </Button>

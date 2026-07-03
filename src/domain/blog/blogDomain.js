@@ -24,6 +24,7 @@ export const normalizePost = (data) => {
         tags,
         ...normalizeStatusFields(data),
         featured: !!data.featured,
+        views: data.views ?? 0,
         ...(data.coverImage !== undefined && { coverImage: data.coverImage })
     };
 };

@@ -9,6 +9,8 @@
   },
   "admin": {
     "common": {
+      "langEn": "EN",
+      "langKm": "KM",
       "light": "light",
       "dark": "dark",
       "loading": "Loading...",
@@ -185,6 +187,10 @@
       "cancel": "Cancel",
       "create": "Create",
       "saved": "Saved successfully"
+    },
+    "search": {
+      "esc": "Esc",
+      "commandPalette": "Command Palette"
     },
     "dashboard": {
       "title": "Dashboard",
@@ -3404,5 +3410,24 @@
   "restricted": {
     "title": "Access Restricted",
     "description": "You do not have permission to view this content."
+  },
+  "card": {
+    "labels": {
+      "mobile": "Mobile",
+      "email": "Email",
+      "website": "Website",
+      "location": "Location"
+    },
+    "qr": {
+      "scanToSave": "SCAN TO SAVE",
+      "myContactInstantly": "my contact instantly"
+    },
+    "tagline": "SECURE TODAY • PROTECT TOMORROW • EMPOWER FUTURE",
+    "fallbackName": "John Doe",
+    "fallbackTitle": "Information Security Professional"
+  },
+  "errors": {
+    "rateLimitMinute": "Too many requests. Please wait a minute.",
+    "rateLimitDay": "Daily request limit reached. Please try tomorrow."
   }
 }

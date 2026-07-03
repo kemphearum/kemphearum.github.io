@@ -29,10 +29,10 @@ const DigitalCard = memo(({
     const { t } = useTranslation();
 
     // Robust fallbacks for previewing without data
-    const safeName = name || 'John Doe';
+    const safeName = name || t('card.fallbackName', 'John Doe');
     const firstName = safeName.split(' ')[0];
     const lastName = safeName.split(' ').slice(1).join(' ');
-    const safeTitle = title || 'Information Security Professional';
+    const safeTitle = title || t('card.fallbackTitle', 'Information Security Professional');
     const safeCompany = company || '';
 
     const renderSocialIcon = (key, size = 22) => {
@@ -123,7 +123,7 @@ const DigitalCard = memo(({
                                     <div className={styles.contactIcon}><Phone size={18} color="white" /></div>
                                     <div className={styles.contactText}>
                                         <span className={styles.value}>{social.phone}</span>
-                                        <span className={styles.label}>Mobile</span>
+                                        <span className={styles.label}>{t('card.labels.mobile', 'Mobile')}</span>
                                     </div>
                                 </div>
                             )}
@@ -132,7 +132,7 @@ const DigitalCard = memo(({
                                     <div className={styles.contactIcon}><Mail size={18} color="white" /></div>
                                     <div className={styles.contactText}>
                                         <span className={styles.value}>{social.email}</span>
-                                        <span className={styles.label}>Email</span>
+                                        <span className={styles.label}>{t('card.labels.email', 'Email')}</span>
                                     </div>
                                 </div>
                             )}
@@ -140,7 +140,7 @@ const DigitalCard = memo(({
                                 <div className={styles.contactIcon}><Globe size={18} color="white" /></div>
                                 <div className={styles.contactText}>
                                     <span className={styles.value}>{portfolioUrl.replace(/^https?:\/\//, '')}</span>
-                                    <span className={styles.label}>Website</span>
+                                    <span className={styles.label}>{t('card.labels.website', 'Website')}</span>
                                 </div>
                             </div>
                             {location && (
@@ -148,7 +148,7 @@ const DigitalCard = memo(({
                                     <div className={styles.contactIcon}><MapPin size={18} color="white" /></div>
                                     <div className={styles.contactText}>
                                         <span className={styles.value}>{location}</span>
-                                        <span className={styles.label}>Location</span>
+                                        <span className={styles.label}>{t('card.labels.location', 'Location')}</span>
                                     </div>
                                 </div>
                             )}
@@ -159,8 +159,8 @@ const DigitalCard = memo(({
                                 <QRCodeCard url={cardUrl} logoUrl={photoUrl} compact={true} exportMode={exportMode} />
                             </div>
                             <div className={styles.qrText}>
-                                <span className={styles.qrMain}>SCAN TO SAVE</span>
-                                <span className={styles.qrSub}>my contact instantly</span>
+                                <span className={styles.qrMain}>{t('card.qr.scanToSave', 'SCAN TO SAVE')}</span>
+                                <span className={styles.qrSub}>{t('card.qr.myContactInstantly', 'my contact instantly')}</span>
                             </div>
                         </div>
 
@@ -198,7 +198,7 @@ const DigitalCard = memo(({
                         </div>
 
                         <div className={styles.footerTagline}>
-                            SECURE TODAY <span className={styles.dot}>•</span> PROTECT TOMORROW <span className={styles.dot}>•</span> EMPOWER FUTURE
+                            {t('card.tagline', 'SECURE TODAY • PROTECT TOMORROW • EMPOWER FUTURE')}
                         </div>
                     </div>
 

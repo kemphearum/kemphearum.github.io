@@ -7,13 +7,14 @@ import { motion } from 'framer-motion';
 import styles from './RelatedArticles.module.scss'; // Reuse blog card styles where possible or create new
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
+import { Eye } from 'lucide-react';
 
 const RelatedArticles = ({ currentPostId, tags }) => {
     const { language, t } = useTranslation();
     const { data: relatedPostsData, isLoading: loading } = useQuery({
-    staleTime: 60000,
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
+        staleTime: 60000,
+        gcTime: 300000,
+        refetchOnWindowFocus: false,
         queryKey: ['relatedPosts', currentPostId, tags],
         queryFn: () => BlogService.fetchRelatedPosts(currentPostId, tags, null),
         enabled: !!currentPostId
@@ -64,6 +65,9 @@ const RelatedArticles = ({ currentPostId, tags }) => {
                                     {post.tags && post.tags.length > 0 && (
                                         <span className={styles.tag}>{post.tags[0]}</span>
                                     )}
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                        <Eye size={14} /> {post.views || 0}
+                                    </span>
                                 </div>
                             </div>
                         </Link>

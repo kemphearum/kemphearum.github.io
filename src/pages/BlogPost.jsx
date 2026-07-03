@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, X, Calendar, Clock, Tag,
     Copy, Check, ArrowLeft, ChevronRight, Maximize2,
-    Facebook, Instagram, Linkedin, Send
+    Facebook, Instagram, Linkedin, Send, Eye
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/sections/Navbar';
@@ -127,6 +127,21 @@ const BlogPost = () => {
             if (instaCopiedResetRef.current) clearTimeout(instaCopiedResetRef.current);
         };
     }, []);
+
+    // View tracking
+    useEffect(() => {
+        if (!post?.id) return;
+        try {
+            const viewedPosts = JSON.parse(localStorage.getItem('portfolio.viewed_posts') || '[]');
+            if (!viewedPosts.includes(post.id)) {
+                BlogService.incrementViewCount(post.id);
+                viewedPosts.push(post.id);
+                localStorage.setItem('portfolio.viewed_posts', JSON.stringify(viewedPosts));
+            }
+        } catch (err) {
+            console.error('Error handling view counts in local storage', err);
+        }
+    }, [post?.id]);
 
     // Lightbox Scroll Lock
     useEffect(() => {
@@ -344,6 +359,10 @@ const BlogPost = () => {
                                     <div className={styles.infoRow}>
                                         <span className={styles.label}><Clock size={14} /> {tr('Read Time', 'ពេលអាន')}</span>
                                         <span className={styles.value}>{calculateReadTime(localizedPost.content)}</span>
+                                    </div>
+                                    <div className={styles.infoRow}>
+                                        <span className={styles.label}><Eye size={14} /> {tr('Views', 'ការចូលមើល')}</span>
+                                        <span className={styles.value}>{post.views || 0}</span>
                                     </div>
                                 </div>
                             </div>

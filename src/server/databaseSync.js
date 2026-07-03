@@ -12,6 +12,12 @@ const GITHUB_DISPATCH_URL = 'https://api.github.com/repos/kemphearum/kemphearum.
  * the GITHUB_DISPATCH_TOKEN env var (never exposed to the client).
  */
 export const processDatabaseSync = async ({ authToken, payload }) => {
+    // Bypass in local development if service account is missing
+    if ((globalThis.process?.env?.NODE_ENV === 'development' || !globalThis.process?.env?.NODE_ENV) && !globalThis.process?.env?.FIREBASE_SERVICE_ACCOUNT_JSON) {
+        console.log('Skipping database sync in development due to missing FIREBASE_SERVICE_ACCOUNT_JSON.');
+        return { status: 200, body: { success: true } };
+    }
+
     if (!authToken) {
         return { status: 401, body: { success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required.' } } };
     }

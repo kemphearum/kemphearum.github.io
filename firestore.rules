@@ -311,12 +311,13 @@ service cloud.firestore {
     
     function isPostPayloadValid() {
       let data = request.resource.data;
-      return data.keys().hasOnly(['title', 'excerpt', 'content', 'slug', 'tags', 'visible', 'publishedAt', 'status', 'featured', 'coverImage', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      return data.keys().hasOnly(['title', 'excerpt', 'content', 'slug', 'tags', 'visible', 'publishedAt', 'status', 'featured', 'coverImage', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'views'])
       && (!data.keys().hasAny(['title']) || isLocalizedField(data.title))
       && (!data.keys().hasAny(['slug']) || data.slug is string)
       && (!data.keys().hasAny(['tags']) || data.tags is list)
       && (!data.keys().hasAny(['visible']) || data.visible is bool)
       && (!data.keys().hasAny(['featured']) || data.featured is bool)
+      && (!data.keys().hasAny(['views']) || data.views is int)
       && hasSystemFields(data);
     }
     
@@ -435,6 +436,9 @@ service cloud.firestore {
     match /posts/{document=**} {
       allow read;
       allow write: if canWriteModule('blog') && isPostPayloadValid();
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views'])
+                    && request.resource.data.views == resource.data.get('views', 0) + 1
+                    && request.resource.data.views is int;
     }
 
     // Messages: contact submissions are written via Cloud Functions (Admin
