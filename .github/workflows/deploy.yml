@@ -1,0 +1,112 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "src/**"
+      - "public/**"
+      - ".github/workflows/deploy.yml"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.js"
+      - "react-router.config.ts"
+      - "firebase.json"
+      - "firestore.rules"
+      - "firestore.indexes.json"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      # Security gate
+      - name: Security audit (block on critical)
+        run: npm audit --audit-level=critical
+
+      - name: Security audit report (non-blocking)
+        if: always()
+        continue-on-error: true
+        run: npm audit --omit=dev || true
+
+      - name: Build Primary (Prod)
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+        run: |
+          npm run build
+          mv build/client build-primary
+
+      - name: Build Backup (Dev)
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY_BACKUP }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN_BACKUP }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID_BACKUP }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET_BACKUP }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID_BACKUP }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID_BACKUP }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_BACKUP }}
+        run: |
+          npm run build
+          mv build/client build-backup
+
+      - name: Authenticate to Primary Firebase
+        id: auth-primary
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Deploy to Primary Firebase Hosting
+        run: |
+          mkdir -p build
+          cp -r ./build-primary build/client
+          npx --yes firebase-tools deploy --only hosting --project phearum-info --non-interactive
+          rm -rf build/client
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-primary.outputs.credentials_file_path }}
+
+      - name: Authenticate to Backup Firebase
+        id: auth-backup
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BACKUP }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Deploy to Backup Firebase Hosting
+        continue-on-error: true
+        run: |
+          mkdir -p build
+          cp -r ./build-backup build/client
+          npx --yes firebase-tools deploy --only hosting --project kem-phearum --non-interactive
+          rm -rf build/client
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth-backup.outputs.credentials_file_path }}
