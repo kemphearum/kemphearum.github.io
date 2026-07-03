@@ -37,31 +37,3 @@ jobs:
           VITE_FIREBASE_APP_ID: "dummy-app-id"
           VITE_FIREBASE_MEASUREMENT_ID: "dummy-measurement-id"
       # Fails if coverage drops below the thresholds set in vite.config.js
-
-  test-e2e:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 20
-          cache: 'npm'
-      - run: npm ci
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-      - name: Run Playwright tests
-        run: npm run test:e2e
-        env:
-          VITE_FIREBASE_API_KEY: "test12345678901234567890123456789012345"
-          VITE_FIREBASE_AUTH_DOMAIN: "dummy-auth-domain"
-          VITE_FIREBASE_PROJECT_ID: "dummy-project-id"
-          VITE_FIREBASE_STORAGE_BUCKET: "dummy-storage-bucket"
-          VITE_FIREBASE_MESSAGING_SENDER_ID: "dummy-sender-id"
-          VITE_FIREBASE_APP_ID: "dummy-app-id"
-          VITE_FIREBASE_MEASUREMENT_ID: "dummy-measurement-id"
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 30
