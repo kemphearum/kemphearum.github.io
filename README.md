@@ -75,6 +75,8 @@ src/
   i18n/                  Translation dictionaries
 ```
 
+See [ARCHITECTURE.md](ARCHITECTURE.md) for a deeper dive into the technical design, directory structures, and design decisions.
+
 ## 🚀 Installation & Local Development
 
 ### 1. Clone the repository
@@ -148,7 +150,7 @@ Security is deeply integrated into the architecture:
 - **Server-enforced RBAC:** Client-side permissions are advisory; `firestore.rules` is the final authority, resolving custom roles against `rolePermissions` documents.
 - **Immutable Audit Logs:** Failed logins and operational changes are recorded via server-side APIs to prevent client tampering.
 - **Secret Management:** Sensitive API keys (e.g., Geolocation) are never bundled to the client. They are kept in Vercel environment variables and proxied through internal `/api` endpoints.
-- **Automated Scanning:** CodeQL and Dependabot are configured via GitHub Actions to proactively identify vulnerabilities.
+- **Automated Scanning:** Dependabot is configured via GitHub Actions to proactively identify vulnerable dependencies.
 
 If you discover a security vulnerability, please refer to [SECURITY.md](SECURITY.md).
 
