@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import { BadgeCheck, MapPin, Clock, FileText, Send, Sparkles } from 'lucide-react';
 import styles from './RecruiterSnapshot.module.scss';

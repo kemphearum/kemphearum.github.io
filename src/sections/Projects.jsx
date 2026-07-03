@@ -4,7 +4,7 @@ import ProjectService from '../services/ProjectService';
 import SettingsService from '../services/SettingsService';
 import ProjectCard from './ProjectCard';
 import styles from './Projects.module.scss';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';

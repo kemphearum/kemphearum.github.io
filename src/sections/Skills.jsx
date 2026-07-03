@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import SkillService from '../services/SkillService';
 import { SectionHeader } from '@/shared/components/ui';

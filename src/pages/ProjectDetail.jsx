@@ -4,7 +4,7 @@ import ProjectService from '../services/ProjectService';
 import { useActivity } from '../hooks/useActivity';
 import MarkdownRenderer from '@/sections/MarkdownRenderer';
 import { generateMetaTags } from '../utils/SeoHelper';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, ExternalLink, Code, X, Calendar, Clock,

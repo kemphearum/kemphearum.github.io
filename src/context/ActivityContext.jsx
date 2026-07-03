@@ -11,8 +11,8 @@ import { ActivityContext } from './ActivityContextValue';
 export const ActivityProvider = ({ children }) => {
     const [dailyUsage, setDailyUsage] = useState({ reads: 0, writes: 0, deletes: 0 });
     const [currentDateKey, setCurrentDateKey] = useState(getTodayDateKey());
-    // eslint-disable-next-line no-unused-vars
-    const [user, setUser] = useState(null);
+
+    const [_user, setUser] = useState(null);
     const [trackerTick, setTrackerTick] = useState(0);
     const [loggingConfig, setLoggingConfig] = useState({
         logAll: true,
@@ -89,11 +89,11 @@ export const ActivityProvider = ({ children }) => {
         return () => unsubscribe();
     }, [currentDateKey]);
 
-    const flushToFirestore = useCallback(async () => {
+    const flushToFirestore = useCallback(async function doFlush() {
         if (isFlushing.current) {
             // If already flushing, ensure we check back soon instead of dropping the flush entirely
             if (activityFlushTimerRef.current) clearTimeout(activityFlushTimerRef.current);
-            activityFlushTimerRef.current = setTimeout(flushToFirestore, 1000);
+            activityFlushTimerRef.current = setTimeout(doFlush, 1000);
             return;
         }
 

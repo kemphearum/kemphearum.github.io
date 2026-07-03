@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router';
 import ContentService from '../services/ContentService';
 import { useAnalytics } from '../hooks/useAnalytics';
 import styles from './Hero.module.scss';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import MarkdownRenderer from './MarkdownRenderer';
 import { useTranslation } from '../hooks/useTranslation';

@@ -5,7 +5,7 @@ import { useActivity } from '../hooks/useActivity';
 import MarkdownRenderer from '@/sections/MarkdownRenderer';
 import { calculateReadTime } from '../utils/helpers';
 import { generateMetaTags } from '../utils/SeoHelper';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowUp, X, Calendar, Clock, Tag,

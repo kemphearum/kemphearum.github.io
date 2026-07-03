@@ -29,7 +29,6 @@ export const ThemeProvider = ({ children }) => {
         // 2. On mount, read the actual preferred theme from localStorage
         const saved = localStorage.getItem('portfolio-theme');
         const actualTheme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTheme(actualTheme);
         setIsMounted(true);
     }, []);
