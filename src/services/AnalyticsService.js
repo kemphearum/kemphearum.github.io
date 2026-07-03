@@ -2,7 +2,7 @@ import BaseService from './BaseService';
 import { db } from '../firebase';
 import { 
     collection, getDocs, query, where, orderBy, getCountFromServer, 
-    limit as firestoreLimit, addDoc, serverTimestamp, doc, updateDoc 
+    limit as firestoreLimit 
 } from 'firebase/firestore';
 import { isAdminRole } from '../utils/permissions';
 
@@ -195,31 +195,20 @@ class AnalyticsService extends BaseService {
      * @returns {Promise<string>} Document ID
      */
     async logVisit(visitData) {
-        const now = new Date();
-        const dateKey = toDateString(now);
-
-        const sanitizedPayload = {
-            sessionId: sanitizeVisitString(visitData?.sessionId, 'unknown-session', 128),
-            path: sanitizeVisitString(visitData?.path, '/', 512),
-            date: sanitizeVisitString(visitData?.date || dateKey, dateKey, 10),
-            userAgent: sanitizeVisitString(visitData?.userAgent, 'Unknown', 1024),
-            device: sanitizeVisitString(visitData?.device, 'desktop', 24).toLowerCase(),
-            browser: sanitizeVisitString(visitData?.browser, 'Unknown', 80),
-            os: sanitizeVisitString(visitData?.os, 'Unknown', 80),
-            isReturning: Boolean(visitData?.isReturning),
-            country: sanitizeVisitString(visitData?.country, 'Unknown', 100),
-            countryCode: sanitizeVisitString(visitData?.countryCode, 'UN', 3).toUpperCase(),
-            city: sanitizeVisitString(visitData?.city, 'Unknown', 120),
-            ip: sanitizeVisitString(visitData?.ip, 'Unknown', 64),
-            referrer: sanitizeVisitString(visitData?.referrer, 'Direct', 1024),
-            duration: 0
-        };
-
-        const docRef = await addDoc(collection(db, this.collectionName), {
-            ...sanitizedPayload,
-            timestamp: serverTimestamp()
-        });
-        return docRef.id;
+        try {
+            const response = await fetch('/api/analytics', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(visitData || {})
+            });
+            const result = await response.json();
+            if (result.success && result.data?.id) {
+                return result.data.id;
+            }
+        } catch (error) {
+            console.warn('[Analytics] Failed to log visit:', error);
+        }
+        return null;
     }
 
     /**
@@ -230,16 +219,16 @@ class AnalyticsService extends BaseService {
      */
     async updateVisitDuration(visitId, durationSeconds) {
         if (!visitId || typeof visitId !== 'string') return;
-
-        const normalizedDuration = Number.isFinite(Number(durationSeconds))
-            ? Math.floor(Number(durationSeconds))
-            : 0;
-        const safeDuration = Math.max(0, Math.min(MAX_DURATION_SECONDS, normalizedDuration));
-
-        const docRef = doc(db, this.collectionName, visitId);
-        await updateDoc(docRef, {
-            duration: safeDuration
-        });
+        
+        try {
+            await fetch('/api/analytics', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: visitId, duration: durationSeconds })
+            });
+        } catch (error) {
+            console.warn('[Analytics] Failed to update visit duration:', error);
+        }
     }
 }
 

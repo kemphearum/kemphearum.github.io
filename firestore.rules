@@ -522,14 +522,13 @@ service cloud.firestore {
     }
 
     // Analytics/Visits Tracking
-    // NOTE: create is intentionally unauthenticated (anonymous visitors) and
-    // shape-validated only. This cannot be rate-limited in rules — enable
-    // Firebase App Check and/or move ingestion behind a rate-limited Cloud
-    // Function to protect quota (see security review F-02).
+    // NOTE: client-side creation is disabled to protect against quota exhaustion.
+    // Ingestion is routed securely through the /api/analytics endpoint which
+    // enforces strict IP-based rate limits.
     match /visits/{document=**} {
-      allow create: if isVisitPayloadValid();
+      allow create: if false;
       allow read, delete: if isAdmin();
-      allow update: if isStaff() || isVisitDurationUpdateValid();
+      allow update: if isStaff();
     }
 
     // Global Activity Tracker
