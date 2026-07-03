@@ -410,11 +410,6 @@ service cloud.firestore {
       allow write: if canWriteModule('education') && isEducationPayloadValid();
     }
 
-    match /testimonials/{document=**} {
-      allow read;
-      allow write: if canWriteModule('testimonials');
-    }
-
     match /awards/{document=**} {
       allow read;
       allow write: if canWriteModule('awards') && isAwardPayloadValid();
