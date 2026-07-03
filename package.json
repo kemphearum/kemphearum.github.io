@@ -48,7 +48,7 @@
     "react-to-print": "^3.3.0",
     "recharts": "^3.7.0",
     "rehype-slug": "^6.0.0",
-    "sass": "^1.97.3"
+    "sass": "^1.101.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
