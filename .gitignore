@@ -17,8 +17,6 @@ node_modules
 .env.local
 .env.*.local
 
-# Testing
-coverage
 
 # Build
 dist
@@ -80,9 +78,6 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 
-# Test reports
-playwright-report/
-test-results/
 
 # JetBrains
 *.iml
