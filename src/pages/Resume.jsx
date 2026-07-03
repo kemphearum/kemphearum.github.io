@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router';
 import {
-    Printer, Download, ArrowLeft, Mail, MapPin, Clock,
+    Printer, ArrowLeft, Mail, MapPin, Clock,
     Globe, Github, Linkedin, Briefcase, GraduationCap, Award, FolderGit2
 } from 'lucide-react';
 import styles from './Resume.module.scss';
@@ -183,11 +183,8 @@ const Resume = () => {
                     <ArrowLeft size={16} /> {t('resume.back', 'Back')}
                 </a>
                 <div className={styles.toolbarActions}>
-                    <button type="button" className={styles.toolbarBtn} onClick={handlePrint} disabled={isDataLoading}>
-                        <Download size={16} /> {t('resume.download', 'Download PDF')}
-                    </button>
-                    <button type="button" className={`${styles.toolbarBtn} ${styles.toolbarBtnPrimary}`} onClick={handlePrint} disabled={isDataLoading}>
-                        <Printer size={16} /> {t('resume.print', 'Print')}
+                    <button type="button" className={`${styles.toolbarBtn} ${styles.toolbarBtnPrimary}`} onClick={handlePrint} disabled={isDataLoading} title={t('resume.printSaveHint', 'Use Print dialog to Save as PDF')}>
+                        <Printer size={16} /> {t('resume.printOrSave', 'Print / Save PDF')}
                     </button>
                 </div>
             </div>
