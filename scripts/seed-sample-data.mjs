@@ -116,7 +116,7 @@ const DATA = {
         {
             id: 'admin',
             baseRole: 'admin',
-            allowedTabs: ['dashboard', 'projects', 'blog', 'experience', 'skills', 'certificates', 'education', 'messages', 'communication', 'resume', 'testimonials', 'awards', 'publications', 'speaking', 'database'],
+            allowedTabs: ['dashboard', 'projects', 'blog', 'experience', 'skills', 'certificates', 'education', 'messages', 'communication', 'resume', 'awards', 'publications', 'speaking', 'database'],
             allowedActions: {}
         },
         {
