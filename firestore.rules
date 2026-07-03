@@ -254,7 +254,7 @@ service cloud.firestore {
 
     function isProjectPayloadValid() {
       let data = request.resource.data;
-      return data.keys().hasOnly(['title', 'description', 'techStack', 'githubUrl', 'liveUrl', 'slug', 'content', 'visible', 'publishedAt', 'status', 'featured', 'imageUrl', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      return data.keys().hasOnly(['title', 'description', 'techStack', 'githubUrl', 'liveUrl', 'slug', 'content', 'visible', 'publishedAt', 'status', 'featured', 'imageUrl', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'problem', 'solution', 'architecture', 'impact', 'galleryUrls'])
       && (!data.keys().hasAny(['title']) || isLocalizedField(data.title))
       && (!data.keys().hasAny(['description']) || data.description is map)
       && (!data.keys().hasAny(['content']) || data.content is map)
@@ -267,7 +267,7 @@ service cloud.firestore {
     
     function isExperiencePayloadValid() {
       let data = request.resource.data;
-      return data.keys().hasOnly(['company', 'role', 'startDate', 'startMonthYear', 'endDate', 'endMonthYear', 'period', 'current', 'description', 'visible', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      return data.keys().hasOnly(['company', 'role', 'startDate', 'startMonthYear', 'endDate', 'endMonthYear', 'period', 'current', 'description', 'visible', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'companyLogoUrl', 'employmentType', 'location', 'keyResponsibilities', 'majorAchievements', 'technologiesUsed', 'relatedProjects'])
       && (!data.keys().hasAny(['company']) || isLocalizedField(data.company))
       && (!data.keys().hasAny(['role']) || isLocalizedField(data.role))
       && (!data.keys().hasAny(['current']) || data.current is bool)
@@ -278,7 +278,7 @@ service cloud.firestore {
     
     function isSkillPayloadValid() {
       let data = request.resource.data;
-      return data.keys().hasOnly(['name', 'description', 'category', 'level', 'slug', 'visible', 'featured', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      return data.keys().hasOnly(['name', 'description', 'category', 'level', 'slug', 'visible', 'featured', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'yearsOfExperience', 'iconUrl', 'relatedProjects', 'relatedCertifications'])
       && (!data.keys().hasAny(['name']) || isLocalizedField(data.name))
       && (!data.keys().hasAny(['slug']) || data.slug is string)
       && (!data.keys().hasAny(['visible']) || data.visible is bool)
@@ -289,7 +289,7 @@ service cloud.firestore {
     
     function isCertificatePayloadValid() {
       let data = request.resource.data;
-      return data.keys().hasOnly(['name', 'description', 'organization', 'issueDate', 'expiryDate', 'credentialId', 'url', 'slug', 'visible', 'featured', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      return data.keys().hasOnly(['name', 'description', 'organization', 'issueDate', 'expiryDate', 'credentialId', 'url', 'slug', 'visible', 'featured', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'badgeUrl', 'skillsCovered'])
       && (!data.keys().hasAny(['name']) || isLocalizedField(data.name))
       && (!data.keys().hasAny(['slug']) || data.slug is string)
       && (!data.keys().hasAny(['visible']) || data.visible is bool)
@@ -300,7 +300,7 @@ service cloud.firestore {
     
     function isEducationPayloadValid() {
       let data = request.resource.data;
-      return data.keys().hasOnly(['school', 'degree', 'fieldOfStudy', 'startDate', 'startYear', 'endDate', 'endYear', 'period', 'current', 'description', 'visible', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy'])
+      return data.keys().hasOnly(['school', 'degree', 'fieldOfStudy', 'startDate', 'startYear', 'endDate', 'endYear', 'period', 'current', 'description', 'visible', 'order', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'type'])
       && (!data.keys().hasAny(['school']) || isLocalizedField(data.school))
       && (!data.keys().hasAny(['degree']) || isLocalizedField(data.degree))
       && (!data.keys().hasAny(['current']) || data.current is bool)
