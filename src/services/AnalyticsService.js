@@ -44,12 +44,7 @@ const normalizeDateRange = (range) => {
     };
 };
 
-const sanitizeVisitString = (value, fallback = 'Unknown', max = 256) => {
-    if (typeof value !== 'string') return fallback;
-    const normalized = value.trim();
-    if (!normalized) return fallback;
-    return normalized.slice(0, max);
-};
+
 
 class AnalyticsService extends BaseService {
     constructor() {
