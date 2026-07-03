@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import BlogService from './BlogService';
 import { db } from '../firebase';
-import { collection, query, where, getDocs, getCountFromServer, updateDoc, doc, increment } from 'firebase/firestore';
+import { getDocs, getDoc, updateDoc, doc, increment } from 'firebase/firestore';
 import { validatePost } from '../domain/blog/blogDomain';
 
 vi.mock('../domain/blog/blogDomain', () => ({

@@ -28,6 +28,14 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run test:coverage
+        env:
+          VITE_FIREBASE_API_KEY: "AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ0123456"
+          VITE_FIREBASE_AUTH_DOMAIN: "dummy-auth-domain"
+          VITE_FIREBASE_PROJECT_ID: "dummy-project-id"
+          VITE_FIREBASE_STORAGE_BUCKET: "dummy-storage-bucket"
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "dummy-sender-id"
+          VITE_FIREBASE_APP_ID: "dummy-app-id"
+          VITE_FIREBASE_MEASUREMENT_ID: "dummy-measurement-id"
       # Fails if coverage drops below the thresholds set in vite.config.js
 
   test-e2e:
@@ -43,6 +51,14 @@ jobs:
         run: npx playwright install --with-deps
       - name: Run Playwright tests
         run: npm run test:e2e
+        env:
+          VITE_FIREBASE_API_KEY: "AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ0123456"
+          VITE_FIREBASE_AUTH_DOMAIN: "dummy-auth-domain"
+          VITE_FIREBASE_PROJECT_ID: "dummy-project-id"
+          VITE_FIREBASE_STORAGE_BUCKET: "dummy-storage-bucket"
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "dummy-sender-id"
+          VITE_FIREBASE_APP_ID: "dummy-app-id"
+          VITE_FIREBASE_MEASUREMENT_ID: "dummy-measurement-id"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

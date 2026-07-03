@@ -181,4 +181,4 @@ If you discover a security vulnerability, please refer to [SECURITY.md](SECURITY
 
 ---
 
-**Built with 💻 by Kem Phearum**
+**Built with ❤️ by Kem Phearum**

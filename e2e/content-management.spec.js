@@ -6,7 +6,6 @@ test.describe('Content Management (Read-Only)', () => {
     
     // Wait for the blog grid to load
     // Assuming there is at least one blog post in the local dev/emulated DB
-    const blogArticles = page.locator('article');
     
     // We don't know exactly how many, but there should be content
     // Or if the DB is empty, it might show a "No posts" message.
