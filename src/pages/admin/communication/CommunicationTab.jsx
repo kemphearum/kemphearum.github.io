@@ -29,8 +29,6 @@ const CommunicationTab = ({ isActionAllowed }) => {
     const [activeSection, setActiveSection] = useState('contact');
     const exportRef = useRef(null);
     const [contactPreview, setContactPreview] = useState(false);
-    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-
     const canEditCommunication = isActionAllowed(ACTIONS.EDIT, MODULES.COMMUNICATION);
     const canPublishCommunication = isActionAllowed(ACTIONS.PUBLISH, MODULES.COMMUNICATION);
     const canUploadResume = isActionAllowed(ACTIONS.UPLOAD, 'resume');
@@ -161,36 +159,6 @@ const CommunicationTab = ({ isActionAllowed }) => {
             telegramEnabled: data.telegramEnabled === 'true',
             telegramQrCodeImage: qrImage
         });
-    };
-
-    const handleGeneratePdf = async (lang) => {
-        setIsGeneratingPdf(true);
-        try {
-            const { generateResumePdf } = await import('../../../utils/resumePdfGenerator');
-            
-            const [experiences, educations, skills, projects] = await Promise.all([
-                ExperienceService.getAll(),
-                EducationService.getAll(),
-                SkillService.getAll(),
-                ProjectService.getAll()
-            ]);
-
-            const resumeExportData = {
-                profile: profileData || {},
-                experiences: experiences || [],
-                educations: educations || [],
-                skills: skills || [],
-                projects: projects || []
-            };
-
-            await generateResumePdf(resumeExportData, lang);
-            showNotification(t('admin.common.success', 'Success'), 'PDF generated successfully!', 'success');
-        } catch (err) {
-            console.error('Failed to generate PDF:', err);
-            showNotification(t('admin.common.error', 'Error'), 'Failed to generate PDF.', 'error');
-        } finally {
-            setIsGeneratingPdf(false);
-        }
     };
 
     const handleSaveAvailability = async (data) => {
@@ -528,14 +496,6 @@ const CommunicationTab = ({ isActionAllowed }) => {
                                     </div>
                                 )}
                                 
-                                <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
-                                    <Button type="button" variant="outline" onClick={() => handleGeneratePdf('en')} isLoading={isGeneratingPdf}>
-                                        <Printer size={16}/> {t('admin.communication.resume.generateEn', 'Generate PDF (EN)')}
-                                    </Button>
-                                    <Button type="button" variant="outline" onClick={() => handleGeneratePdf('km')} isLoading={isGeneratingPdf}>
-                                        <Printer size={16}/> {t('admin.communication.resume.generateKm', 'Generate PDF (KM)')}
-                                    </Button>
-                                </div>
                                 <Button type="submit" disabled={!canUploadResume && !canPublishResume} isLoading={updateResumeMutation.isPending}>
                                     <Save size={16}/> {t('admin.communication.resume.save')}
                                 </Button>
