@@ -107,9 +107,9 @@ const Blog = () => {
         return parsed.length > 0 ? parsed : allTags.slice(0, 8);
     }, [settings?.blogFilters, language, allTags]);
 
-    const visiblePosts = posts.filter(post => {
-        if (!isEffectivelyPublished(post)) return false;
+    const publishedPosts = posts.filter(post => isEffectivelyPublished(post));
 
+    const filteredPosts = publishedPosts.filter(post => {
         const matchesSearch =
             post.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
             post.excerpt?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
@@ -134,8 +134,8 @@ const Blog = () => {
         setCurrentPage(1);
     };
 
-    const totalPages = Math.ceil(visiblePosts.length / itemsPerPage);
-    const paginatedPosts = visiblePosts.slice(
+    const totalPages = Math.ceil(filteredPosts.length / itemsPerPage);
+    const paginatedPosts = filteredPosts.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
@@ -181,7 +181,7 @@ const Blog = () => {
                             </svg>
                         </motion.div>
 
-                        {displayTags.length > 0 && (
+                        {!loading && publishedPosts.length > 0 && displayTags.length > 0 && (
                             <motion.div
                                 className={styles.tagFilter}
                                 initial={{ opacity: 0, y: 20 }}
@@ -259,8 +259,8 @@ const Blog = () => {
                             </div>
                         ) : (
                             <div className={styles.emptyState}>
-                                <h3>{t('blog.emptyTitle')}</h3>
-                                <p>{t('blog.emptyDescription')}</p>
+                                <h3>{publishedPosts.length === 0 ? t('blog.empty') : t('blog.emptyTitle')}</h3>
+                                <p>{publishedPosts.length === 0 ? t('blog.hint') : t('blog.emptyDescription')}</p>
                             </div>
                         )}
 

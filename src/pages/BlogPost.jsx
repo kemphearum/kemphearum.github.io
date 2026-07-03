@@ -293,7 +293,7 @@ const BlogPost = () => {
                         transition={{ delay: 0.1, duration: 0.5 }}
                     >
                         {coverImg ? (
-                            <img src={coverImg} alt={localizedPost.title} width="1200" height="630" />
+                            <img src={coverImg} alt={localizedPost.title} width="1200" height="630" fetchPriority="high" />
                         ) : (
                             <div className={styles.heroPlaceholder}>
                                 <span>{localizedPost.title}</span>

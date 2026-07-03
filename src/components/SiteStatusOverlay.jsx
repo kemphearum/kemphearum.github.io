@@ -255,7 +255,7 @@ const SiteStatusOverlay = ({ config }) => {
     const bannerColor = isMaintenance ? '#ef4444' : '#60a5fa';
 
     return (
-        <>
+        <aside aria-label="Site Status">
             <div className={styles.watermarkOverlay}>
                 <div className={styles.watermarkText} style={{ color: isMaintenance ? '#ef4444' : 'var(--text-primary)' }}>
                     {Array.from({ length: 50 }).map((_, i) => (
@@ -282,7 +282,7 @@ const SiteStatusOverlay = ({ config }) => {
                     </span>
                 </div>
             </div>
-        </>
+        </aside>
     );
 };
 

@@ -4,6 +4,8 @@ import { useActivity } from '../../../hooks/useActivity';
 import { useTranslation } from '../../../hooks/useTranslation';
 import { ACTIONS } from '../../../utils/permissions';
 import { listDashboardWidgets } from '../../../registry/dashboardWidgetRegistry';
+import { Card, Skeleton } from '../../../shared/components/ui';
+import styles from './DashboardTab.module.scss';
 
 /**
  * Dashboard shell. Widgets are composed from the dashboard widget registry —
@@ -33,12 +35,24 @@ const DashboardTab = ({ userRole, isActionAllowed, setActiveTab }) => {
   );
 
   return (
-    <div className="admin-tab-container">
+    <div className={`admin-tab-container ${styles.dashboardGrid}`}>
       {widgets.map((widget) => {
         const WidgetComponent = widget.component;
         return (
-          <React.Suspense key={widget.id} fallback={<div className="loading-state">{t('admin.common.loading')}</div>}>
-            <WidgetComponent ctx={ctx} />
+          <React.Suspense 
+            key={widget.id} 
+            fallback={
+              <div className={`${styles.widgetWrapper} ${styles[`widget-${widget.id}`]}`}>
+                <Card className={styles.panel} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: 0.7 }}>
+                  <Skeleton height="24px" width="140px" />
+                  <Skeleton height="100%" width="100%" />
+                </Card>
+              </div>
+            }
+          >
+            <div className={`${styles.widgetWrapper} ${styles[`widget-${widget.id}`]}`}>
+              <WidgetComponent ctx={ctx} />
+            </div>
           </React.Suspense>
         );
       })}

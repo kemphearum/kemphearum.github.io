@@ -28,7 +28,25 @@ export default defineConfig({
     setupFiles: './src/setupTests.js',
     // Firestore rules tests require the emulator + @firebase/rules-unit-testing
     // and are run separately (firebase emulators:exec), not in the unit run.
-    exclude: ['**/node_modules/**', '**/firestore.rules.test.mjs'],
+    exclude: ['**/node_modules/**', '**/firestore.rules.test.mjs', '**/e2e/**'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      statements: 90,
+      branches: 85,
+      functions: 90,
+      lines: 90,
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/build/**',
+        '**/.react-router/**',
+        '**/e2e/**',
+        '**/eslint.config.js',
+        '**/vite.config.js',
+        '**/playwright.config.js'
+      ]
+    }
   },
   server: {
     port: 5173,
@@ -36,5 +54,17 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/firebase/')) return 'vendor-firebase';
+          if (id.includes('node_modules/framer-motion') || 
+              id.includes('node_modules/lucide-react') || 
+              id.includes('node_modules/recharts')) {
+            return 'vendor-ui';
+          }
+        }
+      }
+    }
   },
 })

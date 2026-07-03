@@ -1,7 +1,7 @@
 import BlogPost from "../../src/pages/BlogPost";
 import BlogService from "../../src/services/BlogService";
 import { getLocalizedField } from "../../src/utils/localization";
-import { generateMetaTags, DEFAULT_SITE_URL } from "../../src/utils/SeoHelper";
+import { generateMetaTags, generateArticleSchema, DEFAULT_SITE_URL } from "../../src/utils/SeoHelper";
 
 const getMetaLanguage = () => {
     if (typeof window === 'undefined') return 'en';
@@ -25,14 +25,20 @@ export function meta({ data, params }) {
     const title = getLocalizedField(data.title, language);
     const excerpt = getLocalizedField(data.excerpt, language);
     const content = getLocalizedField(data.content, language);
+    const url = `${DEFAULT_SITE_URL}/blog/${params.slug}`;
 
-    return generateMetaTags({
-        title,
-        description: excerpt || content?.substring(0, 160).replace(/[#*`]/g, '') + '...',
-        image: data.coverImage,
-        type: 'article',
-        url: `${DEFAULT_SITE_URL}/blog/${params.slug}`
-    });
+    return [
+        ...generateMetaTags({
+            title,
+            description: excerpt || content?.substring(0, 160).replace(/[#*`]/g, '') + '...',
+            image: data.coverImage,
+            type: 'article',
+            url
+        }),
+        {
+            "script:ld+json": generateArticleSchema(data, language, url, null)
+        }
+    ];
 }
 
 export async function clientLoader({ serverLoader }) {

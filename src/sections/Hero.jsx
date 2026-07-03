@@ -177,6 +177,7 @@ const Hero = () => {
                                 className={styles.profileImage}
                                 width="320"
                                 height="320"
+                                fetchPriority="high"
                             />
                         )}
                         <div className={styles.imageRing} />

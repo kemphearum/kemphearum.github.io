@@ -303,7 +303,7 @@ const AnimatedBackground = ({
     }, [density, speed, interactive, variant]);
 
     return (
-        <div className={styles.backgroundWrapper}>
+        <div className={styles.backgroundWrapper} aria-hidden="true">
             <div className={styles.glowLayer} style={{ opacity: glowOpacity / 100 }}>
                 <div className={styles.glowPrimary} />
                 <div className={styles.glowSecondary} />

@@ -86,7 +86,7 @@ const Skills = ({ isStandalone = false }) => {
                                                     )}
                                                 </div>
                                             </div>
-                                            <span className={styles.levelDots} aria-label={t(`skills.levels.${skill.level}`)} title={t(`skills.levels.${skill.level}`)}>
+                                            <span className={styles.levelDots} role="img" aria-label={t(`skills.levels.${skill.level}`)} title={t(`skills.levels.${skill.level}`)}>
                                                 {[1, 2, 3, 4].map((dot) => (
                                                     <span
                                                         key={dot}

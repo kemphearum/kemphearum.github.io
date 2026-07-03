@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Activity, ArrowRight } from 'lucide-react';
-import { Card, Spinner, EmptyState } from '@/shared/components/ui';
+import { Card, Spinner, EmptyState, Skeleton } from '@/shared/components/ui';
 import BaseService from '../../../../services/BaseService';
 import AuditLogService from '../../../../services/AuditLogService';
 import { formatLocalizedPeriod } from '../../../../utils/localization';
@@ -37,7 +37,9 @@ const RecentActivityWidget = ({ ctx }) => {
         </button>
       </div>
       {isLoading ? (
-        <div className={styles.listLoading}><Spinner size="md" /></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} width="100%" height="24px" />)}
+        </div>
       ) : !recentActivity.length ? (
         <EmptyState title={t('admin.dashboard.empty')} />
       ) : (

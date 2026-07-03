@@ -285,7 +285,7 @@ const ProjectDetail = () => {
                         transition={{ delay: 0.1, duration: 0.5 }}
                     >
                         {heroImg ? (
-                            <img src={heroImg} alt={localizedProject.title} width="1200" height="630" />
+                            <img src={heroImg} alt={localizedProject.title} width="1200" height="630" fetchPriority="high" />
                         ) : (
                             <div className={styles.heroPlaceholder}>
                                 <span>{localizedProject.title}</span>

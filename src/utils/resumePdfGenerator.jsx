@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import { jsPDF } from 'jspdf';
 import { toJpeg } from 'html-to-image';

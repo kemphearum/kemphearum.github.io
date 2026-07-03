@@ -1,7 +1,7 @@
 import ProjectDetail from "../../src/pages/ProjectDetail";
 import ProjectService from "../../src/services/ProjectService";
 import { getLocalizedField } from "../../src/utils/localization";
-import { generateMetaTags, DEFAULT_SITE_URL } from "../../src/utils/SeoHelper";
+import { generateMetaTags, generateProjectSchema, DEFAULT_SITE_URL } from "../../src/utils/SeoHelper";
 
 const getMetaLanguage = () => {
     if (typeof window === 'undefined') return 'en';
@@ -24,14 +24,20 @@ export function meta({ data, params }) {
 
     const title = getLocalizedField(data.title, language);
     const description = getLocalizedField(data.description, language);
+    const url = `${DEFAULT_SITE_URL}/projects/${params.slug}`;
 
-    return generateMetaTags({
-        title,
-        description: description || tr('Project details and technical implementation.', 'ព័ត៌មានលម្អិតគម្រោង និងការអនុវត្តបច្ចេកទេស។'),
-        image: data.imageUrl,
-        type: 'article',
-        url: `${DEFAULT_SITE_URL}/projects/${params.slug}`
-    });
+    return [
+        ...generateMetaTags({
+            title,
+            description: description || tr('Project details and technical implementation.', 'ព័ត៌មានលម្អិតគម្រោង និងការអនុវត្តបច្ចេកទេស។'),
+            image: data.imageUrl,
+            type: 'article',
+            url
+        }),
+        {
+            "script:ld+json": generateProjectSchema(data, language, url, null)
+        }
+    ];
 }
 
 export async function clientLoader({ serverLoader }) {

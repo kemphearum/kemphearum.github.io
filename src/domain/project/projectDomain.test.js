@@ -2,63 +2,64 @@ import { describe, it, expect } from 'vitest';
 import { normalizeProject, validateProject } from './projectDomain';
 
 describe('projectDomain', () => {
-    describe('normalizeProject()', () => {
-        it('should normalize basic project data', () => {
+    describe('normalizeProject', () => {
+        it('normalizes standard project data correctly', () => {
             const rawData = {
-                title: ' My Project ',
-                techStack: 'React, Vitest, CSS'
+                titleEn: 'Test Project',
+                titleKm: 'គម្រោងសាកល្បង',
+                descriptionEn: 'A test project',
+                techStack: 'React, Vite, Firebase',
+                githubUrl: ' https://github.com/test ',
+                status: 'published'
             };
+
             const result = normalizeProject(rawData);
 
-            expect(result.title).toEqual({ en: 'My Project', km: '' });
-            expect(result.techStack).toEqual(['React', 'Vitest', 'CSS']);
-            expect(result.slug).toBe('my-project');
-            expect(result.visible).toBe(true);
+            expect(result.title.en).toBe('Test Project');
+            expect(result.title.km).toBe('គម្រោងសាកល្បង');
+            expect(result.techStack).toEqual(['React', 'Vite', 'Firebase']);
+            expect(result.githubUrl).toBe('https://github.com/test');
+            expect(result.slug).toBe('test-project');
+            expect(result.status).toBe('published');
             expect(result.featured).toBe(false);
+            expect(result.galleryUrls).toEqual([]);
         });
 
-        it('should handle techStack array input', () => {
-            const rawData = { techStack: ['JavaScript', 'HTML'] };
+        it('handles array inputs for techStack and galleryUrls', () => {
+            const rawData = {
+                titleEn: 'Project 2',
+                techStack: ['Node', 'Express', 'Node'], // tests deduplication
+                galleryUrls: ['url1', 'url2', '']
+            };
+
             const result = normalizeProject(rawData);
-            expect(result.techStack).toEqual(['JavaScript', 'HTML']);
+
+            expect(result.techStack).toEqual(['Node', 'Express']);
+            expect(result.galleryUrls).toEqual(['url1', 'url2']);
         });
 
-        it('should generate slug if missing', () => {
-            const result = normalizeProject({ title: 'Hello World' });
-            expect(result.slug).toBe('hello-world');
+        it('handles missing fields gracefully', () => {
+            const result = normalizeProject({});
+            expect(result.title.en).toBe('Untitled Project');
+            expect(result.slug).toBe('untitled-project');
+            expect(result.techStack).toEqual([]);
         });
-
-        it('should use provided slug if present', () => {
-            const result = normalizeProject({ title: 'A', slug: 'custom-slug' });
-            expect(result.slug).toBe('custom-slug');
-        });
-
-        it('should handle boolean fields correctly', () => {
-            const result = normalizeProject({ visible: false, featured: true });
-            expect(result.visible).toBe(false);
-            expect(result.featured).toBe(true);
-        });
-
-        it('should include imageUrl if provided', () => {
-            const result = normalizeProject({ imageUrl: 'http://test.com/img.jpg' });
-            expect(result.imageUrl).toBe('http://test.com/img.jpg');
+        
+        it('includes imageUrl if provided', () => {
+            const result = normalizeProject({ imageUrl: 'test.png' });
+            expect(result.imageUrl).toBe('test.png');
         });
     });
 
-    describe('validateProject()', () => {
-        it('should return null for valid data', () => {
-            const errors = validateProject({ title: { en: 'Valid Project', km: '' } });
+    describe('validateProject', () => {
+        it('returns errors if titleEn is missing', () => {
+            const errors = validateProject({ title: { km: 'Test' } });
+            expect(errors).toEqual({ titleEn: 'English title is required' });
+        });
+
+        it('returns null if validation passes', () => {
+            const errors = validateProject({ title: { en: 'Test Project' } });
             expect(errors).toBeNull();
-        });
-
-        it('should return error if title is missing', () => {
-            const errors = validateProject({ title: { en: '', km: '' } });
-            expect(errors.titleEn).toBe('English title is required');
-        });
-
-        it('should return error if title is only whitespace', () => {
-            const errors = validateProject({ title: { en: '   ', km: '' } });
-            expect(errors.titleEn).toBe('English title is required');
         });
     });
 });

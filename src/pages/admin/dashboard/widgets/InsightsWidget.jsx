@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Spinner } from '@/shared/components/ui';
+import { Card, Spinner, Skeleton } from '@/shared/components/ui';
 import BaseService from '../../../../services/BaseService';
 import BlogService from '../../../../services/BlogService';
 import ProjectService from '../../../../services/ProjectService';
@@ -71,7 +71,20 @@ const InsightsWidget = ({ ctx }) => {
       <h2 className={styles.sectionTitle}>{t('admin.dashboard.insights.title')}</h2>
 
       {loading ? (
-        <div className={styles.listLoading}><Spinner size="md" /></div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', height: '100%' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <Skeleton width="100px" height="28px" borderRadius="50px" />
+            <Skeleton width="80px" height="28px" borderRadius="50px" />
+            <Skeleton width="120px" height="28px" borderRadius="50px" />
+          </div>
+          <Skeleton width="100%" height="92px" />
+          <div style={{ display: 'flex', gap: '0.75rem', marginTop: 'auto' }}>
+            <Skeleton width="100%" height="60px" />
+            <Skeleton width="100%" height="60px" />
+            <Skeleton width="100%" height="60px" />
+            <Skeleton width="100%" height="60px" />
+          </div>
+        </div>
       ) : (
         <div className={styles.insights}>
           <div className={styles.insightsBlock}>
@@ -91,7 +104,7 @@ const InsightsWidget = ({ ctx }) => {
             <div className={styles.trend}>
               {trend.map((m) => (
                 <div key={m.key} className={styles.trendCol}>
-                  <div className={styles.trendBarTrack}>
+                  <div className={styles.trendBarTrack} title={`${m.count} items in ${m.key}`}>
                     <div className={styles.trendBar} style={{ height: `${Math.round((m.count / trendMax) * 100)}%` }} />
                   </div>
                   <span className={styles.trendCount}>{m.count}</span>
