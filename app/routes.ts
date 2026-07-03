@@ -11,6 +11,7 @@ export default [
   route("api/geo", "routes/api.geo.jsx", { id: "api-geo" }),
   route("api/auth-log", "routes/api.authLog.jsx", { id: "api-auth-log" }),
   route("api/db-sync", "routes/api.dbSync.jsx", { id: "api-db-sync" }),
+  route("api/analytics", "routes/api.analytics.jsx", { id: "api-analytics" }),
   route("sitemap.xml", "routes/sitemap[.]xml.jsx"),
   route("rss.xml", "routes/rss[.]xml.jsx"),
   route("resume", "routes/resume.jsx", { id: "resume" }),
