@@ -12,13 +12,25 @@ import { ALLOWED_CONTACT_ORIGINS } from './contactSubmission';
 const parseServiceAccount = () => {
     const raw = globalThis.process?.env?.FIREBASE_SERVICE_ACCOUNT_JSON;
     if (!raw) {
+        if (globalThis.process?.env?.NODE_ENV === 'development' || !globalThis.process?.env?.NODE_ENV) {
+            console.warn('⚠️ Missing FIREBASE_SERVICE_ACCOUNT_JSON in development. Admin SDK disabled.');
+            return null;
+        }
         throw new Error('Missing FIREBASE_SERVICE_ACCOUNT_JSON in server environment.');
     }
-    const parsed = JSON.parse(raw);
-    if (parsed.private_key) {
-        parsed.private_key = String(parsed.private_key).replace(/\\n/g, '\n');
+    try {
+        const parsed = JSON.parse(raw);
+        if (parsed.private_key) {
+            parsed.private_key = String(parsed.private_key).replace(/\\n/g, '\n');
+        }
+        return parsed;
+    } catch (_e) {
+        if (globalThis.process?.env?.NODE_ENV === 'development') {
+            console.warn('⚠️ Invalid FIREBASE_SERVICE_ACCOUNT_JSON format in development. Admin SDK disabled.');
+            return null;
+        }
+        throw new Error('Invalid FIREBASE_SERVICE_ACCOUNT_JSON format.');
     }
-    return parsed;
 };
 
 const ensureApp = () => {

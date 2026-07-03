@@ -18,8 +18,8 @@ const PublicationLocalizedFields = () => {
         <>
             <Tabs value={activeLanguage} onValueChange={setActiveLanguage} className="ui-inlineLangTabs">
                 <Tabs.List>
-                    <Tabs.Trigger value="en">EN</Tabs.Trigger>
-                    <Tabs.Trigger value="km">KM</Tabs.Trigger>
+                    <Tabs.Trigger value="en">{t('admin.common.langEn', 'EN')}</Tabs.Trigger>
+                    <Tabs.Trigger value="km">{t('admin.common.langKm', 'KM')}</Tabs.Trigger>
                 </Tabs.List>
             </Tabs>
 

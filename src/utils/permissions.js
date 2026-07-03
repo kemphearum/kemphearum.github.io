@@ -158,11 +158,6 @@ export const isActionAllowed = (action, moduleName, role, rolePermissions = {}) 
     // 1. Superadmin has absolute power
     if (isSuperAdminRole(normalizedRole)) return true;
 
-    // 2. These modules are strictly for superadmin (unless it's self-reading profile)
-    const superAdminOnly = [MODULES.AUDIT];
-    if (superAdminOnly.includes(moduleName) && moduleName !== MODULES.PROFILE) {
-        return false;
-    }
 
     // Settings can be visible by dynamic role tab config, but only superadmin can mutate.
     if (moduleName === MODULES.SETTINGS && action !== ACTIONS.VIEW) {

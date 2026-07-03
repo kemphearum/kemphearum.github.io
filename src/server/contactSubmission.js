@@ -18,14 +18,26 @@ export const ALLOWED_CONTACT_ORIGINS = new Set([
 const parseServiceAccount = () => {
     const raw = globalThis.process?.env?.FIREBASE_SERVICE_ACCOUNT_JSON;
     if (!raw) {
+        if (globalThis.process?.env?.NODE_ENV === 'development' || !globalThis.process?.env?.NODE_ENV) {
+            console.warn('⚠️ Missing FIREBASE_SERVICE_ACCOUNT_JSON in development. Admin SDK disabled for Contact.');
+            return null;
+        }
         throw new Error('Missing FIREBASE_SERVICE_ACCOUNT_JSON in server environment.');
     }
 
-    const parsed = JSON.parse(raw);
-    if (parsed.private_key) {
-        parsed.private_key = String(parsed.private_key).replace(/\\n/g, '\n');
+    try {
+        const parsed = JSON.parse(raw);
+        if (parsed.private_key) {
+            parsed.private_key = String(parsed.private_key).replace(/\\n/g, '\n');
+        }
+        return parsed;
+    } catch (_e) {
+        if (globalThis.process?.env?.NODE_ENV === 'development') {
+            console.warn('⚠️ Invalid FIREBASE_SERVICE_ACCOUNT_JSON format in development. Admin SDK disabled for Contact.');
+            return null;
+        }
+        throw new Error('Invalid FIREBASE_SERVICE_ACCOUNT_JSON format.');
     }
-    return parsed;
 };
 
 const getDb = () => {
@@ -108,8 +120,13 @@ export const buildCorsHeaders = (origin) => {
 
     return headers;
 };
-
 export const processContactSubmission = async ({ payload, clientIp }) => {
+    // Bypass in local development if service account is missing
+    if ((globalThis.process?.env?.NODE_ENV === 'development' || !globalThis.process?.env?.NODE_ENV) && !globalThis.process?.env?.FIREBASE_SERVICE_ACCOUNT_JSON) {
+        console.log('Skipping contact submission in development due to missing FIREBASE_SERVICE_ACCOUNT_JSON.');
+        return { status: 200, body: { success: true } };
+    }
+
     const data = payload && typeof payload === 'object' ? payload : {};
     const honeypot = normalizeText(data.website || '', 200);
 

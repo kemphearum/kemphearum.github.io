@@ -273,6 +273,22 @@ class BlogService extends BaseService {
             drafts
         };
     }
+
+    /**
+     * Increments the view count for a specific blog post by ID
+     * @param {string} id
+     * @returns {Promise<void>}
+     */
+    async incrementViewCount(id) {
+        if (!id) return;
+        try {
+            const { increment, updateDoc, doc } = await import('firebase/firestore');
+            const docRef = doc(db, this.collectionName, id);
+            await updateDoc(docRef, { views: increment(1) });
+        } catch (error) {
+            console.error('Failed to increment view count:', error);
+        }
+    }
 }
 
 export default new BlogService();

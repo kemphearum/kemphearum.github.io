@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, History, Plus } from 'lucide-react';
+import { FileText, History, Plus, Eye } from 'lucide-react';
 import { Button, Badge } from '@/shared/components/ui';
 import DataTable from '@/shared/components/ui/data-table/DataTable';
 import { renderAdminActions } from '@/shared/components/ui/data-table/DataTableHelpers';
@@ -122,6 +122,17 @@ const BlogTable = ({
               ? t('admin.blog.table.homepageHighlight')
               : t('admin.blog.table.standardListing')}
           </span>
+        </div>
+      )
+    },
+    {
+      key: 'views',
+      header: t('admin.blog.table.views', 'Views'),
+      sortable: true,
+      render: (row) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)' }}>
+          <Eye size={14} />
+          <span>{row.views || 0}</span>
         </div>
       )
     },

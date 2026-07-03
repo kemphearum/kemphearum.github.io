@@ -32,6 +32,12 @@ export const processAuthEvent = async ({ payload, headers, authToken }) => {
         return { status: 400, body: { success: false, error: { code: 'BAD_REQUEST', message: 'A valid email is required.' } } };
     }
 
+    // Bypass in local development if service account is missing
+    if ((globalThis.process?.env?.NODE_ENV === 'development' || !globalThis.process?.env?.NODE_ENV) && !globalThis.process?.env?.FIREBASE_SERVICE_ACCOUNT_JSON) {
+        console.log('Skipping auth audit log in development due to missing FIREBASE_SERVICE_ACCOUNT_JSON.');
+        return { status: 200, body: { success: true } };
+    }
+
     try {
         const db = getDb();
 

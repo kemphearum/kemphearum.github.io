@@ -8,6 +8,7 @@ import { Link } from 'react-router';
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
 import { filterPublished } from '../domain/shared/contentStatus';
+import { Eye } from 'lucide-react';
 
 const FeaturedBlogs = () => {
     const { language, t } = useTranslation();
@@ -100,6 +101,9 @@ const FeaturedBlogs = () => {
                                                     {post.tags && post.tags.length > 0 && (
                                                         <span className={styles.tag}>{post.tags[0]}</span>
                                                     )}
+                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                        <Eye size={14} /> {post.views || 0}
+                                                    </span>
                                                 </div>
                                                 <h3>{post.title}</h3>
                                                 <p>{post.excerpt}</p>

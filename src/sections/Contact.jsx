@@ -289,7 +289,7 @@ const Contact = () => {
                                     style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', width: '100%', justifyContent: 'center' }}
                                 >
                                     <FileText size={18} />
-                                    Download Résumé
+                                    {t('contact.downloadResume', 'Download Résumé')}
                                 </a>
                             </div>
                         )}

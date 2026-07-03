@@ -41,6 +41,7 @@ import Footer from '@/sections/Footer';
 import styles from './Blog.module.scss';
 import { useTranslation } from '../hooks/useTranslation';
 import { useDebounce } from '../hooks/useDebounce';
+import { Eye } from 'lucide-react';
 
 const Blog = () => {
     const loaderData = useLoaderData();
@@ -244,6 +245,9 @@ const Blog = () => {
                                                     {post.tags && post.tags.length > 0 && (
                                                         <span className={styles.tag}>{post.tags[0]}</span>
                                                     )}
+                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                                                        <Eye size={14} /> {post.views || 0}
+                                                    </span>
                                                 </div>
                                                 <h3>{post.title}</h3>
                                                 <p>{post.excerpt}</p>

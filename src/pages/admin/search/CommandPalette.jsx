@@ -217,7 +217,7 @@ const CommandPalette = ({ open, onClose, onNavigate, isActionAllowed, canViewTab
             onKeyDown={handleKeyDown}
             aria-label={t('admin.palette.placeholder')}
           />
-          <kbd className={styles.kbd}>Esc</kbd>
+          <kbd className={styles.kbd}>{t('admin.search.esc', 'Esc')}</kbd>
         </div>
 
         <div className={styles.results} ref={listRef}>
