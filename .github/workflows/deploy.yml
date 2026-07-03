@@ -65,7 +65,6 @@ jobs:
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
         run: |
           npm run build
-          cp build/client/index.html build/client/404.html
           mv build/client build-primary
 
       - name: Build Backup (Dev)
@@ -79,7 +78,6 @@ jobs:
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID_BACKUP }}
         run: |
           npm run build
-          cp build/client/index.html build/client/404.html
           mv build/client build-backup
 
       - name: Clean up existing github-pages artifacts

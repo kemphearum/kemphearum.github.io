@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Kem Phearum — Redirecting…</title>
+    <style>html { background: #0b1527; }</style>
+    <script>
+        (function () {
+            try {
+                var path = location.pathname + location.search + location.hash;
+                if (path && path !== '/') {
+                    sessionStorage.setItem('rr:spa-fallback-path', path);
+                }
+            } catch (e) { /* storage unavailable */ }
+            location.replace('/');
+        })();
+    </script>
+</head>
+<body>
+    <noscript>Page not found. <a href="/">Go to the homepage</a>.</noscript>
+</body>
+</html>
