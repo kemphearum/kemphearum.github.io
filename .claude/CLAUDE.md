@@ -1,5 +1,7 @@
 # Project Instructions — portfolio
 
+*Last updated: July 4, 2026*
+
 React Router 7 + Vite + Firebase personal portfolio. These rules govern how Claude works in this repo. (Tool-agnostic mirror also lives in root `AGENTS.md` — kept in sync with this file.)
 
 ## Project Context

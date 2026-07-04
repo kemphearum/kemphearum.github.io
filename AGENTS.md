@@ -1,5 +1,7 @@
 # Agent Instructions — portfolio
 
+*Last updated: July 4, 2026*
+
 React Router 7 + Vite + Firebase personal portfolio. These rules govern how AI coding agents work in this repo. (Claude-specific instructions also live in `.claude/CLAUDE.md` — kept in sync with this file.)
 
 ## Project Context
