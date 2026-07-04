@@ -71,6 +71,7 @@ service cloud.firestore {
     function isAdmin() {
       return roleName() == 'admin'
         || roleName() == 'administrator'
+        || getBaseRole(roleName()) == 'admin'
         || isSuperAdmin();
     }
 
@@ -87,6 +88,7 @@ service cloud.firestore {
     function isEditor() {
       return roleName() == 'editor'
         || roleName() == 'writer'
+        || getBaseRole(roleName()) == 'editor'
         || isAdmin();
     }
 

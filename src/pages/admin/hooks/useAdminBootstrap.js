@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { isAdminRole, isSuperAdminRole } from '../../../utils/permissions';
+import PermissionService from '../../../services/auth/PermissionService';
 import SettingsService from '../../../services/SettingsService';
 
 export const useAdminBootstrap = ({
@@ -61,7 +61,7 @@ export const useAdminBootstrap = ({
             // Dynamic roles depend on rolePermissions for tab visibility/action capability.
             // Fetch for every authenticated user role (not only static admin roles).
             fetchRolePermissions();
-            if (isAdminRole(userRole)) {
+            if (PermissionService.can(userRole, PermissionService.ACTIONS.VIEW, PermissionService.RESOURCES.MESSAGES)) {
                 fetchMessages();
             }
         }
@@ -95,7 +95,7 @@ export const useAdminBootstrap = ({
     }, [fetchSectionOnce, user, userRole]);
 
     useEffect(() => {
-        if (!isSuperAdminRole(userRole)) return;
+        if (!PermissionService.can(userRole, PermissionService.ACTIONS.CONFIGURE, PermissionService.RESOURCES.SETTINGS)) return;
 
         const runMigration = async () => {
             try {

@@ -87,6 +87,10 @@ export async function action({ request }) {
         if (error?.code === 'RATE_LIMITED') {
             return toJsonResponse({ success: false, error: { code: 'RATE_LIMITED', message: error.message } }, 429, corsHeaders);
         }
+        if (error?.message?.includes('Admin SDK is disabled')) {
+            // Gracefully return success in dev when admin sdk isn't configured
+            return toJsonResponse({ success: true, warning: 'Analytics ignored - Admin SDK disabled' }, 200, corsHeaders);
+        }
         console.error('Analytics API error:', error);
         return toJsonResponse({ success: false, error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } }, 500, corsHeaders);
     }

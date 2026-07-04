@@ -26,6 +26,7 @@ import { ACTIONS } from '../utils/permissionConstants';
 import { useCommandPalette } from '../hooks/useCommandPalette';
 import CommandPalette from './admin/search/CommandPalette';
 import { useNotifications } from '../context/NotificationContextValue';
+import { AdminAccessProvider } from '../context/AdminAccessContext';
 
 const LAZY_RELOAD_PREFIX = 'admin-lazy-reload:';
 
@@ -70,7 +71,7 @@ const GeneralTab = lazyWithRetry(() => import('./admin/general/GeneralTab'), 'ge
 const ProfileTab = lazyWithRetry(() => import('./admin/profile/ProfileTab'), 'profile');
 const SettingsTab = lazyWithRetry(() => import('./admin/settings/SettingsTab'), 'settings');
 const MessagesTab = lazyWithRetry(() => import('./admin/messages/MessagesTab'), 'messages');
-const UsersTab = lazyWithRetry(() => import('./admin/users/UsersTab'), 'users');
+const AuthTab = lazyWithRetry(() => import('./admin/auth/AuthTab'), 'users');
 const DatabaseTab = lazyWithRetry(() => import('./admin/database/DatabaseTab'), 'database');
 const AuditLogsTab = lazyWithRetry(() => import('./admin/audit/AuditLogsTab'), 'audit');
 const AnalyticsTab = lazyWithRetry(() => import('./admin/analytics/AnalyticsTab'), 'analytics');
@@ -243,7 +244,7 @@ const Admin = () => {
             case 'messages':
                 return <MessagesTab {...commonProps} onMessagesChange={fetchMessages} />;
             case 'users':
-                return <UsersTab {...commonProps} user={user} />;
+                return <AuthTab {...commonProps} user={user} />;
             case 'database':
                 return <DatabaseTab {...commonProps} setActiveTab={setActiveTab} />;
             case 'audit':

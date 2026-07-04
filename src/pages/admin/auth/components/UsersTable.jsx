@@ -1,9 +1,9 @@
 
-import { Edit, Key, Trash2, UserPlus, Users } from 'lucide-react';
+import { Edit, Key, Trash2, UserPlus, Users, Shield } from 'lucide-react';
 import DataTable from '../../../../shared/components/ui/data-table/DataTable';
 import { Button, Badge } from '../../../../shared/components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
-import { formatRoleDisplayName, isSuperAdminRole, normalizeRole } from '../../../../utils/permissions';
+import { formatRoleDisplayName, normalizeRole } from '../../../../utils/permissions';
 import HighlightText from '../../../../shared/components/ui/HighlightText';
 
 
@@ -43,7 +43,7 @@ const UsersTable = ({
       header: t('ui.user'),
       sortable: true,
       render: (user) => {
-        const normalizedRole = normalizeRole(user.role);
+        const normalizedRole = normalizeRole(user.role) === 'superadmin';
         const initials = (user.displayName || user.email || '??')
           .split(/[@.\s]/)
           .filter(Boolean)
@@ -89,7 +89,7 @@ const UsersTable = ({
       header: t('admin.rolePermissions.roleSuffix'),
       sortable: true,
       render: (user) => {
-        const normalizedRole = normalizeRole(user.role);
+        const normalizedRole = normalizeRole(user.role) === 'superadmin';
         const roleVariants = {
           superadmin: 'success',
           admin: 'primary',
@@ -171,7 +171,7 @@ const UsersTable = ({
               variant="danger" 
               size="sm" 
               onClick={(event) => { event.stopPropagation(); onDelete(user); }}
-              disabled={!canDisableUsers || isSuperAdminRole(user.role)}
+              disabled={!canDisableUsers || normalizeRole(user.role) === 'superadmin'}
               title={t('ui.disableUser')}
             >
               <Trash2 size={16} />

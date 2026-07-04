@@ -10,5 +10,14 @@ export const ACTIONS = {
     VIEW_HISTORY: 'view_history',
     UPLOAD: 'upload',
     DOWNLOAD: 'download',
-    PUBLISH: 'publish'
+    PUBLISH: 'publish',
+    ARCHIVE: 'archive',
+    RESTORE: 'restore',
+    IMPORT: 'import',
+    EXPORT: 'export',
+    APPROVE: 'approve',
+    EXECUTE: 'execute',
+    CONFIGURE: 'configure',
+    MANAGE: 'manage',
+    VIEW_AUDIT_LOGS: 'view_audit_logs'
 };

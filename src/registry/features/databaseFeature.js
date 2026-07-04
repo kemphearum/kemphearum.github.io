@@ -3,8 +3,16 @@ import { ACTIONS } from '../../utils/permissionConstants';
 
 export const databaseFeature = {
     id: 'database',
+    category: 'database',
+    visibility: true,
     permissions: {
-        actions: [ACTIONS.DATABASE_ACTIONS]
+        supportedActions: [ACTIONS.VIEW, ACTIONS.CONFIGURE, ACTIONS.MANAGE, ACTIONS.EXPORT, ACTIONS.VIEW_AUDIT_LOGS],
+        defaultPermissions: {
+            admin: [ACTIONS.VIEW, ACTIONS.CONFIGURE, ACTIONS.MANAGE, ACTIONS.EXPORT, ACTIONS.VIEW_AUDIT_LOGS],
+            editor: [],
+            author: [],
+            viewer: []
+        }
     },
     nav: {
         group: 'administration',

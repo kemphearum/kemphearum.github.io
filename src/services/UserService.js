@@ -1,8 +1,9 @@
 import BaseService from './BaseService';
+import PermissionService from './auth/PermissionService';
 import { db, auth } from '../firebase';
 import { collection, addDoc, getDocs, getDoc, setDoc, deleteDoc, doc, query, where, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { isActionAllowed, ACTIONS, MODULES, isSuperAdminRole, normalizeRole, normalizeRolePermissionEntry } from '../utils/permissions';
+import { ACTIONS, MODULES, isSuperAdminRole, normalizeRole, normalizeRolePermissionEntry } from '../utils/permissions';
 import { normalizeUser, validateUser } from '../domain/user/userDomain';
 
 class UserService extends BaseService {
@@ -67,7 +68,7 @@ class UserService extends BaseService {
      * @returns {Promise<void>}
      */
     async updateRole(userRole, userId, newRole, trackWrite, rolePermissions = {}) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS, userRole, rolePermissions)) throw new Error("Unauthorized action");
+        if (!PermissionService.can(userRole, PermissionService.ACTIONS.EDIT, PermissionService.RESOURCES.USERS, rolePermissions)) throw new Error("Unauthorized action");
         const normalizedRole = normalizeRole(newRole) || 'pending';
         return this.update(userId, { role: normalizedRole }, trackWrite);
     }
@@ -82,7 +83,7 @@ class UserService extends BaseService {
      * @returns {Promise<void>}
      */
     async setUserDisabled(userRole, userId, shouldDisable, trackWrite, rolePermissions = {}) {
-        if (!isActionAllowed(ACTIONS.DISABLE, MODULES.USERS, userRole, rolePermissions)) throw new Error("Unauthorized action");
+        if (!PermissionService.can(userRole, PermissionService.ACTIONS.DISABLE, PermissionService.RESOURCES.USERS, rolePermissions)) throw new Error("Unauthorized action");
         await this.update(userId, {
             isActive: !shouldDisable,
             disabled: shouldDisable
@@ -98,7 +99,7 @@ class UserService extends BaseService {
      * @returns {Promise<void>}
      */
     async removeUser(userRole, userId, trackDelete, rolePermissions = {}) {
-        if (!isActionAllowed(ACTIONS.DELETE, MODULES.USERS, userRole, rolePermissions)) throw new Error("Unauthorized action");
+        if (!PermissionService.can(userRole, PermissionService.ACTIONS.DELETE, PermissionService.RESOURCES.USERS, rolePermissions)) throw new Error("Unauthorized action");
         // We use updateDoc to logically disable them
         await this.update(userId, { isActive: false }, trackDelete);
     }
@@ -111,7 +112,7 @@ class UserService extends BaseService {
      * @returns {Promise<void>}
      */
     async sendPasswordReset(userRole, email, rolePermissions = {}) {
-        if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS, userRole, rolePermissions)) throw new Error("Unauthorized action");
+        if (!PermissionService.can(userRole, PermissionService.ACTIONS.EDIT, PermissionService.RESOURCES.USERS, rolePermissions)) throw new Error("Unauthorized action");
         return sendPasswordResetEmail(auth, email);
     }
 
@@ -126,7 +127,7 @@ class UserService extends BaseService {
      * @returns {Promise<void>}
      */
     async createUser(userRole, email, password, role, trackRead, rolePermissions = {}) {
-        if (!isActionAllowed(ACTIONS.CREATE, MODULES.USERS, userRole, rolePermissions)) throw new Error("Unauthorized action");
+        if (!PermissionService.can(userRole, PermissionService.ACTIONS.CREATE, PermissionService.RESOURCES.USERS, rolePermissions)) throw new Error("Unauthorized action");
         const normalizedRole = normalizeRole(role) || 'pending';
 
         const dataToValidate = { email, role: normalizedRole };

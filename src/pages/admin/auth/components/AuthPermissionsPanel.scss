@@ -1,0 +1,205 @@
+.permission-matrix-container {
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--bg-card);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(8px);
+    
+    .permission-matrix {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        
+        th, td {
+            padding: 0.8rem;
+            border-bottom: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            white-space: nowrap;
+            position: relative;
+            transition: background-color 0.2s ease;
+            
+            &:last-child {
+                border-right: none;
+            }
+        }
+        
+        th {
+            background-color: var(--bg-subtle);
+            font-weight: 600;
+            color: var(--color-text);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .sticky-col {
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            background-color: var(--bg-card);
+            font-weight: 500;
+        }
+        
+        th.sticky-col {
+            z-index: 15;
+            background-color: var(--bg-subtle);
+        }
+        
+        .feature-col {
+            min-width: 220px;
+        }
+        
+        .action-col {
+            min-width: 110px;
+        }
+        
+        .action-header {
+            text-transform: capitalize;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            color: var(--color-text-muted);
+        }
+        
+        /* Not Applicable State */
+        .not-applicable {
+            background-image: repeating-linear-gradient(
+                45deg,
+                var(--bg-subtle) 0,
+                var(--bg-subtle) 2px,
+                var(--bg-card) 2px,
+                var(--bg-card) 6px
+            );
+            color: var(--color-text-muted);
+            opacity: 0.6;
+        }
+        
+        /* Crosshair Hover Effect */
+        .feature-row {
+            &:hover {
+                td { background-color: var(--bg-hover); }
+                .sticky-col { background-color: var(--bg-hover); }
+            }
+        }
+        
+        td:hover::after {
+            content: "";
+            position: absolute;
+            background-color: rgba(128, 128, 128, 0.05);
+            left: 0;
+            top: -5000px;
+            height: 10000px;
+            width: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .category-row {
+            td {
+                background-color: var(--bg-subtle);
+                border-bottom: 2px solid var(--color-primary);
+                position: sticky;
+                left: 0;
+                z-index: 4;
+                font-size: 0.85rem;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                color: var(--color-primary);
+                
+                &:hover {
+                    background-color: var(--bg-hover);
+                }
+            }
+        }
+        
+        /* Interactive Icons */
+        .matrix-toggle {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: var(--color-text-muted);
+            display: inline-flex;
+            padding: 4px;
+            border-radius: 6px;
+            
+            &.granted {
+                color: var(--color-success);
+            }
+            
+            &:hover:not(:disabled) {
+                transform: scale(1.15) translateY(-2px);
+                background: var(--bg-subtle);
+            }
+            
+            &:active:not(:disabled) {
+                transform: scale(0.95);
+            }
+        }
+        
+        .chevron-icon {
+            transition: transform 0.3s ease;
+            &.open { transform: rotate(90deg); }
+        }
+    }
+}
+
+/* Modern Pill Navigation */
+.ui-tabs-list.modern-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--bg-subtle);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 0;
+
+    .ui-tabs-trigger {
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        background: transparent;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 500;
+        color: var(--color-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        
+        &:hover {
+            background: var(--bg-hover);
+            color: var(--color-text);
+        }
+
+        &.ui-tabs-trigger-active {
+            background: var(--color-primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            
+            .role-badge {
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+            }
+        }
+    }
+    
+    .add-role-btn {
+        margin-left: auto;
+        color: var(--color-primary);
+        font-weight: 600;
+        background: transparent;
+        border: 1px dashed var(--color-primary);
+        
+        &:hover {
+            background: var(--bg-subtle);
+        }
+    }
+}
+
+.role-badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--border-color);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}

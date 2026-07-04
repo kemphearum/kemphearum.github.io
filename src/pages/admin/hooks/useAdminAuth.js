@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { serverTimestamp } from 'firebase/firestore';
 import { fetchGeoData } from '../../../utils/geoUtils';
 import { getDeviceType, getSessionId } from '../../../hooks/useAnalytics';
-import { isSuperAdminRole, normalizeRole } from '../../../utils/permissions';
+import { normalizeRole } from '../../../utils/permissions';
 import UserService from '../../../services/UserService';
 import AuthService from '../../../services/AuthService';
 import AuditLogService from '../../../services/AuditLogService';
@@ -119,10 +119,10 @@ export const useAdminAuth = ({
                         setUserId(userData.id);
                         setUserDisplayName(normalizeRenderableText(userData.displayName, language, ''));
 
-                        if (isBootstrapSuperAdminEmail(currentEmail) && !isSuperAdminRole(fetchedRole)) {
+                        if (isBootstrapSuperAdminEmail(currentEmail) && fetchedRole !== 'superadmin') {
                             fetchedRole = 'superadmin';
                             UserService.updateUserField(userData.id, { role: 'superadmin' }).catch(console.error);
-                        } else if (userData.role !== fetchedRole && isSuperAdminRole(fetchedRole)) {
+                        } else if (userData.role !== fetchedRole && fetchedRole === 'superadmin') {
                             UserService.updateUserField(userData.id, { role: fetchedRole }).catch(console.error);
                         }
 

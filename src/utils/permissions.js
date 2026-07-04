@@ -1,3 +1,4 @@
+import { getFeature } from '../registry/featureRegistry.js';
 import { ACTIONS } from './permissionConstants';
 import { MODULES, MODULE_ACTIONS } from '../registry/permissionRegistry';
 
@@ -6,6 +7,52 @@ export { MODULES, MODULE_ACTIONS };
 
 const VALID_MODULE_KEYS = new Set(Object.values(MODULES));
 const VALID_ACTION_KEYS = new Set(Object.values(ACTIONS));
+
+export const ACTION_DEPENDENCIES = {
+    [ACTIONS.CREATE]: [ACTIONS.VIEW],
+    [ACTIONS.EDIT]: [ACTIONS.VIEW],
+    [ACTIONS.DELETE]: [ACTIONS.VIEW],
+    [ACTIONS.PUBLISH]: [ACTIONS.VIEW, ACTIONS.EDIT],
+    [ACTIONS.ARCHIVE]: [ACTIONS.VIEW],
+    [ACTIONS.VIEW_HISTORY]: [ACTIONS.VIEW],
+};
+
+export const enforceDependencies = (actions) => {
+    if (!Array.isArray(actions)) return [];
+    const enforced = new Set(actions);
+    let changed = true;
+    
+    // Iteratively resolve dependencies
+    while (changed) {
+        changed = false;
+        for (const action of enforced) {
+            const deps = ACTION_DEPENDENCIES[action] || [];
+            for (const dep of deps) {
+                if (!enforced.has(dep)) {
+                    enforced.add(dep);
+                    changed = true;
+                }
+            }
+        }
+    }
+    return Array.from(enforced);
+};
+
+export const SOD_CONFLICTS = [
+    // Example: A user cannot possess both standard data entry and raw database manipulation
+    [ACTIONS.CREATE, ACTIONS.DATABASE_ACTIONS]
+];
+
+export const validateSoD = (actions) => {
+    for (const conflict of SOD_CONFLICTS) {
+        const hasAll = conflict.every(a => actions.includes(a));
+        if (hasAll) {
+            return `SoD Violation: Cannot combine ${conflict.join(' and ')}`;
+        }
+    }
+    return null;
+};
+
 
 const ROLE_ALIAS_MAP = {
     owner: 'superadmin',
@@ -117,7 +164,7 @@ const EDITOR_ALLOWED_ACTIONS = new Set([
     ACTIONS.VIEW_HISTORY
 ]);
 
-const isDefaultRoleCapabilityAllowed = (action, moduleName, normalizedRole) => {
+/* const isDefaultRoleCapabilityAllowed = (action, moduleName, normalizedRole) => {
     if (normalizedRole === 'admin') {
         const restrictedAdminModules = [MODULES.USERS, MODULES.AUDIT, MODULES.SETTINGS];
         if (restrictedAdminModules.includes(moduleName)) return false;
@@ -145,7 +192,7 @@ const isDefaultRoleCapabilityAllowed = (action, moduleName, normalizedRole) => {
     }
 
     return false;
-};
+}; */
 
 /**
  * Core RBAC decision engine.
@@ -153,25 +200,13 @@ const isDefaultRoleCapabilityAllowed = (action, moduleName, normalizedRole) => {
  */
 export const isActionAllowed = (action, moduleName, role, rolePermissions = {}) => {
     const normalizedRole = normalizeRole(role);
-    if (!normalizedRole) return false;
+    if (!normalizedRole || normalizedRole === 'pending') return false;
 
     // 1. Superadmin has absolute power
     if (isSuperAdminRole(normalizedRole)) return true;
 
-
-    // Settings can be visible by dynamic role tab config, but only superadmin can mutate.
-    if (moduleName === MODULES.SETTINGS && action !== ACTIONS.VIEW) {
-        return false;
-    }
-
-    // 3. Always allow profile + dashboard access for any authenticated role
-    if (moduleName === MODULES.PROFILE) return true;
-    if (moduleName === MODULES.DASHBOARD) return true;
-
-    // 4. Handle dynamic configuration (Strict Priority)
-    // If a role is explicitly defined in the rolePermissions object, that configuration defines their world.
+    // 2. Dynamic configuration (role matrix overrides)
     const isRoleConfigured = rolePermissions && Object.prototype.hasOwnProperty.call(rolePermissions, normalizedRole);
-
     if (isRoleConfigured) {
         const permissionEntry = normalizeRolePermissionEntry(rolePermissions[normalizedRole], normalizedRole);
         const configuredTabs = Array.isArray(permissionEntry.allowedTabs) ? permissionEntry.allowedTabs : [];
@@ -180,46 +215,29 @@ export const isActionAllowed = (action, moduleName, role, rolePermissions = {}) 
             : {};
 
         const isTabInConfig = configuredTabs.includes(moduleName);
-
-        // If it's a VIEW request, return whether it's in the config
         if (action === ACTIONS.VIEW) return isTabInConfig;
-
-        // If it's any other action, and they can't VIEW it, they can't do anything
         if (!isTabInConfig) return false;
 
-        const explicitActionsForModule = Array.isArray(configuredActions[moduleName])
-            ? configuredActions[moduleName]
-            : [];
-        
-        // 1. Explicitly granted actions always win
+        const explicitActionsForModule = Array.isArray(configuredActions[moduleName]) ? configuredActions[moduleName] : [];
         if (explicitActionsForModule.includes(action)) return true;
 
-        // 2. Fallback to inheritance from base role
-        const capabilityRole = ['admin', 'editor', 'pending'].includes(normalizedRole)
+        const capabilityRole = ['admin', 'editor', 'author', 'viewer'].includes(normalizedRole)
             ? normalizedRole
             : permissionEntry.baseRole;
-
-        // Honor the base role capabilities, overriding default module restrictions,
-        // because the user explicitly granted the module in 'configuredTabs'.
+            
         if (capabilityRole === 'superadmin') return true;
         
-        if (capabilityRole === 'admin') {
-            // Admins can do anything that isn't SuperAdmin-only,
-            // except full DB destructive actions
-            if (moduleName === MODULES.DATABASE && action === ACTIONS.DATABASE_ACTIONS) return false;
-            return true;
-        }
-
-        if (capabilityRole === 'editor') {
-            // Inherit the same content-authoring action set as a base editor
-            // (no delete/feature/visibility/database actions).
-            return EDITOR_ALLOWED_ACTIONS.has(action);
-        }
-
-        return false;
+        const feature = getFeature(moduleName);
+        if (!feature || !feature.permissions || !feature.permissions.defaultPermissions) return false;
+        
+        const defaultActions = feature.permissions.defaultPermissions[capabilityRole] || [];
+        return defaultActions.includes(action);
     }
 
-    // 5. Default Role Matrices (Fallback logic if no specific config exists)
-    // Only applied if we don't have a dynamic config for the role.
-    return isDefaultRoleCapabilityAllowed(action, moduleName, normalizedRole);
+    // 3. Fallback to Feature Registry Default Permissions
+    const feature = getFeature(moduleName);
+    if (!feature || !feature.permissions || !feature.permissions.defaultPermissions) return false;
+
+    const defaultActions = feature.permissions.defaultPermissions[normalizedRole] || [];
+    return defaultActions.includes(action);
 };

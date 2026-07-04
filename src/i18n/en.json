@@ -253,7 +253,8 @@
       "awards": "Awards",
       "publications": "Publications",
       "speaking": "Speaking",
-      "communication": "Communication"
+      "communication": "Communication",
+      "auth": "Authentication (IAM)"
     },
     "subtitles": {
       "general": "Manage your portfolio primary content",
@@ -330,6 +331,115 @@
         "magicLinkInvalid": "This sign-in link is invalid. Please request a new one.",
         "magicLinkExpired": "This sign-in link has expired. Please request a new one.",
         "internalError": "Authentication configuration error. Please check your Firebase Support Email and Authorized Domains."
+      },
+      "tabs": {
+        "overview": "Overview",
+        "users": "Users",
+        "roles": "Roles",
+        "permissions": "Permissions",
+        "sessions": "Sessions",
+        "security": "Security",
+        "activity": "Activity",
+        "settings": "Settings"
+      },
+      "overview": {
+        "title": "Authentication Overview",
+        "totalUsers": "Total Users",
+        "activeUsers": "Active Users",
+        "disabledUsers": "Disabled Users",
+        "administrators": "Administrators",
+        "editors": "Editors",
+        "authors": "Authors",
+        "viewers": "Viewers",
+        "sessionInfo": "Current Session Info",
+        "authProvider": "Authentication Provider",
+        "currentUser": "Current User",
+        "currentRole": "Current Role",
+        "emailStatus": "Email Verification Status",
+        "verified": "Verified",
+        "unverified": "Unverified",
+        "lastLogin": "Last Login",
+        "authStatus": "Authentication Status",
+        "active": "ACTIVE"
+      },
+      "permissions": {
+        "title": "Enterprise Permission Matrix",
+        "unsavedChanges": "Unsaved changes",
+        "resetDefault": "Reset Default",
+        "saveChanges": "Save Changes",
+        "resetConfirm": "Are you sure you want to reset this role to its default permissions? All unsaved changes will be lost.",
+        "copyConfirm": "Are you sure you want to copy permissions from {{source}}? This will overwrite your current unsaved changes for {{target}}.",
+        "discardConfirm": "You have unsaved changes. Discard and switch roles?",
+        "copyFrom": "Copy from...",
+        "filterFeatures": "Filter features...",
+        "unauthorizedTitle": "Unauthorized",
+        "unauthorizedDesc": "Only superadministrators can modify the system Permission Matrix.",
+        "featureModule": "Feature Module",
+        "modules": "Modules",
+        "addRole": "+ Add Role",
+        "addRolePrompt": "Enter new role name (e.g. moderator, guest):",
+        "addRoleError": "Role name must be lowercase and contain no spaces.",
+        "roleExists": "Role already exists.",
+        "saveSuccess": "Permissions for {{role}} saved.",
+        "saveError": "Failed to save permissions",
+        "matrix": {
+          "view": "View",
+          "create": "Create",
+          "edit": "Edit",
+          "delete": "Delete",
+          "publish": "Publish",
+          "archive": "Archive",
+          "export": "Export",
+          "configure": "Configure",
+          "view_history": "View History",
+          "approve": "Approve",
+          "restore": "Restore",
+          "import": "Import",
+          "manage": "Manage"
+        },
+        "categories": {
+          "content": "Content",
+          "system": "System",
+          "analytics": "Analytics",
+          "database": "Database",
+          "communication": "Communication"
+        },
+        "roleName": "Role Name",
+        "roleNamePlaceholder": "e.g. moderator, guest",
+        "roleNameHelp": "Lowercase letters, numbers, hyphens, and underscores only.",
+        "invalidRoleName": "Role name must contain only letters, numbers, hyphens, or underscores.",
+        "reservedRoleName": "This role name is reserved and cannot be used.",
+        "roleNameTooLong": "Role name cannot exceed 20 characters.",
+        "deleteRole": "Delete Role",
+        "deleteConfirmTitle": "Delete Role",
+        "deleteConfirmDesc": "Are you sure you want to delete the '{{role}}' role? Any users with this role will be reassigned to 'Viewer'. This action cannot be undone.",
+        "deleteError": "Failed to delete role",
+        "deleteSuccess": "Role {{role}} has been deleted.",
+        "baseRole": "Base Security Role",
+        "baseRoleHelp": "Determines the baseline backend Firestore capabilities for this custom role.",
+        "baseRoleBadge": "Base:"
+      },
+      "roles": {
+        "title": "System Roles",
+        "archNote": "Architecture Note:",
+        "archDesc": "The system supports extending base roles with custom permissions via the Permission Matrix. The roles below are the default System Roles.",
+        "users": "Users",
+        "admin": {
+          "name": "Administrator",
+          "description": "Full access to all system features including database management, audit logs, and authentication settings. Cannot perform super-admin specific destructive actions."
+        },
+        "editor": {
+          "name": "Editor",
+          "description": "Can manage all content across the application (projects, blog, experience, etc.) but cannot access system settings, database management, or user authentication panels."
+        },
+        "author": {
+          "name": "Author",
+          "description": "Can create and edit their own content, but may be restricted from publishing or editing other users' content. (Customizable via Permissions Matrix)"
+        },
+        "viewer": {
+          "name": "Viewer",
+          "description": "Read-only access to the admin dashboard and content modules. Cannot create, edit, or delete data."
+        }
       }
     },
     "rolePermissions": {

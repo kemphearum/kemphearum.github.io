@@ -2,24 +2,23 @@ import { useState } from 'react';
 import { Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { EmptyState } from '@/shared/components/ui';
-import BaseService from '../../../services/BaseService';
-import UserService from '../../../services/UserService';
-import { useActivity } from '../../../hooks/useActivity';
-import { useAsyncAction } from '../../../hooks/useAsyncAction';
-import { useDebounce } from '../../../hooks/useDebounce';
-import DeleteConfirmDialog from '../../../shared/components/dialog/DeleteConfirmDialog';
-import UsersToolbar from './components/UsersToolbar';
-import UsersTable from './components/UsersTable';
-import UsersFormDialog from './components/UsersFormDialog';
-import UserDetailDialog from './components/UserDetailDialog';
-import RolePermissionsPanel from './components/RolePermissionsPanel';
-import { useTranslation } from '../../../hooks/useTranslation';
-import { ACTIONS, MODULES, formatRoleDisplayName, isSuperAdminRole, normalizeRole } from '../../../utils/permissions';
+import BaseService from '../../../../services/BaseService';
+import UserService from '../../../../services/UserService';
+import { useActivity } from '../../../../hooks/useActivity';
+import { useAsyncAction } from '../../../../hooks/useAsyncAction';
+import { useDebounce } from '../../../../hooks/useDebounce';
+import DeleteConfirmDialog from '../../../../shared/components/dialog/DeleteConfirmDialog';
+import UsersToolbar from './UsersToolbar';
+import UsersTable from './UsersTable';
+import UsersFormDialog from './UsersFormDialog';
+import UserDetailDialog from './UserDetailDialog';
+import EffectivePermissionsModal from './EffectivePermissionsModal';
+import { useTranslation } from '../../../../hooks/useTranslation';
+import PermissionService from '../../../../services/auth/PermissionService';
+import { formatRoleDisplayName, normalizeRole } from '../../../../utils/permissions';
+import { useCursorPagination } from '../../../../hooks/useCursorPagination';
 
-
-import { useCursorPagination } from '../../../hooks/useCursorPagination';
-
-const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
+const AuthUsersPanel = ({ user, userRole, showToast }) => {
   const { t } = useTranslation();
   const tm = (key, params = {}) => t(`admin.users.${key}`, params);
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,6 +26,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
+  const [viewingPermissionsFor, setViewingPermissionsFor] = useState(null);
 
   const { loading: createLoading, execute: executeCreate } = useAsyncAction({
     showToast,
@@ -53,14 +53,10 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     invalidateKeys: [['users']]
   });
 
-  const { loading: _permissionsLoading, execute: executePermissions } = useAsyncAction({
-    showToast,
-    errorMessage: tm('toasts.savePermissionsFailed'),
-    invalidateKeys: [['rolePermissions'], ['users']]
-  });
+
 
   const { trackRead, trackWrite } = useActivity();
-  const canViewUsers = isActionAllowed(ACTIONS.VIEW, MODULES.USERS);
+  const canViewUsers = PermissionService.can(userRole, PermissionService.ACTIONS.VIEW, PermissionService.RESOURCES.USERS);
 
 
   // cursor pagination hook
@@ -172,9 +168,8 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
     enabled: !!editingUser?.id
   });
 
-  // Handlers
   const handleCreateUser = async (data) => {
-    if (!isActionAllowed(ACTIONS.CREATE, MODULES.USERS)) {
+    if (!PermissionService.can(userRole, PermissionService.ACTIONS.CREATE, PermissionService.RESOURCES.USERS)) {
       return showToast(tm('toasts.noPermission'), "error");
     }
 
@@ -190,7 +185,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   };
 
   const handleRoleChange = async (userId, newRole) => {
-    if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS)) {
+    if (!PermissionService.can(userRole, PermissionService.ACTIONS.EDIT, PermissionService.RESOURCES.USERS)) {
       return showToast(tm('toasts.noPermission'), "error");
     }
 
@@ -212,7 +207,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   };
 
   const handleResetPassword = async (targetUser) => {
-    if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS)) {
+    if (!PermissionService.can(userRole, PermissionService.ACTIONS.EDIT, PermissionService.RESOURCES.USERS)) {
       return showToast(tm('toasts.noPermission'), "error");
     }
 
@@ -225,7 +220,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
 
   const handleDisableUser = async () => {
     if (!deletingUser) return;
-    if (!isActionAllowed(ACTIONS.DISABLE, MODULES.USERS)) {
+    if (!PermissionService.can(userRole, PermissionService.ACTIONS.DISABLE, PermissionService.RESOURCES.USERS)) {
       return showToast(tm('toasts.noPermission'), "error");
     }
 
@@ -249,37 +244,11 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
       successMessage: `${tm('common.user')} ${deletingUser.email} ${shouldDisable ? tm('common.disabled') : tm('common.enabled')} ${tm('common.successfully')}`
     });
   };
+  const canCreateUsers = PermissionService.can(userRole, PermissionService.ACTIONS.CREATE, PermissionService.RESOURCES.USERS);
+  const canEditUsers = PermissionService.can(userRole, PermissionService.ACTIONS.EDIT, PermissionService.RESOURCES.USERS);
+  const canDisableUsers = PermissionService.can(userRole, PermissionService.ACTIONS.DISABLE, PermissionService.RESOURCES.USERS);
 
-  const handleSavePermissions = async (role, allowedTabs, baseRole, allowedActions = {}) => {
-    if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS)) {
-      return showToast(tm('toasts.noPermission'), "error");
-    }
-
-    await executePermissions(async () => {
-      await UserService.saveRolePermissions(role, allowedTabs, trackWrite, baseRole, allowedActions, userRole);
-    }, {
-      successMessage: `${tm('toasts.permissionsFor')} '${formatRoleDisplayName(role)}' ${tm('toasts.saved')}`
-    });
-  };
-
-  const handleRemoveRole = async (role) => {
-    if (!isActionAllowed(ACTIONS.EDIT, MODULES.USERS)) {
-      return showToast(tm('toasts.noPermission'), "error");
-    }
-
-    await executePermissions(async () => {
-      await UserService.deleteRoleAndReassignUsers(role, 'pending', trackWrite, userRole);
-    }, {
-      successMessage: `Role '${formatRoleDisplayName(role)}' removed. Users were reassigned to pending.`
-    });
-  };
-
-  const canCreateUsers = isActionAllowed(ACTIONS.CREATE, MODULES.USERS);
-  const canEditUsers = isActionAllowed(ACTIONS.EDIT, MODULES.USERS);
-  const canDisableUsers = isActionAllowed(ACTIONS.DISABLE, MODULES.USERS);
-  const canManageRolePermissions = isSuperAdminRole(userRole);
-
-  if (!isActionAllowed(ACTIONS.VIEW, MODULES.USERS)) {
+  if (!canViewUsers) {
     return (
       <EmptyState 
         title={tm('restricted.title')}
@@ -290,7 +259,13 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   }
 
   return (
-    <div className="admin-tab-container">
+    <div className="auth-panel-container">
+      <div className="ui-mb-medium">
+        <div className="ui-alert ui-alert-warning">
+          <strong>Note:</strong> Force Logout requires a trusted backend (Firebase Admin SDK or Cloud Functions) and is unavailable in Zero-Cost mode.
+        </div>
+      </div>
+
       <UsersToolbar 
         search={searchQuery}
         onSearch={setSearchQuery}
@@ -310,6 +285,7 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
         onEdit={setEditingUser}
         onResetPassword={handleResetPassword}
         onDelete={setDeletingUser}
+        onViewPermissions={setViewingPermissionsFor}
         searchQuery={searchQuery}
         onClearSearch={() => setSearchQuery('')}
         onCreate={() => setIsFormOpen(true)}
@@ -329,14 +305,6 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
         paginationVariant="cursor"
       />
 
-      {canManageRolePermissions && (
-        <RolePermissionsPanel 
-          rolePermissions={rolePermissions}
-          onSave={handleSavePermissions}
-          onRemoveRole={handleRemoveRole}
-          availableRoles={availableRoles}
-        />
-      )}
 
       {/* Dialogs */}
       <UsersFormDialog 
@@ -384,4 +352,4 @@ const UsersTab = ({ user, userRole, showToast, isActionAllowed }) => {
   );
 };
 
-export default UsersTab;
+export default AuthUsersPanel;

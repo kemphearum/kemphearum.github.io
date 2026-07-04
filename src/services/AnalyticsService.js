@@ -4,7 +4,7 @@ import {
     collection, getDocs, query, where, orderBy, getCountFromServer, 
     limit as firestoreLimit 
 } from 'firebase/firestore';
-import { isAdminRole } from '../utils/permissions';
+import PermissionService from './auth/PermissionService';
 
 const MAX_ANALYTICS_ROWS = 3000;
 const MAX_DETAIL_WINDOW = 5000;
@@ -59,7 +59,7 @@ class AnalyticsService extends BaseService {
      * @returns {Promise<Array<Object>>} List of visit records
      */
     async fetchAnalytics(userRole, dateRangeConfig, trackRead) {
-        if (!isAdminRole(userRole)) return [];
+        if (!PermissionService.can(userRole, PermissionService.ACTIONS.VIEW, PermissionService.RESOURCES.ANALYTICS)) return [];
 
         const { startDate, endDate, startKey, endKey } = normalizeDateRange(dateRangeConfig);
 
@@ -111,7 +111,7 @@ class AnalyticsService extends BaseService {
      * @returns {Promise<{data: Array, meta: {total: number, page: number, totalPages: number}}>}
      */
     async fetchAnalyticsDetails(userRole, dateRangeConfig, type, pagination = { page: 1, limit: 50 }, trackRead) {
-        if (!isAdminRole(userRole)) {
+        if (!PermissionService.can(userRole, PermissionService.ACTIONS.VIEW, PermissionService.RESOURCES.ANALYTICS)) {
             return { data: [], meta: { total: 0, page: 1, totalPages: 0, hasMore: false } };
         }
 

@@ -187,3 +187,20 @@ The `DatabaseTab` (`src/pages/admin/database/DatabaseTab.jsx`) acts as a compreh
 - **No Cloud Functions/Firebase Storage:** Features like `DatabaseAssetAnalytics` and `DatabaseHealthCheck` perform their scans client-side. They download the required collections, throttle their loops to prevent main-thread freezing, and process metadata locally. While this would not scale for a massive enterprise dataset without a backend, it is highly efficient for a portfolio CMS.
 - **Batch Operations:** All CSV imports and restores use `writeBatch(db)` chunked to 450 operations per batch to safely operate within Firestore's 500-operation limit.
 - **Data Integrity & Audit:** All destructive or mutative actions (Import, Export, Restore, Archive) are strictly logged to the `auditLogs` collection via `AuditLogService`.
+
+## Authentication & Authorization Center (IAM)
+
+The `AuthTab` (`src/pages/admin/auth/AuthTab.jsx`) is the central Identity and Access Management module, designed within the same zero-cost constraint.
+- **Permission Matrix:** Dynamically builds a grid using `featureRegistry.js` allowing super-admins to grant CRUD (Create, Edit, Delete, View, View History) access to custom roles per feature.
+- **Session Tracking:** Intercepts logins in `AuthService.js` to log sessions to Firestore (`users/{uid}/sessions`), storing user agent, platform, and login time.
+- **Security Posture:** A read-only architectural overview is provided since real security constraints (like MFA) require a backend, which violates the zero-cost architecture.
+- **Activity Logging:** Uses `AuditLogService.fetchActivityDetails` filtered to the `users` module to present an audit trail of user management actions.
+
+## Analytics & Insights Center
+
+The `AnalyticsTab` (`src/pages/admin/analytics/AnalyticsTab.jsx`) provides enterprise-grade telemetry and insights without third-party services (like Google Analytics) or paid Firebase extensions, strictly adhering to the zero-cost architecture.
+- **Client-Side Aggregation:** Features like `AnalyticsOverviewPanel` and `AnalyticsVisitorsPanel` fetch raw `visits` data via `AnalyticsService` within a selected date range and aggregate metrics (total visitors, unique visitors, browser distribution, returning users) entirely on the client.
+- **Content & Contact Intelligence:** The `AnalyticsContentPanel` and `AnalyticsContactPanel` derive actionable insights by intelligently filtering `visits` by path (`/projects`, `/blog`) and cross-referencing `messages`.
+- **Search & Download Tracking:** The `AnalyticsSearchPanel` and `AnalyticsDownloadsPanel` are designed to consume custom frontend events (`searchLogs` and `/download/*` paths) ensuring complete visibility into user intent.
+- **Reports & Exploration:** Administrators can generate Daily, Weekly, and Monthly reports with one-click JSON/CSV exports, or use the `AnalyticsExplorerPanel` to run ad-hoc queries against raw telemetry using the accessible `DataTable` component.
+- **Configurable Retention:** The `AnalyticsSettingsPanel` integrates with `SettingsService` to manage tracking toggles (visitor, anonymous, search, download) and define data retention windows to optimize Firestore storage usage.

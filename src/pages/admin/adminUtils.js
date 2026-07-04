@@ -9,6 +9,7 @@ export const tabLabelKeys = {
     blog: 'admin.tabs.blog',
     messages: 'admin.tabs.messages',
     database: 'admin.tabs.database',
+    auth: 'admin.tabs.auth',
     users: 'admin.tabs.users',
     audit: 'admin.tabs.audit',
     analytics: 'admin.tabs.analytics',

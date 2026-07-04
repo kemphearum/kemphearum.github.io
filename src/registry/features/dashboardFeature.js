@@ -6,8 +6,16 @@ const CONTENT_MODULES = ['projects', 'blog', 'experience', 'skills', 'certificat
 
 export const dashboardFeature = {
     id: 'dashboard',
+    category: 'analytics',
+    visibility: true,
     permissions: {
-        actions: [ACTIONS.VIEW]
+        supportedActions: [ACTIONS.VIEW, ACTIONS.CONFIGURE, ACTIONS.MANAGE, ACTIONS.EXPORT, ACTIONS.VIEW_AUDIT_LOGS],
+        defaultPermissions: {
+            admin: [ACTIONS.VIEW, ACTIONS.CONFIGURE, ACTIONS.MANAGE, ACTIONS.EXPORT, ACTIONS.VIEW_AUDIT_LOGS],
+            editor: [],
+            author: [],
+            viewer: []
+        }
     },
     nav: {
         

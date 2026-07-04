@@ -30,6 +30,7 @@ import { useAnalytics } from '../src/hooks/useAnalytics';
 import { Analytics } from "@vercel/analytics/react";
 import { useTranslation } from '../src/hooks/useTranslation';
 import { buildBrowserTitle } from '../src/utils/browserTitle';
+import { validateFeatureRegistry } from '../src/utils/validateRegistry';
 
 const PRIMARY_ORIGIN = 'https://phearum-info.web.app';
 
@@ -390,6 +391,7 @@ export function ErrorBoundary() {
 }
 
 export default function App() {
+  useEffect(() => { validateFeatureRegistry(); }, []);
   const loaderData = useLoaderData();
   const location = useLocation();
   const navigate = useNavigate();

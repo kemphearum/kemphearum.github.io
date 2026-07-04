@@ -4,8 +4,16 @@ import { ACTIONS } from '../../utils/permissionConstants';
 
 export const settingsFeature = {
     id: 'settings',
+    category: 'system',
+    visibility: true,
     permissions: {
-        actions: [ACTIONS.VIEW, ACTIONS.EDIT]
+        supportedActions: [ACTIONS.VIEW, ACTIONS.CONFIGURE, ACTIONS.MANAGE, ACTIONS.EXPORT, ACTIONS.VIEW_AUDIT_LOGS],
+        defaultPermissions: {
+            admin: [ACTIONS.VIEW, ACTIONS.CONFIGURE, ACTIONS.MANAGE, ACTIONS.EXPORT, ACTIONS.VIEW_AUDIT_LOGS],
+            editor: [],
+            author: [],
+            viewer: []
+        }
     },
     nav: {
         group: 'administration',

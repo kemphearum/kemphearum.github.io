@@ -1,4 +1,5 @@
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { doc, collection, setDoc, serverTimestamp } from 'firebase/firestore';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
@@ -24,6 +25,30 @@ const getActionCodeSettings = () => ({
     handleCodeInApp: true
 });
 
+const _logSession = async (user) => {
+    if (!user) return;
+    try {
+        const userRef = doc(db, 'users', user.uid);
+        const sessionRef = doc(collection(userRef, 'sessions'));
+        
+        // Basic device/browser info
+        const userAgent = window.navigator.userAgent;
+        const platform = window.navigator.platform;
+        
+        await setDoc(sessionRef, {
+            userAgent,
+            platform,
+            providerId: user.providerData[0]?.providerId || 'unknown',
+            loginTime: serverTimestamp(),
+            ip: 'Unknown' // Would need a Cloud Function for actual IP, sticking to zero-cost
+        });
+        
+        await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
+    } catch (e) {
+        console.error('Failed to log session', e);
+    }
+};
+
 class AuthService {
     /**
      * Authenticate a user with email and password
@@ -32,7 +57,9 @@ class AuthService {
      * @returns {Promise<import('firebase/auth').UserCredential>}
      */
     async login(email, password) {
-        return signInWithEmailAndPassword(auth, email, password);
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        await _logSession(cred.user);
+        return cred;
     }
 
     /**
@@ -52,7 +79,9 @@ class AuthService {
     async loginWithGoogle() {
         const provider = new GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
-        return signInWithPopup(auth, provider);
+        const cred = await signInWithPopup(auth, provider);
+        await _logSession(cred.user);
+        return cred;
     }
 
     /**
@@ -63,7 +92,9 @@ class AuthService {
         const provider = new OAuthProvider('apple.com');
         provider.addScope('email');
         provider.addScope('name');
-        return signInWithPopup(auth, provider);
+        const cred = await signInWithPopup(auth, provider);
+        await _logSession(cred.user);
+        return cred;
     }
 
     /**
@@ -110,6 +141,7 @@ class AuthService {
         if (typeof window !== 'undefined') {
             window.localStorage.removeItem(MAGIC_LINK_EMAIL_KEY);
         }
+        await _logSession(credential.user);
         return credential;
     }
 

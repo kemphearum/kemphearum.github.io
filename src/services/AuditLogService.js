@@ -2,11 +2,10 @@ import BaseService from './BaseService';
 import { db } from '../firebase';
 import {
     collection, getDocs, query, orderBy, limit as firestoreLimit,
-    collectionGroup, addDoc, serverTimestamp, where,
-    startAfter
+    collectionGroup, addDoc, serverTimestamp, where, startAfter
 } from 'firebase/firestore';
 import { apiUrl } from '../utils/apiBase';
-import { isSuperAdminRole } from '../utils/permissions';
+import PermissionService from './auth/PermissionService';
 
 class AuditLogService extends BaseService {
     constructor() {
@@ -240,7 +239,7 @@ class AuditLogService extends BaseService {
      * @returns {Promise<{data: Array, lastDoc: any, hasMore: boolean}>}
      */
     async fetchSecurityAuditTrail({ userRole, trackRead, lastDoc = null, limit = 10, search = '', dateRange = 'all', statusFilter = 'all' }) {
-        if (!isSuperAdminRole(userRole)) throw new Error('Unauthorized');
+        if (!PermissionService.can(userRole, PermissionService.ACTIONS.MANAGE, PermissionService.RESOURCES.AUDIT)) throw new Error('Unauthorized');
         const safeLimit = Math.min(100, Math.max(5, Number(limit) || 10));
         const normalizedSearch = (search || '').trim().toLowerCase();
         const normalizedStatusFilter = String(statusFilter || 'all').toLowerCase();
