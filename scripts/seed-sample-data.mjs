@@ -116,14 +116,29 @@ const DATA = {
         {
             id: 'admin',
             baseRole: 'admin',
-            allowedTabs: ['dashboard', 'projects', 'blog', 'experience', 'skills', 'certificates', 'education', 'messages', 'communication', 'resume', 'awards', 'publications', 'speaking', 'database', 'audit'],
+            _schemaVersion: 1,
+            allowedTabs: ['dashboard', 'general', 'education', 'experience', 'projects', 'skills', 'certificates', 'blog', 'messages', 'database', 'users', 'audit', 'analytics', 'settings', 'profile', 'home', 'about', 'communication', 'profileInfo', 'awards', 'publications', 'speaking', 'resume'],
             allowedActions: {}
         },
         {
             id: 'editor',
             baseRole: 'editor',
+            _schemaVersion: 1,
             allowedTabs: ['dashboard', 'projects', 'blog', 'skills', 'certificates', 'communication'],
-            allowedActions: {}
+            allowedActions: {
+                blog: ['view', 'create', 'edit', 'delete', 'publish'],
+                projects: ['view', 'create', 'edit', 'publish']
+            }
+        },
+        {
+            id: 'viewer',
+            baseRole: 'pending',
+            _schemaVersion: 1,
+            allowedTabs: ['dashboard', 'blog', 'projects'],
+            allowedActions: {
+                blog: ['view'],
+                projects: ['view']
+            }
         }
     ],
     users: [
@@ -140,6 +155,14 @@ const DATA = {
             email: 'editor@example.com',
             displayName: 'Editor User',
             role: 'editor',
+            isActive: true,
+            photoURL: ''
+        },
+        {
+            id: 'sample-viewer',
+            email: 'viewer@example.com',
+            displayName: 'Viewer User',
+            role: 'viewer',
             isActive: true,
             photoURL: ''
         }
