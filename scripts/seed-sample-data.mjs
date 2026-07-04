@@ -128,14 +128,6 @@ const DATA = {
     ],
     users: [
         {
-            id: 'bootstrap-superadmin',
-            email: 'kem.phearum@gmail.com',
-            displayName: 'Kem Phearum',
-            role: 'superadmin',
-            isActive: true,
-            photoURL: ''
-        },
-        {
             id: 'sample-admin',
             email: 'admin@example.com',
             displayName: 'Admin User',

@@ -1,5 +1,5 @@
-import { db } from '../firebase';
-import { collection, getDocs, query, where, doc, writeBatch, setDoc, Timestamp, getDoc, limit as firestoreLimit } from 'firebase/firestore';
+import { db, app } from '../firebase';
+import { collection, getDocs, query, where, doc, writeBatch, Timestamp, getDoc, limit as firestoreLimit } from 'firebase/firestore';
 import SettingsService from './SettingsService';
 import BaseService, { isQuotaExceededError } from './BaseService';
 
@@ -82,21 +82,17 @@ class DatabaseService {
         return snapshot.size;
     }
 
-    /**
-     * Get health status of all collections.
-     * @param {function(number, string): void} [trackRead] 
-     * @returns {Promise<Record<string, number>>}
-     */
     static async getHealth(trackRead) {
         const counts = {};
         const failures = {};
         const { getCountFromServer } = await import('firebase/firestore');
 
-        for (const col of DatabaseService.HEALTH_COLLECTIONS) {
+        await Promise.all(DatabaseService.HEALTH_COLLECTIONS.map(async (col) => {
             try {
                 const colRef = collection(db, col);
                 let count = 0;
                 let method = 'aggregate';
+                let sizeBytes = 0;
 
                 try {
                     const aggregateSnapshot = await getCountFromServer(colRef);
@@ -106,14 +102,10 @@ class DatabaseService {
                     // Fall back to full scan count so Database tab remains useful.
                     method = 'manual';
                     count = await DatabaseService.countCollectionManual(col);
-                    DatabaseService.safeTrackRead(trackRead, count, `Counted ${col} for health (manual fallback)`);
-                    counts[col] = count;
-                    continue;
                 }
 
                 // Defensive fallback: if aggregate says 0, validate with a 1-doc probe.
-                // This prevents misleading all-zero dashboards when aggregate behavior is inconsistent.
-                if (count === 0) {
+                if (count === 0 && method === 'aggregate') {
                     const probeSnapshot = await getDocs(query(colRef, firestoreLimit(1)));
                     if (!probeSnapshot.empty) {
                         method = 'manual';
@@ -121,8 +113,20 @@ class DatabaseService {
                     }
                 }
 
-                DatabaseService.safeTrackRead(trackRead, 1, `Counted ${col} for health (${method})`);
+                if (count > 0) {
+                    // Estimate size using up to 10 documents
+                    const sampleSnap = await getDocs(query(colRef, firestoreLimit(10)));
+                    let sampleSize = 0;
+                    sampleSnap.forEach(d => {
+                        sampleSize += JSON.stringify(d.data()).length;
+                    });
+                    const avgDocSize = sampleSnap.size > 0 ? Math.round(sampleSize / sampleSnap.size) : 0;
+                    sizeBytes = avgDocSize * count;
+                }
+
+                DatabaseService.safeTrackRead(trackRead, method === 'manual' ? count : 1, `Counted ${col} for health (${method})`);
                 counts[col] = count;
+                counts[`${col}_size`] = sizeBytes;
             } catch (err) {
                 console.error(`Error counting ${col}:`, err);
                 failures[col] = {
@@ -130,7 +134,7 @@ class DatabaseService {
                     message: err?.message || 'Failed to count collection'
                 };
             }
-        }
+        }));
 
         if (Object.keys(failures).length > 0) {
             const error = new Error('Database health check failed for one or more collections.');
@@ -142,6 +146,22 @@ class DatabaseService {
         }
 
         return counts;
+    }
+
+    /**
+     * Get database metadata (Provider, Project ID, Status)
+     * @returns {Object}
+     */
+    static getDatabaseMetadata() {
+        return {
+            provider: 'Firebase',
+            projectId: app?.options?.projectId || 'unknown',
+            environment: import.meta.env.MODE || 'production',
+            region: 'Multi-region (Default)', // Firestore free tier is multi-region nam5 or eur3 usually
+            connectionStatus: window.navigator.onLine ? 'Online' : 'Offline',
+            latency: '...', // Can be measured in UI if needed
+            pendingWrites: '0'
+        };
     }
 
     /**
@@ -214,6 +234,30 @@ class DatabaseService {
     }
 
     /**
+     * Log database events (Backup/Restore)
+     */
+    static async logDatabaseEvent(action, details) {
+        try {
+            const key = action === 'BACKUP' ? 'database_backup_history' : 'database_restore_history';
+            const history = JSON.parse(localStorage.getItem(key) || '[]');
+            const entry = { id: Date.now(), date: new Date().toISOString(), action, details };
+            history.unshift(entry);
+            localStorage.setItem(key, JSON.stringify(history.slice(0, 10)));
+
+            const AuditLogService = (await import('./AuditLogService')).default;
+            await BaseService.safe(() => AuditLogService.addAuditLog({
+                email: 'Admin Session',
+                action: action === 'BACKUP' ? 'DATABASE_BACKUP' : 'DATABASE_RESTORE',
+                details,
+                ipAddress: 'Internal', country: 'Internal', city: 'Internal',
+                userAgent: 'Administrative Action', deviceType: 'desktop', sessionId: 'service-action'
+            }, 'success', null));
+        } catch (e) {
+            console.error('Failed to log database event:', e);
+        }
+    }
+
+    /**
      * Perform full database backup.
      * @param {string} userRole 
      * @param {function(number, string): void} [trackRead] 
@@ -267,6 +311,11 @@ class DatabaseService {
             exportData,
             `portfolio_backup_${new Date().toISOString().split('T')[0]}.json`
         );
+
+        await DatabaseService.logDatabaseEvent('BACKUP', {
+            collections: Object.keys(exportData.collections).length,
+            sizeBytes: JSON.stringify(exportData).length
+        });
 
         return true;
     }
@@ -490,25 +539,47 @@ class DatabaseService {
         let processedCount = 0;
         let completedCount = 0;
         const failedCollections = new Set();
+        
+        let currentBatch = writeBatch(db);
+        let currentBatchSize = 0;
 
         for (const [colName, docs] of collectionsToProcess) {
             const docEntries = Object.entries(docs);
-            for (let i = 0; i < docEntries.length; i += 25) {
-                const chunk = docEntries.slice(i, i + 25);
-                await Promise.all(chunk.map(async ([docId, docData]) => {
+            for (const [docId, docData] of docEntries) {
+                try {
+                    const processedData = DatabaseService.restoreFirestoreTypes(docData);
+                    const docRef = doc(db, colName, docId);
+                    currentBatch.set(docRef, processedData);
+                    currentBatchSize++;
+                } catch (error) {
+                    failedCollections.add(colName);
+                    console.error(`Failed to prepare restore ${colName}/${docId}:`, error);
+                }
+                
+                processedCount++;
+                if (onProgress) onProgress(processedCount, totalDocs);
+
+                if (currentBatchSize >= DatabaseService.MAX_BATCH_OPERATIONS) {
                     try {
-                        const processedData = DatabaseService.restoreFirestoreTypes(docData);
-                        const docRef = doc(db, colName, docId);
-                        await setDoc(docRef, processedData);
-                        completedCount++;
+                        await currentBatch.commit();
+                        completedCount += currentBatchSize;
                     } catch (error) {
                         failedCollections.add(colName);
-                        console.error(`Failed to restore ${colName}/${docId}:`, error);
-                    } finally {
-                        processedCount++;
-                        if (onProgress) onProgress(processedCount, totalDocs);
+                        console.error('Batch commit failed', error);
                     }
-                }));
+                    currentBatch = writeBatch(db);
+                    currentBatchSize = 0;
+                }
+            }
+        }
+        
+        if (currentBatchSize > 0) {
+            try {
+                await currentBatch.commit();
+                completedCount += currentBatchSize;
+            } catch (error) {
+                failedCollections.add('final-batch');
+                console.error('Final batch commit failed', error);
             }
         }
 
@@ -517,6 +588,13 @@ class DatabaseService {
         }
 
         if (trackWrite) trackWrite(completedCount, `Restored database (${completedCount}/${totalDocs})`);
+        
+        await DatabaseService.logDatabaseEvent('RESTORE', {
+            completedCount,
+            totalDocs,
+            failedCollections: Array.from(failedCollections)
+        });
+        
         return { completedCount, totalDocs, failedCollections: Array.from(failedCollections) };
     }
 }

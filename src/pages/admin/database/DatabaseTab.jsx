@@ -18,6 +18,11 @@ import DatabaseAdvancedPanel from './components/DatabaseAdvancedPanel';
 import RestoreDialog from './components/RestoreDialog';
 import ArchiveDialog from './components/ArchiveDialog';
 import AuditSettingsPanel from './components/AuditSettingsPanel';
+import CollectionExplorerDialog from './components/CollectionExplorerDialog';
+import DatabaseAssetAnalytics from './components/DatabaseAssetAnalytics';
+import DatabaseMonitoringPanel from './components/DatabaseMonitoringPanel';
+import DatabaseActivityPanel from './components/DatabaseActivityPanel';
+import DatabaseHealthCheck from './components/DatabaseHealthCheck';
 import RestoreProgress from './components/RestoreProgress';
 import QuotaResilienceBanner from '../components/QuotaResilienceBanner';
 import { useTranslation } from '../../../hooks/useTranslation';
@@ -79,6 +84,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
     const [quotaExceeded, setQuotaExceeded] = useState(false);
     const [healthFailures, setHealthFailures] = useState({});
     const [syncStatus, setSyncStatus] = useState({ state: 'idle', message: '', requestedAt: null });
+    const [explorerCollection, setExplorerCollection] = useState(null);
     const lastHealthErrorKeyRef = useRef('');
     
     const { trackRead, trackWrite, trackDelete } = useActivity();
@@ -468,6 +474,7 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 isFetching={dbHealthFetching}
                 totalDocs={calculatedTotal}
                 setActiveTab={setActiveTab}
+                onExplore={(collectionKey) => setExplorerCollection(collectionKey)}
             />
 
             <DatabaseActions 
@@ -481,12 +488,18 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 canArchive={canArchive}
             />
 
+            <DatabaseAssetAnalytics showToast={showToast} />
+            <DatabaseMonitoringPanel />
+            <DatabaseActivityPanel />
+
             <DatabaseSyncPanel
                 loading={syncLoading}
                 syncStatus={syncStatus}
                 onSync={handleTriggerDatabaseSync}
                 canSync={canSyncDatabase}
             />
+
+            <DatabaseHealthCheck showToast={showToast} />
 
             <DatabaseAdvancedPanel 
                 showToast={showToast} 
@@ -519,6 +532,12 @@ const DatabaseTab = ({ userRole, showToast, setActiveTab, isActionAllowed, userE
                 onArchiveTargetsChange={setArchiveTargets}
                 onConfirm={handleArchiveData}
                 loading={archiveLoading}
+            />
+
+            <CollectionExplorerDialog
+                open={!!explorerCollection}
+                onOpenChange={(isOpen) => !isOpen && setExplorerCollection(null)}
+                collectionName={explorerCollection}
             />
         </div>
     );

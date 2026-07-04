@@ -35,7 +35,11 @@ const parseServiceAccount = () => {
 
 const ensureApp = () => {
     if (!getApps().length) {
-        initializeApp({ credential: cert(parseServiceAccount()) });
+        const sa = parseServiceAccount();
+        if (!sa) {
+            throw new Error('Admin SDK is disabled. FIREBASE_SERVICE_ACCOUNT_JSON is missing.');
+        }
+        initializeApp({ credential: cert(sa) });
     }
 };
 

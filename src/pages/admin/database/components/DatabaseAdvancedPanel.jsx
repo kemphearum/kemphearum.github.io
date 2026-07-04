@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Rocket, Settings2, DatabaseZap, BookOpen, Copy, Play } from 'lucide-react';
+import { Rocket, Settings2, DatabaseZap, BookOpen, Copy, Play, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { seedSampleData } from '../../../../utils/sampleData';
 
 const DatabaseAdvancedPanel = ({ showToast, userRole, trackWrite, onSuccess }) => {
   const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
 
   const copyText = async (value) => {
     try {
@@ -42,13 +43,17 @@ const DatabaseAdvancedPanel = ({ showToast, userRole, trackWrite, onSuccess }) =
 
   return (
     <div className="ui-actions-section ui-advanced-section">
-      <div className="ui-flex-between ui-mb-medium">
+      <div className="ui-flex-between" style={{ cursor: 'pointer' }} onClick={() => setExpanded(!expanded)}>
         <h4 className="ui-flex-center-gap-small ui-m-0">
-          <Rocket size={18} className="ui-text-accent" /> {t('ui.advancedWorkflow')}
+          <Rocket size={18} className="ui-text-accent" /> Developer Tools & Maintenance
         </h4>
+        <Button variant="ghost" size="sm" className="ui-btn-icon-only" onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}>
+            {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </Button>
       </div>
 
-      <div className="ui-grid ui-advanced-grid">
+      {expanded && (
+      <div className="ui-grid ui-advanced-grid ui-mt-medium">
         <div className="ui-database-card ui-primary">
           <div className="ui-flex-column ui-flex-1">
             <h5 className="ui-flex-center-gap-small ui-mb-small">
@@ -110,6 +115,7 @@ const DatabaseAdvancedPanel = ({ showToast, userRole, trackWrite, onSuccess }) =
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 };

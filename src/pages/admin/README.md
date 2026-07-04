@@ -180,3 +180,10 @@ content registry. A future scheduler could flip stored status without changing a
 - `components/Form.jsx` — react-hook-form wrapper. It calls
   `useUnsavedChangesWarning(isDirty)` so any form guards against losing unsaved
   edits on refresh/tab close.
+
+## Database Management Center
+
+The `DatabaseTab` (`src/pages/admin/database/DatabaseTab.jsx`) acts as a comprehensive database management utility designed entirely around the zero-cost architecture constraint:
+- **No Cloud Functions/Firebase Storage:** Features like `DatabaseAssetAnalytics` and `DatabaseHealthCheck` perform their scans client-side. They download the required collections, throttle their loops to prevent main-thread freezing, and process metadata locally. While this would not scale for a massive enterprise dataset without a backend, it is highly efficient for a portfolio CMS.
+- **Batch Operations:** All CSV imports and restores use `writeBatch(db)` chunked to 450 operations per batch to safely operate within Firestore's 500-operation limit.
+- **Data Integrity & Audit:** All destructive or mutative actions (Import, Export, Restore, Archive) are strictly logged to the `auditLogs` collection via `AuditLogService`.

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Activity, BarChart2, Code, FileText, KeyRound, Mail, Settings, Shield, Users } from 'lucide-react';
 import UsageBar from '../../components/UsageBar';
 import StatCard from '../../components/StatCard';
@@ -118,7 +118,7 @@ const COLLECTION_META = [
   }
 ];
 
-const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, isFetching = false, totalDocs, setActiveTab }) => {
+const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, isFetching = false, totalDocs, setActiveTab, onExplore }) => {
   const { language, t } = useTranslation();
   const locale = language === 'km' ? 'km-KH' : 'en-US';
   const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
@@ -140,6 +140,28 @@ const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, isFetching = fa
     if (healthFailures[key]) return 'N/A';
     return numberFormatter.format(Number(dbHealth[key]) || 0);
   };
+
+  const formatBytes = (bytes, decimals = 2) => {
+    if (!+bytes) return '0 B';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+  };
+
+  const [dbMetadata, setDbMetadata] = useState(() => DatabaseService.getDatabaseMetadata());
+
+  useEffect(() => {
+      const handleOnline = () => setDbMetadata(prev => ({ ...prev, connectionStatus: 'Online' }));
+      const handleOffline = () => setDbMetadata(prev => ({ ...prev, connectionStatus: 'Offline' }));
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+          window.removeEventListener('online', handleOnline);
+          window.removeEventListener('offline', handleOffline);
+      };
+  }, []);
 
   const usagePercent = Math.round((totalDocs / DatabaseService.SOFT_DOC_LIMIT) * 100);
   const usageHint = usagePercent >= 90
@@ -170,6 +192,36 @@ const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, isFetching = fa
               : t('ui.counting'))}
         </span>
       </h4>
+
+      <div className="ui-grid ui-mb-large" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
+         <div className="ui-card ui-p-medium ui-bg-subtle-light">
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Provider</div>
+             <div className="ui-font-bold">{dbMetadata.provider}</div>
+         </div>
+         <div className="ui-card ui-p-medium ui-bg-subtle-light">
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Project ID</div>
+             <div className="ui-font-bold">{dbMetadata.projectId}</div>
+         </div>
+         <div className="ui-card ui-p-medium ui-bg-subtle-light">
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Environment</div>
+             <div className="ui-font-bold" style={{ textTransform: 'capitalize' }}>{dbMetadata.environment}</div>
+         </div>
+         <div className="ui-card ui-p-medium ui-bg-subtle-light">
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Region</div>
+             <div className="ui-font-bold">{dbMetadata.region}</div>
+         </div>
+         <div className="ui-card ui-p-medium ui-bg-subtle-light">
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Connection</div>
+             <div className="ui-font-bold ui-flex-center-gap-small">
+                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: dbMetadata.connectionStatus === 'Online' ? 'var(--color-success)' : 'var(--color-danger)' }} />
+                 {dbMetadata.connectionStatus}
+             </div>
+         </div>
+         <div className="ui-card ui-p-medium ui-bg-subtle-light">
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Pending Writes</div>
+             <div className="ui-font-bold">{dbMetadata.pendingWrites}</div>
+         </div>
+      </div>
 
       <div className="ui-db-overview">
         <span className="ui-db-overview-pill ui-db-overview-pill--ok">
@@ -210,7 +262,19 @@ const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, isFetching = fa
               onKeyDown={(event) => handleCardKeyDown(event, collection.tab)}
               role={isClickable ? 'button' : undefined}
               tabIndex={isClickable ? 0 : undefined}
-              description={isFailed ? t('ui.unableToLoadRightNow') : collection.description}
+              description={isFailed ? t('ui.unableToLoadRightNow') : (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>{formatBytes(dbHealth[`${collection.key}_size`] || 0)} • {collection.description}</span>
+                      <button 
+                          className="ui-btn ui-btn-ghost ui-btn-small" 
+                          style={{ padding: '2px 6px', height: 'auto', fontSize: '0.75rem' }}
+                          onClick={(e) => { e.stopPropagation(); onExplore(collection.key); }}
+                          title="Explore Data"
+                      >
+                          Explore
+                      </button>
+                  </div>
+              )}
               className={`ui-db-stat-card ${isFailed ? 'ui-db-stat-card--error' : ''}`}
               style={{ '--stat-color': collection.color }}
               title={isFailed ? `${t('ui.failedToCount')} ${collection.label}` : collection.label}
