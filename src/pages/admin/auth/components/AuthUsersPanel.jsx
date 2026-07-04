@@ -329,6 +329,14 @@ const AuthUsersPanel = ({ user, userRole, showToast }) => {
         availableRoles={availableRoles}
       />
 
+      {viewingPermissionsFor && (
+        <EffectivePermissionsModal
+          user={viewingPermissionsFor}
+          rolePermissions={rolePermissions}
+          onClose={() => setViewingPermissionsFor(null)}
+        />
+      )}
+
       <DeleteConfirmDialog 
         open={!!deletingUser}
         onOpenChange={(open) => !open && setDeletingUser(null)}
