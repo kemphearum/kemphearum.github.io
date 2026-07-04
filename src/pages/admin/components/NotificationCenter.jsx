@@ -32,11 +32,11 @@ const NotificationCenter = () => {
     }, [open]);
 
     const toggle = () => {
-        setOpen((prev) => {
-            const next = !prev;
-            if (next && unreadCount > 0) markAllRead();
-            return next;
-        });
+        const next = !open;
+        setOpen(next);
+        if (next && unreadCount > 0) {
+            markAllRead();
+        }
     };
 
     const formatTime = (timestamp) => new Intl.DateTimeFormat(language === 'km' ? 'km-KH' : 'en-US', {
