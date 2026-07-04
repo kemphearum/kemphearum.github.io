@@ -35,11 +35,11 @@ export const useAdminBootstrap = ({
     }, [setLastSyncTime]);
 
     useEffect(() => {
-        localStorage.setItem('adminActiveTab', activeTab);
+        localStorage.setItem('portfolio.ui.activeTab', activeTab);
     }, [activeTab]);
 
     useEffect(() => {
-        localStorage.setItem('adminSidebarPersistent', JSON.stringify(sidebarPersistent));
+        localStorage.setItem('portfolio.ui.sidebarPersistent', JSON.stringify(sidebarPersistent));
     }, [sidebarPersistent]);
 
     useEffect(() => {

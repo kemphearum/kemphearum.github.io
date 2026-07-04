@@ -53,11 +53,14 @@ const Footer = () => {
 
     const getMirrorIcon = (name, url) => {
         const lowerName = name.toLowerCase();
-        const lowerUrl = url.toLowerCase();
+        let hostname = '';
+        try { hostname = new URL(url).hostname.toLowerCase(); } catch { /* ignore */ }
         
-        if (lowerName.includes('github') || lowerUrl.includes('github.io')) return <Github size={16} />;
-        if (lowerName.includes('vercel') || lowerUrl.includes('vercel.app')) return <Triangle size={14} style={{ transform: 'rotate(0deg)' }} />;
-        if (lowerName.includes('firebase') || lowerUrl.includes('web.app')) return <Flame size={16} />;
+        const isDomain = (host, domain) => host === domain || host.endsWith('.' + domain);
+
+        if (lowerName.includes('github') || isDomain(hostname, 'github.io')) return <Github size={16} />;
+        if (lowerName.includes('vercel') || isDomain(hostname, 'vercel.app')) return <Triangle size={14} style={{ transform: 'rotate(0deg)' }} />;
+        if (lowerName.includes('firebase') || isDomain(hostname, 'web.app')) return <Flame size={16} />;
         if (lowerName.includes('mirror')) return <Terminal size={16} />;
         return <Globe size={16} />;
     };

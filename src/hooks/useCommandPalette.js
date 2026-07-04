@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react';
 
-const RECENT_KEY = 'admin.palette.recent';
+const RECENT_KEY = 'portfolio.palette.recent';
+const LEGACY_RECENT_KEY = 'admin.palette.recent';
 const RECENT_MAX = 8;
 
 export const readRecent = () => {
     if (typeof window === 'undefined') return [];
     try {
-        const parsed = JSON.parse(window.localStorage.getItem(RECENT_KEY) || '[]');
+        let raw = window.localStorage.getItem(RECENT_KEY);
+        if (!raw) {
+            raw = window.localStorage.getItem(LEGACY_RECENT_KEY);
+            if (raw) {
+                window.localStorage.setItem(RECENT_KEY, raw);
+                window.localStorage.removeItem(LEGACY_RECENT_KEY);
+            }
+        }
+        const parsed = JSON.parse(raw || '[]');
         return Array.isArray(parsed) ? parsed : [];
     } catch {
         return [];

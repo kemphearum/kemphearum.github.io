@@ -105,7 +105,15 @@ const Admin = () => {
     // UI & Tabs
     const [activeTab, setActiveTab] = useState(() => {
         if (typeof window === 'undefined') return 'dashboard';
-        return localStorage.getItem('adminActiveTab') || 'dashboard';
+        let val = localStorage.getItem('portfolio.ui.activeTab');
+        if (!val) {
+            val = localStorage.getItem('adminActiveTab');
+            if (val) {
+                localStorage.setItem('portfolio.ui.activeTab', val);
+                localStorage.removeItem('adminActiveTab');
+            }
+        }
+        return val || 'dashboard';
     });
 
     // Content & Permissions

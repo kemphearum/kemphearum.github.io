@@ -35,10 +35,17 @@ export const useAdminContent = ({
     const [sidebarPersistent, setSidebarPersistent] = useState(() => {
         if (typeof window === 'undefined') return true;
         try {
-            const stored = localStorage.getItem('adminSidebarPersistent');
+            let stored = localStorage.getItem('portfolio.ui.sidebarPersistent');
+            if (stored === null) {
+                stored = localStorage.getItem('adminSidebarPersistent');
+                if (stored !== null) {
+                    localStorage.setItem('portfolio.ui.sidebarPersistent', stored);
+                    localStorage.removeItem('adminSidebarPersistent');
+                }
+            }
             return stored !== null ? JSON.parse(stored) : true;
         } catch {
-            localStorage.removeItem('adminSidebarPersistent');
+            localStorage.removeItem('portfolio.ui.sidebarPersistent');
             return true;
         }
     });

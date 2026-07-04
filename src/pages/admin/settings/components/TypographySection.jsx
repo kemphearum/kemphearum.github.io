@@ -73,11 +73,14 @@ const TypographySection = ({
 
     const getPreviewMirrorIcon = (name = '', url = '') => {
         const lowerName = String(name).toLowerCase();
-        const lowerUrl = String(url).toLowerCase();
+        let hostname = '';
+        try { hostname = new URL(String(url)).hostname.toLowerCase(); } catch { /* ignore */ }
 
-        if (lowerName.includes('github') || lowerUrl.includes('github.io')) return <Github size={14} />;
-        if (lowerName.includes('vercel') || lowerUrl.includes('vercel.app')) return <Triangle size={13} />;
-        if (lowerName.includes('firebase') || lowerUrl.includes('web.app')) return <Flame size={14} />;
+        const isDomain = (host, domain) => host === domain || host.endsWith('.' + domain);
+
+        if (lowerName.includes('github') || isDomain(hostname, 'github.io')) return <Github size={14} />;
+        if (lowerName.includes('vercel') || isDomain(hostname, 'vercel.app')) return <Triangle size={13} />;
+        if (lowerName.includes('firebase') || isDomain(hostname, 'web.app')) return <Flame size={14} />;
         if (lowerName.includes('mirror')) return <Terminal size={14} />;
         return <Globe size={14} />;
     };

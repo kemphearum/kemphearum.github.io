@@ -152,7 +152,12 @@ const MarkdownRenderer = ({ content }) => {
                             }
                             // Facebook (Post or Video)
                             const fbMatch = url.match(/facebook\.com\/(?:.*\/videos\/(\d+)|([a-zA-Z0-9.]+)\/posts\/([a-zA-Z0-9]+)|permalink\.php\?story_fbid=([a-zA-Z0-9]+)&id=([a-zA-Z0-9]+))/i);
-                            if (fbMatch || url.includes('facebook.com')) {
+                            let isFbHost = false;
+                            try {
+                                const hostname = new URL(url).hostname.toLowerCase();
+                                isFbHost = hostname === 'facebook.com' || hostname.endsWith('.facebook.com');
+                            } catch { /* ignore */ }
+                            if (fbMatch || isFbHost) {
                                 const encodedUrl = encodeURIComponent(url);
                                 const isVideo = url.includes('/videos/');
                                 const fbSrc = isVideo 

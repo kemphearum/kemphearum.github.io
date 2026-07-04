@@ -38,7 +38,7 @@ export const getSessionId = () => {
     try {
         let sessionId = sessionStorage.getItem('analytics_session_id');
         if (!sessionId) {
-            sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            sessionId = crypto.randomUUID();
             sessionStorage.setItem('analytics_session_id', sessionId);
         }
         return sessionId;
