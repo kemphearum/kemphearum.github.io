@@ -120,6 +120,7 @@ const COLLECTION_META = [
 
 const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, isFetching = false, totalDocs, setActiveTab, onExplore }) => {
   const { language, t } = useTranslation();
+  const tm = (key, params = {}) => t(`admin.database.${key}`, params);
   const locale = language === 'km' ? 'km-KH' : 'en-US';
   const numberFormatter = useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const localizedCollections = useMemo(
