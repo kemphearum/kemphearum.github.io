@@ -23,12 +23,12 @@ import { QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { queryClient } from '../src/queryClient';
 import React, { useCallback, useEffect } from 'react';
 import SettingsService from '../src/services/SettingsService';
-import AnimatedBackground from '@/sections/AnimatedBackground';
+const AnimatedBackground = React.lazy(() => import('@/sections/AnimatedBackground'));
 import SiteStatusOverlay from '../src/components/SiteStatusOverlay';
 import '../src/styles/global.scss';
 import { useAnalytics } from '../src/hooks/useAnalytics';
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
+const Analytics = React.lazy(() => import('@vercel/analytics/react').then(m => ({ default: m.Analytics })));
+const SpeedInsights = React.lazy(() => import('@vercel/speed-insights/react').then(m => ({ default: m.SpeedInsights })));
 import { useTranslation } from '../src/hooks/useTranslation';
 import { buildBrowserTitle } from '../src/utils/browserTitle';
 import { validateFeatureRegistry } from '../src/utils/validateRegistry';
@@ -55,13 +55,7 @@ export const clientLoader = async ({ serverLoader }) => {
     return await serverLoader();
   } catch (error) {
     console.warn("Client fallback for root loader:", error);
-    try {
-      const currentOrigin = window.location.origin;
-      const globalSettings = await SettingsService.fetchGlobalSettings();
-      return { ...(globalSettings || {}), currentOrigin };
-    } catch {
-      return { currentOrigin: window.location.origin };
-    }
+    return { currentOrigin: window?.location?.origin || '' };
   }
 };
 clientLoader.hydrate = true;
@@ -106,10 +100,10 @@ export function Layout({ children }) {
                       <ComponentErrorBoundary>
                       {children}
                       {typeof window !== 'undefined' && window.location.hostname.includes('vercel') && !['localhost', '127.0.0.1'].includes(window.location.hostname) && (
-                        <>
+                        <React.Suspense fallback={null}>
                           <Analytics />
                           <SpeedInsights />
-                        </>
+                        </React.Suspense>
                       )}
                       </ComponentErrorBoundary>
                     </NotificationProvider>
@@ -342,13 +336,15 @@ function SettingsApplier({ children, initialSettings }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <AnimatedBackground
-        density={bgDensity}
-        speed={bgSpeed}
-        glowOpacity={bgGlowOpacity}
-        interactive={bgInteractive}
-        variant={bgStyle}
-      />
+      <React.Suspense fallback={null}>
+        <AnimatedBackground
+          density={bgDensity}
+          speed={bgSpeed}
+          glowOpacity={bgGlowOpacity}
+          interactive={bgInteractive}
+          variant={bgStyle}
+        />
+      </React.Suspense>
       <SiteStatusOverlay config={siteConfig} />
       {children}
     </>

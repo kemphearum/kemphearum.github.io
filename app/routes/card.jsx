@@ -10,13 +10,7 @@ const getMetaLanguage = () => {
   return localStorage.getItem('portfolio.language') === 'km' ? 'km' : 'en';
 };
 
-// Server loader returns null — Firebase client SDK can't run server-side
-export function loader() {
-  return { settings: null, profile: null, communication: null };
-}
-
-// Client loader runs in the browser where Firebase is available
-export async function clientLoader() {
+export async function loader() {
   try {
     const [settings, profileInfo, home, communication] = await Promise.all([
       SettingsService.fetchGlobalSettings(),
@@ -31,12 +25,10 @@ export async function clientLoader() {
     };
     return { settings, profile, communication };
   } catch (error) {
-    console.error("Card Client Loader Error:", error);
+    console.error("Card Loader Error:", error);
     return { settings: null, profile: null, communication: null };
   }
 }
-
-clientLoader.hydrate = true;
 
 export function meta({ data, matches }) {
   const currentOrigin = matches?.find(m => m.id === "root")?.data?.currentOrigin || (typeof window !== 'undefined' ? window.location.origin : '');

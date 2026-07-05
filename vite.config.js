@@ -3,6 +3,8 @@ import { defineConfig } from "vite";
 import { vercelPreset } from "@vercel/react-router/vite";
 import { fileURLToPath, URL } from "node:url";
 
+import { visualizer } from "rollup-plugin-visualizer";
+
 // https://vite.dev/config/
 export default defineConfig({
   resolve: {
@@ -12,7 +14,10 @@ export default defineConfig({
     dedupe: ["react", "react-dom"]
   },
 
-  plugins: [reactRouter({ presets: [vercelPreset()] })].filter(Boolean),
+  plugins: [
+    reactRouter({ presets: [vercelPreset()] }),
+    visualizer({ open: false, filename: "bundle-analysis.html" })
+  ].filter(Boolean),
   ssr: {
     noExternal: [
       "react-markdown",
@@ -29,17 +34,7 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 2000,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules/firebase/')) return 'vendor-firebase';
-          if (id.includes('node_modules/framer-motion') || 
-              id.includes('node_modules/lucide-react') || 
-              id.includes('node_modules/recharts')) {
-            return 'vendor-ui';
-          }
-        }
-      }
-    }
+    // Let Vite and React Router handle chunking automatically.
+    // manualChunks for vendor-ui was causing recharts and framer-motion to load on every page.
   },
 })
