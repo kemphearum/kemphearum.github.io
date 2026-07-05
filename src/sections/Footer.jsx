@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import SettingsService from '../services/SettingsService';
+import CommunicationService from '../services/CommunicationService';
 import { Github, Globe, Cloud, Activity, Terminal, Triangle, Flame } from 'lucide-react';
  
 import { motion } from 'framer-motion';
@@ -8,14 +9,15 @@ import styles from './Footer.module.scss';
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField } from '../utils/localization';
 
-const Footer = () => {
+const Footer = ({ initialSettings, initialContact }) => {
     const { language, t } = useTranslation();
     const { data: globalConfig } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
         queryKey: ['settings', 'global'],
-        queryFn: () => SettingsService.fetchGlobalSettings()
+        queryFn: () => SettingsService.fetchGlobalSettings(),
+        initialData: initialSettings
     });
 
     const { data: commRaw } = useQuery({
@@ -23,7 +25,8 @@ const Footer = () => {
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['content', 'contact'],
-        queryFn: () => import('../services/CommunicationService').then(m => m.default.get())
+        queryFn: () => CommunicationService.get(),
+        initialData: initialContact
     });
     const communication = commRaw || {};
 

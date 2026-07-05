@@ -25,15 +25,15 @@ const AVAILABILITY_CLASS = {
     busy: 'closed'
 };
 
-const RecruiterSnapshot = () => {
+const RecruiterSnapshot = ({ initialProfile, initialContact, initialSkills, initialCertificates, initialProjects, initialExperience }) => {
     const { language, t } = useTranslation();
 
-    const { data: profileRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'profileInfo'], queryFn: () => ContentService.fetchSection('profileInfo') });
-    const { data: commRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'contact'], queryFn: () => CommunicationService.get() });
-    const { data: skillsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['skills'], queryFn: () => SkillService.getAll() });
-    const { data: certsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['certificates'], queryFn: () => CertificateService.getAll() });
-    const { data: projectsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['projects'], queryFn: () => ProjectService.getAll() });
-    const { data: experienceRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['experience'], queryFn: () => ExperienceService.getAll() });
+    const { data: profileRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'profileInfo'], queryFn: () => ContentService.fetchSection('profileInfo'), initialData: initialProfile });
+    const { data: commRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['content', 'contact'], queryFn: () => CommunicationService.get(), initialData: initialContact });
+    const { data: skillsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['skills'], queryFn: () => SkillService.getAll(), initialData: initialSkills });
+    const { data: certsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['certificates'], queryFn: () => CertificateService.getAll(), initialData: initialCertificates });
+    const { data: projectsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['projects'], queryFn: () => ProjectService.getAll(), initialData: initialProjects });
+    const { data: experienceRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['experience'], queryFn: () => ExperienceService.getAll(), initialData: initialExperience });
 
     const profile = profileRaw || {};
     const comm = commRaw || {};

@@ -21,7 +21,7 @@ const formatMonth = (value, language) => {
     return language === 'km' ? formatLocalizedPeriod(rawDate, language) : rawDate;
 };
 
-const Certificates = ({ isStandalone = false }) => {
+const Certificates = ({ isStandalone = false, initialData }) => {
     const { language, t } = useTranslation();
     const enabled = useFeatureFlag('showCertificates');
 
@@ -30,7 +30,8 @@ const Certificates = ({ isStandalone = false }) => {
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['certificates'],
-        queryFn: () => CertificateService.getAll('createdAt', 'desc')
+        queryFn: () => CertificateService.getAll('issueDate', 'desc'),
+        initialData: initialData
     });
 
     const certificates = useMemo(() => filterPublished(certificatesData || [])

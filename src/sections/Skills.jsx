@@ -12,7 +12,7 @@ import { filterPublished } from '../domain/shared/contentStatus';
 
 const LEVEL_VALUE = { beginner: 1, intermediate: 2, advanced: 3, expert: 4 };
 
-const Skills = ({ isStandalone = false }) => {
+const Skills = ({ isStandalone = false, initialData }) => {
     const { language, t } = useTranslation();
     const enabled = useFeatureFlag('showSkills');
 
@@ -21,7 +21,8 @@ const Skills = ({ isStandalone = false }) => {
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['skills'],
-        queryFn: () => SkillService.getAll('createdAt', 'desc')
+        queryFn: () => SkillService.getAll('createdAt', 'desc'),
+        initialData: initialData
     });
 
     const grouped = useMemo(() => {

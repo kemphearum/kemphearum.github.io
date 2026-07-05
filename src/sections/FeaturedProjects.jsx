@@ -9,14 +9,15 @@ import { Link } from 'react-router';
 import { useTranslation } from '../hooks/useTranslation';
 import { filterPublished } from '../domain/shared/contentStatus';
 
-const FeaturedProjects = () => {
+const FeaturedProjects = ({ initialData }) => {
     const { t } = useTranslation();
     const { data: projectsData, isLoading: loading } = useQuery({
         staleTime: 60000,
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['projects'],
-        queryFn: () => ProjectService.getAll('createdAt', 'desc')
+        queryFn: () => ProjectService.getAll('createdAt', 'desc'),
+        initialData: initialData
     });
 
     const projects = projectsData || [];

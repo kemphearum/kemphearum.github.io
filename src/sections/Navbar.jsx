@@ -11,7 +11,7 @@ import { getLocalizedField } from '../utils/localization';
 
 const SECTION_IDS = ['home', 'about', 'experience', 'skills', 'certificates', 'projects', 'blog', 'contact'];
 
-const Navbar = () => {
+const Navbar = ({ initialSettings }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [activeSection, setActiveSection] = useState('home');
@@ -40,7 +40,8 @@ const Navbar = () => {
     gcTime: 300000,
     refetchOnWindowFocus: false,
         queryKey: ['settings', 'global'],
-        queryFn: () => SettingsService.fetchGlobalSettings()
+        queryFn: () => SettingsService.fetchGlobalSettings(),
+        initialData: initialSettings
     });
 
     const settings = globalConfig?.site || globalConfig || {

@@ -14,12 +14,12 @@ import MarkdownRenderer from './MarkdownRenderer';
 
 const QUERY_OPTS = { staleTime: 300000, gcTime: 900000, refetchOnWindowFocus: false };
 
-const Credibility = () => {
+const Credibility = ({ initialAwards, initialPublications, initialSpeaking }) => {
     const { language, t } = useTranslation();
 
-    const { data: awardsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['awards'], queryFn: () => AwardService.getAll() });
-    const { data: publicationsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['publications'], queryFn: () => PublicationService.getAll() });
-    const { data: speakingRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['speaking'], queryFn: () => SpeakingService.getAll() });
+    const { data: awardsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['awards'], queryFn: () => AwardService.getAll(), initialData: initialAwards });
+    const { data: publicationsRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['publications'], queryFn: () => PublicationService.getAll(), initialData: initialPublications });
+    const { data: speakingRaw } = useQuery({ ...QUERY_OPTS, queryKey: ['speaking'], queryFn: () => SpeakingService.getAll(), initialData: initialSpeaking });
 
     const awards = useMemo(() => filterPublished(awardsRaw || [])
         .map((a) => ({ ...a, title: getLocalizedField(a.title, language), organization: getLocalizedField(a.organization, language), description: getLocalizedField(a.description, language) }))

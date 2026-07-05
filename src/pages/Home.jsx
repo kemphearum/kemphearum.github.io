@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router';
+import { useLocation, useLoaderData } from 'react-router';
 import Navbar from '@/sections/Navbar';
 import Hero from '@/sections/Hero';
 import About from '@/sections/About';
@@ -57,6 +57,7 @@ export function meta({ data }) {
 
 export default function Home() {
   const location = useLocation();
+  const data = useLoaderData();
   const pendingScrollStopRef = useRef(null);
 
   const queueSectionScroll = useCallback((sectionId, behavior = 'smooth') => {
@@ -129,23 +130,39 @@ export default function Home() {
 
   return (
     <>
-      <Navbar />
+      <Navbar initialSettings={data?.settings} />
       <main>
-        <Hero />
-        <CareerHighlights />
-        <RecruiterSnapshot />
-        <About />
-        <Experience />
-        <Education />
-        <Skills />
-        <Certificates />
-        <Credibility />
-        <FeaturedProjects />
-        <FeaturedBlogs />
-        <Contact />
+        <Hero initialData={data?.home} />
+        <CareerHighlights 
+          initialExperience={data?.experience}
+          initialProjects={data?.projects}
+          initialCertificates={data?.certificates}
+          initialSkills={data?.skills}
+        />
+        <RecruiterSnapshot 
+          initialProfile={data?.profile}
+          initialContact={data?.contact}
+          initialSkills={data?.skills}
+          initialCertificates={data?.certificates}
+          initialProjects={data?.projects}
+          initialExperience={data?.experience}
+        />
+        <About initialData={data?.about} initialSkills={data?.skills} />
+        <Experience initialData={data?.experience} />
+        <Education initialData={data?.education} />
+        <Skills initialData={data?.skills} />
+        <Certificates initialData={data?.certificates} />
+        <Credibility 
+          initialAwards={data?.awards}
+          initialPublications={data?.publications}
+          initialSpeaking={data?.speaking}
+        />
+        <FeaturedProjects initialData={data?.projects} />
+        <FeaturedBlogs initialData={data?.posts} />
+        <Contact initialData={data?.contact} initialResume={data?.resume} />
       </main>
       <BackToTop />
-      <Footer />
+      <Footer initialSettings={data?.settings} initialContact={data?.contact} />
     </>
   );
 }

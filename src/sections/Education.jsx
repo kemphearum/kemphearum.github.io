@@ -9,14 +9,15 @@ import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField, formatLocalizedPeriod } from '../utils/localization';
 import { GraduationCap } from 'lucide-react';
 
-const Education = () => {
+const Education = ({ initialData }) => {
     const { language, t } = useTranslation();
     const { data: educationsData, isLoading: loading } = useQuery({
         staleTime: 60000,
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['education'],
-        queryFn: () => EducationService.getAll()
+        queryFn: () => EducationService.getAll(),
+        initialData: initialData
     });
 
     const educations = educationsData || [];

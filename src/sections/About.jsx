@@ -10,14 +10,15 @@ import { getLocalizedField } from '../utils/localization';
 import SkillService from '../services/SkillService';
 import { filterPublished } from '../domain/shared/contentStatus';
 
-const About = () => {
+const About = ({ initialData, initialSkills }) => {
     const { language, t } = useTranslation();
     const { data, isLoading: loading } = useQuery({
         staleTime: 60000,
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['content', 'about'],
-        queryFn: () => ContentService.fetchSection('about')
+        queryFn: () => ContentService.fetchSection('about'),
+        initialData: initialData
     });
 
     const { data: skillsData, isLoading: skillsLoading } = useQuery({
@@ -25,7 +26,8 @@ const About = () => {
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['skills'],
-        queryFn: () => SkillService.getAll()
+        queryFn: () => SkillService.getAll(),
+        initialData: initialSkills
     });
 
     const rawContent = data || {

@@ -12,7 +12,7 @@ import { getLocalizedField } from '../utils/localization';
 import { normalizeSectionTarget } from '../utils/sectionNavigation';
 import { Download, Send } from 'lucide-react';
 
-const Hero = () => {
+const Hero = ({ initialData }) => {
     const { trackEvent } = useAnalytics();
     const { language, t } = useTranslation();
     const navigate = useNavigate();
@@ -42,7 +42,8 @@ const Hero = () => {
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['content', 'home'],
-        queryFn: () => ContentService.fetchSection('home')
+        queryFn: () => ContentService.fetchSection('home'),
+        initialData: initialData
     });
 
     const rawContent = data || {

@@ -90,7 +90,7 @@ const getPortfolioUrl = () => {
     return origin && !origin.includes('localhost') ? origin : DEFAULT_SITE_URL;
 };
 
-const Contact = () => {
+const Contact = ({ initialData, initialResume }) => {
     const { trackEvent } = useAnalytics();
     const { language, t } = useTranslation();
     const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -105,7 +105,8 @@ const Contact = () => {
         retry: 1,
         refetchOnWindowFocus: false,
         queryKey: ['content', 'contact'],
-        queryFn: () => CommunicationService.get()
+        queryFn: () => CommunicationService.get(),
+        initialData: initialData
     });
 
     const { data: resumeData } = useQuery({
@@ -114,7 +115,8 @@ const Contact = () => {
         retry: 1,
         refetchOnWindowFocus: false,
         queryKey: ['content', 'resume'],
-        queryFn: () => ResumeService.get()
+        queryFn: () => ResumeService.get(),
+        initialData: initialResume
     });
 
     const communication = commData || {};

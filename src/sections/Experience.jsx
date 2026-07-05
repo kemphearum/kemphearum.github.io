@@ -8,14 +8,15 @@ import MarkdownRenderer from './MarkdownRenderer';
 import { useTranslation } from '../hooks/useTranslation';
 import { getLocalizedField, formatLocalizedPeriod } from '../utils/localization';
 
-const Experience = () => {
+const Experience = ({ initialData }) => {
     const { language, t } = useTranslation();
     const { data: experiencesData, isLoading: loading } = useQuery({
     staleTime: 60000,
     gcTime: 300000,
     refetchOnWindowFocus: false,
         queryKey: ['experience'],
-        queryFn: () => ExperienceService.getAll()
+        queryFn: () => ExperienceService.getAll(),
+        initialData: initialData
     });
 
     const experiences = experiencesData || [];

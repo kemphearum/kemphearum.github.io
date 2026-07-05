@@ -1,6 +1,17 @@
 import Home from "../../src/pages/Home";
 import SettingsService from "../../src/services/SettingsService";
 import ContentService from "../../src/services/ContentService";
+import BlogService from "../../src/services/BlogService";
+import ProjectService from "../../src/services/ProjectService";
+import ExperienceService from "../../src/services/ExperienceService";
+import EducationService from "../../src/services/EducationService";
+import SkillService from "../../src/services/SkillService";
+import CertificateService from "../../src/services/CertificateService";
+import AwardService from "../../src/services/AwardService";
+import PublicationService from "../../src/services/PublicationService";
+import SpeakingService from "../../src/services/SpeakingService";
+import CommunicationService from "../../src/services/CommunicationService";
+import ResumeService from "../../src/services/ResumeService";
 import { getLocalizedField } from "../../src/utils/localization";
 import { buildBrowserTitle } from "../../src/utils/browserTitle";
 import { generateMetaTags, generatePersonSchema, DEFAULT_SITE_URL } from "../../src/utils/SeoHelper";
@@ -12,21 +23,52 @@ const getMetaLanguage = () => {
 
 export async function loader() {
   try {
-    const [settings, profile] = await Promise.all([
+    const [
+      settings,
+      profile,
+      about,
+      home,
+      contact,
+      resume,
+      posts,
+      projects,
+      experience,
+      education,
+      skills,
+      certificates,
+      awards,
+      publications,
+      speaking
+    ] = await Promise.all([
       SettingsService.fetchGlobalSettings(),
-      ContentService.fetchSection('profileInfo')
+      ContentService.fetchSection('profileInfo'),
+      ContentService.fetchSection('about'),
+      ContentService.fetchSection('home'),
+      CommunicationService.get(),
+      ResumeService.get(),
+      BlogService.getAll('createdAt', 'desc'),
+      ProjectService.getAll('createdAt', 'desc'),
+      ExperienceService.getAll('startDate', 'desc'),
+      EducationService.getAll('startDate', 'desc'),
+      SkillService.getAll(),
+      CertificateService.getAll('issueDate', 'desc'),
+      AwardService.getAll(),
+      PublicationService.getAll(),
+      SpeakingService.getAll()
     ]);
-    return { settings, profile };
+    return {
+      settings, profile, about, home, contact, resume, posts, projects, experience,
+      education, skills, certificates, awards, publications, speaking
+    };
   } catch (error) {
     console.error("Home Loader Error:", error);
-    return { settings: null, profile: null };
+    return { settings: null, profile: null, about: null, home: null };
   }
 }
 
 export function meta({ data, matches }) {
   const currentOrigin = matches?.find(m => m.id === "root")?.data?.currentOrigin || (typeof window !== 'undefined' ? window.location.origin : '');
   const language = getMetaLanguage();
-  // Backward compatible with the legacy loader shape (raw settings doc).
   const settings = data?.settings ?? data;
   const site = settings?.site || settings || {};
   const seo = settings?.seo || {};

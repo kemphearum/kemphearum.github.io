@@ -10,14 +10,15 @@ import { getLocalizedField } from '../utils/localization';
 import { filterPublished } from '../domain/shared/contentStatus';
 import { Eye } from 'lucide-react';
 
-const FeaturedBlogs = () => {
+const FeaturedBlogs = ({ initialData }) => {
     const { language, t } = useTranslation();
     const { data: postsData, isLoading: loading } = useQuery({
         staleTime: 60000,
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['posts'],
-        queryFn: () => BlogService.getAll('createdAt', 'desc')
+        queryFn: () => BlogService.getAll('createdAt', 'desc'),
+        initialData: initialData
     });
 
     const posts = (postsData || []).map((post) => ({

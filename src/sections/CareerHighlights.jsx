@@ -12,7 +12,7 @@ import SkillService from '../services/SkillService';
 import { filterPublished } from '../domain/shared/contentStatus';
 import { deriveYearsOfExperience } from '../domain/experience/experienceDomain';
 
-const CareerHighlights = () => {
+const CareerHighlights = ({ initialExperience, initialProjects, initialCertificates, initialSkills }) => {
     const { t } = useTranslation();
 
     const { data: experiencesData } = useQuery({
@@ -20,7 +20,8 @@ const CareerHighlights = () => {
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['experience'],
-        queryFn: () => ExperienceService.getAll()
+        queryFn: () => ExperienceService.getAll('startDate', 'desc'),
+        initialData: initialExperience
     });
 
     const { data: projectsData } = useQuery({
@@ -28,7 +29,8 @@ const CareerHighlights = () => {
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['projects'],
-        queryFn: () => ProjectService.getAll()
+        queryFn: () => ProjectService.getAll('createdAt', 'desc'),
+        initialData: initialProjects
     });
 
     const { data: certificatesData } = useQuery({
@@ -36,7 +38,8 @@ const CareerHighlights = () => {
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['certificates'],
-        queryFn: () => CertificateService.getAll()
+        queryFn: () => CertificateService.getAll('issueDate', 'desc'),
+        initialData: initialCertificates
     });
 
     const { data: skillsData } = useQuery({
@@ -44,7 +47,8 @@ const CareerHighlights = () => {
         gcTime: 300000,
         refetchOnWindowFocus: false,
         queryKey: ['skills'],
-        queryFn: () => SkillService.getAll()
+        queryFn: () => SkillService.getAll(),
+        initialData: initialSkills
     });
 
     // Calculate stats
