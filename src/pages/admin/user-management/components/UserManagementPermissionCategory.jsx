@@ -140,7 +140,7 @@ const UserManagementPermissionCategory = ({
                                         const isSupported = feature.permissions.supportedActions.includes(action);
                                         
                                         if (!isSupported) {
-                                            return null;
+                                            return <div key={action} className="action-toggle" style={{ visibility: 'hidden' }}></div>;
                                         }
 
                                         if (action === ACTIONS.VIEW) {

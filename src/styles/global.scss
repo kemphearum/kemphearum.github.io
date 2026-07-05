@@ -188,7 +188,6 @@ html {
     --workspace-stat-icon-border: rgba(149, 177, 255, 0.28);
 
     &[data-theme="light"],
-    &[data-theme="light"] *,
     [data-theme="light"] & {
         --bg-color: #f8f9fa;
         --bg-surface: rgba(255, 255, 255, calc(0.18 + (var(--dynamic-glass-opacity) * 0.82)));
