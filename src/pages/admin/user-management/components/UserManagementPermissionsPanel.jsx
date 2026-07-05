@@ -148,7 +148,7 @@ const UserManagementPermissionsPanel = ({ showToast, userRole }) => {
             requestConfirm({
                 title: t('admin.auth.permissions.discardConfirmTitle') || 'Discard Unsaved Changes?',
                 message: t('admin.auth.permissions.discardConfirm') || 'You have unsaved changes. Discard and switch roles?',
-                confirmLabel: 'Discard & Switch',
+                confirmLabel: t('admin.auth.permissions.discardAndSwitch') || 'Discard & Switch',
                 confirmVariant: 'danger',
                 tone: 'warning',
                 onConfirm: performAddRole

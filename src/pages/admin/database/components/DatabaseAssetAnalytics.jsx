@@ -78,11 +78,11 @@ const DatabaseAssetAnalytics = ({ showToast }) => {
         <div className="ui-actions-section">
             <div className="ui-flex-between ui-mb-medium">
                 <h4 className="ui-flex-center-gap-small ui-m-0">
-                    <Image size={18} className="ui-text-accent" /> Asset & Data Analytics (Zero-Cost)
+                    <Image size={18} className="ui-text-accent" /> {tm('ui.assetDataAnalytics')}
                 </h4>
                 <Button variant="outline" size="sm" onClick={handleAnalyze} disabled={analyzing}>
                     {analyzing ? <RefreshCw size={16} className="ui-spin" /> : <Play size={16} />} 
-                    {analyzing ? 'Scanning...' : 'Run Scan'}
+                    {analyzing ? tm('ui.scanning') : tm('ui.runScan')}
                 </Button>
             </div>
             
@@ -93,7 +93,7 @@ const DatabaseAssetAnalytics = ({ showToast }) => {
                             <div className="ui-statInfo">
                                 <div className="ui-statValue">{results.totalAssets}</div>
                                 <div className="ui-statLabel">{tm('ui.uniqueAssets')}</div>
-                                <div className="ui-statDescription">Found in {results.totalDocsScanned} docs</div>
+                                <div className="ui-statDescription">{tm('ui.foundInDocs', { count: results.totalDocsScanned })}</div>
                             </div>
                         </div>
                         <div className="ui-statCard" style={{ flex: 1, cursor: 'default' }}>
@@ -110,13 +110,13 @@ const DatabaseAssetAnalytics = ({ showToast }) => {
                             onClick={() => setActiveTab('summary')}
                             style={{ padding: '0.5rem 1rem', background: 'none', border: 'none', borderBottom: activeTab === 'summary' ? '2px solid var(--primary-color)' : '2px solid transparent', cursor: 'pointer', color: activeTab === 'summary' ? 'var(--primary-color)' : 'var(--text-muted)' }}
                         >
-                            All Assets
+                            {tm('ui.allAssets')}
                         </button>
                         <button 
                             onClick={() => setActiveTab('duplicates')}
                             style={{ padding: '0.5rem 1rem', background: 'none', border: 'none', borderBottom: activeTab === 'duplicates' ? '2px solid var(--primary-color)' : '2px solid transparent', cursor: 'pointer', color: activeTab === 'duplicates' ? 'var(--primary-color)' : 'var(--text-muted)' }}
                         >
-                            Duplicates
+                            {tm('ui.duplicates')}
                         </button>
                     </div>
 
@@ -140,7 +140,7 @@ const DatabaseAssetAnalytics = ({ showToast }) => {
                                 <div style={{ flex: 1, overflow: 'hidden' }}>
                                     <div style={{ fontSize: '0.85rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.url}</div>
                                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                        Referenced {item.refs.length} time(s) in: {item.refs.join(', ')}
+                                        {tm('ui.referencedTimes', { count: item.refs.length, refs: item.refs.join(', ') })}
                                     </div>
                                 </div>
                             </div>
@@ -153,7 +153,7 @@ const DatabaseAssetAnalytics = ({ showToast }) => {
             )}
             {!results && !analyzing && (
                 <div className="ui-text-muted ui-text-small">
-                    Scans text and rich-text fields across CMS collections to aggregate and deduplicate external image/asset references. Note: Missing assets are detected during render via broken link indicators.
+                    {tm('ui.assetDataAnalyticsDesc')}
                 </div>
             )}
         </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { AlertTriangle, Info } from 'lucide-react';
 import { Dialog, Button } from '../ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 const ConfirmDialog = ({
   open,
@@ -9,13 +10,14 @@ const ConfirmDialog = ({
   loading,
   title,
   message,
-  confirmLabel = 'Confirm',
-  loadingLabel = 'Processing...',
+  confirmLabel,
+  loadingLabel,
   confirmVariant = 'primary',
   tone = 'info',
   note,
   icon,
 }) => {
+  const { t } = useTranslation();
   const DefaultIcon = tone === 'danger' || tone === 'warning' ? AlertTriangle : Info;
   const ConfirmIcon = icon || DefaultIcon;
 
@@ -29,10 +31,10 @@ const ConfirmDialog = ({
             </div>
             <div>
               <Dialog.Title className="ui-confirm-dialog__title">
-                {title || 'Please Confirm'}
+                {title || t('admin.common.confirm.title', 'Please Confirm')}
               </Dialog.Title>
               <Dialog.Description className="ui-confirm-dialog__description">
-                Review before you continue.
+                {t('admin.common.confirm.review', 'Review before you continue.')}
               </Dialog.Description>
             </div>
           </div>
@@ -41,21 +43,21 @@ const ConfirmDialog = ({
         
         <Dialog.Body className="ui-confirm-dialog__body">
           <p className="ui-confirm-dialog__message">
-            {message || 'Are you sure you want to proceed?'}
+            {message || t('admin.common.confirm.message', 'Are you sure you want to proceed?')}
           </p>
           {note && <p className="ui-confirm-dialog__note">{note}</p>}
         </Dialog.Body>
         
         <Dialog.Footer className="ui-confirm-dialog__footer">
           <Button variant="ghost" onClick={() => onOpenChange(false)} type="button">
-            Cancel
+            {t('admin.common.cancel', 'Cancel')}
           </Button>
           <Button 
             variant={confirmVariant}
             onClick={onConfirm} 
             isLoading={loading}
           >
-            {loading ? loadingLabel : confirmLabel}
+            {loading ? (loadingLabel || t('admin.common.processing', 'Processing...')) : (confirmLabel || t('admin.common.confirm.button', 'Confirm'))}
           </Button>
         </Dialog.Footer>
       </Dialog.Content>
