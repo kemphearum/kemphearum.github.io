@@ -46,7 +46,9 @@ export const ThemeProvider = ({ children }) => {
         document.documentElement.style.colorScheme = theme;
         try {
             window.localStorage.setItem('portfolio-theme', theme);
-        } catch (e) {}
+        } catch (error) {
+            console.warn('Failed to save theme to localStorage:', error);
+        }
     }, [theme, isMounted]);
 
     const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
