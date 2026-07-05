@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from '../../../../../hooks/useTranslation';
+import { useTranslation } from '../../../../hooks/useTranslation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save, ShieldAlert, Sliders, Database, EyeOff } from 'lucide-react';
 import SettingsService from '../../../../services/SettingsService';
@@ -7,6 +7,8 @@ import BaseService from '../../../../services/BaseService';
 import { Spinner } from '@/shared/components/ui';
 
 const AnalyticsSettingsPanel = ({ showToast }) => {
+    const { t } = useTranslation();
+    const tm = (key, params = {}) => t(`admin.analytics.settings.${key}`, params);
     const queryClient = useQueryClient();
     const [settings, setSettings] = useState({
         dataRetentionDays: 90,
