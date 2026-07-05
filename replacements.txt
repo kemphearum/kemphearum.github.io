@@ -1,2 +1,0 @@
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>==>
-Co-authored-by: Claude Fable 5 <noreply@anthropic.com>==>
