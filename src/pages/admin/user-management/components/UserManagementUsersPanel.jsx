@@ -262,7 +262,7 @@ const UserManagementUsersPanel = ({ user, userRole, showToast }) => {
     <div className="auth-panel-container">
       <div className="ui-mb-medium">
         <div className="ui-alert ui-alert-warning">
-          <strong>Note:</strong> Force Logout requires a trusted backend (Firebase Admin SDK or Cloud Functions) and is unavailable in Zero-Cost mode.
+          {t('admin.userManagement.activeSessions.forceLogoutNote')}
         </div>
       </div>
 

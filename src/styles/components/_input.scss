@@ -40,6 +40,11 @@
         padding: 1rem 1.25rem;
         font-size: 1rem;
     }
+
+    &[type="date"]::-webkit-calendar-picker-indicator {
+        filter: var(--calendar-icon-filter, invert(1));
+        cursor: pointer;
+    }
 }
 
 [data-theme="light"] {

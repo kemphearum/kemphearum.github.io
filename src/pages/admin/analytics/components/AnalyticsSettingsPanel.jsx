@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from '../../../../../hooks/useTranslation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save, ShieldAlert, Sliders, Database, EyeOff } from 'lucide-react';
 import SettingsService from '../../../../services/SettingsService';
@@ -68,7 +69,7 @@ const AnalyticsSettingsPanel = ({ showToast }) => {
     return (
         <div className="analytics-panel fade-in">
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Sliders size={24} color="var(--primary-color)" /> Analytics Settings
+                <Sliders size={24} color="var(--primary-color)" /> {tm('title')}
             </h3>
 
             <div className="admin-analytics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))' }}>
@@ -78,25 +79,25 @@ const AnalyticsSettingsPanel = ({ showToast }) => {
                         <div style={{ padding: '0.75rem', background: 'rgba(100, 255, 218, 0.1)', borderRadius: '8px', color: 'var(--primary-color)' }}>
                             <Database size={24} />
                         </div>
-                        <h4 style={{ margin: 0, fontSize: '1.125rem' }}>Data Retention</h4>
+                        <h4 style={{ margin: 0, fontSize: '1.125rem' }}>{tm('dataRetention.title')}</h4>
                     </div>
 
                     <div className="ui-form-group">
-                        <label>Analytics Retention Period (Days)</label>
+                        <label>{tm('dataRetention.period')}</label>
                         <select 
                             className="ui-input" 
                             name="dataRetentionDays"
                             value={settings.dataRetentionDays}
                             onChange={handleChange}
                         >
-                            <option value={30}>30 Days</option>
-                            <option value={90}>90 Days</option>
-                            <option value={180}>180 Days</option>
-                            <option value={365}>1 Year</option>
-                            <option value={9999}>Indefinite</option>
+                            <option value={30}>{tm('dataRetention.days', { count: 30 })}</option>
+                            <option value={90}>{tm('dataRetention.days', { count: 90 })}</option>
+                            <option value={180}>{tm('dataRetention.days', { count: 180 })}</option>
+                            <option value={365}>{tm('dataRetention.days', { count: 365 })}</option>
+                            <option value={9999}>{t('admin.common.indefinite', 'Indefinite')}</option>
                         </select>
                         <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-                            Older analytics data will be automatically purged by client-side janitor routines to save Firestore storage.
+                            {tm('dataRetention.note')}
                         </p>
                     </div>
                 </div>
@@ -106,7 +107,7 @@ const AnalyticsSettingsPanel = ({ showToast }) => {
                         <div style={{ padding: '0.75rem', background: 'rgba(124, 77, 255, 0.1)', borderRadius: '8px', color: '#7c4dff' }}>
                             <EyeOff size={24} />
                         </div>
-                        <h4 style={{ margin: 0, fontSize: '1.125rem' }}>Tracking Preferences</h4>
+                        <h4 style={{ margin: 0, fontSize: '1.125rem' }}>{tm('tracking.title')}</h4>
                     </div>
 
                     <div className="ui-form-group" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -119,8 +120,8 @@ const AnalyticsSettingsPanel = ({ showToast }) => {
                                 style={{ width: '1.25rem', height: '1.25rem' }}
                             />
                             <div>
-                                <div style={{ fontWeight: 500 }}>Enable Visitor Tracking</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Record page views and sessions to Firestore.</div>
+                                <div style={{ fontWeight: 500 }}>{tm('tracking.visitor.label')}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{tm('tracking.visitor.desc')}</div>
                             </div>
                         </label>
 
@@ -133,8 +134,8 @@ const AnalyticsSettingsPanel = ({ showToast }) => {
                                 style={{ width: '1.25rem', height: '1.25rem' }}
                             />
                             <div>
-                                <div style={{ fontWeight: 500 }}>Anonymize IP Addresses</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Mask the last octet of IP addresses before saving.</div>
+                                <div style={{ fontWeight: 500 }}>{tm('tracking.anonymize.label')}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{tm('tracking.anonymize.desc')}</div>
                             </div>
                         </label>
                         
@@ -147,8 +148,8 @@ const AnalyticsSettingsPanel = ({ showToast }) => {
                                 style={{ width: '1.25rem', height: '1.25rem' }}
                             />
                             <div>
-                                <div style={{ fontWeight: 500 }}>Enable Search Tracking</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Record search queries from the public frontend.</div>
+                                <div style={{ fontWeight: 500 }}>{tm('tracking.search.label')}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{tm('tracking.search.desc')}</div>
                             </div>
                         </label>
 
@@ -161,8 +162,8 @@ const AnalyticsSettingsPanel = ({ showToast }) => {
                                 style={{ width: '1.25rem', height: '1.25rem' }}
                             />
                             <div>
-                                <div style={{ fontWeight: 500 }}>Enable Download Tracking</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Record file downloads (Resumes, PDFs).</div>
+                                <div style={{ fontWeight: 500 }}>{tm('tracking.download.label')}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{tm('tracking.download.desc')}</div>
                             </div>
                         </label>
                     </div>

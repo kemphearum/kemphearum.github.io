@@ -3145,6 +3145,11 @@
         "toolbar": {
             "add": "Add",
             "search": "Search..."
+        },
+        "userManagement": {
+            "activeSessions": {
+                "forceLogoutNote": "Note: Force Logout requires a trusted backend (Firebase Admin SDK or Cloud Functions) and is unavailable in Zero-Cost mode."
+            }
         }
     },
     "nav": {

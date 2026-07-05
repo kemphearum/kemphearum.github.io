@@ -79,13 +79,13 @@ const PublicationFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit
                 <div className="ui-blog-dialog__body">
                     <Form id="publication-form" defaultValues={defaultValues} onSubmit={onSubmit} className="ui-blog-formLayout">
                         <div className="ui-blog-formLayout__main">
-                            <div className="ui-blog-formCard">
+                            <div className="ui-blog-formSection">
                                 <PublicationLocalizedFields />
                             </div>
                         </div>
                         <div className="ui-blog-formLayout__sidebar">
-                            <div className="ui-blog-formCard">
-                                <h3 className="ui-blog-formCard__title">{t('admin.publications.form.sections.details', 'Details')}</h3>
+                            <div className="ui-blog-formSection">
+                                <h3 className="ui-blog-formSection__head">{t('admin.publications.form.sections.details', 'Details')}</h3>
 
                                 <FormField label={t('admin.publications.form.fields.publishDate', 'Publish Date')} name="publishDate">
                                     <FormInput type="date" />
@@ -96,9 +96,9 @@ const PublicationFormDialog = ({ open, onOpenChange, mode, initialData, onSubmit
                                 </FormField>
                             </div>
 
-                            <div className="ui-blog-formCard">
-                                <h3 className="ui-blog-formCard__title">{t('admin.common.table.status', 'Status')}</h3>
-                                <div className="ui-blog-formCard__toggles">
+                            <div className="ui-blog-formSection">
+                                <h3 className="ui-blog-formSection__head">{t('admin.common.table.status', 'Status')}</h3>
+                                <div className="ui-blog-formSection__toggles">
                                     <FormField
                                         label={t('admin.common.visible', 'Visible')}
                                         name="visible"
