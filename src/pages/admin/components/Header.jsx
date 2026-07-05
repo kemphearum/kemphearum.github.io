@@ -110,7 +110,10 @@ const Header = ({
                             mode: theme === 'dark' ? t('admin.common.light') : t('admin.common.dark')
                         })}
                     >
-                        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                        {/* Empty placeholder during SSR/Hydration to avoid SVG mismatch warnings */}
+                        <div style={{ width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                        </div>
                     </button>
 
                     {isSettingsAllowed && (

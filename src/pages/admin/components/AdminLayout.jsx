@@ -73,7 +73,6 @@ const AdminLayout = ({
         <div
             className={styles.layout}
             data-admin-theme="true"
-            data-theme={theme}
             style={{ '--admin-header-height': `${headerHeight}px` }}
         >
             <AnimatedBackground 
