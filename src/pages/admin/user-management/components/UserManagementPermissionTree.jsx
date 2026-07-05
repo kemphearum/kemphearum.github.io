@@ -54,14 +54,6 @@ const UserManagementPermissionTree = ({
         }));
     };
 
-    const handleGlobalRemoveAll = () => {
-        setLocalPermissions(prev => ({
-            ...prev,
-            allowedTabs: [],
-            allowedActions: {}
-        }));
-    };
-
     const handleGlobalGrantCRUD = () => {
         const crudActions = [ACTIONS.VIEW, ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE];
         const newAllowedTabs = [];

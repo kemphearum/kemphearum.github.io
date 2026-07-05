@@ -49,23 +49,6 @@ const UserManagementPermissionCategory = ({
         });
     };
 
-    const handleRemoveAll = (e) => {
-        e.stopPropagation();
-        features.forEach(f => {
-            if (localPermissions.allowedTabs.includes(f.id)) {
-                toggleTab(f.id);
-            }
-            allActions.forEach(action => {
-                if (action !== ACTIONS.VIEW && f.permissions.supportedActions.includes(action)) {
-                    const currentActions = localPermissions.allowedActions[f.id] || [];
-                    if (currentActions.includes(action)) {
-                        toggleAction(f.id, action);
-                    }
-                }
-            });
-        });
-    };
-
     const handleGrantCRUD = (e) => {
         e.stopPropagation();
         const crudActions = [ACTIONS.VIEW, ACTIONS.CREATE, ACTIONS.EDIT, ACTIONS.DELETE];

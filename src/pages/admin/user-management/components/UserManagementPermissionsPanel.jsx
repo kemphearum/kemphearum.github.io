@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { useQuery } from '@tanstack/react-query';
 import UserService from '../../../../services/UserService';
@@ -166,7 +166,7 @@ const UserManagementPermissionsPanel = ({ showToast, userRole }) => {
         invalidateKeys: [['rolePermissions']]
     });
 
-    const getDefaultPermissions = (role) => {
+    const getDefaultPermissions = useCallback((role) => {
         const defaultTabs = [];
         const defaultActions = {};
         
@@ -183,7 +183,8 @@ const UserManagementPermissionsPanel = ({ showToast, userRole }) => {
             allowedTabs: defaultTabs,
             allowedActions: defaultActions
         };
-    };
+    }, [features]);
+
 
     // Initialize local permissions
     useEffect(() => {
