@@ -28,19 +28,25 @@ import SiteStatusOverlay from '../src/components/SiteStatusOverlay';
 import '../src/styles/global.scss';
 import { useAnalytics } from '../src/hooks/useAnalytics';
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useTranslation } from '../src/hooks/useTranslation';
 import { buildBrowserTitle } from '../src/utils/browserTitle';
 import { validateFeatureRegistry } from '../src/utils/validateRegistry';
 
-const PRIMARY_ORIGIN = 'https://phearum-info.web.app';
+export function headers() {
+  return {
+    "Cache-Control": "public, max-age=0, s-maxage=60, stale-while-revalidate=86400",
+  };
+}
 
-export async function loader() {
+export async function loader({ request }) {
   try {
+    const currentOrigin = request ? new URL(request.url).origin : '';
     const globalSettings = await SettingsService.fetchGlobalSettings();
-    return globalSettings || {};
+    return { ...(globalSettings || {}), currentOrigin };
   } catch (error) {
     console.error("Vercel Root Loader Error:", error);
-    return {};
+    return { currentOrigin: '' };
   }
 }
 
@@ -50,10 +56,11 @@ export const clientLoader = async ({ serverLoader }) => {
   } catch (error) {
     console.warn("Client fallback for root loader:", error);
     try {
+      const currentOrigin = window.location.origin;
       const globalSettings = await SettingsService.fetchGlobalSettings();
-      return globalSettings || {};
+      return { ...(globalSettings || {}), currentOrigin };
     } catch {
-      return {};
+      return { currentOrigin: window.location.origin };
     }
   }
 };
@@ -98,7 +105,12 @@ export function Layout({ children }) {
                     <NotificationProvider>
                       <ComponentErrorBoundary>
                       {children}
-                      {typeof window !== 'undefined' && window.location.hostname.includes('vercel') && !['localhost', '127.0.0.1'].includes(window.location.hostname) && <Analytics />}
+                      {typeof window !== 'undefined' && window.location.hostname.includes('vercel') && !['localhost', '127.0.0.1'].includes(window.location.hostname) && (
+                        <>
+                          <Analytics />
+                          <SpeedInsights />
+                        </>
+                      )}
                       </ComponentErrorBoundary>
                     </NotificationProvider>
                   </ActivityProvider>
@@ -299,6 +311,7 @@ function SettingsApplier({ children, initialSettings }) {
   }, [globalConfig, language, metadata, resolveLocalizedString, defaultGlassOpacity, defaultGlassBlur, defaultGlassColor]);
 
   const siteConfig = globalConfig?.site || globalConfig || {};
+  const currentOrigin = initialSettings?.currentOrigin || (typeof window !== 'undefined' ? window.location.origin : '');
   const bgDensity = siteConfig.bgDensity ?? defaultBgDensity ?? 50;
   const bgSpeed = siteConfig.bgSpeed ?? defaultBgSpeed ?? 50;
   const bgGlowOpacity = siteConfig.bgGlowOpacity ?? defaultBgGlowOpacity ?? 50;
@@ -309,7 +322,7 @@ function SettingsApplier({ children, initialSettings }) {
     "@context": "https://schema.org",
     "@type": "Person",
     "name": "Kem Phearum",
-    "url": siteConfig.canonicalUrl || PRIMARY_ORIGIN,
+    "url": siteConfig.canonicalUrl || currentOrigin,
     "jobTitle": "Security Consultant",
     "worksFor": {
       "@type": "Organization",

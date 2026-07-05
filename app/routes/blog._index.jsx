@@ -17,7 +17,8 @@ export async function loader() {
     }
 }
 
-export function meta({ data }) {
+export function meta({ data, matches }) {
+  const currentOrigin = matches?.find(m => m.id === "root")?.data?.currentOrigin || (typeof window !== 'undefined' ? window.location.origin : '');
     const language = getMetaLanguage();
     const tr = (enText, kmText) => (language === 'km' ? kmText : enText);
     const site = data?.site || data || {};
@@ -31,7 +32,7 @@ export function meta({ data }) {
             siteTitle: getLocalizedField(site.title, language) || "Kem Phearum",
             type: 'website',
             image: site.ogImageUrl || "/og-image.png",
-            url: `${site.canonicalUrl || DEFAULT_SITE_URL}/blog`
+            url: `${site.canonicalUrl || currentOrigin}/blog`
         }),
         {
             tagName: "link",

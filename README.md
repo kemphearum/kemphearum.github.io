@@ -115,7 +115,10 @@ npm run dev
 The application is designed for a hybrid deployment model to maximize the free tier.
 
 ### 1. Vercel (Primary & Backend)
-Pushing to the `main` branch automatically triggers a Vercel deployment. Vercel hosts the SSR React Router application and executes the `/api/*` serverless functions. Ensure server environment variables are configured in the Vercel dashboard as *Sensitive*.
+Pushing to the `main` branch automatically triggers a Vercel deployment. Vercel hosts the SSR React Router application and executes the `/api/*` serverless functions.
+- **Edge Caching & Performance:** HTML and static assets utilize dynamic Cache-Control rules (`stale-while-revalidate=86400`) alongside Vercel Speed Insights to maximize Free (Hobby) tier limits (10s execution max) and provide a lightning-fast experience.
+- **Unlimited Custom Domains:** Fully supports any custom domain seamlessly via dynamic origin routing, allowing deployments under `phearum.dev`, `portfolio.example.com`, etc., without any hardcoded configuration changes or paid upgrades.
+- Ensure server environment variables are configured in the Vercel dashboard as *Sensitive*.
 
 ### 2. Firebase (Database & Rules)
 Firestore security rules must be deployed manually when updated:

@@ -10,7 +10,7 @@ const toJsonResponse = (body, status, headers = {}) => (
 
 export async function action({ request }) {
     const origin = String(request.headers.get('origin') || '');
-    const corsHeaders = buildApiCorsHeaders(origin, { allowHeaders: 'Content-Type, Authorization' });
+    const corsHeaders = buildApiCorsHeaders(origin, request.url, { allowHeaders: 'Content-Type, Authorization' });
 
     if (request.method === 'OPTIONS') {
         return new Response('', { status: 204, headers: corsHeaders });
@@ -27,5 +27,5 @@ export async function action({ request }) {
 
 export async function loader({ request }) {
     const origin = String(request.headers.get('origin') || '');
-    return toJsonResponse({ success: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' } }, 405, buildApiCorsHeaders(origin));
+    return toJsonResponse({ success: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' } }, 405, buildApiCorsHeaders(origin, request.url));
 }

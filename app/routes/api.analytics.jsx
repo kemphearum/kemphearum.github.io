@@ -20,7 +20,7 @@ const sanitizeVisitString = (value, fallback = 'Unknown', max = 256) => {
 
 export async function action({ request }) {
     const origin = String(request.headers.get('origin') || '');
-    const corsHeaders = buildApiCorsHeaders(origin, { methods: 'POST, PUT, OPTIONS' });
+    const corsHeaders = buildApiCorsHeaders(origin, request.url, { methods: 'POST, PUT, OPTIONS' });
 
     if (request.method === 'OPTIONS') {
         return new Response('', { status: 204, headers: corsHeaders });
@@ -98,6 +98,6 @@ export async function action({ request }) {
 
 export async function loader({ request }) {
     const origin = String(request.headers.get('origin') || '');
-    const corsHeaders = buildApiCorsHeaders(origin);
+    const corsHeaders = buildApiCorsHeaders(origin, request.url);
     return toJsonResponse({ success: false, error: { code: 'METHOD_NOT_ALLOWED', message: 'Method not allowed' } }, 405, corsHeaders);
 }

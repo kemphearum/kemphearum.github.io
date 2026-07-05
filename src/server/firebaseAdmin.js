@@ -57,13 +57,30 @@ export const getAdminAuth = () => {
 // share one CORS policy.
 export const ALLOWED_API_ORIGINS = ALLOWED_CONTACT_ORIGINS;
 
-export const buildApiCorsHeaders = (origin, { methods = 'POST, OPTIONS', allowHeaders = 'Content-Type' } = {}) => {
+export const buildApiCorsHeaders = (origin, requestUrl, { methods = 'POST, OPTIONS', allowHeaders = 'Content-Type' } = {}) => {
     const headers = {
         Vary: 'Origin',
         'Access-Control-Allow-Methods': methods,
         'Access-Control-Allow-Headers': allowHeaders
     };
-    if (origin && ALLOWED_API_ORIGINS.has(origin)) {
+    
+    let isAllowed = false;
+    if (origin) {
+        if (ALLOWED_API_ORIGINS.has(origin) || origin.endsWith('.vercel.app')) {
+            isAllowed = true;
+        } else if (requestUrl) {
+            try {
+                const requestOrigin = new URL(requestUrl).origin;
+                if (origin === requestOrigin) {
+                    isAllowed = true;
+                }
+            } catch {
+                // ignore
+            }
+        }
+    }
+    
+    if (isAllowed) {
         headers['Access-Control-Allow-Origin'] = origin;
     }
     return headers;

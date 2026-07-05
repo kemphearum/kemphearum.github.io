@@ -11,7 +11,7 @@ const toJsonResponse = (body, status, headers = {}) => (
 // Geo lookup is a GET (no body), so it is served from the loader.
 export async function loader({ request }) {
     const origin = String(request.headers.get('origin') || '');
-    const corsHeaders = buildApiCorsHeaders(origin, { methods: 'GET, OPTIONS' });
+    const corsHeaders = buildApiCorsHeaders(origin, request.url, { methods: 'GET, OPTIONS' });
 
     if (request.method === 'OPTIONS') {
         return new Response('', { status: 204, headers: corsHeaders });

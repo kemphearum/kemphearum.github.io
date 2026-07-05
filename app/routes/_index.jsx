@@ -23,7 +23,8 @@ export async function loader() {
   }
 }
 
-export function meta({ data }) {
+export function meta({ data, matches }) {
+  const currentOrigin = matches?.find(m => m.id === "root")?.data?.currentOrigin || (typeof window !== 'undefined' ? window.location.origin : '');
   const language = getMetaLanguage();
   // Backward compatible with the legacy loader shape (raw settings doc).
   const settings = data?.settings ?? data;
@@ -36,7 +37,7 @@ export function meta({ data }) {
       ? 'អ្នកជំនាញសន្តិសុខ ICT និងសវនកម្ម IT'
       : 'ICT Security & IT Audit Professional'
   );
-  const url = site.canonicalUrl || DEFAULT_SITE_URL;
+  const url = site.canonicalUrl || currentOrigin;
 
   return [
     ...generateMetaTags({

@@ -107,14 +107,31 @@ export const getClientIpFromHeaders = (headers) => {
     return normalizeText(candidate, 100);
 };
 
-export const buildCorsHeaders = (origin) => {
+export const buildCorsHeaders = (origin, requestUrl) => {
     const headers = {
         Vary: 'Origin',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type'
     };
 
-    if (origin && ALLOWED_CONTACT_ORIGINS.has(origin)) {
+    let isAllowed = false;
+    
+    if (origin) {
+        if (ALLOWED_CONTACT_ORIGINS.has(origin) || origin.endsWith('.vercel.app')) {
+            isAllowed = true;
+        } else if (requestUrl) {
+            try {
+                const requestOrigin = new URL(requestUrl).origin;
+                if (origin === requestOrigin) {
+                    isAllowed = true;
+                }
+            } catch {
+                // Ignore malformed URL
+            }
+        }
+    }
+
+    if (isAllowed) {
         headers['Access-Control-Allow-Origin'] = origin;
     }
 

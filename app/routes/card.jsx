@@ -38,7 +38,8 @@ export async function clientLoader() {
 
 clientLoader.hydrate = true;
 
-export function meta({ data }) {
+export function meta({ data, matches }) {
+  const currentOrigin = matches?.find(m => m.id === "root")?.data?.currentOrigin || (typeof window !== 'undefined' ? window.location.origin : '');
   const language = getMetaLanguage();
   const settings = data?.settings ?? data;
   const site = settings?.site || settings || {};
@@ -46,7 +47,7 @@ export function meta({ data }) {
   const name = profile?.name ? getLocalizedField(profile.name, language) : 'Digital Card';
   const title = `Name Card - ${name}`;
   const desc = `Digital Name Card and Contact Information for ${name}`;
-  const url = `${site.canonicalUrl || DEFAULT_SITE_URL}/card`;
+  const url = `${site.canonicalUrl || currentOrigin}/card`;
 
   return [
     ...generateMetaTags({

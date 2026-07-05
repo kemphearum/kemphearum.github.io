@@ -2,18 +2,16 @@ import BlogService from '../../src/services/BlogService';
 import ProjectService from '../../src/services/ProjectService';
 import { filterPublished } from '../../src/domain/shared/contentStatus';
 
-const DEFAULT_BASE_URL = 'https://phearum-info.web.app';
-
 const normalizeBaseUrl = (request) => {
     try {
         if (request?.url) {
             const { origin } = new URL(request.url);
-            if (origin && !origin.includes('localhost')) return origin;
+            return origin;
         }
     } catch {
-        // Ignore malformed request URL and fallback below.
+        // Ignore malformed request URL
     }
-    return DEFAULT_BASE_URL;
+    return '';
 };
 
 const escapeXml = (value) => String(value || '')

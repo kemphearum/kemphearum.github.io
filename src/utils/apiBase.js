@@ -3,14 +3,15 @@
  *
  * The API routes only exist on the Vercel SSR deployment. The site is also
  * mirrored on GitHub Pages and Firebase Hosting, where same-origin /api calls
- * would 404 — so off-Vercel we target the primary Vercel origin (cross-origin,
- * covered by the CORS allowlist in src/server/firebaseAdmin.js).
+ * would 404 — so off-Vercel we target the primary Vercel origin via environment variables.
  */
-const DEFAULT_PRIMARY_ORIGIN = 'https://phearum-info.vercel.app';
 
 const getPrimaryOrigin = () => {
     const explicit = String(import.meta.env.VITE_PRIMARY_CONTACT_ORIGIN || '').trim();
-    return (explicit || DEFAULT_PRIMARY_ORIGIN).replace(/\/$/, '');
+    if (explicit) return explicit.replace(/\/$/, '');
+    
+    // Fall back to the current window origin when deployed on Vercel custom domains
+    return typeof window !== 'undefined' ? window.location.origin : '';
 };
 
 /**

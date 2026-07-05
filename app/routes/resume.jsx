@@ -24,11 +24,12 @@ export async function loader() {
   }
 }
 
-export function meta({ data }) {
+export function meta({ data, matches }) {
+  const currentOrigin = matches?.find(m => m.id === "root")?.data?.currentOrigin || (typeof window !== 'undefined' ? window.location.origin : '');
   const language = getMetaLanguage();
   const site = data?.settings?.site || {};
   const profile = data?.profile || null;
-  const url = `${site.canonicalUrl || DEFAULT_SITE_URL}/resume`;
+  const url = `${site.canonicalUrl || currentOrigin}/resume`;
   const role = (profile && getLocalizedField(profile.currentRole, language)) || 'ICT Security & IT Audit Professional';
   const title = language === 'km' ? 'ប្រវត្តិរូប' : 'Résumé';
   const description = (profile && getLocalizedField(profile.summary, language))
