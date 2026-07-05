@@ -162,6 +162,19 @@
             min-width: 200px;
             max-width: 400px;
         }
+
+        @media (max-width: 768px) {
+            padding: 1rem;
+            
+            .toolbar-top, .toolbar-bottom {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-container {
+                max-width: 100%;
+            }
+        }
     }
 
     .permission-tree-content {
@@ -216,6 +229,13 @@
         .category-actions {
             display: flex;
             gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
         }
     }
 
@@ -271,6 +291,21 @@
         gap: 0.5rem;
         flex: 1;
         max-width: 100%;
+    }
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+
+        .feature-name {
+            width: 100%;
+        }
+
+        .feature-actions-grid {
+            width: 100%;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        }
     }
 }
 
