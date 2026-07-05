@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Rocket, Settings2, DatabaseZap, BookOpen, Copy, Play, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
+import ConfirmDialog from '../../../../shared/components/dialog/ConfirmDialog';
 import { useTranslation } from '../../../../hooks/useTranslation';
 import { seedSampleData } from '../../../../utils/sampleData';
 
 const DatabaseAdvancedPanel = ({ showToast, userRole, trackWrite, onSuccess }) => {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null, title: '', message: '' });
 
   const copyText = async (value) => {
     try {
@@ -24,21 +27,28 @@ const DatabaseAdvancedPanel = ({ showToast, userRole, trackWrite, onSuccess }) =
   };
 
   const [isSeeding, setIsSeeding] = useState(false);
-  const handleSeed = async () => {
-    if (!window.confirm(t('ui.areYouSureYouWantToSeedSa'))) return;
-    setIsSeeding(true);
-    try {
-        const results = await seedSampleData(userRole, trackWrite);
-        let createdCount = 0;
-        Object.values(results).forEach(r => createdCount += r.created);
-        showToast?.(t('ui.successfullySeededCreated'), 'success');
-        if (onSuccess) onSuccess();
-    } catch (error) {
-        console.error(error);
-        showToast?.(t('ui.seedingFailed'), 'error');
-    } finally {
-        setIsSeeding(false);
-    }
+  const handleSeed = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Seed Sample Data',
+      message: t('ui.areYouSureYouWantToSeedSa') || 'Are you sure you want to seed sample data? This might take a few moments.',
+      onConfirm: async () => {
+        setConfirmDialog({ ...confirmDialog, isOpen: false });
+        setIsSeeding(true);
+        try {
+            const results = await seedSampleData(userRole, trackWrite);
+            let createdCount = 0;
+            Object.values(results).forEach(r => createdCount += r.created);
+            showToast?.(t('ui.successfullySeededCreated'), 'success');
+            if (onSuccess) onSuccess();
+        } catch (error) {
+            console.error(error);
+            showToast?.(t('ui.seedingFailed'), 'error');
+        } finally {
+            setIsSeeding(false);
+        }
+      }
+    });
   };
 
   return (
@@ -116,6 +126,17 @@ const DatabaseAdvancedPanel = ({ showToast, userRole, trackWrite, onSuccess }) =
         </div>
       </div>
       )}
+
+      <ConfirmDialog 
+        open={confirmDialog.isOpen}
+        onOpenChange={(open) => !open && setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmLabel={t('common.confirm') || 'Confirm'}
+        confirmVariant="primary"
+        tone="info"
+      />
     </div>
   );
 };

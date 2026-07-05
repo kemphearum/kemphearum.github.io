@@ -11,7 +11,11 @@ import { ACTIONS, formatRoleDisplayName } from '../../../../utils/permissions';
 import { Save, CheckSquare, Square, X, AlertTriangle, Search, Copy, RefreshCw, Trash2, ChevronDown, ChevronRight, UserPlus } from 'lucide-react';
 import { Button, Spinner, EmptyState, Input, Dialog } from '@/shared/components/ui';
 import DeleteConfirmDialog from '../../../../shared/components/dialog/DeleteConfirmDialog';
-import clsx from 'clsx';
+import ConfirmDialog from '../../../../shared/components/dialog/ConfirmDialog';
+import AuthRoleList from './AuthRoleList';
+import AuthPermissionTree from './AuthPermissionTree';
+import AuthRoleCompareDialog from './AuthRoleCompareDialog';
+import { checkDependencies } from '../utils/permissionDependencies';
 import './AuthPermissionsPanel.scss';
 
 const AuthPermissionsPanel = ({ showToast, userRole }) => {
@@ -23,9 +27,31 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedCategories, setExpandedCategories] = useState({ content: true, system: true, analytics: true, database: true, communication: true });
     const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
+    const [isCompareOpen, setIsCompareOpen] = useState(false);
     const [newRoleName, setNewRoleName] = useState('');
     const [newBaseRole, setNewBaseRole] = useState('viewer');
     const [deletingRole, setDeletingRole] = useState(null);
+    
+    const [confirmDialogState, setConfirmDialogState] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null,
+        confirmLabel: 'Confirm',
+        tone: 'warning',
+        confirmVariant: 'primary'
+    });
+
+    const requestConfirm = (config) => {
+        setConfirmDialogState(prev => ({ ...prev, ...config, isOpen: true }));
+    };
+
+    const handleConfirmAction = () => {
+        if (confirmDialogState.onConfirm) {
+            confirmDialogState.onConfirm();
+        }
+        setConfirmDialogState(prev => ({ ...prev, isOpen: false }));
+    };
     
     // Derived from features
     const features = useMemo(() => listFeatures().filter(f => f.permissions?.supportedActions?.length > 0), []);
@@ -108,15 +134,29 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
             return;
         }
         
-        if (hasUnsavedChanges && !window.confirm(t('admin.auth.permissions.discardConfirm') || 'You have unsaved changes. Discard and switch roles?')) return;
+        const performAddRole = () => {
+            setSelectedRole(cleanName);
+            setLocalPermissions({
+                baseRole: newBaseRole,
+                allowedTabs: [],
+                allowedActions: {}
+            });
+            setIsAddRoleOpen(false);
+        };
         
-        setSelectedRole(cleanName);
-        setLocalPermissions({
-            baseRole: newBaseRole,
-            allowedTabs: [],
-            allowedActions: {}
-        });
-        setIsAddRoleOpen(false);
+        if (hasUnsavedChanges) {
+            requestConfirm({
+                title: t('admin.auth.permissions.discardConfirmTitle') || 'Discard Unsaved Changes?',
+                message: t('admin.auth.permissions.discardConfirm') || 'You have unsaved changes. Discard and switch roles?',
+                confirmLabel: 'Discard & Switch',
+                confirmVariant: 'danger',
+                tone: 'warning',
+                onConfirm: performAddRole
+            });
+            return;
+        }
+        
+        performAddRole();
     };
 
 
@@ -137,6 +177,13 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
             });
         }
     }, [selectedRole, rolePermissions, isLoading]);
+
+    const getPermissionsForRole = (role) => {
+        if (role === selectedRole && localPermissions) {
+            return localPermissions;
+        }
+        return rolePermissions?.[role] || { allowedTabs: [], allowedActions: {} };
+    };
 
     const hasUnsavedChanges = (() => {
         if (isLoading || !localPermissions || !rolePermissions) return false;
@@ -200,9 +247,20 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
 
     const toggleTab = (tabId) => {
         setLocalPermissions(prev => {
-            const allowedTabs = prev.allowedTabs.includes(tabId) 
-                ? prev.allowedTabs.filter(id => id !== tabId)
-                : [...prev.allowedTabs, tabId];
+            const isGranted = !prev.allowedTabs.includes(tabId);
+            const currentActions = prev.allowedActions[tabId] || [];
+            
+            // Check dependencies if revoking view (might affect children)
+            if (!isGranted) {
+                const warnings = checkDependencies(ACTIONS.VIEW, false, currentActions, true);
+                if (warnings.length > 0) {
+                    warnings.forEach(w => showToast(w, 'warning'));
+                }
+            }
+
+            const allowedTabs = isGranted
+                ? [...prev.allowedTabs, tabId]
+                : prev.allowedTabs.filter(id => id !== tabId);
             return { ...prev, allowedTabs };
         });
     };
@@ -210,9 +268,18 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
     const toggleAction = (tabId, action) => {
         setLocalPermissions(prev => {
             const modActions = prev.allowedActions[tabId] || [];
-            const newModActions = modActions.includes(action)
-                ? modActions.filter(a => a !== action)
-                : [...modActions, action];
+            const isGranted = !modActions.includes(action);
+            const hasViewAccess = prev.allowedTabs.includes(tabId);
+            
+            const warnings = checkDependencies(action, isGranted, modActions, hasViewAccess);
+            if (warnings.length > 0) {
+                // We use setTimeout to ensure toasts render without blocking state update
+                setTimeout(() => warnings.forEach(w => showToast(w, 'warning')), 0);
+            }
+
+            const newModActions = isGranted
+                ? [...modActions, action]
+                : modActions.filter(a => a !== action);
             
             return {
                 ...prev,
@@ -229,33 +296,52 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
     };
 
     const resetToDefault = () => {
-        if (!window.confirm(t('admin.auth.permissions.resetConfirm') || 'Are you sure you want to reset this role to its default permissions? All unsaved changes will be lost.')) return;
-        
-        const defaultTabs = [];
-        const defaultActions = {};
-        
-        features.forEach(f => {
-            const perms = f.permissions.defaultPermissions[selectedRole] || [];
-            if (perms.length > 0) {
-                defaultTabs.push(f.id);
-                defaultActions[f.id] = perms;
-            }
-        });
-        
-        setLocalPermissions({
-            baseRole: selectedRole,
-            allowedTabs: defaultTabs,
-            allowedActions: defaultActions
+        const performReset = () => {
+            const defaultTabs = [];
+            const defaultActions = {};
+            
+            features.forEach(f => {
+                const perms = f.permissions.defaultPermissions[selectedRole] || [];
+                if (perms.length > 0) {
+                    defaultTabs.push(f.id);
+                    defaultActions[f.id] = perms;
+                }
+            });
+            
+            setLocalPermissions({
+                baseRole: selectedRole,
+                allowedTabs: defaultTabs,
+                allowedActions: defaultActions
+            });
+        };
+
+        requestConfirm({
+            title: t('admin.auth.permissions.resetConfirmTitle') || 'Reset to Default?',
+            message: t('admin.auth.permissions.resetConfirm') || 'Are you sure you want to reset this role to its default permissions? All unsaved changes will be lost.',
+            confirmLabel: 'Reset Permissions',
+            confirmVariant: 'danger',
+            tone: 'warning',
+            onConfirm: performReset
         });
     };
 
     const copyFromRole = (sourceRole) => {
-        if (!window.confirm(t('admin.auth.permissions.copyConfirm', { source: formatRoleDisplayName(sourceRole), target: formatRoleDisplayName(selectedRole) }) || `Are you sure you want to copy permissions from ${formatRoleDisplayName(sourceRole)}? This will overwrite your current unsaved changes for ${formatRoleDisplayName(selectedRole)}.`)) return;
-        const config = rolePermissions[sourceRole] || { allowedTabs: [], allowedActions: {} };
-        setLocalPermissions({
-            baseRole: config.baseRole || sourceRole,
-            allowedTabs: [...(config.allowedTabs || [])],
-            allowedActions: JSON.parse(JSON.stringify(config.allowedActions || {}))
+        const performCopy = () => {
+            const config = rolePermissions[sourceRole] || { allowedTabs: [], allowedActions: {} };
+            setLocalPermissions({
+                baseRole: config.baseRole || sourceRole,
+                allowedTabs: [...(config.allowedTabs || [])],
+                allowedActions: JSON.parse(JSON.stringify(config.allowedActions || {}))
+            });
+        };
+
+        requestConfirm({
+            title: t('admin.auth.permissions.copyConfirmTitle') || 'Copy Permissions?',
+            message: t('admin.auth.permissions.copyConfirm', { source: formatRoleDisplayName(sourceRole), target: formatRoleDisplayName(selectedRole) }) || `Are you sure you want to copy permissions from ${formatRoleDisplayName(sourceRole)}? This will overwrite your current unsaved changes for ${formatRoleDisplayName(selectedRole)}.`,
+            confirmLabel: 'Copy Permissions',
+            confirmVariant: 'primary',
+            tone: 'info',
+            onConfirm: performCopy
         });
     };
 
@@ -277,180 +363,41 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
         );
     }
 
-    const filteredCategories = Object.keys(categories).reduce((acc, cat) => {
-        const filtered = categories[cat].filter(f => {
-            const title = t(f.nav?.labelKey || '') || f.id;
-            return title.toLowerCase().includes(searchQuery.toLowerCase());
-        });
-        if (filtered.length > 0) acc[cat] = filtered;
-        return acc;
-    }, {});
-
     return (
-        <div className="auth-permissions-panel">
-            <div className="ui-flex-between ui-mb-medium">
-                <div>
-                    <h3 className="ui-heading ui-m-0">{t('admin.auth.permissions.title') || 'Enterprise Permission Matrix'}</h3>
-                    {hasUnsavedChanges && <span className="ui-text-sm ui-text-warning ui-flex-center-gap-small ui-mt-xs"><AlertTriangle size={14} /> {t('admin.auth.permissions.unsavedChanges') || 'Unsaved changes'}</span>}
-                </div>
-                <div className="ui-flex-center-gap-small">
-                    <Button variant="outline" onClick={resetToDefault}>
-                        <RefreshCw size={16} /> {t('admin.auth.permissions.resetDefault') || 'Reset Default'}
-                    </Button>
-                    {!['superadmin', 'admin', 'editor', 'author', 'viewer', 'pending'].includes(selectedRole) && (
-                        <Button variant="danger" onClick={() => setDeletingRole(selectedRole)}>
-                            <Trash2 size={16} /> {t('admin.auth.permissions.deleteRole') || 'Delete Role'}
-                        </Button>
-                    )}
-                    <Button onClick={handleSave} isLoading={saving} disabled={!hasUnsavedChanges}>
-                        <Save size={16} /> {t('admin.auth.permissions.saveChanges') || 'Save Changes'}
-                    </Button>
-                </div>
-            </div>
-            
-            <div className="ui-mb-medium ui-flex-between">
-                <div className="ui-tabs">
-                    <div className="ui-tabs-list modern-pills">
-                        {allRoles.map(role => (
-                            <button 
-                                key={role}
-                                className={clsx("ui-tabs-trigger", selectedRole === role && "ui-tabs-trigger-active")}
-                                onClick={() => {
-                                    if (hasUnsavedChanges && !window.confirm(t('admin.auth.permissions.discardConfirm') || 'You have unsaved changes. Discard and switch roles?')) return;
-                                    setSelectedRole(role);
-                                }}
-                            >
-                                {formatRoleDisplayName(role)}
-                                {!['admin', 'editor', 'author', 'viewer', 'superadmin', 'pending'].includes(role) && rolePermissions && rolePermissions[role] && rolePermissions[role].baseRole && (
-                                    <span className="role-badge">
-                                        {t('admin.auth.permissions.baseRoleBadge') || 'Base:'} {formatRoleDisplayName(rolePermissions[role].baseRole)}
-                                    </span>
-                                )}
-                            </button>
-                        ))}
-                        <button 
-                            className="ui-tabs-trigger add-role-btn"
-                            onClick={handleAddRole}
-                        >
-                            {t('admin.auth.permissions.addRole') || '+ Add Role'}
-                        </button>
-                    </div>
-                </div>
-                
-                <div className="ui-flex-center-gap-small">
-                    <select 
-                        className="ui-input" 
-                        onChange={(e) => {
-                            if(e.target.value) copyFromRole(e.target.value);
-                            e.target.value = "";
-                        }}
-                        defaultValue=""
-                    >
-                        <option value="" disabled>{t('admin.auth.permissions.copyFrom') || 'Copy from...'}</option>
-                        {allRoles.filter(r => r !== selectedRole).map(r => (
-                            <option key={r} value={r}>{formatRoleDisplayName(r)}</option>
-                        ))}
-                    </select>
-                    <div style={{ width: '250px' }}>
-                        <Input 
-                            placeholder={t('admin.auth.permissions.filterFeatures') || 'Filter features...'} 
-                            icon={Search}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-                </div>
-            </div>
+        <div className="auth-permissions-panel two-panel-layout">
+            <AuthRoleList 
+                allRoles={allRoles}
+                selectedRole={selectedRole}
+                setSelectedRole={setSelectedRole}
+                rolePermissions={rolePermissions}
+                onAddRole={handleAddRole}
+                onDeleteRole={(role) => setDeletingRole(role)}
+                hasUnsavedChanges={hasUnsavedChanges}
+                requestConfirm={requestConfirm}
+                onCompare={() => setIsCompareOpen(true)}
+                getPermissionsForRole={getPermissionsForRole}
+            />
 
-            <div className="ui-card ui-p-medium">
-                <div className="permission-matrix-container">
-                    <table className="permission-matrix">
-                        <thead>
-                            <tr>
-                                <th className="sticky-col feature-col">{t('admin.auth.permissions.featureModule') || 'Feature Module'}</th>
-                                {allActions.map(action => (
-                                    <th key={action} className="ui-text-center action-col">
-                                        <div className="action-header">{t('admin.auth.permissions.matrix.' + action) || action.replace('_', ' ')}</div>
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Object.entries(filteredCategories).map(([cat, catsFeatures]) => (
-                                <React.Fragment key={cat}>
-                                    <tr className="category-row">
-                                        <td colSpan={allActions.length + 1} onClick={() => toggleCategoryExpanded(cat)} style={{ cursor: 'pointer' }}>
-                                            <div className="ui-flex-center-gap-small ui-text-bold">
-                                                <ChevronRight size={16} className={clsx("chevron-icon", expandedCategories[cat] && "open")} />
-                                                <span style={{ textTransform: 'capitalize' }}>{t(`admin.auth.permissions.categories.${cat}`) || cat.replace(/([A-Z])/g, ' $1').trim()} {t('admin.auth.permissions.modules') || 'Modules'}</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {expandedCategories[cat] && catsFeatures.map(feature => {
-                                        const hasAccess = localPermissions.allowedTabs.includes(feature.id);
-                                        const allowedActions = localPermissions.allowedActions[feature.id] || [];
-
-                                        return (
-                                            <tr key={feature.id} className={clsx("feature-row", !hasAccess && "ui-opacity-50")}>
-                                                <td className="sticky-col feature-col ui-flex-center-gap-small">
-                                                    {feature.nav?.icon && <feature.nav.icon size={16} />}
-                                                    {t(feature.nav?.labelKey || '') || feature.id}
-                                                </td>
-                                                
-                                                {allActions.map(action => {
-                                                    const isSupported = feature.permissions.supportedActions.includes(action);
-                                                    
-                                                    if (!isSupported) {
-                                                        return (
-                                                            <td key={action} className="ui-text-center not-applicable" title={t('admin.auth.permissions.notApplicable') || 'Not Applicable'}>
-                                                                <X size={16} />
-                                                            </td>
-                                                        );
-                                                    }
-
-                                                    // For view action, it toggles tab access entirely
-                                                    if (action === ACTIONS.VIEW) {
-                                                        return (
-                                                            <td key={action} className="ui-text-center">
-                                                                <button 
-                                                                    className={clsx("ui-btn-icon matrix-toggle", hasAccess && "granted")} 
-                                                                    onClick={() => toggleTab(feature.id)}
-                                                                >
-                                                                    {hasAccess ? <CheckSquare size={20} /> : <Square size={20} />}
-                                                                </button>
-                                                            </td>
-                                                        );
-                                                    }
-
-                                                    const isGranted = allowedActions.includes(action);
-                                                    return (
-                                                        <td key={action} className="ui-text-center">
-                                                            <button 
-                                                                className={clsx("ui-btn-icon matrix-toggle", isGranted && "granted")}
-                                                                onClick={() => toggleAction(feature.id, action)}
-                                                                disabled={!hasAccess}
-                                                            >
-                                                                {isGranted ? <CheckSquare size={20} /> : <Square size={20} />}
-                                                            </button>
-                                                        </td>
-                                                    );
-                                                })}
-                                            </tr>
-                                        );
-                                    })}
-                                </React.Fragment>
-                            ))}
-                            {Object.keys(filteredCategories).length === 0 && (
-                                <tr>
-                                    <td colSpan={allActions.length + 1} className="ui-text-center ui-p-large ui-text-muted">
-                                        No features match your search.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <AuthPermissionTree 
+                categories={categories}
+                allActions={allActions}
+                localPermissions={localPermissions}
+                setLocalPermissions={setLocalPermissions}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                expandedCategories={expandedCategories}
+                setExpandedCategories={setExpandedCategories}
+                toggleTab={toggleTab}
+                toggleAction={toggleAction}
+                toggleCategoryExpanded={toggleCategoryExpanded}
+                hasUnsavedChanges={hasUnsavedChanges}
+                selectedRole={selectedRole}
+                resetToDefault={resetToDefault}
+                handleSave={handleSave}
+                saving={saving}
+                allRoles={allRoles}
+                copyFromRole={copyFromRole}
+            />
 
             <Dialog open={isAddRoleOpen} onOpenChange={setIsAddRoleOpen}>
                 <Dialog.Content maxWidth="400px">
@@ -510,6 +457,26 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
                 title={t('admin.auth.permissions.deleteConfirmTitle') || 'Delete Role'}
                 description={t('admin.auth.permissions.deleteConfirmDesc', { role: formatRoleDisplayName(deletingRole || '') }) || `Are you sure you want to delete the '${formatRoleDisplayName(deletingRole || '')}' role? Any users with this role will be reassigned to 'Viewer'. This action cannot be undone.`}
                 loading={deleting}
+            />
+
+            <ConfirmDialog 
+                open={confirmDialogState.isOpen}
+                onOpenChange={(open) => !open && setConfirmDialogState(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={handleConfirmAction}
+                title={confirmDialogState.title}
+                message={confirmDialogState.message}
+                confirmLabel={confirmDialogState.confirmLabel}
+                confirmVariant={confirmDialogState.confirmVariant}
+                tone={confirmDialogState.tone}
+            />
+            
+            <AuthRoleCompareDialog 
+                open={isCompareOpen}
+                onOpenChange={setIsCompareOpen}
+                allRoles={allRoles}
+                rolePermissions={rolePermissions}
+                features={features}
+                allActions={allActions}
             />
         </div>
     );

@@ -1,6 +1,8 @@
 {
   "common": {
-    "profile": "Profile"
+    "profile": "Profile",
+    "add": "Add",
+    "close": "Close"
   },
   "language": {
     "label": "Language",
@@ -374,7 +376,23 @@
         "filterFeatures": "Filter features...",
         "unauthorizedTitle": "Unauthorized",
         "unauthorizedDesc": "Only superadministrators can modify the system Permission Matrix.",
+        "editingRole": "Editing Role",
+        "searchModules": "Search permissions & modules...",
+        "bulkActions": "Bulk Actions",
+        "expandAll": "Expand All",
+        "collapseAll": "Collapse All",
+        "grantAll": "Grant All",
+        "removeAll": "Remove All",
+        "grantReadOnly": "Grant Read Only",
+        "grantCRUD": "Grant CRUD",
+        "compareRoles": "Compare Roles",
+        "role1": "Role 1",
+        "role2": "Role 2",
+        "selectRolesToCompare": "Select two roles to see their differences.",
+        "noDifferences": "These roles have identical permissions.",
+        "showAllPermissions": "Show all permissions (including matches)",
         "featureModule": "Feature Module",
+        "permission": "Permission",
         "modules": "Modules",
         "addRole": "+ Add Role",
         "addRolePrompt": "Enter new role name (e.g. moderator, guest):",
@@ -392,6 +410,7 @@
           "export": "Export",
           "configure": "Configure",
           "view_history": "View History",
+          "view_audit_logs": "View Audit Logs",
           "approve": "Approve",
           "restore": "Restore",
           "import": "Import",

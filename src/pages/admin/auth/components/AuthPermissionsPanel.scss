@@ -1,205 +1,350 @@
-.permission-matrix-container {
-    overflow-x: auto;
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    background: var(--bg-card);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
-    backdrop-filter: blur(8px);
+.two-panel-layout {
+    display: flex;
+    gap: 1.5rem;
+    height: calc(100vh - 200px);
+    min-height: 600px;
+    align-items: stretch;
     
-    .permission-matrix {
+    @media (max-width: 1024px) {
+        flex-direction: column;
+        height: auto;
+    }
+}
+
+/* Left Panel: Role List */
+.auth-role-list-panel {
+    width: 280px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    
+    @media (max-width: 1024px) {
         width: 100%;
-        border-collapse: collapse;
-        overflow: hidden;
-        
-        th, td {
-            padding: 0.8rem;
-            border-bottom: 1px solid var(--border-color);
-            border-right: 1px solid var(--border-color);
-            white-space: nowrap;
-            position: relative;
-            transition: background-color 0.2s ease;
-            
-            &:last-child {
-                border-right: none;
-            }
+        height: 350px;
+    }
+
+    .role-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--bg-subtle);
+    }
+    
+    .role-list-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.5rem;
+    }
+
+    .role-list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+
+        &:hover {
+            background: var(--bg-hover);
         }
-        
-        th {
-            background-color: var(--bg-subtle);
-            font-weight: 600;
-            color: var(--color-text);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        
-        .sticky-col {
-            position: sticky;
-            left: 0;
-            z-index: 5;
-            background-color: var(--bg-card);
-            font-weight: 500;
-        }
-        
-        th.sticky-col {
-            z-index: 15;
-            background-color: var(--bg-subtle);
-        }
-        
-        .feature-col {
-            min-width: 220px;
-        }
-        
-        .action-col {
-            min-width: 110px;
-        }
-        
-        .action-header {
-            text-transform: capitalize;
-            font-size: 0.8rem;
-            letter-spacing: 0.5px;
-            color: var(--color-text-muted);
-        }
-        
-        /* Not Applicable State */
-        .not-applicable {
-            background-image: repeating-linear-gradient(
-                45deg,
-                var(--bg-subtle) 0,
-                var(--bg-subtle) 2px,
-                var(--bg-card) 2px,
-                var(--bg-card) 6px
-            );
-            color: var(--color-text-muted);
-            opacity: 0.6;
-        }
-        
-        /* Crosshair Hover Effect */
-        .feature-row {
-            &:hover {
-                td { background-color: var(--bg-hover); }
-                .sticky-col { background-color: var(--bg-hover); }
-            }
-        }
-        
-        td:hover::after {
-            content: "";
-            position: absolute;
-            background-color: rgba(128, 128, 128, 0.05);
-            left: 0;
-            top: -5000px;
-            height: 10000px;
-            width: 100%;
-            z-index: -1;
-            pointer-events: none;
-        }
-        
-        .category-row {
-            td {
-                background-color: var(--bg-subtle);
-                border-bottom: 2px solid var(--color-primary);
-                position: sticky;
-                left: 0;
-                z-index: 4;
-                font-size: 0.85rem;
-                letter-spacing: 1px;
-                text-transform: uppercase;
+
+        &.active {
+            background: var(--bg-subtle);
+            border-color: var(--color-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+            .role-icon {
                 color: var(--color-primary);
+            }
+        }
+
+        .role-item-main {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .role-icon {
+            color: var(--color-text-muted);
+            
+            &.role-admin { color: var(--color-danger); }
+            &.role-editor { color: var(--color-warning); }
+            &.role-author { color: var(--color-accent); }
+            &.role-viewer { color: var(--color-info); }
+        }
+
+        .role-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .role-name {
+            font-weight: 500;
+            color: var(--color-text);
+            text-transform: capitalize;
+        }
+        
+        .role-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 2px;
+        }
+
+        .role-item-actions {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            
+            .action-btn {
+                background: none;
+                border: none;
+                color: var(--color-text-muted);
+                cursor: pointer;
+                padding: 4px;
+                border-radius: 4px;
                 
                 &:hover {
-                    background-color: var(--bg-hover);
+                    background: var(--bg-hover);
+                    &.delete-btn { color: var(--color-danger); }
                 }
             }
         }
-        
-        /* Interactive Icons */
-        .matrix-toggle {
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            color: var(--color-text-muted);
-            display: inline-flex;
-            padding: 4px;
-            border-radius: 6px;
-            
-            &.granted {
-                color: var(--color-success);
-            }
-            
-            &:hover:not(:disabled) {
-                transform: scale(1.15) translateY(-2px);
-                background: var(--bg-subtle);
-            }
-            
-            &:active:not(:disabled) {
-                transform: scale(0.95);
-            }
-        }
-        
-        .chevron-icon {
-            transition: transform 0.3s ease;
-            &.open { transform: rotate(90deg); }
+
+        &:hover .role-item-actions, &.active .role-item-actions {
+            opacity: 1;
         }
     }
 }
 
-/* Modern Pill Navigation */
-.ui-tabs-list.modern-pills {
+/* Right Panel: Permission Tree */
+.auth-permission-tree-panel {
+    flex: 1;
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    background: var(--bg-subtle);
-    border-radius: 12px;
+    flex-direction: column;
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
-    margin-bottom: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    min-width: 0;
 
-    .ui-tabs-trigger {
-        border: none;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        background: transparent;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        font-weight: 500;
-        color: var(--color-text-muted);
+    .sticky-action-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(var(--bg-card-rgb, 255, 255, 255), 0.95);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
         display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        
+        .toolbar-top, .toolbar-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .search-container {
+            flex: 1;
+            min-width: 200px;
+            max-width: 400px;
+        }
+    }
+
+    .permission-tree-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.5rem;
+    }
+}
+
+/* Permission Accordion & Categories */
+.permission-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.permission-category {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-subtle);
+    overflow: hidden;
+
+    .category-header {
+        display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 0.5rem;
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        user-select: none;
+        transition: background-color 0.2s ease;
         
         &:hover {
             background: var(--bg-hover);
-            color: var(--color-text);
         }
 
-        &.ui-tabs-trigger-active {
-            background: var(--color-primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        .category-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            color: var(--color-text);
             
-            .role-badge {
-                background: rgba(255, 255, 255, 0.2);
-                color: white;
+            .title-text {
+                font-size: 1.05rem;
+            }
+            
+            svg {
+                color: var(--color-text-muted);
             }
         }
-    }
-    
-    .add-role-btn {
-        margin-left: auto;
-        color: var(--color-primary);
-        font-weight: 600;
-        background: transparent;
-        border: 1px dashed var(--color-primary);
         
-        &:hover {
-            background: var(--bg-subtle);
+        .category-actions {
+            display: flex;
+            gap: 0.5rem;
         }
+    }
+
+    .category-body {
+        background: var(--bg-card);
+        border-top: 1px solid var(--border-color);
+        padding: 0;
     }
 }
 
-.role-badge {
-    font-size: 0.65rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: var(--border-color);
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    transition: all 0.3s ease;
+/* Feature Rows inside Category */
+.feature-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s ease;
+    
+    &:last-child {
+        border-bottom: none;
+    }
+    
+    &:hover {
+        background-color: var(--bg-hover);
+    }
+    
+    &.disabled {
+        opacity: 0.7;
+        
+        .feature-name {
+            color: var(--color-text-muted);
+        }
+    }
+
+    .feature-name {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 500;
+        width: 200px;
+        flex-shrink: 0;
+        color: var(--color-text);
+        
+        .feature-icon {
+            color: var(--color-text-muted);
+        }
+    }
+
+    .feature-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+        gap: 0.5rem;
+        flex: 1;
+        max-width: 100%;
+    }
+}
+
+/* Action Toggles */
+.action-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    width: 100%;
+    border-radius: 6px;
+    background: var(--bg-subtle);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+    user-select: none;
+    
+    &:hover:not(.not-applicable):not(.disabled-action) {
+        background: var(--bg-hover);
+        border-color: var(--color-primary);
+    }
+
+    .action-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-transform: capitalize;
+        color: var(--color-text);
+    }
+    
+    &.not-applicable {
+        background: transparent;
+        cursor: not-allowed;
+        opacity: 0.5;
+        
+        .action-label {
+            color: var(--color-text-muted);
+            text-decoration: line-through;
+        }
+    }
+    
+    &.disabled-action {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+}
+
+/* Utilities & Overrides */
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none;
+    }
+    
+    .feature-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        
+        .feature-actions-grid {
+            justify-content: flex-start;
+            width: 100%;
+        }
+    }
+    
+    .auth-permission-tree-panel .sticky-action-toolbar {
+        padding: 1rem;
+        
+        .toolbar-top, .toolbar-bottom {
+            flex-direction: column;
+            align-items: stretch;
+            
+            .action-buttons {
+                justify-content: space-between;
+            }
+        }
+    }
 }

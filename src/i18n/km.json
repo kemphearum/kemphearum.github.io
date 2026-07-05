@@ -1,6 +1,8 @@
 {
   "common": {
-    "profile": "ប្រវត្តិរូប"
+    "profile": "ប្រវត្តិរូប",
+    "add": "បន្ថែម",
+    "close": "បិទ"
   },
   "language": {
     "label": "ភាសា",
@@ -472,7 +474,23 @@
         "filterFeatures": "ចម្រោះលក្ខណៈពិសេស...",
         "unauthorizedTitle": "មិនមានការអនុញ្ញាត",
         "unauthorizedDesc": "មានតែអភិបាលកំពូលប៉ុណ្ណោះដែលអាចកែប្រែម៉ាទ្រីសការអនុញ្ញាតប្រព័ន្ធបាន។",
+        "editingRole": "កំពុងកែប្រែតួនាទី",
+        "searchModules": "ស្វែងរកសិទ្ធិ និងម៉ូឌុល...",
+        "bulkActions": "សកម្មភាពរួម",
+        "expandAll": "ពង្រីកទាំងអស់",
+        "collapseAll": "បង្រួមទាំងអស់",
+        "grantAll": "ផ្តល់សិទ្ធិទាំងអស់",
+        "removeAll": "លុបសិទ្ធិទាំងអស់",
+        "grantReadOnly": "ផ្តល់សិទ្ធិអានតែប៉ុណ្ណោះ",
+        "grantCRUD": "ផ្តល់សិទ្ធិ CRUD",
+        "compareRoles": "ប្រៀបធៀបតួនាទី",
+        "role1": "តួនាទី ១",
+        "role2": "តួនាទី ២",
+        "selectRolesToCompare": "ជ្រើសរើសតួនាទីពីរដើម្បីមើលភាពខុសគ្នា។",
+        "noDifferences": "តួនាទីទាំងនេះមានសិទ្ធិដូចគ្នា។",
+        "showAllPermissions": "បង្ហាញសិទ្ធិទាំងអស់",
         "featureModule": "ម៉ូឌុលលក្ខណៈពិសេស",
+        "permission": "សិទ្ធិ",
         "modules": "ម៉ូឌុល",
         "addRole": "+ បន្ថែមតួនាទី",
         "addRolePrompt": "បញ្ចូលឈ្មោះតួនាទីថ្មី (ឧទាហរណ៍៖ moderator, guest)៖",
@@ -490,6 +508,7 @@
           "export": "នាំចេញ",
           "configure": "កំណត់រចនាសម្ព័ន្ធ",
           "view_history": "មើលប្រវត្តិ",
+          "view_audit_logs": "មើលកំណត់ហេតុសវនកម្ម",
           "approve": "អនុម័ត",
           "restore": "ស្តារ",
           "import": "នាំចូល",
