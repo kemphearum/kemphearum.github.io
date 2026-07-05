@@ -21,25 +21,32 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-    // 1. Initialize to 'dark' to perfectly match SSG pre-render and avoid Hydration Mismatch
-    const [theme, setTheme] = useState('dark');
+    // 1. Initialize from localStorage immediately on the client to prevent theme flashing
+    const [theme, setTheme] = useState(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                const saved = window.localStorage.getItem('portfolio-theme');
+                if (saved) return saved;
+                if (window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
+            } catch (e) {
+                console.warn('Error reading theme from localStorage', e);
+            }
+        }
+        return 'dark'; // SSG default
+    });
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-        // 2. On mount, read the actual preferred theme from localStorage
-        const saved = localStorage.getItem('portfolio-theme');
-        const actualTheme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-        setTheme(actualTheme);
         setIsMounted(true);
     }, []);
 
     useEffect(() => {
-        // 3. Only sync to DOM AFTER we have resolved the true client-side theme.
-        // This prevents React from accidentally overriding the <script> tag's theme during hydration.
         if (!isMounted) return;
         document.documentElement.setAttribute('data-theme', theme);
         document.documentElement.style.colorScheme = theme;
-        localStorage.setItem('portfolio-theme', theme);
+        try {
+            window.localStorage.setItem('portfolio-theme', theme);
+        } catch (e) {}
     }, [theme, isMounted]);
 
     const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
