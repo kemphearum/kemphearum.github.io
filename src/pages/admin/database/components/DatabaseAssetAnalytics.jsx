@@ -4,10 +4,14 @@ import { Button } from '@/shared/components/ui';
 import { db } from '../../../../firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import DatabaseService from '../../../../services/DatabaseService';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const ASSET_REGEX = /https?:\/\/[^\s"'<>]+\.(?:jpg|jpeg|png|gif|webp|svg|mp4|webm)/gi;
 
 const DatabaseAssetAnalytics = ({ showToast }) => {
+    const { t } = useTranslation();
+    const tm = (key, params = {}) => t(`admin.database.${key}`, params);
+
     const [analyzing, setAnalyzing] = useState(false);
     const [results, setResults] = useState(null);
     const [activeTab, setActiveTab] = useState('summary');

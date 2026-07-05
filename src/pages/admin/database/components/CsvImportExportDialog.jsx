@@ -3,6 +3,7 @@ import { Upload, Download, AlertTriangle, FileText, X } from 'lucide-react';
 import { Button, Dialog } from '@/shared/components/ui';
 import { db } from '../../../../firebase';
 import { collection, getDocs, writeBatch, doc } from 'firebase/firestore';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const parseCSV = (str) => {
     const lines = str.trim().split('\n');
@@ -16,6 +17,9 @@ const parseCSV = (str) => {
 };
 
 const CsvImportExportDialog = ({ open, onOpenChange, collectionName, showToast }) => {
+    const { t } = useTranslation();
+    const tm = (key, params = {}) => t(`admin.database.${key}`, params);
+
     const [preview, setPreview] = useState(null);
     const [loading, setLoading] = useState(false);
     const [mode, setMode] = useState('export'); // 'export' or 'import'

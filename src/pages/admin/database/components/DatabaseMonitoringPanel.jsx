@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart2 } from 'lucide-react';
 import { db } from '../../../../firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const Sparkline = ({ data, color, max }) => {
     if (!data || data.length === 0) return null;
@@ -37,6 +38,9 @@ const Sparkline = ({ data, color, max }) => {
 };
 
 const DatabaseMonitoringPanel = () => {
+    const { t } = useTranslation();
+    const tm = (key, params = {}) => t(`admin.database.${key}`, params);
+
     const [usageData, setUsageData] = useState([]);
     const [loading, setLoading] = useState(true);
 

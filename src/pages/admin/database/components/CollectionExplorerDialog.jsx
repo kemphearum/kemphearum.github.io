@@ -4,6 +4,7 @@ import { db } from '../../../../firebase';
 import { collection, getDocs, query, limit as firestoreLimit, startAfter, orderBy } from 'firebase/firestore';
 import { Dialog, Button, Input } from '@/shared/components/ui';
 import CsvImportExportDialog from './CsvImportExportDialog';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const JsonViewer = ({ data, name = 'root', isLast = true }) => {
     if (data === undefined) return <span>undefined{isLast ? '' : ','}</span>;
@@ -47,6 +48,9 @@ const JsonViewer = ({ data, name = 'root', isLast = true }) => {
 };
 
 const CollectionExplorerDialog = ({ open, onOpenChange, collectionName }) => {
+    const { t } = useTranslation();
+    const tm = (key, params = {}) => t(`admin.database.${key}`, params);
+
     const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');

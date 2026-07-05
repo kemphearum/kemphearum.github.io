@@ -2,8 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Activity, Shield } from 'lucide-react';
 import { db } from '../../../../firebase';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const DatabaseActivityPanel = () => {
+    const { t } = useTranslation();
+    const tm = (key, params = {}) => t(`admin.database.${key}`, params);
+
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
 

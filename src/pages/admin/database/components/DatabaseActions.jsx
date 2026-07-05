@@ -14,6 +14,8 @@ const DatabaseActions = ({
   canArchive = true
 }) => {
   const { t } = useTranslation();
+    const tm = (key, params = {}) => t(`admin.database.${key}`, params);
+
   const restoreInputId = useId();
   const restoreInputRef = useRef(null);
 
