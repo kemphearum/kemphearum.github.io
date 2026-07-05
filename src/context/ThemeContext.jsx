@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useLayoutEffect } from 'react';
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 const defaultThemeContext = {
     theme: 'dark',
@@ -42,10 +44,13 @@ export const ThemeProvider = ({ children }) => {
 
 
 
-    useEffect(() => {
-        if (!isMounted) return;
+    useIsomorphicLayoutEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
         document.documentElement.style.colorScheme = theme;
+    }, [theme]);
+
+    useEffect(() => {
+        if (!isMounted) return;
         try {
             window.localStorage.setItem('portfolio-theme', theme);
         } catch (error) {
