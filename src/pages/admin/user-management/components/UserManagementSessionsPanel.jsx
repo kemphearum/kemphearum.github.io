@@ -4,9 +4,11 @@ import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { Monitor, Smartphone, Globe, ShieldCheck, Activity } from 'lucide-react';
 import { Spinner, EmptyState } from '@/shared/components/ui';
 import { formatDate } from '../../../../utils/dateUtils';
+import { useTranslation } from '../../../../hooks/useTranslation';
 import { motion } from 'framer-motion';
 
 const UserManagementSessionsPanel = () => {
+    const { t, language } = useTranslation();
     const [sessions, setSessions] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentUser = auth.currentUser;
@@ -47,7 +49,7 @@ const UserManagementSessionsPanel = () => {
         if (ua.includes('chrome')) return 'Chrome';
         if (ua.includes('firefox')) return 'Firefox';
         if (ua.includes('safari') && !ua.includes('chrome')) return 'Safari';
-        return 'Unknown Browser';
+        return t('admin.auth.session.unknownBrowser') || 'Unknown Browser';
     };
 
     if (loading) {
@@ -79,7 +81,7 @@ const UserManagementSessionsPanel = () => {
             animate="show"
         >
             <motion.div variants={itemVariants} className="ui-mb-medium">
-                <h3 className="ui-heading ui-m-0">Current Session</h3>
+                <h3 className="ui-heading ui-m-0">{t('admin.auth.session.currentSession') || 'Current Session'}</h3>
             </motion.div>
             
             <motion.div variants={itemVariants} className="ui-card ui-p-medium ui-mb-large" style={{ borderLeft: '4px solid var(--color-success)' }}>
@@ -87,26 +89,26 @@ const UserManagementSessionsPanel = () => {
                     <div>
                         <div className="ui-flex-center-gap-small ui-mb-small">
                             <ShieldCheck size={20} className="ui-text-success" />
-                            <strong>Active Session ({currentUser?.email})</strong>
-                            <span className="ui-badge ui-badge-success">This Device</span>
+                            <strong>{t('admin.auth.session.activeSession') || 'Active Session'} ({currentUser?.email})</strong>
+                            <span className="ui-badge ui-badge-success">{t('admin.auth.session.thisDevice') || 'This Device'}</span>
                         </div>
                         <div className="ui-text-sm ui-text-muted">
-                            <p className="ui-m-0">Started: {currentUser?.metadata?.lastSignInTime ? new Date(currentUser.metadata.lastSignInTime).toLocaleString() : 'Just now'}</p>
-                            <p className="ui-m-0">Provider: {currentUser?.providerData?.[0]?.providerId || 'email/password'}</p>
+                            <p className="ui-m-0">{t('admin.auth.session.started') || 'Started'}: {currentUser?.metadata?.lastSignInTime ? new Date(currentUser.metadata.lastSignInTime).toLocaleString(language === 'km' ? 'km-KH' : 'en-US') : (t('admin.auth.session.justNow') || 'Just now')}</p>
+                            <p className="ui-m-0">{t('admin.auth.session.provider') || 'Provider'}: {currentUser?.providerData?.[0]?.providerId || 'email/password'}</p>
                         </div>
                     </div>
                 </div>
             </motion.div>
 
             <motion.div variants={itemVariants} className="ui-flex-between ui-mb-medium">
-                <h3 className="ui-heading ui-m-0">Recent Login History</h3>
+                <h3 className="ui-heading ui-m-0">{t('admin.auth.session.recentLoginHistory') || 'Recent Login History'}</h3>
             </motion.div>
 
             <motion.div variants={itemVariants}>
                 {sessions.length === 0 ? (
                     <EmptyState 
-                        title="No session history"
-                        description="Session history logging has just been enabled."
+                        title={t('admin.auth.session.noSessionHistory') || "No session history"}
+                        description={t('admin.auth.session.sessionLoggingEnabled') || "Session history logging has just been enabled."}
                         icon={Activity}
                     />
                 ) : (
@@ -115,10 +117,10 @@ const UserManagementSessionsPanel = () => {
                             <table className="ui-table">
                                 <thead>
                                     <tr>
-                                        <th>Device / Browser</th>
-                                        <th>Location (IP)</th>
-                                        <th>Time</th>
-                                        <th>Method</th>
+                                        <th>{t('admin.auth.session.tableDeviceBrowser') || 'Device / Browser'}</th>
+                                        <th>{t('admin.auth.session.tableLocationIP') || 'Location (IP)'}</th>
+                                        <th>{t('admin.auth.session.tableTime') || 'Time'}</th>
+                                        <th>{t('admin.auth.session.tableMethod') || 'Method'}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -130,22 +132,22 @@ const UserManagementSessionsPanel = () => {
                                                 <td>
                                                     <div className="ui-flex-center-gap-small">
                                                         <DeviceIcon size={16} className="ui-text-muted" />
-                                                        <span>{getBrowserName(session.userAgent)} on {session.platform || 'Unknown OS'}</span>
-                                                        {isCurrent && <span className="ui-badge ui-badge-outline ui-text-xs">Current</span>}
+                                                        <span>{getBrowserName(session.userAgent)} {language === 'km' ? 'នៅលើ' : 'on'} {session.platform || (t('admin.auth.session.unknownOS') || 'Unknown OS')}</span>
+                                                        {isCurrent && <span className="ui-badge ui-badge-outline ui-text-xs">{t('admin.auth.session.current') || 'Current'}</span>}
                                                     </div>
                                                 </td>
-                                                <td className="ui-text-muted">{session.ip || 'Unknown'}</td>
+                                                <td className="ui-text-muted">{session.ip || (t('admin.auth.session.unknown') || 'Unknown')}</td>
                                                 <td>
                                                     {session.loginTime?.toDate ? 
-                                                        formatDate(session.loginTime.toDate().toISOString(), 'en', {
+                                                        formatDate(session.loginTime.toDate().toISOString(), language, {
                                                             year: 'numeric', month: 'short', day: 'numeric',
                                                             hour: '2-digit', minute: '2-digit'
                                                         }) 
-                                                        : 'Just now'
+                                                        : (t('admin.auth.session.justNow') || 'Just now')
                                                     }
                                                 </td>
                                                 <td className="ui-text-muted" style={{ textTransform: 'capitalize' }}>
-                                                    {session.providerId?.replace('.com', '') || 'Password'}
+                                                    {session.providerId?.replace('.com', '') || (t('admin.auth.session.password') || 'Password')}
                                                 </td>
                                             </tr>
                                         );
