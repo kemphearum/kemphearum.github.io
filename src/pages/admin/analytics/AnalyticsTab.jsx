@@ -50,10 +50,10 @@ const AnalyticsTab = ({ userRole, showToast }) => {
     return (
         <div className="admin-tab-container ui-tabs-root">
             <AnalyticsFilterBar 
-                analyticsRange={analyticsRange} 
-                setAnalyticsRange={setAnalyticsRange} 
-                onRefreshAll={() => {}} // Panels will refetch themselves or we rely on React Query cache invalidation
-                lastUpdated={new Date().toISOString()} // Need to handle last updated per panel if needed
+                range={analyticsRange} 
+                onRangeChange={setAnalyticsRange} 
+                onRefresh={() => {}} 
+                lastUpdated={new Date().toISOString()} 
             />
 
             <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="ui-tabs">
