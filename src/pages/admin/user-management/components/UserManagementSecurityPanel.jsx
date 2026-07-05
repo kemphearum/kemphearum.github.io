@@ -1,8 +1,9 @@
 import React from 'react';
 import { ShieldCheck, KeyRound, Smartphone, AlertCircle, Fingerprint, Lock } from 'lucide-react';
 import { Button } from '@/shared/components/ui';
+import { motion } from 'framer-motion';
 
-const AuthSecurityPanel = () => {
+const UserManagementSecurityPanel = () => {
     const securityFeatures = [
         {
             title: "Authentication Providers",
@@ -15,30 +16,6 @@ const AuthSecurityPanel = () => {
                 { label: "Google OAuth", value: "Enabled" },
                 { label: "Apple OAuth", value: "Disabled" },
                 { label: "Anonymous", value: "Disabled" }
-            ]
-        },
-        {
-            title: "Multi-Factor Auth (MFA)",
-            description: "Require a secondary form of authentication (SMS, Authenticator App) for privileged roles.",
-            icon: Smartphone,
-            status: "Unavailable in Zero-Cost",
-            statusType: "warning",
-            details: [
-                { label: "SMS Authentication", value: "Disabled" },
-                { label: "Time-based OTP", value: "Disabled" },
-                { label: "Security Keys", value: "Disabled" }
-            ]
-        },
-        {
-            title: "Password Policies",
-            description: "Enforcement of password complexity, rotation, and history.",
-            icon: KeyRound,
-            status: "Managed by Identity Provider",
-            statusType: "info",
-            details: [
-                { label: "Minimum Length", value: "6 Characters" },
-                { label: "Complexity Requirements", value: "Firebase Default" },
-                { label: "Password History", value: "Not Tracked" }
             ]
         },
         {
@@ -56,8 +33,26 @@ const AuthSecurityPanel = () => {
         }
     ];
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+    };
+
     return (
-        <div className="auth-security-panel">
+        <motion.div 
+            className="auth-security-panel"
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+        >
             <div className="ui-flex-between ui-mb-medium">
                 <h3 className="ui-heading ui-m-0">Security Posture</h3>
             </div>
@@ -75,7 +70,7 @@ const AuthSecurityPanel = () => {
                 {securityFeatures.map((feature, idx) => {
                     const Icon = feature.icon;
                     return (
-                        <div key={idx} className="ui-card ui-p-medium">
+                        <motion.div variants={itemVariants} key={idx} className="ui-card ui-p-medium">
                             <div className="ui-flex-between ui-mb-small">
                                 <h4 className="ui-heading ui-m-0 ui-flex-center-gap-small">
                                     <Icon size={18} className="ui-text-muted" />
@@ -99,12 +94,12 @@ const AuthSecurityPanel = () => {
                                     </li>
                                 ))}
                             </ul>
-                        </div>
+                        </motion.div>
                     );
                 })}
             </div>
-        </div>
+        </motion.div>
     );
 };
 
-export default AuthSecurityPanel;
+export default UserManagementSecurityPanel;

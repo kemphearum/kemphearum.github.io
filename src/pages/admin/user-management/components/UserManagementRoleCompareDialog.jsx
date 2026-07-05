@@ -3,7 +3,7 @@ import { useTranslation } from '../../../../hooks/useTranslation';
 import { ACTIONS, formatRoleDisplayName } from '../../../../utils/permissions';
 import { Dialog, Button } from '@/shared/components/ui';
 import { GitCompare, Check, X, ShieldAlert, Shield, Users, Info } from 'lucide-react';
-import './AuthRoleCompareDialog.scss';
+import './UserManagementRoleCompareDialog.scss';
 
 const ROLE_ICONS = {
     admin: ShieldAlert,
@@ -12,7 +12,7 @@ const ROLE_ICONS = {
     viewer: Info
 };
 
-const AuthRoleCompareDialog = ({ 
+const UserManagementRoleCompareDialog = ({ 
     open, 
     onOpenChange, 
     allRoles, 
@@ -178,4 +178,4 @@ const AuthRoleCompareDialog = ({
     );
 };
 
-export default AuthRoleCompareDialog;
+export default UserManagementRoleCompareDialog;

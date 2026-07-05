@@ -12,13 +12,13 @@ import { Save, CheckSquare, Square, X, AlertTriangle, Search, Copy, RefreshCw, T
 import { Button, Spinner, EmptyState, Input, Dialog } from '@/shared/components/ui';
 import DeleteConfirmDialog from '../../../../shared/components/dialog/DeleteConfirmDialog';
 import ConfirmDialog from '../../../../shared/components/dialog/ConfirmDialog';
-import AuthRoleList from './AuthRoleList';
-import AuthPermissionTree from './AuthPermissionTree';
-import AuthRoleCompareDialog from './AuthRoleCompareDialog';
+import UserManagementRoleList from './UserManagementRoleList';
+import UserManagementPermissionTree from './UserManagementPermissionTree';
+import UserManagementRoleCompareDialog from './UserManagementRoleCompareDialog';
 import { checkDependencies } from '../utils/permissionDependencies';
-import './AuthPermissionsPanel.scss';
+import './UserManagementPermissionsPanel.scss';
 
-const AuthPermissionsPanel = ({ showToast, userRole }) => {
+const UserManagementPermissionsPanel = ({ showToast, userRole }) => {
     const { t } = useTranslation();
     const { trackRead, trackWrite } = useActivity();
     
@@ -166,28 +166,51 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
         invalidateKeys: [['rolePermissions']]
     });
 
+    const getDefaultPermissions = (role) => {
+        const defaultTabs = [];
+        const defaultActions = {};
+        
+        features.forEach(f => {
+            const perms = f.permissions.defaultPermissions[role] || [];
+            if (perms.length > 0) {
+                defaultTabs.push(f.id);
+                defaultActions[f.id] = perms;
+            }
+        });
+        
+        return {
+            baseRole: role,
+            allowedTabs: defaultTabs,
+            allowedActions: defaultActions
+        };
+    };
+
     // Initialize local permissions
     useEffect(() => {
         if (!isLoading && rolePermissions) {
-            const config = rolePermissions[selectedRole] || { allowedTabs: [], allowedActions: {} };
-            setLocalPermissions({
-                baseRole: config.baseRole || 'pending',
-                allowedTabs: config.allowedTabs || [],
-                allowedActions: config.allowedActions || {}
-            });
+            const config = rolePermissions[selectedRole];
+            if (config) {
+                setLocalPermissions({
+                    baseRole: config.baseRole || 'pending',
+                    allowedTabs: config.allowedTabs || [],
+                    allowedActions: config.allowedActions || {}
+                });
+            } else {
+                setLocalPermissions(getDefaultPermissions(selectedRole));
+            }
         }
-    }, [selectedRole, rolePermissions, isLoading]);
+    }, [selectedRole, rolePermissions, isLoading, features, getDefaultPermissions]);
 
     const getPermissionsForRole = (role) => {
         if (role === selectedRole && localPermissions) {
             return localPermissions;
         }
-        return rolePermissions?.[role] || { allowedTabs: [], allowedActions: {} };
+        return rolePermissions?.[role] || getDefaultPermissions(role);
     };
 
     const hasUnsavedChanges = (() => {
         if (isLoading || !localPermissions || !rolePermissions) return false;
-        const config = rolePermissions[selectedRole] || { allowedTabs: [], allowedActions: {} };
+        const config = rolePermissions[selectedRole] || getDefaultPermissions(selectedRole);
         const oldTabs = [...(config.allowedTabs || [])].sort().join(',');
         const newTabs = [...(localPermissions.allowedTabs || [])].sort().join(',');
         if (oldTabs !== newTabs) return true;
@@ -297,22 +320,7 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
 
     const resetToDefault = () => {
         const performReset = () => {
-            const defaultTabs = [];
-            const defaultActions = {};
-            
-            features.forEach(f => {
-                const perms = f.permissions.defaultPermissions[selectedRole] || [];
-                if (perms.length > 0) {
-                    defaultTabs.push(f.id);
-                    defaultActions[f.id] = perms;
-                }
-            });
-            
-            setLocalPermissions({
-                baseRole: selectedRole,
-                allowedTabs: defaultTabs,
-                allowedActions: defaultActions
-            });
+            setLocalPermissions(getDefaultPermissions(selectedRole));
         };
 
         requestConfirm({
@@ -327,7 +335,7 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
 
     const copyFromRole = (sourceRole) => {
         const performCopy = () => {
-            const config = rolePermissions[sourceRole] || { allowedTabs: [], allowedActions: {} };
+            const config = rolePermissions[sourceRole] || getDefaultPermissions(sourceRole);
             setLocalPermissions({
                 baseRole: config.baseRole || sourceRole,
                 allowedTabs: [...(config.allowedTabs || [])],
@@ -365,7 +373,7 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
 
     return (
         <div className="auth-permissions-panel two-panel-layout">
-            <AuthRoleList 
+            <UserManagementRoleList 
                 allRoles={allRoles}
                 selectedRole={selectedRole}
                 setSelectedRole={setSelectedRole}
@@ -378,7 +386,7 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
                 getPermissionsForRole={getPermissionsForRole}
             />
 
-            <AuthPermissionTree 
+            <UserManagementPermissionTree 
                 categories={categories}
                 allActions={allActions}
                 localPermissions={localPermissions}
@@ -470,7 +478,7 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
                 tone={confirmDialogState.tone}
             />
             
-            <AuthRoleCompareDialog 
+            <UserManagementRoleCompareDialog 
                 open={isCompareOpen}
                 onOpenChange={setIsCompareOpen}
                 allRoles={allRoles}
@@ -482,4 +490,4 @@ const AuthPermissionsPanel = ({ showToast, userRole }) => {
     );
 };
 
-export default AuthPermissionsPanel;
+export default UserManagementPermissionsPanel;

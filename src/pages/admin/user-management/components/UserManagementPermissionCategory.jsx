@@ -5,7 +5,7 @@ import { ChevronRight, ChevronDown, CheckSquare, Square, X } from 'lucide-react'
 import clsx from 'clsx';
 import { Button } from '@/shared/components/ui';
 
-const AuthPermissionCategory = ({
+const UserManagementPermissionCategory = ({
     categoryName,
     features,
     allActions,
@@ -135,7 +135,6 @@ const AuthPermissionCategory = ({
                         <Button variant="ghost" size="sm" onClick={handleGrantReadOnly}>{t('admin.auth.permissions.grantReadOnly') || 'Read Only'}</Button>
                         <Button variant="ghost" size="sm" onClick={handleGrantCRUD}>{t('admin.auth.permissions.grantCRUD') || 'CRUD'}</Button>
                         <Button variant="ghost" size="sm" onClick={handleGrantAll}>{t('admin.auth.permissions.grantAll') || 'Grant All'}</Button>
-                        <Button variant="ghost" size="sm" onClick={handleRemoveAll} className="ui-text-danger">{t('admin.auth.permissions.removeAll') || 'Clear All'}</Button>
                     </div>
                 )}
             </div>
@@ -158,12 +157,7 @@ const AuthPermissionCategory = ({
                                         const isSupported = feature.permissions.supportedActions.includes(action);
                                         
                                         if (!isSupported) {
-                                            return (
-                                                <div key={action} className="action-toggle not-applicable" title={t('admin.auth.permissions.notApplicable') || 'Not Applicable'}>
-                                                    <span className="action-label">{t('admin.auth.permissions.matrix.' + action) || action.replace('_', ' ')}</span>
-                                                    <X size={18} className="ui-text-muted ui-opacity-50" />
-                                                </div>
-                                            );
+                                            return null;
                                         }
 
                                         if (action === ACTIONS.VIEW) {
@@ -199,7 +193,7 @@ const AuthPermissionCategory = ({
     );
 };
 
-export default memo(AuthPermissionCategory, (prevProps, nextProps) => {
+export default memo(UserManagementPermissionCategory, (prevProps, nextProps) => {
     return (
         prevProps.isExpanded === nextProps.isExpanded &&
         prevProps.localPermissions === nextProps.localPermissions &&

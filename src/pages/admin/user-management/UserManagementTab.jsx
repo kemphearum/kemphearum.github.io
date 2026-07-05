@@ -5,16 +5,16 @@ import { EmptyState } from '@/shared/components/ui';
 import { useTranslation } from '../../../hooks/useTranslation';
 import PermissionService from '../../../services/auth/PermissionService';
 
-import AuthOverviewPanel from './components/AuthOverviewPanel';
-import AuthUsersPanel from './components/AuthUsersPanel';
-import AuthRolesPanel from './components/AuthRolesPanel';
-import AuthPermissionsPanel from './components/AuthPermissionsPanel';
-import AuthSessionsPanel from './components/AuthSessionsPanel';
-import AuthSecurityPanel from './components/AuthSecurityPanel';
-import AuthActivityPanel from './components/AuthActivityPanel';
-import AuthSettingsPanel from './components/AuthSettingsPanel';
+import UserManagementOverviewPanel from './components/UserManagementOverviewPanel';
+import UserManagementUsersPanel from './components/UserManagementUsersPanel';
+import UserManagementRolesPanel from './components/UserManagementRolesPanel';
+import UserManagementPermissionsPanel from './components/UserManagementPermissionsPanel';
+import UserManagementSessionsPanel from './components/UserManagementSessionsPanel';
+import UserManagementSecurityPanel from './components/UserManagementSecurityPanel';
+import UserManagementActivityPanel from './components/UserManagementActivityPanel';
+import UserManagementSettingsPanel from './components/UserManagementSettingsPanel';
 
-const AuthTab = ({ user, userRole, showToast }) => {
+const UserManagementTab = ({ user, userRole, showToast }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState('overview');
 
@@ -36,8 +36,7 @@ const AuthTab = ({ user, userRole, showToast }) => {
                 <Tabs.List className="ui-tabs-list" aria-label="Authentication & Authorization">
                     <Tabs.Trigger className="ui-tabs-trigger" value="overview">{t('admin.auth.tabs.overview') || 'Overview'}</Tabs.Trigger>
                     <Tabs.Trigger className="ui-tabs-trigger" value="users">{t('admin.auth.tabs.users') || 'Users'}</Tabs.Trigger>
-                    <Tabs.Trigger className="ui-tabs-trigger" value="roles">{t('admin.auth.tabs.roles') || 'Roles'}</Tabs.Trigger>
-                    <Tabs.Trigger className="ui-tabs-trigger" value="permissions">{t('admin.auth.tabs.permissions') || 'Permissions'}</Tabs.Trigger>
+                    <Tabs.Trigger className="ui-tabs-trigger" value="roles">{t('admin.auth.tabs.rolesAndPermissions') || 'Roles & Permissions'}</Tabs.Trigger>
                     <Tabs.Trigger className="ui-tabs-trigger" value="sessions">{t('admin.auth.tabs.sessions') || 'Sessions'}</Tabs.Trigger>
                     <Tabs.Trigger className="ui-tabs-trigger" value="security">{t('admin.auth.tabs.security') || 'Security'}</Tabs.Trigger>
                     <Tabs.Trigger className="ui-tabs-trigger" value="activity">{t('admin.auth.tabs.activity') || 'Activity'}</Tabs.Trigger>
@@ -46,35 +45,31 @@ const AuthTab = ({ user, userRole, showToast }) => {
 
                 <div className="ui-tabs-content-container" style={{ marginTop: '2rem' }}>
                     <Tabs.Content value="overview">
-                        <AuthOverviewPanel showToast={showToast} userRole={userRole} currentUser={user} />
+                        <UserManagementOverviewPanel showToast={showToast} userRole={userRole} currentUser={user} />
                     </Tabs.Content>
                     
                     <Tabs.Content value="users">
-                        <AuthUsersPanel showToast={showToast} userRole={userRole} currentUser={user} />
+                        <UserManagementUsersPanel showToast={showToast} userRole={userRole} currentUser={user} />
                     </Tabs.Content>
 
                     <Tabs.Content value="roles">
-                        <AuthRolesPanel showToast={showToast} userRole={userRole} />
-                    </Tabs.Content>
-
-                    <Tabs.Content value="permissions">
-                        <AuthPermissionsPanel showToast={showToast} userRole={userRole} />
+                        <UserManagementPermissionsPanel showToast={showToast} userRole={userRole} />
                     </Tabs.Content>
 
                     <Tabs.Content value="sessions">
-                        <AuthSessionsPanel showToast={showToast} userRole={userRole} />
+                        <UserManagementSessionsPanel showToast={showToast} userRole={userRole} />
                     </Tabs.Content>
 
                     <Tabs.Content value="security">
-                        <AuthSecurityPanel showToast={showToast} userRole={userRole} />
+                        <UserManagementSecurityPanel showToast={showToast} userRole={userRole} />
                     </Tabs.Content>
 
                     <Tabs.Content value="activity">
-                        <AuthActivityPanel showToast={showToast} userRole={userRole} />
+                        <UserManagementActivityPanel showToast={showToast} userRole={userRole} />
                     </Tabs.Content>
 
                     <Tabs.Content value="settings">
-                        <AuthSettingsPanel showToast={showToast} userRole={userRole} />
+                        <UserManagementSettingsPanel showToast={showToast} userRole={userRole} />
                     </Tabs.Content>
                 </div>
             </Tabs.Root>
@@ -82,4 +77,4 @@ const AuthTab = ({ user, userRole, showToast }) => {
     );
 };
 
-export default AuthTab;
+export default UserManagementTab;

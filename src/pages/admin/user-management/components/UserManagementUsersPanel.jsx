@@ -18,7 +18,7 @@ import PermissionService from '../../../../services/auth/PermissionService';
 import { formatRoleDisplayName, normalizeRole } from '../../../../utils/permissions';
 import { useCursorPagination } from '../../../../hooks/useCursorPagination';
 
-const AuthUsersPanel = ({ user, userRole, showToast }) => {
+const UserManagementUsersPanel = ({ user, userRole, showToast }) => {
   const { t } = useTranslation();
   const tm = (key, params = {}) => t(`admin.users.${key}`, params);
   const [searchQuery, setSearchQuery] = useState('');
@@ -360,4 +360,4 @@ const AuthUsersPanel = ({ user, userRole, showToast }) => {
   );
 };
 
-export default AuthUsersPanel;
+export default UserManagementUsersPanel;

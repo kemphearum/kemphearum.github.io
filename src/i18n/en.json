@@ -256,7 +256,7 @@
       "publications": "Publications",
       "speaking": "Speaking",
       "communication": "Communication",
-      "auth": "Authentication (IAM)"
+      "userManagement": "User Management"
     },
     "subtitles": {
       "general": "Manage your portfolio primary content",
@@ -337,12 +337,11 @@
       "tabs": {
         "overview": "Overview",
         "users": "Users",
-        "roles": "Roles",
-        "permissions": "Permissions",
         "sessions": "Sessions",
         "security": "Security",
         "activity": "Activity",
-        "settings": "Settings"
+        "settings": "Settings",
+        "rolesAndPermissions": "Roles & Permissions"
       },
       "overview": {
         "title": "Authentication Overview",
@@ -382,7 +381,7 @@
         "expandAll": "Expand All",
         "collapseAll": "Collapse All",
         "grantAll": "Grant All",
-        "removeAll": "Remove All",
+        "removeAll": "Clear All",
         "grantReadOnly": "Grant Read Only",
         "grantCRUD": "Grant CRUD",
         "compareRoles": "Compare Roles",

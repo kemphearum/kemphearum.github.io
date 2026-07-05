@@ -7,7 +7,9 @@ import { useActivity } from '../../../../hooks/useActivity';
 import BaseService from '../../../../services/BaseService';
 import { db } from '../../../../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-const AuthSettingsPanel = ({ userRole, showToast }) => {
+import { motion } from 'framer-motion';
+
+const UserManagementSettingsPanel = ({ userRole, showToast }) => {
     const { trackWrite } = useActivity();
     const [settings, setSettings] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -79,16 +81,34 @@ const AuthSettingsPanel = ({ userRole, showToast }) => {
         );
     }
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: { staggerChildren: 0.1 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+    };
+
     return (
-        <div className="auth-settings-panel">
-            <div className="ui-flex-between ui-mb-medium">
+        <motion.div 
+            className="auth-settings-panel"
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+        >
+            <motion.div variants={itemVariants} className="ui-flex-between ui-mb-medium">
                 <h3 className="ui-heading ui-m-0">Global Auth Settings</h3>
                 <Button onClick={handleSave} loading={saving}>
                     <Save size={16} /> Save Settings
                 </Button>
-            </div>
+            </motion.div>
 
-            <div className="ui-card ui-p-medium ui-mb-large">
+            <motion.div variants={itemVariants} className="ui-card ui-p-medium ui-mb-large">
                 <h4 className="ui-heading ui-mb-small">User Registration</h4>
                 <p className="ui-text-muted ui-text-sm ui-mb-medium">
                     Control how new users join the platform. Note: Firebase Authentication must also be configured to allow/deny sign-ups.
@@ -98,24 +118,30 @@ const AuthSettingsPanel = ({ userRole, showToast }) => {
                     <label className="ui-flex-center-gap-small ui-mb-xs">
                         <input 
                             type="checkbox"
+                            className="ui-checkbox"
                             checked={settings.allowPublicRegistration}
                             onChange={(e) => handleChange('allowPublicRegistration', e.target.checked)}
                         />
-                        Allow Public Registration
+                        <span className="ui-text-bold">Allow Public Registration</span>
                     </label>
-                    <span className="ui-text-sm ui-text-muted">If disabled, users can only be invited by an Administrator.</span>
+                    <div className="ui-text-sm ui-text-muted" style={{ marginLeft: '24px' }}>
+                        If disabled, new users can only be created by an administrator.
+                    </div>
                 </div>
 
                 <div className="ui-form-group ui-mb-medium">
                     <label className="ui-flex-center-gap-small ui-mb-xs">
                         <input 
                             type="checkbox"
+                            className="ui-checkbox"
                             checked={settings.requireEmailVerification}
                             onChange={(e) => handleChange('requireEmailVerification', e.target.checked)}
                         />
-                        Require Email Verification
+                        <span className="ui-text-bold">Require Email Verification</span>
                     </label>
-                    <span className="ui-text-sm ui-text-muted">New users must verify their email before accessing the dashboard.</span>
+                    <div className="ui-text-sm ui-text-muted" style={{ marginLeft: '24px' }}>
+                        Users cannot access protected resources until their email address is verified.
+                    </div>
                 </div>
 
                 <div className="ui-form-group">
@@ -124,32 +150,44 @@ const AuthSettingsPanel = ({ userRole, showToast }) => {
                         className="ui-input"
                         value={settings.defaultNewUserRole}
                         onChange={(e) => handleChange('defaultNewUserRole', e.target.value)}
+                        style={{ maxWidth: '300px' }}
                     >
-                        <option value="pending">Pending (Requires Approval)</option>
-                        <option value="viewer">Viewer</option>
-                        <option value="author">Author</option>
+                        <option value="pending">Pending (No Access)</option>
+                        <option value="viewer">Viewer (Read-Only)</option>
+                        <option value="author">Author (Limited Write)</option>
+                        <option value="editor">Editor (Full Write)</option>
                     </select>
                 </div>
-            </div>
+            </motion.div>
 
-            <div className="ui-card ui-p-medium">
+            <motion.div variants={itemVariants} className="ui-card ui-p-medium">
                 <h4 className="ui-heading ui-mb-small">Session Management</h4>
-                <div className="ui-form-group">
-                    <label className="ui-label">Idle Session Timeout (Minutes)</label>
+                
+                <div className="ui-form-group ui-mb-medium">
+                    <label className="ui-label">Max Session Inactivity Timeout (Minutes)</label>
                     <input 
-                        type="number" 
-                        className="ui-input" 
+                        type="number"
+                        className="ui-input"
                         value={settings.sessionTimeoutMinutes}
-                        onChange={(e) => handleChange('sessionTimeoutMinutes', parseInt(e.target.value) || 0)}
-                        min="5"
+                        onChange={(e) => handleChange('sessionTimeoutMinutes', parseInt(e.target.value, 10))}
+                        min="15"
+                        step="15"
+                        style={{ maxWidth: '150px' }}
                     />
-                    <span className="ui-text-sm ui-text-muted ui-mt-xs ui-block">
-                        Force logout after a period of inactivity. Set to 0 to disable (rely on Firebase token expiry).
+                    <div className="ui-text-sm ui-text-muted ui-mt-xs">
+                        Force logout after this period of inactivity. Default: 1440 (24 hours).
+                    </div>
+                </div>
+
+                <div className="ui-alert ui-alert-warning ui-mt-medium">
+                    <AlertCircle size={16} />
+                    <span>
+                        Session timeout depends on client-side enforcement and Firebase Auth token refresh cycles (usually 1 hour). Changing this setting will take effect on the next client-side token refresh.
                     </span>
                 </div>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 };
 
-export default AuthSettingsPanel;
+export default UserManagementSettingsPanel;

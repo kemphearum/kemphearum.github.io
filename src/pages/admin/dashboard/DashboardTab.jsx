@@ -6,6 +6,7 @@ import { ACTIONS } from '../../../utils/permissions';
 import { listDashboardWidgets } from '../../../registry/dashboardWidgetRegistry';
 import { Card, Skeleton } from '../../../shared/components/ui';
 import styles from './DashboardTab.module.scss';
+import { motion } from 'framer-motion';
 
 /**
  * Dashboard shell. Widgets are composed from the dashboard widget registry —
@@ -34,29 +35,47 @@ const DashboardTab = ({ userRole, isActionAllowed, setActiveTab }) => {
     [ctx]
   );
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+
   return (
-    <div className={`admin-tab-container ${styles.dashboardGrid}`}>
+    <motion.div 
+      className={`admin-tab-container ${styles.dashboardGrid}`}
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
       {widgets.map((widget) => {
         const WidgetComponent = widget.component;
         return (
           <React.Suspense 
             key={widget.id} 
             fallback={
-              <div className={`${styles.widgetWrapper} ${styles[`widget-${widget.id}`]}`}>
+              <motion.div variants={itemVariants} className={`${styles.widgetWrapper} ${styles[`widget-${widget.id}`]}`}>
                 <Card className={styles.panel} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', opacity: 0.7 }}>
                   <Skeleton height="24px" width="140px" />
                   <Skeleton height="100%" width="100%" />
                 </Card>
-              </div>
+              </motion.div>
             }
           >
-            <div className={`${styles.widgetWrapper} ${styles[`widget-${widget.id}`]}`}>
+            <motion.div variants={itemVariants} className={`${styles.widgetWrapper} ${styles[`widget-${widget.id}`]}`}>
               <WidgetComponent ctx={ctx} />
-            </div>
+            </motion.div>
           </React.Suspense>
         );
       })}
-    </div>
+    </motion.div>
   );
 };
 

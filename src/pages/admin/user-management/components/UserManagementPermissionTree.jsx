@@ -3,9 +3,9 @@ import { useTranslation } from '../../../../hooks/useTranslation';
 import { ACTIONS } from '../../../../utils/permissions';
 import { Search, Save, AlertTriangle, RefreshCw, ChevronDown, ChevronRight, CheckSquare, Square, X } from 'lucide-react';
 import { Button, Input } from '@/shared/components/ui';
-import AuthPermissionCategory from './AuthPermissionCategory';
+import UserManagementPermissionCategory from './UserManagementPermissionCategory';
 
-const AuthPermissionTree = ({
+const UserManagementPermissionTree = ({
     categories,
     allActions,
     localPermissions,
@@ -151,11 +151,11 @@ const AuthPermissionTree = ({
                     </div>
                     <div className="ui-flex-center-gap-small action-buttons">
                         <select 
-                            className="ui-input ui-input-sm" 
+                            className="ui-input ui-input--sm" 
+                            style={{ width: 'auto', minWidth: '140px' }}
                             onChange={(e) => {
                                 const val = e.target.value;
                                 if(val === 'grant_all') handleGlobalGrantAll();
-                                if(val === 'remove_all') handleGlobalRemoveAll();
                                 if(val === 'grant_crud') handleGlobalGrantCRUD();
                                 if(val === 'grant_readonly') handleGlobalGrantReadOnly();
                                 e.target.value = "";
@@ -166,14 +166,14 @@ const AuthPermissionTree = ({
                             <option value="grant_readonly">{t('admin.auth.permissions.grantReadOnly') || 'Grant Read Only'}</option>
                             <option value="grant_crud">{t('admin.auth.permissions.grantCRUD') || 'Grant CRUD'}</option>
                             <option value="grant_all">{t('admin.auth.permissions.grantAll') || 'Grant All'}</option>
-                            <option value="remove_all">{t('admin.auth.permissions.removeAll') || 'Clear All'}</option>
                         </select>
                         <Button variant="ghost" size="sm" onClick={handleExpandAll}>{t('admin.auth.permissions.expandAll') || 'Expand All'}</Button>
                         <Button variant="ghost" size="sm" onClick={handleCollapseAll}>{t('admin.auth.permissions.collapseAll') || 'Collapse All'}</Button>
                         
                         <div className="copy-role-selector">
                             <select 
-                                className="ui-input ui-input-sm" 
+                                className="ui-input ui-input--sm" 
+                                style={{ width: 'auto', minWidth: '140px' }}
                                 onChange={(e) => {
                                     if(e.target.value) copyFromRole(e.target.value);
                                     e.target.value = "";
@@ -198,7 +198,7 @@ const AuthPermissionTree = ({
                 ) : (
                     <div className="permission-accordion">
                         {Object.entries(filteredCategories).map(([cat, catsFeatures]) => (
-                            <AuthPermissionCategory 
+                            <UserManagementPermissionCategory 
                                 key={cat}
                                 categoryName={cat}
                                 features={catsFeatures}
@@ -217,4 +217,4 @@ const AuthPermissionTree = ({
     );
 };
 
-export default AuthPermissionTree;
+export default UserManagementPermissionTree;

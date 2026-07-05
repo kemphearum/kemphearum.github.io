@@ -71,7 +71,7 @@ const GeneralTab = lazyWithRetry(() => import('./admin/general/GeneralTab'), 'ge
 const ProfileTab = lazyWithRetry(() => import('./admin/profile/ProfileTab'), 'profile');
 const SettingsTab = lazyWithRetry(() => import('./admin/settings/SettingsTab'), 'settings');
 const MessagesTab = lazyWithRetry(() => import('./admin/messages/MessagesTab'), 'messages');
-const AuthTab = lazyWithRetry(() => import('./admin/auth/AuthTab'), 'users');
+const UserManagementTab = lazyWithRetry(() => import('./admin/user-management/UserManagementTab'), 'users');
 const DatabaseTab = lazyWithRetry(() => import('./admin/database/DatabaseTab'), 'database');
 const AuditLogsTab = lazyWithRetry(() => import('./admin/audit/AuditLogsTab'), 'audit');
 const AnalyticsTab = lazyWithRetry(() => import('./admin/analytics/AnalyticsTab'), 'analytics');
@@ -244,7 +244,7 @@ const Admin = () => {
             case 'messages':
                 return <MessagesTab {...commonProps} onMessagesChange={fetchMessages} />;
             case 'users':
-                return <AuthTab {...commonProps} user={user} />;
+                return <UserManagementTab {...commonProps} user={user} />;
             case 'database':
                 return <DatabaseTab {...commonProps} setActiveTab={setActiveTab} />;
             case 'audit':

@@ -12,7 +12,7 @@ const ROLE_ICONS = {
     viewer: Info
 };
 
-const AuthRoleList = ({
+const UserManagementRoleList = ({
     allRoles,
     selectedRole,
     setSelectedRole,
@@ -90,25 +90,29 @@ const AuthRoleList = ({
                                         ) : (
                                             <span className="ui-text-xs ui-text-muted">Base: {formatRoleDisplayName(baseRole)}</span>
                                         )}
-                                        <span className="ui-text-xs ui-text-muted" style={{ marginLeft: '4px' }}>&bull; {permCount} perms</span>
                                     </div>
                                 </div>
                             </div>
                             
-                            {isActive && !isSystem && (
-                                <div className="role-item-actions">
-                                    <button 
-                                        className="action-btn delete-btn" 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDeleteRole(role);
-                                        }}
-                                        title={t('admin.auth.permissions.deleteRole') || 'Delete Role'}
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                            <div className="role-item-right">
+                                <div className="perm-dot-badge" title={`${permCount} permissions granted`}>
+                                    {permCount}
                                 </div>
-                            )}
+                                {isActive && !isSystem && (
+                                    <div className="role-item-actions">
+                                        <button 
+                                            className="action-btn delete-btn" 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteRole(role);
+                                            }}
+                                            title={t('admin.auth.permissions.deleteRole') || 'Delete Role'}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     );
                 })}
@@ -117,4 +121,4 @@ const AuthRoleList = ({
     );
 };
 
-export default AuthRoleList;
+export default UserManagementRoleList;

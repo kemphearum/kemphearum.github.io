@@ -37,7 +37,7 @@ const ROLES_INFO = [
     }
 ];
 
-const AuthRolesPanel = ({ userRole }) => {
+const UserManagementRolesPanel = ({ userRole }) => {
     const { t } = useTranslation();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -116,4 +116,4 @@ const AuthRolesPanel = ({ userRole }) => {
     );
 };
 
-export default AuthRolesPanel;
+export default UserManagementRolesPanel;

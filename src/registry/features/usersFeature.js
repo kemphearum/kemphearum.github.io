@@ -16,7 +16,7 @@ export const usersFeature = {
     },
     nav: {
         group: 'administration',
-        labelKey: 'admin.tabs.auth',
+        labelKey: 'admin.tabs.userManagement',
         icon: UsersIcon
     }
 };

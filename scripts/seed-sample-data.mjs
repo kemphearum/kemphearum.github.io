@@ -112,35 +112,7 @@ const DATA = {
             }
         }
     ],
-    rolePermissions: [
-        {
-            id: 'admin',
-            baseRole: 'admin',
-            _schemaVersion: 1,
-            allowedTabs: ['dashboard', 'general', 'education', 'experience', 'projects', 'skills', 'certificates', 'blog', 'messages', 'database', 'users', 'audit', 'analytics', 'settings', 'profile', 'home', 'about', 'communication', 'profileInfo', 'awards', 'publications', 'speaking', 'resume'],
-            allowedActions: {}
-        },
-        {
-            id: 'editor',
-            baseRole: 'editor',
-            _schemaVersion: 1,
-            allowedTabs: ['dashboard', 'projects', 'blog', 'skills', 'certificates', 'communication'],
-            allowedActions: {
-                blog: ['view', 'create', 'edit', 'delete', 'publish'],
-                projects: ['view', 'create', 'edit', 'publish']
-            }
-        },
-        {
-            id: 'viewer',
-            baseRole: 'pending',
-            _schemaVersion: 1,
-            allowedTabs: ['dashboard', 'blog', 'projects'],
-            allowedActions: {
-                blog: ['view'],
-                projects: ['view']
-            }
-        }
-    ],
+
     users: [
         {
             id: 'sample-admin',

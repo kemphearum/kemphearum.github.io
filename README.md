@@ -30,7 +30,7 @@ This repository houses the complete source code for Kem Phearum's personal portf
 - **Interactive Background:** High-performance animated canvas background utilizing Framer Motion.
 
 ### Admin Dashboard (CMS)
-- **Secure Authentication:** Firebase Email/Password Auth with strict server-side Role-Based Access Control (RBAC).
+- **User Management (IAM):** Comprehensive interface for managing users, sessions, activity logs, and granular Role-Based Access Control (RBAC).
 - **Content Management:** Full CRUD interfaces for Projects, Experience, and Blog posts with localized field support.
 - **Settings & Configuration:** Manage identity, typography, visual themes, and external integrations directly from the UI.
 - **Database Maintenance:** Built-in tools to trigger full JSON backups, restore snapshots, and archive operational data.
