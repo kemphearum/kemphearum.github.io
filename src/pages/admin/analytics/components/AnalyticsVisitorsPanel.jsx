@@ -92,7 +92,7 @@ const AnalyticsVisitorsPanel = ({ userRole, analyticsRange }) => {
         <div className="analytics-panel fade-in">
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 600 }}>Visitor Analytics</h3>
 
-            <div className="admin-grid" style={{ marginBottom: '2rem' }}>
+            <div className="admin-analytics-grid" style={{ marginBottom: '2rem' }}>
                 <AnalyticsChart
                     type="line"
                     title="Traffic Overview"
@@ -105,7 +105,7 @@ const AnalyticsVisitorsPanel = ({ userRole, analyticsRange }) => {
                 />
             </div>
 
-            <div className="admin-grid">
+            <div className="admin-analytics-grid">
                 <AnalyticsChart
                     type="pie"
                     title="Device Distribution"
@@ -140,7 +140,7 @@ const AnalyticsVisitorsPanel = ({ userRole, analyticsRange }) => {
                 />
             </div>
             
-            <div className="admin-grid" style={{ marginTop: '2rem' }}>
+            <div className="admin-analytics-grid" style={{ marginTop: '2rem' }}>
                 <AnalyticsChart
                     type="pie"
                     title="Visitor Retention"

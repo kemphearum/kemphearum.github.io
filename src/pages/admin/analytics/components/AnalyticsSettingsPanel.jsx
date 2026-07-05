@@ -71,7 +71,7 @@ const AnalyticsSettingsPanel = ({ showToast }) => {
                 <Sliders size={24} color="var(--primary-color)" /> Analytics Settings
             </h3>
 
-            <div className="admin-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))' }}>
+            <div className="admin-analytics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))' }}>
                 
                 <div className="admin-card" style={{ padding: '2rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>

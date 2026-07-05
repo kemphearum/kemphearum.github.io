@@ -72,7 +72,7 @@ const AnalyticsContentPanel = ({ userRole, analyticsRange }) => {
         <div className="analytics-panel fade-in">
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 600 }}>Content Analytics</h3>
 
-            <div className="admin-grid" style={{ marginBottom: '2rem' }}>
+            <div className="admin-analytics-grid" style={{ marginBottom: '2rem' }}>
                 <AnalyticsChart
                     type="bar"
                     title="Most Viewed Pages (Overall)"
@@ -85,7 +85,7 @@ const AnalyticsContentPanel = ({ userRole, analyticsRange }) => {
                 />
             </div>
 
-            <div className="admin-grid">
+            <div className="admin-analytics-grid">
                 <AnalyticsChart
                     type="bar"
                     title="Top Blog Posts"

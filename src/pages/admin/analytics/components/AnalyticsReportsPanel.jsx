@@ -125,7 +125,7 @@ const AnalyticsReportsPanel = ({ userRole, showToast }) => {
                 </div>
             </div>
 
-            <div className="admin-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+            <div className="admin-analytics-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
                 <div className="admin-card" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <div>
                         <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

@@ -80,15 +80,15 @@ const StatusSection = ({ settingsData, setSettingsData, onSave, loading }) => {
                                                 <h4>{t('admin.settings.sections.status.messageTitle', 'Status Message')}</h4>
                                                 <p>{t('admin.settings.sections.status.messageDescription', 'The message displayed in the dialog or watermark overlay.')}</p>
                                             </div>
-                                            <div style={{ display: 'flex', backgroundColor: 'rgba(30, 41, 59, 0.5)', borderRadius: '0.5rem', padding: '0.25rem' }}>
+                                            <div style={{ display: 'flex', backgroundColor: 'var(--bg-surface-light)', border: '1px solid var(--divider)', borderRadius: '0.5rem', padding: '0.25rem' }}>
                                                 <button 
                                                     type="button" 
                                                     onClick={() => setActiveLang('en')}
                                                     style={{
                                                         padding: '0.25rem 0.75rem', fontSize: '0.875rem', fontWeight: 500, borderRadius: '0.375rem',
-                                                        transition: 'background-color 0.2s', border: 'none', cursor: 'pointer',
-                                                        backgroundColor: activeLang === 'en' ? '#2563eb' : 'transparent',
-                                                        color: activeLang === 'en' ? '#ffffff' : '#94a3b8'
+                                                        transition: 'all 0.2s', border: 'none', cursor: 'pointer',
+                                                        backgroundColor: activeLang === 'en' ? 'var(--primary-color)' : 'transparent',
+                                                        color: activeLang === 'en' ? '#ffffff' : 'var(--text-secondary)'
                                                     }}
                                                 >
                                                     EN
@@ -98,9 +98,9 @@ const StatusSection = ({ settingsData, setSettingsData, onSave, loading }) => {
                                                     onClick={() => setActiveLang('km')}
                                                     style={{
                                                         padding: '0.25rem 0.75rem', fontSize: '0.875rem', fontWeight: 500, borderRadius: '0.375rem',
-                                                        transition: 'background-color 0.2s', border: 'none', cursor: 'pointer',
-                                                        backgroundColor: activeLang === 'km' ? '#2563eb' : 'transparent',
-                                                        color: activeLang === 'km' ? '#ffffff' : '#94a3b8'
+                                                        transition: 'all 0.2s', border: 'none', cursor: 'pointer',
+                                                        backgroundColor: activeLang === 'km' ? 'var(--primary-color)' : 'transparent',
+                                                        color: activeLang === 'km' ? '#ffffff' : 'var(--text-secondary)'
                                                     }}
                                                 >
                                                     ខ្មែរ

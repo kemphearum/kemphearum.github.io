@@ -1987,6 +1987,22 @@
         "operatingSystems": "Operating Systems",
         "visitorRetention": "Visitor Retention",
         "topVisitedPages": "Top Visited Pages"
+      },
+      "overview": {
+        "title": "Executive Dashboard",
+        "totalVisitors": "Total Visitors",
+        "uniqueVisitors": "Unique Visitors",
+        "returning": "Returning",
+        "pageViews": "Page Views",
+        "blogViews": "Blog Views",
+        "projectViews": "Project Views",
+        "downloads": "Downloads",
+        "messages": "Messages",
+        "avgSession": "Avg Session",
+        "bounceRate": "Bounce Rate",
+        "visitorTrends": "Visitor Trends",
+        "chartComingSoon": "Chart Coming Soon",
+        "chartComingSoonDesc": "Visitor trends chart will be displayed here."
       }
     },
     "audit": {

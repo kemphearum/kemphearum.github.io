@@ -108,7 +108,7 @@ const AnalyticsContactPanel = ({ analyticsRange }) => {
         <div className="analytics-panel fade-in">
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 600 }}>Contact Analytics</h3>
 
-            <div className="admin-grid" style={{ marginBottom: '2rem' }}>
+            <div className="admin-analytics-grid" style={{ marginBottom: '2rem' }}>
                 <div className="admin-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div style={{ padding: '1rem', background: 'rgba(100, 255, 218, 0.1)', borderRadius: '8px', color: 'var(--primary-color)' }}>
@@ -146,7 +146,7 @@ const AnalyticsContactPanel = ({ analyticsRange }) => {
                 </div>
             </div>
 
-            <div className="admin-grid" style={{ marginBottom: '2rem' }}>
+            <div className="admin-analytics-grid" style={{ marginBottom: '2rem' }}>
                 <AnalyticsChart
                     type="line"
                     title="Message Volume"
@@ -159,7 +159,7 @@ const AnalyticsContactPanel = ({ analyticsRange }) => {
                 />
             </div>
 
-            <div className="admin-grid">
+            <div className="admin-analytics-grid">
                 <AnalyticsChart
                     type="pie"
                     title="Response Status"

@@ -2085,6 +2085,22 @@
         "operatingSystems": "ប្រព័ន្ធប្រតិបត្តិការ",
         "visitorRetention": "ការត្រឡប់មកវិញរបស់អ្នកទស្សនា",
         "topVisitedPages": "ទំព័រដែលចូលមើលច្រើនបំផុត"
+      },
+      "overview": {
+        "title": "ផ្ទាំងគ្រប់គ្រងប្រតិបត្តិការ",
+        "totalVisitors": "អ្នកទស្សនាសរុប",
+        "uniqueVisitors": "អ្នកទស្សនាមិនស្ទួន",
+        "returning": "អ្នកទស្សនាត្រឡប់មកវិញ",
+        "pageViews": "ចំនួនមើលទំព័រ",
+        "blogViews": "ចំនួនមើលប្លុក",
+        "projectViews": "ចំនួនមើលគម្រោង",
+        "downloads": "ការទាញយក",
+        "messages": "សារ",
+        "avgSession": "មធ្យមក្នុងមួយសម័យ",
+        "bounceRate": "អត្រាចាកចេញ",
+        "visitorTrends": "និន្នាការអ្នកទស្សនា",
+        "chartComingSoon": "គំនូសតាងនឹងមកដល់ឆាប់ៗនេះ",
+        "chartComingSoonDesc": "គំនូសតាងនិន្នាការអ្នកទស្សនានឹងត្រូវបានបង្ហាញនៅទីនេះ។"
       }
     },
     "audit": {

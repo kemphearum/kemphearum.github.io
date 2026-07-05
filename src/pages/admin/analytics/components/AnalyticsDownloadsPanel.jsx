@@ -84,7 +84,7 @@ const AnalyticsDownloadsPanel = ({ userRole, analyticsRange }) => {
         <div className="analytics-panel fade-in">
             <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 600 }}>Download Analytics</h3>
 
-            <div className="admin-grid" style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+            <div className="admin-analytics-grid" style={{ marginBottom: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
                 <div className="admin-card" style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                     <div style={{ padding: '1rem', background: 'rgba(100, 255, 218, 0.1)', borderRadius: '12px', color: 'var(--primary-color)' }}>
                         <Download size={32} />
@@ -108,7 +108,7 @@ const AnalyticsDownloadsPanel = ({ userRole, analyticsRange }) => {
                 </div>
             </div>
 
-            <div className="admin-grid" style={{ marginBottom: '2rem' }}>
+            <div className="admin-analytics-grid" style={{ marginBottom: '2rem' }}>
                 <AnalyticsChart
                     type="line"
                     title="Download Volume"
@@ -121,7 +121,7 @@ const AnalyticsDownloadsPanel = ({ userRole, analyticsRange }) => {
                 />
             </div>
 
-            <div className="admin-grid">
+            <div className="admin-analytics-grid">
                 <AnalyticsChart
                     type="bar"
                     title="Most Downloaded Assets"

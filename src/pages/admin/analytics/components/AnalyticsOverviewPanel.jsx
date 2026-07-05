@@ -6,8 +6,10 @@ import BaseService from '../../../../services/BaseService';
 import StatCard from '../../components/StatCard';
 import { EmptyState, Spinner } from '@/shared/components/ui';
 import { calculatePreviousRange } from '../../../../utils/analyticsUtils';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 const AnalyticsOverviewPanel = ({ userRole, analyticsRange }) => {
+    const { t } = useTranslation();
 
     const {
         data: analyticsData = { current: [], previous: [] },
@@ -122,27 +124,27 @@ const AnalyticsOverviewPanel = ({ userRole, analyticsRange }) => {
 
     return (
         <div className="analytics-panel fade-in">
-            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 600 }}>Executive Dashboard</h3>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem', fontWeight: 600 }}>{t('admin.analytics.overview.title') || 'Executive Dashboard'}</h3>
             
-            <div className="admin-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                {renderCard("Total Visitors", currentMetrics.totalVisitors, previousMetrics.totalVisitors, Users)}
-                {renderCard("Unique Visitors", currentMetrics.uniqueVisitors, previousMetrics.uniqueVisitors, UserPlus)}
-                {renderCard("Returning", currentMetrics.returningVisitors, previousMetrics.returningVisitors, Activity)}
-                {renderCard("Page Views", currentMetrics.pageViews, previousMetrics.pageViews, FileText)}
-                {renderCard("Blog Views", currentMetrics.blogViews, previousMetrics.blogViews, FileText)}
-                {renderCard("Project Views", currentMetrics.projectViews, previousMetrics.projectViews, FileText)}
-                {renderCard("Downloads", currentMetrics.downloads, previousMetrics.downloads, Download)}
-                {renderCard("Messages", currentMetrics.contactMessages, previousMetrics.contactMessages, Mail)}
+            <div className="admin-analytics-grid" style={{ gap: '1rem' }}>
+                {renderCard(t('admin.analytics.overview.totalVisitors') || "Total Visitors", currentMetrics.totalVisitors, previousMetrics.totalVisitors, Users)}
+                {renderCard(t('admin.analytics.overview.uniqueVisitors') || "Unique Visitors", currentMetrics.uniqueVisitors, previousMetrics.uniqueVisitors, UserPlus)}
+                {renderCard(t('admin.analytics.overview.returning') || "Returning", currentMetrics.returningVisitors, previousMetrics.returningVisitors, Activity)}
+                {renderCard(t('admin.analytics.overview.pageViews') || "Page Views", currentMetrics.pageViews, previousMetrics.pageViews, FileText)}
+                {renderCard(t('admin.analytics.overview.blogViews') || "Blog Views", currentMetrics.blogViews, previousMetrics.blogViews, FileText)}
+                {renderCard(t('admin.analytics.overview.projectViews') || "Project Views", currentMetrics.projectViews, previousMetrics.projectViews, FileText)}
+                {renderCard(t('admin.analytics.overview.downloads') || "Downloads", currentMetrics.downloads, previousMetrics.downloads, Download)}
+                {renderCard(t('admin.analytics.overview.messages') || "Messages", currentMetrics.contactMessages, previousMetrics.contactMessages, Mail)}
                 
                 <StatCard
-                    label="Avg Session"
+                    label={t('admin.analytics.overview.avgSession') || "Avg Session"}
                     value={`${currentMetrics.avgSession}s`}
                     icon={Clock}
                     color="var(--primary-color)"
                 />
                 
                 <StatCard
-                    label="Bounce Rate"
+                    label={t('admin.analytics.overview.bounceRate') || "Bounce Rate"}
                     value={`${currentMetrics.bounceRate}%`}
                     icon={BarChart2}
                     color="var(--danger-color)"
@@ -152,8 +154,11 @@ const AnalyticsOverviewPanel = ({ userRole, analyticsRange }) => {
             <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                 {/* Future: Render quick mini-charts here */}
                 <div className="admin-card" style={{ flex: 1, minWidth: '300px', padding: '1.5rem' }}>
-                    <h4>Visitor Trends</h4>
-                    <EmptyState title="Chart Coming Soon" description="Visitor trends chart will be displayed here." />
+                    <h4>{t('admin.analytics.overview.visitorTrends') || 'Visitor Trends'}</h4>
+                    <EmptyState 
+                        title={t('admin.analytics.overview.chartComingSoon') || "Chart Coming Soon"} 
+                        description={t('admin.analytics.overview.chartComingSoonDesc') || "Visitor trends chart will be displayed here."} 
+                    />
                 </div>
             </div>
         </div>
