@@ -30,6 +30,7 @@ import { useAnalytics } from '../src/hooks/useAnalytics';
 const Analytics = React.lazy(() => import('@vercel/analytics/react').then(m => ({ default: m.Analytics })));
 const SpeedInsights = React.lazy(() => import('@vercel/speed-insights/react').then(m => ({ default: m.SpeedInsights })));
 import { useTranslation } from '../src/hooks/useTranslation';
+import { useInteraction } from '../src/hooks/useInteraction';
 import { buildBrowserTitle } from '../src/utils/browserTitle';
 import { validateFeatureRegistry } from '../src/utils/validateRegistry';
 
@@ -178,6 +179,7 @@ function RouteScrollReset() {
 
 function SettingsApplier({ children, initialSettings }) {
   const { language } = useTranslation();
+  const hasInteracted = useInteraction(8000); // 8 second fallback timeout
   useAnalytics();
   const defaultVisualSettings = SettingsService.constructor.DEFAULT_VISUAL_SETTINGS || {};
   const {
@@ -336,15 +338,17 @@ function SettingsApplier({ children, initialSettings }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <React.Suspense fallback={null}>
-        <AnimatedBackground
-          density={bgDensity}
-          speed={bgSpeed}
-          glowOpacity={bgGlowOpacity}
-          interactive={bgInteractive}
-          variant={bgStyle}
-        />
-      </React.Suspense>
+      {hasInteracted && (
+        <React.Suspense fallback={null}>
+          <AnimatedBackground
+            density={bgDensity}
+            speed={bgSpeed}
+            glowOpacity={bgGlowOpacity}
+            interactive={bgInteractive}
+            variant={bgStyle}
+          />
+        </React.Suspense>
+      )}
       <SiteStatusOverlay config={siteConfig} />
       {children}
     </>

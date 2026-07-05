@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { db, auth } from '../firebase';
 import { doc, setDoc, collection, writeBatch, increment as firestoreIncrement, onSnapshot, serverTimestamp, getDocs, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { useInteraction } from '../hooks/useInteraction';
 
 import { getTodayDateKey } from '../utils/dateUtils';
 import { ActivityContext } from './ActivityContextValue';
@@ -28,15 +29,19 @@ export const ActivityProvider = ({ children }) => {
     const isFlushing = useRef(false);
 
     // Track auth state for attribution
+    const hasInteracted = useInteraction(8000);
+
     useEffect(() => {
+        if (!hasInteracted) return;
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
             setUser(currentUser);
         });
         return () => unsubscribe();
-    }, []);
+    }, [hasInteracted]);
 
     // Listen to logging configuration rules
     useEffect(() => {
+        if (!hasInteracted) return;
         const settingsRef = doc(db, 'settings', 'global');
         const unsubscribe = onSnapshot(settingsRef, (snap) => {
             if (snap.exists()) {
@@ -51,7 +56,7 @@ export const ActivityProvider = ({ children }) => {
             }
         });
         return () => unsubscribe();
-    }, []);
+    }, [hasInteracted]);
 
     // Reactive date key for midnight roll-over
     useEffect(() => {
@@ -72,7 +77,7 @@ export const ActivityProvider = ({ children }) => {
 
     // Real-time listener for the daily counter doc
     useEffect(() => {
-        if (!currentDateKey) return;
+        if (!currentDateKey || !hasInteracted) return;
         const docRef = doc(db, 'dailyUsage', currentDateKey);
         const unsubscribe = onSnapshot(docRef, (snapshot) => {
             if (snapshot.exists()) {
@@ -87,7 +92,7 @@ export const ActivityProvider = ({ children }) => {
         });
 
         return () => unsubscribe();
-    }, [currentDateKey]);
+    }, [currentDateKey, hasInteracted]);
 
     const flushToFirestore = useCallback(async function doFlush() {
         if (isFlushing.current) {

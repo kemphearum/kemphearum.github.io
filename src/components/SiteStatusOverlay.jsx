@@ -18,12 +18,18 @@ const SiteStatusOverlay = ({ config }) => {
     const location = useLocation();
     const [isAdminAuthed, setIsAdminAuthed] = useState(false);
 
+    // Default to 'live' if undefined
+    const status = config?.siteStatus || 'live';
+
     useEffect(() => {
+        // Optimization: Do not eagerly initialize Firebase Auth if the site is live
+        if (status === 'live') return;
+
         const unsubscribe = AuthService.onAuthChange((user) => {
             setIsAdminAuthed(!!user);
         });
         return () => unsubscribe();
-    }, []);
+    }, [status]);
 
     const navigate = useNavigate();
 
@@ -41,8 +47,6 @@ const SiteStatusOverlay = ({ config }) => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [navigate]);
 
-    // Default to 'live' if undefined
-    const status = config?.siteStatus || 'live';
     const rawType = config?.siteStatusType || 'watermark';
     
     // If admin is authenticated, downgrade blocking dialogs to watermarks
