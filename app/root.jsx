@@ -126,10 +126,25 @@ export function HydrateFallback() {
       <head>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <Links />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('portfolio-theme');
+                  var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+                  document.documentElement.setAttribute('data-theme', theme);
+                  document.documentElement.style.colorScheme = theme;
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--bg-primary)' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid var(--text-secondary)', borderTopColor: 'var(--accent-primary)', animation: 'spin 1s linear infinite' }} />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--bg-root)' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid var(--border-color)', borderTopColor: 'var(--primary-color)', animation: 'spin 1s linear infinite' }} />
           <style dangerouslySetInnerHTML={{ __html: '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }' }} />
         </div>
       </body>
