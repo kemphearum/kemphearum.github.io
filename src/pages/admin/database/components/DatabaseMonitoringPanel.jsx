@@ -79,13 +79,13 @@ const DatabaseMonitoringPanel = () => {
             
             <div className="ui-card ui-p-medium">
                 {loading ? (
-                    <div className="ui-text-center ui-text-muted">Loading metrics...</div>
+                    <div className="ui-text-center ui-text-muted">{tm('ui.loadingMetrics')}</div>
                 ) : usageData.length === 0 ? (
-                    <div className="ui-text-center ui-text-muted">No usage data available yet.</div>
+                    <div className="ui-text-center ui-text-muted">{tm('ui.noUsageDataAvailableYet')}</div>
                 ) : (
                     <div className="ui-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                         <div className="ui-bg-subtle ui-p-medium ui-rounded" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <div className="ui-text-muted ui-text-small ui-uppercase ui-font-bold">Total Reads</div>
+                            <div className="ui-text-muted ui-text-small ui-uppercase ui-font-bold">{tm('ui.totalReads')}</div>
                             <div className="ui-font-bold" style={{ fontSize: '1.5rem', color: 'var(--color-primary)' }}>{sum(reads)}</div>
                             <div style={{ marginTop: '0.5rem' }}>
                                 <Sparkline data={reads} color="var(--color-primary)" />
@@ -93,7 +93,7 @@ const DatabaseMonitoringPanel = () => {
                         </div>
 
                         <div className="ui-bg-subtle ui-p-medium ui-rounded" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <div className="ui-text-muted ui-text-small ui-uppercase ui-font-bold">Total Writes</div>
+                            <div className="ui-text-muted ui-text-small ui-uppercase ui-font-bold">{tm('ui.totalWrites')}</div>
                             <div className="ui-font-bold" style={{ fontSize: '1.5rem', color: 'var(--color-success)' }}>{sum(writes)}</div>
                             <div style={{ marginTop: '0.5rem' }}>
                                 <Sparkline data={writes} color="var(--color-success)" />
@@ -101,7 +101,7 @@ const DatabaseMonitoringPanel = () => {
                         </div>
 
                         <div className="ui-bg-subtle ui-p-medium ui-rounded" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <div className="ui-text-muted ui-text-small ui-uppercase ui-font-bold">Total Deletes</div>
+                            <div className="ui-text-muted ui-text-small ui-uppercase ui-font-bold">{tm('ui.totalDeletes')}</div>
                             <div className="ui-font-bold" style={{ fontSize: '1.5rem', color: 'var(--color-danger)' }}>{sum(deletes)}</div>
                             <div style={{ marginTop: '0.5rem' }}>
                                 <Sparkline data={deletes} color="var(--color-danger)" />

@@ -169,9 +169,9 @@ const CollectionExplorerDialog = ({ open, onOpenChange, collectionName }) => {
                         
                         <div style={{ flex: 1, overflowY: 'auto', border: '1px solid var(--border)', borderRadius: 'var(--radius)', background: 'var(--bg-subtle-light)' }}>
                             {loading ? (
-                                <div className="ui-p-large ui-text-center ui-text-muted">Loading documents...</div>
+                                <div className="ui-p-large ui-text-center ui-text-muted">{tm('ui.loadingDocuments')}</div>
                             ) : filteredDocs.length === 0 ? (
-                                <div className="ui-p-large ui-text-center ui-text-muted">No documents found.</div>
+                                <div className="ui-p-large ui-text-center ui-text-muted">{tm('ui.noDocumentsFound')}</div>
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                     {filteredDocs.map((doc, idx) => (

@@ -155,7 +155,7 @@ const CsvImportExportDialog = ({ open, onOpenChange, collectionName, showToast }
                             <div className="ui-flex-column" style={{ gap: '1rem' }}>
                                 <div className="ui-quota-banner ui-bg-subtle-light">
                                     <AlertTriangle size={16} style={{ color: 'var(--color-warning)' }} />
-                                    <span>Exporting flat collections to CSV is supported. Nested objects and arrays will be ignored or flattened to strings.</span>
+                                    <span>{tm('ui.exportingFlatCollections')}</span>
                                 </div>
                                 <Button variant="primary" onClick={handleExport} disabled={loading} icon={Download}>
                                     {loading ? 'Exporting...' : 'Export Collection to CSV'}
@@ -175,7 +175,7 @@ const CsvImportExportDialog = ({ open, onOpenChange, collectionName, showToast }
                                     <div className="ui-card ui-p-small" style={{ maxHeight: '200px', overflowY: 'auto' }}>
                                         <div className="ui-font-bold ui-mb-small">Preview ({preview.data.length} rows)</div>
                                         {!preview.hasId && (
-                                            <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem' }}>Warning: No 'id' column found. Rows without an 'id' will be skipped.</div>
+                                            <div style={{ color: 'var(--color-danger)', fontSize: '0.85rem' }}>{tm('ui.warningNoIdColumn')}</div>
                                         )}
                                         <pre style={{ fontSize: '0.75rem', overflowX: 'auto' }}>
                                             {JSON.stringify(preview.data.slice(0, 3), null, 2)}

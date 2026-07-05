@@ -62,10 +62,10 @@ const DatabaseHealthCheck = ({ showToast }) => {
                 issues,
                 score: Math.max(0, 100 - (issues.filter(i => i.type === 'error').length * 5) - (issues.filter(i => i.type === 'warning').length * 2))
             });
-            showToast('Health check complete', 'success');
+            showToast(tm('toasts.healthCheckComplete'), 'success');
         } catch (err) {
             console.error(err);
-            showToast('Health check failed', 'error');
+            showToast(tm('toasts.healthCheckFailed'), 'error');
         } finally {
             setRunning(false);
         }
@@ -90,7 +90,7 @@ const DatabaseHealthCheck = ({ showToast }) => {
                             {results.score}/100
                         </div>
                         <div>
-                            <div className="ui-font-bold">Health Score</div>
+                            <div className="ui-font-bold">{tm('ui.healthScore')}</div>
                             <div className="ui-text-muted ui-text-small">Checked {results.docsChecked} documents across primary collections.</div>
                         </div>
                     </div>

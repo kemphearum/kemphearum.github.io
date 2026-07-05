@@ -195,30 +195,30 @@ const DatabaseStats = ({ dbHealth, healthFailures = {}, loading, isFetching = fa
 
       <div className="ui-grid ui-mb-large" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
          <div className="ui-card ui-p-medium ui-bg-subtle-light">
-             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Provider</div>
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">{tm('ui.provider')}</div>
              <div className="ui-font-bold">{dbMetadata.provider}</div>
          </div>
          <div className="ui-card ui-p-medium ui-bg-subtle-light">
-             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Project ID</div>
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">{tm('ui.projectId')}</div>
              <div className="ui-font-bold">{dbMetadata.projectId}</div>
          </div>
          <div className="ui-card ui-p-medium ui-bg-subtle-light">
-             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Environment</div>
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">{tm('ui.environment')}</div>
              <div className="ui-font-bold" style={{ textTransform: 'capitalize' }}>{dbMetadata.environment}</div>
          </div>
          <div className="ui-card ui-p-medium ui-bg-subtle-light">
-             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Region</div>
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">{tm('ui.region')}</div>
              <div className="ui-font-bold">{dbMetadata.region}</div>
          </div>
          <div className="ui-card ui-p-medium ui-bg-subtle-light">
-             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Connection</div>
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">{tm('ui.connection')}</div>
              <div className="ui-font-bold ui-flex-center-gap-small">
                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: dbMetadata.connectionStatus === 'Online' ? 'var(--color-success)' : 'var(--color-danger)' }} />
                  {dbMetadata.connectionStatus}
              </div>
          </div>
          <div className="ui-card ui-p-medium ui-bg-subtle-light">
-             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">Pending Writes</div>
+             <div className="ui-text-extra-small ui-text-muted ui-uppercase ui-font-bold ui-mb-extra-small">{tm('ui.pendingWrites')}</div>
              <div className="ui-font-bold">{dbMetadata.pendingWrites}</div>
          </div>
       </div>

@@ -61,10 +61,10 @@ const DatabaseAssetAnalytics = ({ showToast }) => {
                 allUrls: allUrls.sort((a, b) => b.refs.length - a.refs.length),
                 totalDocsScanned
             });
-            showToast('Asset analysis complete', 'success');
+            showToast(tm('toasts.assetAnalysisComplete'), 'success');
         } catch (error) {
             console.error(error);
-            showToast('Failed to analyze assets', 'error');
+            showToast(tm('toasts.failedToAnalyzeAssets'), 'error');
         } finally {
             setAnalyzing(false);
         }
@@ -88,15 +88,15 @@ const DatabaseAssetAnalytics = ({ showToast }) => {
                         <div className="ui-statCard" style={{ flex: 1, cursor: 'default' }}>
                             <div className="ui-statInfo">
                                 <div className="ui-statValue">{results.totalAssets}</div>
-                                <div className="ui-statLabel">Unique Assets</div>
+                                <div className="ui-statLabel">{tm('ui.uniqueAssets')}</div>
                                 <div className="ui-statDescription">Found in {results.totalDocsScanned} docs</div>
                             </div>
                         </div>
                         <div className="ui-statCard" style={{ flex: 1, cursor: 'default' }}>
                             <div className="ui-statInfo">
                                 <div className="ui-statValue">{results.duplicates}</div>
-                                <div className="ui-statLabel">Duplicated Assets</div>
-                                <div className="ui-statDescription">Cross-referenced URLs</div>
+                                <div className="ui-statLabel">{tm('ui.duplicatedAssets')}</div>
+                                <div className="ui-statDescription">{tm('ui.crossReferencedUrls')}</div>
                             </div>
                         </div>
                     </div>
@@ -142,7 +142,7 @@ const DatabaseAssetAnalytics = ({ showToast }) => {
                             </div>
                         ))}
                         {(activeTab === 'summary' ? results.allUrls : results.duplicatedUrls).length === 0 && (
-                            <div className="ui-p-large ui-text-center ui-text-muted">No assets found.</div>
+                            <div className="ui-p-large ui-text-center ui-text-muted">{tm('ui.noAssetsFound')}</div>
                         )}
                     </div>
                 </div>

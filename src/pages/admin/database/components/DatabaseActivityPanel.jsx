@@ -34,18 +34,18 @@ const DatabaseActivityPanel = () => {
             
             <div className="ui-card ui-p-medium">
                 {loading ? (
-                    <div className="ui-text-center ui-text-muted">Loading activity...</div>
+                    <div className="ui-text-center ui-text-muted">{tm('ui.loadingActivity')}</div>
                 ) : logs.length === 0 ? (
-                    <div className="ui-text-center ui-text-muted">No recent activity.</div>
+                    <div className="ui-text-center ui-text-muted">{tm('ui.noRecentActivity')}</div>
                 ) : (
                     <div className="ui-table-container">
                         <table className="ui-table">
                             <thead>
                                 <tr>
-                                    <th>Time</th>
-                                    <th>Action</th>
-                                    <th>User</th>
-                                    <th>Details</th>
+                                    <th>{tm('ui.time')}</th>
+                                    <th>{tm('ui.action')}</th>
+                                    <th>{tm('ui.user')}</th>
+                                    <th>{tm('ui.details')}</th>
                                 </tr>
                             </thead>
                             <tbody>

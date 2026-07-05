@@ -58,16 +58,16 @@ const AnalyticsTab = ({ userRole, showToast }) => {
 
             <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="ui-tabs">
                 <Tabs.List className="ui-tabs-list" aria-label="Analytics & Insights">
-                    <Tabs.Trigger className="ui-tabs-trigger" value="overview">Overview</Tabs.Trigger>
-                    <Tabs.Trigger className="ui-tabs-trigger" value="visitors">Visitors</Tabs.Trigger>
-                    <Tabs.Trigger className="ui-tabs-trigger" value="content">Content</Tabs.Trigger>
-                    <Tabs.Trigger className="ui-tabs-trigger" value="contact">Contact</Tabs.Trigger>
-                    <Tabs.Trigger className="ui-tabs-trigger" value="search">Search</Tabs.Trigger>
-                    <Tabs.Trigger className="ui-tabs-trigger" value="downloads">Downloads</Tabs.Trigger>
-                    <Tabs.Trigger className="ui-tabs-trigger" value="tech">Technology</Tabs.Trigger>
-                    <Tabs.Trigger className="ui-tabs-trigger" value="reports">Reports</Tabs.Trigger>
-                    <Tabs.Trigger className="ui-tabs-trigger" value="explorer">Data Explorer</Tabs.Trigger>
-                    <Tabs.Trigger className="ui-tabs-trigger" value="settings">Settings</Tabs.Trigger>
+                    <Tabs.Trigger className="ui-tabs-trigger" value="overview">{t('admin.analytics.tabs.overview')}</Tabs.Trigger>
+                    <Tabs.Trigger className="ui-tabs-trigger" value="visitors">{t('admin.analytics.tabs.visitors')}</Tabs.Trigger>
+                    <Tabs.Trigger className="ui-tabs-trigger" value="content">{t('admin.analytics.tabs.content')}</Tabs.Trigger>
+                    <Tabs.Trigger className="ui-tabs-trigger" value="contact">{t('admin.analytics.tabs.contact')}</Tabs.Trigger>
+                    <Tabs.Trigger className="ui-tabs-trigger" value="search">{t('admin.analytics.tabs.search')}</Tabs.Trigger>
+                    <Tabs.Trigger className="ui-tabs-trigger" value="downloads">{t('admin.analytics.tabs.downloads')}</Tabs.Trigger>
+                    <Tabs.Trigger className="ui-tabs-trigger" value="tech">{t('admin.analytics.tabs.technology')}</Tabs.Trigger>
+                    <Tabs.Trigger className="ui-tabs-trigger" value="reports">{t('admin.analytics.tabs.reports')}</Tabs.Trigger>
+                    <Tabs.Trigger className="ui-tabs-trigger" value="explorer">{t('admin.analytics.tabs.dataExplorer')}</Tabs.Trigger>
+                    <Tabs.Trigger className="ui-tabs-trigger" value="settings">{t('admin.analytics.tabs.settings')}</Tabs.Trigger>
                 </Tabs.List>
 
                 <div className="ui-tabs-content-container" style={{ marginTop: '2rem' }}>

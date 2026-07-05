@@ -158,27 +158,27 @@ const DatabaseActions = ({
 
       {(backupHistory.length > 0 || restoreHistory.length > 0) && (
           <div className="ui-mt-large">
-              <h5 className="ui-mb-small">Recent Activity</h5>
+              <h5 className="ui-mb-small">{tm('ui.recentActivity')}</h5>
               <div className="ui-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
                   <div className="ui-card ui-p-medium">
-                      <h6 className="ui-mb-small">Backups</h6>
+                      <h6 className="ui-mb-small">{tm('ui.backups')}</h6>
                       {backupHistory.slice(0, 5).map(item => (
                           <div key={item.id} className="ui-flex-between ui-text-small ui-mb-extra-small ui-pb-extra-small" style={{ borderBottom: '1px solid var(--border)' }}>
                               <span>{new Date(item.date).toLocaleString()}</span>
                               <span className="ui-text-muted">{item.details?.sizeBytes ? Math.round(item.details.sizeBytes / 1024) + ' KB' : '-'}</span>
                           </div>
                       ))}
-                      {backupHistory.length === 0 && <span className="ui-text-muted ui-text-small">No recent backups.</span>}
+                      {backupHistory.length === 0 && <span className="ui-text-muted ui-text-small">{tm('ui.noRecentBackups')}</span>}
                   </div>
                   <div className="ui-card ui-p-medium">
-                      <h6 className="ui-mb-small">Restores</h6>
+                      <h6 className="ui-mb-small">{tm('ui.restores')}</h6>
                       {restoreHistory.slice(0, 5).map(item => (
                           <div key={item.id} className="ui-flex-between ui-text-small ui-mb-extra-small ui-pb-extra-small" style={{ borderBottom: '1px solid var(--border)' }}>
                               <span>{new Date(item.date).toLocaleString()}</span>
                               <span className="ui-text-muted">{item.details?.completedCount || 0} docs</span>
                           </div>
                       ))}
-                      {restoreHistory.length === 0 && <span className="ui-text-muted ui-text-small">No recent restores.</span>}
+                      {restoreHistory.length === 0 && <span className="ui-text-muted ui-text-small">{tm('ui.noRecentRestores')}</span>}
                   </div>
               </div>
           </div>
