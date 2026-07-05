@@ -21,24 +21,23 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-    // 1. Initialize from localStorage immediately on the client to prevent theme flashing
-    const [theme, setTheme] = useState(() => {
-        if (typeof window !== 'undefined') {
-            try {
-                const saved = window.localStorage.getItem('portfolio-theme');
-                if (saved) return saved;
-                if (window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
-            } catch (e) {
-                console.warn('Error reading theme from localStorage', e);
-            }
-        }
-        return 'dark'; // SSG default
-    });
+    // 1. Initialize to 'dark' to perfectly match SSG pre-render and avoid Hydration Mismatch
+    const [theme, setTheme] = useState('dark');
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
+        // 2. On mount, read the actual preferred theme from localStorage
+        try {
+            const saved = window.localStorage.getItem('portfolio-theme');
+            const actualTheme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            setTheme(actualTheme);
+        } catch (e) {
+            console.warn('Error reading theme from localStorage', e);
+        }
         setIsMounted(true);
     }, []);
+
+
 
     useEffect(() => {
         if (!isMounted) return;
