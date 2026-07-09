@@ -171,7 +171,7 @@ class SettingsService extends BaseService {
                 description: 'Kantumruy Pro for titles, Battambang for body.',
                 icon: '🐘',
                 config: {
-                    fontDisplay: 'kantumruy-pro-medium', fontHeading: 'kantumruy-pro-medium', 
+                    fontDisplay: 'kantumruy-pro', fontHeading: 'kantumruy-pro-medium', 
                     fontSubheading: 'kantumruy-pro', fontLogo: 'kantumruy-pro-medium', 
                     fontNav: 'kantumruy-pro', fontBody: 'battambang', 
                     fontUI: 'kantumruy-pro', fontMono: 'jetbrains-mono',

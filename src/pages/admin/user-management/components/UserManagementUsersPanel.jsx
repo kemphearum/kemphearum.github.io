@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users } from 'lucide-react';
+import { Users, UserCheck, Shield, UserMinus } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { EmptyState } from '@/shared/components/ui';
 import BaseService from '../../../../services/BaseService';
@@ -115,22 +115,26 @@ const UserManagementUsersPanel = ({ user, userRole, showToast }) => {
     {
       label: tm('stats.totalUsers.label'),
       value: userStatsResult.total,
-      meta: tm('stats.totalUsers.meta'),
+      hint: tm('stats.totalUsers.meta'),
+      icon: Users,
     },
     {
       label: tm('stats.activeAccess.label'),
       value: userStatsResult.active,
-      meta: tm('stats.activeAccess.meta'),
+      hint: tm('stats.activeAccess.meta'),
+      icon: UserCheck,
     },
     {
       label: tm('stats.elevatedRoles.label'),
       value: userStatsResult.elevated,
-      meta: tm('stats.elevatedRoles.meta'),
+      hint: tm('stats.elevatedRoles.meta'),
+      icon: Shield,
     },
     {
       label: tm('stats.disabled.label'),
       value: userStatsResult.disabled,
-      meta: userStatsResult.disabled > 0 ? tm('stats.disabled.metaBlocked') : tm('stats.disabled.metaNone'),
+      hint: userStatsResult.disabled > 0 ? tm('stats.disabled.metaBlocked') : tm('stats.disabled.metaNone'),
+      icon: UserMinus,
     },
   ];
 

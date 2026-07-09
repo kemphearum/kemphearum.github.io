@@ -60,10 +60,10 @@
 }
 
 .sectionTitle {
-    font-family: var(--font-footer-title, var(--font-ui, inherit));
-    font-size: var(--font-size-footer-title, 0.65rem);
-    font-weight: var(--font-weight-footer-title, 600);
-    font-style: var(--font-style-footer-title, normal);
+    font-family: var(--font-footer-title, var(--font-ui, inherit)) !important;
+    font-size: var(--font-size-footer-title, 0.65rem) !important;
+    font-weight: var(--font-weight-footer-title, 600) !important;
+    font-style: var(--font-style-footer-title, normal) !important;
     color: #e5e7eb; // Light gray for WCAG AA contrast against #4a525f
     text-transform: uppercase;
     letter-spacing: 2px;

@@ -86,14 +86,14 @@ const DATA = {
                 metaDescription: 'Information Security & Compliance Portfolio showcasing ISO 27001 implementation, risk management, and security architecture.',
                 keywords: 'information security, cybersecurity, ISO 27001, ISMS, risk management, compliance, portfolio',
                 ogImage: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1200&h=630',
-                twitterHandle: '@kemphearum'
+                twitterHandle: '@kem_phearum'
             },
             system: {
                 notificationsEnabled: true,
                 sidebarPersistent: true
             },
             typography: {
-                fontDisplay: 'kantumruy-pro-medium',
+                fontDisplay: 'kantumruy-pro',
                 fontHeading: 'kantumruy-pro-medium',
                 fontSubheading: 'kantumruy-pro',
                 fontLogo: 'kantumruy-pro-medium',
@@ -305,17 +305,17 @@ const DATA = {
         },
         {
             id: 'contact',
-            email: 'hello@example.com',
+            email: 'kem.phearum@gmail.com',
             secondaryEmail: 'security@example.com',
-            phone: '+855 12 345 678',
-            telegramUsername: 'phearum_sec',
-            telegramUrl: 'https://t.me/phearum_sec',
+            phone: '012 521 25',
+            telegramUsername: 'kemphearum',
+            telegramUrl: 'https://t.me/kemphearum',
             telegramEnabled: true,
             telegramQrCodeImage: '',
-            whatsapp: '+855 12 345 678',
+            whatsapp: '012 521 25',
             linkedin: 'https://linkedin.com/in/phearum',
             github: 'https://github.com/kemphearum',
-            twitter: 'https://x.com/phearum_sec',
+            twitter: 'https://x.com/kem_phearum',
             website: 'https://kemphearum.github.io',
             availabilityStatus: 'open',
             availabilityMessage: L('I am open to discussing new opportunities.', 'ខ្ញុំបើកចំហរសម្រាប់ការពិភាក្សាអំពីឱកាសការងារថ្មីៗ។'),
